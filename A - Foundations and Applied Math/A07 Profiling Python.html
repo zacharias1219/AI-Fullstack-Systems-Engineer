@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A07 Profiling Python</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A07">
+<main>
+<header>
+  <div class="eyebrow"><b>A07</b><span>Foundations and applied math</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Profiling Python</h1>
+  <p class="lede">How do you find the exact line or allocation making a Python pipeline slow without guessing? This page covers deterministic tracing (<code>cProfile</code>, <code>pstats</code>), statistical sampling (<code>py-spy</code>), line and memory profilers (<code>tracemalloc</code>), and Amdahl's law. GPU and CUDA kernel profiling belongs to K22.</p>
+  <div class="chips"><span><em>Before</em>A06 Debugging method</span><span><em>Before</em>A01 Python for AI engineering</span><span><em>After</em>A20 Complexity for AI systems</span><span><em>After</em>K22 Profiling workflow</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 and test the Amdahl slider</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the tokenizer kata and inspect cProfile and tracemalloc output</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, say the 90 second answer aloud</span><small>7 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank-page recall</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards and record your answer</span><small>3 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. The numbers come from the kata in station 6.</p>
+  <details class="q"><summary>In the kata's baseline run, <code>tokenize_v0_naive</code> shows <code>cumtime=107.1ms</code> and <code>tottime=1.2ms</code>, while <code>lookup_naive</code> shows <code>cumtime=96.9ms</code> and <code>tottime=96.4ms</code>. Which function actually burns the CPU, and why?</summary><div class="a"><code>lookup_naive</code> burns the CPU. <code>cumtime</code> includes time spent inside all functions called from a function, so the outer wrapper <code>tokenize_v0_naive</code> inherits almost the entire 107.1 ms run. <code>tottime</code> excludes subcalls and measures where the interpreter actually spent 96.4 ms (90% of the run).</div></details>
+  <details class="q"><summary>Stage 1 of the kata speeds up vocabulary lookup and drops wall-clock time from 108.06 ms to 15.78 ms (6.8x faster), yet <code>tracemalloc</code> peak memory stays stuck at 18,505.5 KB. How can a 6.8x CPU speedup leave peak memory unchanged?</summary><div class="a">Time hotspots and memory hotspots are often different functions. Stage 1 fixed the O(V) list scan in <code>lookup_naive</code>, which burned 90% of CPU time but allocated almost nothing. The 18.5 MB peak comes from <code>assemble_naive</code> saving 600 growing prefix strings in a list, which took only 6.3 ms in Stage 0.</div></details>
+  <details class="q"><summary>A function takes 90% of total runtime. Even if you rewrite that function in C so it runs 1,000x faster, what is the maximum end-to-end speedup you can get?</summary><div class="a">At most 10x. By Amdahl's law, the remaining 10% of the program is untouched and sets a floor of 0.10 of the original runtime (1 / 0.10 = 10x). With a 1,000x local speedup, total speedup is 1 / (0.10 + 0.90/1000) = 9.91x.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Optimizing code before profiling is guessing where the clock goes. Human intuition treats every line of source code as equal weight, but runtime follows a power law: one inner loop, uncached regex, or hidden quadratic copy usually accounts for 80% to 95% of wall-clock time or heap memory. Profiling replaces opinions with a table of call counts, exclusive times, and byte allocations.</p>
+  <p>The profiling loop has five disciplined steps: establish a repeatable wall-clock baseline, choose the lowest-overhead profiler that answers your question, separate high-<code>cumtime</code> wrappers from high-<code>tottime</code> leaf hotspots, fix the single highest-share bottleneck, and re-profile to verify the gain against Amdahl's law before hunting the next bottleneck.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The five-step profiling and optimization loop</div>
+    <svg viewBox="0 0 480 200" role="img" aria-label="Five-step profiling loop: 1 Baseline wall-clock and Amdahl bound, 2 Pick profiler (cProfile, py-spy, tracemalloc), 3 Separate cumtime wrapper from tottime leaf hotspot, 4 Fix top hotspot and shift bottleneck, 5 Verify speedup and memory drop.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="8" y="22" width="84" height="50" rx="6" class="c-soft" data-hi="1"/>
+          <text x="50" y="44" text-anchor="middle">1 Baseline</text>
+          <text x="50" y="60" text-anchor="middle" class="m">108.1 ms</text>
+        </g>
+        <g data-step="2">
+          <path d="M92 47 H102" class="ink" fill="none"/>
+          <rect x="102" y="22" width="84" height="50" rx="6" class="c-accent" data-hi="2"/>
+          <text x="144" y="44" text-anchor="middle">2 Instrument</text>
+          <text x="144" y="60" text-anchor="middle" class="m">trace/sample</text>
+        </g>
+        <g data-step="3">
+          <path d="M186 47 H196" class="ink" fill="none"/>
+          <rect x="196" y="22" width="90" height="50" rx="6" class="c-warn" data-hi="3"/>
+          <text x="241" y="44" text-anchor="middle">3 Leaf vs Cum</text>
+          <text x="241" y="60" text-anchor="middle" class="m">tottime 90%</text>
+        </g>
+        <g data-step="4">
+          <path d="M286 47 H296" class="ink" fill="none"/>
+          <rect x="296" y="22" width="84" height="50" rx="6" class="c-accent" data-hi="4"/>
+          <text x="338" y="44" text-anchor="middle">4 Fix #1</text>
+          <text x="338" y="60" text-anchor="middle" class="m">15.8 ms (6.8x)</text>
+          <path d="M338 72 V120 H241 V72" class="ln" fill="none"/>
+          <rect x="195" y="106" width="188" height="26" rx="5" class="c-bad"/>
+          <text x="289" y="123" text-anchor="middle">new #1: assemble (18.5 MB)</text>
+        </g>
+        <g data-step="5">
+          <path d="M380 47 H390" class="ink" fill="none"/>
+          <rect x="390" y="22" width="82" height="50" rx="6" class="c-good" data-hi="5"/>
+          <text x="431" y="44" text-anchor="middle">5 Verify</text>
+          <text x="431" y="60" text-anchor="middle" class="m">7.1 ms / 155 KB</text>
+        </g>
+        <text x="240" y="172" text-anchor="middle" class="m">Amdahl's law: S = 1 / ((1 - p) + p/k). Fix the largest p first, then re-profile.</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Pin a reproducible input and measure baseline wall-clock time with time.perf_counter() (108.06 ms in the kata).</li>
+      <li>Pick the right tool: cProfile for deterministic call counts in dev, py-spy for live sampling, or tracemalloc for heap bytes.</li>
+      <li>Sort pstats by cumtime to see the call spine, then by tottime to isolate the leaf hotspot (lookup_naive at 96.4 ms, 90% share).</li>
+      <li>Fix the top hotspot (list scan to set lookup drops time to 15.78 ms, 6.8x), which exposes assemble_naive as the new bottleneck (18.5 MB peak).</li>
+      <li>Fix the new hotspot (batched join reaches 7.11 ms, 15.2x faster, and 155.4 KB peak) and assert identical output.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every fix shifts the hotspot; measure wall time, sort by <code>tottime</code> to find the leaf, and re-profile after each change.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>B-T-L-A-V (BeTheLAVa):</strong> <strong>B</strong>aseline wall clock (<code>perf_counter</code>), <strong>T</strong>ool choice (<code>cProfile</code> hooks vs <code>py-spy</code> samples vs <code>tracemalloc</code> bytes), <strong>L</strong>eaf <code>tottime</code> over wrapper <code>cumtime</code>, <strong>A</strong>mdahl check (<code>1 / (1 - p)</code>), <strong>V</strong>erify output and re-profile.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Deterministic tracing: cProfile and pstats</h3>
+  <p><code>cProfile</code> is CPython's built-in deterministic profiler, implemented in C via <code>_lsprof</code>. It hooks every Python function call, C-function call, and return, recording exact call counts and elapsed time. You inspect results with <code>pstats.Stats</code>. Five columns matter: <code>ncalls</code> (total calls; written <code>total/primitive</code> when recursive), <code>tottime</code> (exclusive time spent in the function body itself, excluding subcalls), <code>percall</code> (<code>tottime / ncalls</code>), <code>cumtime</code> (inclusive time in the function plus all its callees), and the second <code>percall</code> (<code>cumtime / primitive_calls</code>). Always sort by <code>cumtime</code> first to find which subsystem owns the latency, then sort by <code>tottime</code> to find the leaf function doing the work. Because <code>cProfile</code> fires on every call, tight Python loops with millions of tiny function calls add 20% to 50% profiling overhead, inflating call-heavy paths relative to C extensions.</p>
+  <div class="codewrap"><pre>python -m cProfile -s tottime kata.py
+# Or programmatically with pstats:
+st = pstats.Stats(prof).strip_dirs().sort_stats("tottime")
+st.print_stats(10)</pre></div>
+
+  <h3>Statistical sampling: py-spy and flame graphs</h3>
+  <p>A statistical profiler like <code>py-spy</code> (or <code>scalene</code> and Linux <code>perf</code>) does not hook function calls. Instead, it runs in a separate OS process, reads the target Python process memory at a fixed frequency (default 100 Hz, or once every 10 ms), and reconstructs the call stack. At 100 Hz, overhead is under 2%, making it safe to attach to a live production worker by PID (<code>py-spy top --pid 12345</code> or <code>py-spy record -o profile.svg --pid 12345</code>). Unlike <code>cProfile</code>, <code>py-spy</code> can unwind native C/C++/Rust extensions (<code>--native</code>), distinguish active CPU threads from threads waiting on the GIL or I/O, and render flame graphs where the horizontal width of a bar is the fraction of samples in which that function was on the stack.</p>
+  <details class="q"><summary>Check: on a flame graph, what does a wide flat plateau at the top of a tower mean, versus a wide bar at the bottom that splits into many narrow needles?</summary><div class="a">A wide flat plateau at the top edge is a leaf hotspot (high <code>tottime</code>): the CPU was caught directly inside that function across many samples. A wide bar at the bottom is a wrapper with high <code>cumtime</code>; if it splits into dozens of tiny needles, no single callee dominates.</div></details>
+
+  <h3>Line-level, memory, and Amdahl's law</h3>
+  <p><code>cProfile</code> stops at function boundaries. When a 60-line function has high <code>tottime</code>, use <code>line_profiler</code> (<code>@profile</code> with <code>kernprof -l -v</code>) to time each line, or extract suspected lines into small helper functions so <code>cProfile</code> times them directly. For memory, CPU profilers are blind: a function can allocate 500 MB in 5 ms via C calls and barely register in <code>tottime</code>. Python's built-in <code>tracemalloc</code> hooks the CPython block allocator to track current and peak heap bytes per filename and line number with zero external dependencies.</p>
+  <p>Before optimizing any hotspot that takes a fraction <code>p</code> of runtime, apply Amdahl's law. If you speed up that fraction by a factor <code>k</code>, the new runtime is <code>(1 - p) + p/k</code>, giving total speedup:</p>
+  <div class="codewrap"><pre>S(p, k) = 1 / ((1 - p) + p / k)    --&gt; ceiling as k -&gt; inf is 1 / (1 - p)</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Amdahl's law and profiler observer overhead</div>
+    <p class="ask">Predict first. If a hotspot takes 90% of runtime and you speed it up 20x, is total speedup closer to 20x or 7x? And how much does pure-Python <code>profile</code> distort a call-heavy 100 ms loop compared to <code>py-spy</code>?</p>
+    <div class="ctl">
+      <label><span>Hotspot share (p)</span><input type="range" name="p" min="50" max="98" step="2" value="90"><output data-for="p" data-unit="%"></output></label>
+      <label><span>Local speedup (k)</span><input type="range" name="k" min="2" max="50" step="1" value="20"><output data-for="k" data-unit="x"></output></label>
+      <label><span>Active profiler</span><select name="ovh" data-num><option value="0">None (wall-clock baseline, +0%)</option><option value="2">py-spy sampling at 100 Hz (+2%)</option><option value="35">cProfile C call hooks (+35%)</option><option value="350">profile pure-Python hooks (+350%)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Total speedup is capped by the untouched serial fraction <code>1 - p</code>, and heavy tracing profilers inflate call-heavy wall time.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var p=v.p/100, k=v.k, mult=1+(v.ovh/100);
+    var baseMs=100, optMs=baseMs*((1-p)+(p/k)), ceilMs=baseMs*(1-p), profMs=optMs*mult;
+    var sReal=1/((1-p)+(p/k)), sCeil=1/(1-p);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" ms",digits:1,max:450,rows:[
+      {label:"Baseline (100 ms)",value:baseMs,tone:"muted"},
+      {label:"After "+k+"x fix on "+v.p+"%",value:optMs,tone:"good"},
+      {label:"Measured under profiler",value:profMs,tone:v.ovh>20?"warn":"good"},
+      {label:"Amdahl floor (k=inf)",value:ceilMs,tone:"muted"}
+    ]});
+    return {verdict:"Realized speedup: "+tl.fmt(sReal,2)+"x (Amdahl ceiling: "+tl.fmt(sCeil,1)+"x). Optimized time: "+tl.fmt(optMs,1)+" ms ("+tl.fmt(profMs,1)+" ms with profiler overhead)."};
+  })});</script>
+  <details class="q"><summary>Check: why measure end-to-end wall time with <code>time.perf_counter()</code> outside the <code>cProfile</code> run, as the kata does?</summary><div class="a">Because <code>cProfile</code> adds per-call hook overhead that slows down call-heavy Python code more than C extensions. Measuring wall time separately with <code>time.perf_counter()</code> gives the true speedup without observer distortion.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Amdahl's law speedup for fraction <code>p</code> improved by <code>k</code></td><td class="n">1 / ((1 - p) + p/k)</td><td>Derived</td></tr>
+    <tr><td>Amdahl ceiling for p = 0.50, 0.80, 0.90, 0.95</td><td class="n">2x, 5x, 10x, 20x</td><td>Derived</td></tr>
+    <tr><td>Default <code>py-spy</code> sampling rate and typical CPU overhead</td><td class="n">100 Hz (10 ms), &lt; 2%</td><td>From memory, verify</td></tr>
+    <tr><td>Typical <code>cProfile</code> overhead on call-heavy Python code</td><td class="n">15% to 50%</td><td>From memory, verify</td></tr>
+    <tr><td><code>re._MAXCACHE</code> compiled pattern cache size in CPython 3.x</td><td class="n">512 patterns</td><td>Checked Python 3.13 stdlib</td></tr>
+    <tr><td>Kata Stage 0 (naive) wall time and <code>lookup_naive</code> <code>tottime</code></td><td class="n">108.06 ms, 96.4 ms (90%)</td><td>Your own run, 2026-11-17</td></tr>
+    <tr><td>Kata Stage 1 (set lookup) wall time and speedup</td><td class="n">15.78 ms, 6.8x</td><td>Your own run, 2026-11-17</td></tr>
+    <tr><td>Kata Stage 2 (batched join) wall time, speedup, and peak memory drop</td><td class="n">7.11 ms (15.2x), 18,508.6 KB to 155.4 KB (119x)</td><td>Your own run, 2026-11-17</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Tool</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td><code>cProfile</code> + <code>pstats</code></td><td>Stdlib, exact <code>ncalls</code>, deterministic <code>tottime</code> and <code>cumtime</code></td><td>15% to 50% overhead on call-heavy code; function-level only</td><td>Over-penalizes small Python functions vs monolithic C calls; misses I/O and GIL wait</td></tr>
+    <tr><td><code>py-spy</code> (sampling)</td><td>&lt; 2% overhead, attaches to live PID, sees C extensions and GIL</td><td>Statistical approximation; can miss rare microsecond calls</td><td>Requires <code>SYS_PTRACE</code> capability in Docker or root on Linux</td></tr>
+    <tr><td><code>line_profiler</code></td><td>Exact per-line hit counts and timing inside one hot function</td><td>2x to 10x slowdown on instrumented functions; requires decorator</td><td>Never decorate the whole codebase; target only the top <code>tottime</code> leaf</td></tr>
+    <tr><td><code>tracemalloc</code></td><td>Stdlib, tracks current and peak Python heap bytes by line</td><td>~20% to 30% runtime and memory overhead while active</td><td>Tracks only CPython allocator blocks; blind to raw C/C++ or PyTorch tensor buffers</td></tr>
+    <tr><td><code>Scalene</code></td><td>Splits Python vs native time, CPU vs memory, and copy volume</td><td>External package, best run from CLI during development</td><td>Heavier setup than <code>py-spy</code> for quick production PID attachment</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: profile a slow tokenizer pipeline to a 15.2x speedup</h2>
+  <p>A clinical voice intake pre-tokenizer runs across 600 documents against a 1,205-token vocabulary. Stage 0 has three performance bugs: dynamic regex compilation, an O(V) list scan per token, and a prefix snapshot accumulator that copies strings on every document. Run the script to see how <code>cProfile</code> and <code>tracemalloc</code> expose them in sequence.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""A07 kata: profile a slow tokenizer pipeline across 3 stages with cProfile &amp; tracemalloc."""
+import cProfile
+import io
+import pstats
+import re
+import time
+import tracemalloc
+
+DOCS = 600
+VOCAB_LIST = [f"tok_{i}" for i in range(1200)] + ["clinic", "patient", "intake", "voice", "agent"]
+VOCAB_SET = set(VOCAB_LIST)
+CORPUS = ["Patient intake call: schedule clinic voice agent follow-up for tok_42 and tok_999!"] * DOCS
+PAT_STR = r"[a-zA-Z0-9_]+|[^\s\w]"
+PAT_COMPILED = re.compile(PAT_STR)
+
+
+def split_naive(doc):
+    return re.compile(PAT_STR).findall(doc.lower())
+
+
+def lookup_naive(words):
+    out = []
+    for w in words:
+        out.append(w if w in VOCAB_LIST else "&lt;unk&gt;")
+    return out
+
+
+def assemble_naive(all_doc_tokens):
+    snapshots = []
+    acc = ""
+    for doc_toks in all_doc_tokens:
+        acc = acc + " ".join(doc_toks) + "\n"
+        snapshots.append(acc)
+    return snapshots[-1]
+
+
+def tokenize_v0_naive(corpus):
+    """Stage 0: dynamic re.compile + O(V) list lookup + prefix snapshot copies."""
+    all_tokens = [lookup_naive(split_naive(doc)) for doc in corpus]
+    return assemble_naive(all_tokens)
+
+
+def tokenize_v1_lookup_fixed(corpus):
+    """Stage 1: hoisted regex + O(1) set lookup, but still O(N^2) assemble_naive."""
+    all_tokens = [
+        [w if w in VOCAB_SET else "&lt;unk&gt;" for w in PAT_COMPILED.findall(doc.lower())]
+        for doc in corpus
+    ]
+    return assemble_naive(all_tokens)
+
+
+def tokenize_v2_fast(corpus):
+    """Stage 2: hoisted regex + O(1) set lookup + single-pass ''.join."""
+    lines = [
+        " ".join([w if w in VOCAB_SET else "&lt;unk&gt;" for w in PAT_COMPILED.findall(doc.lower())])
+        for doc in corpus
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def fmt_stat(st, func):
+    cc, nc, tt, ct, _ = st.stats[func]
+    return f"{func[2]} (ncalls={nc}, tottime={tt*1000:.1f}ms, cumtime={ct*1000:.1f}ms)"
+
+
+def profile_stage(name, fn, corpus, base_ms=None):
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    res = fn(corpus)
+    wall_ms = (time.perf_counter() - t0) * 1000.0
+    _, peak_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    pr = cProfile.Profile()
+    pr.enable()
+    fn(corpus)
+    pr.disable()
+
+    st = pstats.Stats(pr, stream=io.StringIO())
+    st.sort_stats("cumtime")
+    top_cum = [fmt_stat(st, f) for f in st.fcn_list[:2]]
+    st.sort_stats("tottime")
+    top_tot = [fmt_stat(st, f) for f in st.fcn_list[:2]]
+    speedup = (base_ms / wall_ms) if base_ms else 1.0
+    print(f"=== {name} ===")
+    print(f"  wall={wall_ms:6.2f} ms | speedup={speedup:5.1f}x | peak_mem={peak_bytes/1024:7.1f} KB | len={len(res)}")
+    print(f"  by cumtime: {' ; '.join(top_cum)}")
+    print(f"  by tottime: {' ; '.join(top_tot)}")
+    return wall_ms, res
+
+
+if __name__ == "__main__":
+    ms0, r0 = profile_stage("Stage 0: Naive (re.compile + list scan + prefix copies)", tokenize_v0_naive, CORPUS)
+    ms1, r1 = profile_stage("Stage 1: Hoisted regex + O(1) set (still prefix copies)", tokenize_v1_lookup_fixed, CORPUS, ms0)
+    ms2, r2 = profile_stage("Stage 2: Hoisted regex + O(1) set + batched join", tokenize_v2_fast, CORPUS, ms0)
+    assert r0 == r1 == r2, "Outputs diverged!"</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== Stage 0: Naive (re.compile + list scan + prefix copies) ===
+  wall=108.06 ms | speedup=  1.0x | peak_mem=18508.6 KB | len=61800
+  by cumtime: tokenize_v0_naive (ncalls=1, tottime=1.2ms, cumtime=107.1ms) ; &lt;listcomp&gt; (ncalls=1, tottime=0.3ms, cumtime=99.4ms)
+  by tottime: lookup_naive (ncalls=600, tottime=96.4ms, cumtime=96.9ms) ; assemble_naive (ncalls=1, tottime=6.3ms, cumtime=6.5ms)
+=== Stage 1: Hoisted regex + O(1) set (still prefix copies) ===
+  wall= 15.78 ms | speedup=  6.8x | peak_mem=18505.5 KB | len=61800
+  by cumtime: tokenize_v1_lookup_fixed (ncalls=1, tottime=1.1ms, cumtime=10.6ms) ; assemble_naive (ncalls=1, tottime=7.1ms, cumtime=7.2ms)
+  by tottime: assemble_naive (ncalls=1, tottime=7.1ms, cumtime=7.2ms) ; &lt;method 'findall' of 're.Pattern' objects&gt; (ncalls=600, tottime=1.3ms, cumtime=1.3ms)
+=== Stage 2: Hoisted regex + O(1) set + batched join ===
+  wall=  7.11 ms | speedup= 15.2x | peak_mem=  155.4 KB | len=61800
+  by cumtime: tokenize_v2_fast (ncalls=1, tottime=0.0ms, cumtime=2.5ms) ; &lt;listcomp&gt; (ncalls=1, tottime=0.4ms, cumtime=2.5ms)
+  by tottime: &lt;method 'findall' of 're.Pattern' objects&gt; (ncalls=600, tottime=1.3ms, cumtime=1.3ms) ; &lt;listcomp&gt; (ncalls=600, tottime=0.6ms, cumtime=0.6ms)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata wall-clock latency across the three profiling stages</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"Stage 0: Naive (1.0x, 18.5 MB)","value":108.06,"tone":"bad"},{"label":"Stage 1: Set + regex (6.8x, 18.5 MB)","value":15.78,"tone":"warn"},{"label":"Stage 2: Batched join (15.2x, 155 KB)","value":7.11,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Fixing the 90% CPU leaf (<code>lookup_naive</code>) gives a 6.8x speedup; fixing the exposed second hotspot (<code>assemble_naive</code>) reaches 15.2x and cuts peak memory 119x.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>In Stage 0, sorting by <code>cumtime</code> puts <code>tokenize_v0_naive</code> first (<code>cumtime=107.1ms</code>, <code>tottime=1.2ms</code>). Sorting by <code>tottime</code> immediately points to <code>lookup_naive</code> (<code>ncalls=600</code>, <code>tottime=96.4ms</code>, or 90.0% of profiled time).</li>
+    <li>Replacing <code>w in VOCAB_LIST</code> (O(V) scan of 1,205 items) with <code>w in VOCAB_SET</code> (O(1) hash lookup) and hoisting <code>re.compile</code> drops wall time from <code>108.06 ms</code> to <code>15.78 ms</code> (<code>6.8x</code> speedup).</li>
+    <li>After Stage 1 removes the lookup bottleneck, <code>assemble_naive</code> jumps from 6% of the profile to the #1 <code>tottime</code> hotspot (<code>7.1ms</code> out of <code>10.6ms</code>), and <code>peak_mem</code> is still <code>18,505.5 KB</code> because <code>snapshots.append(acc)</code> holds all 600 growing prefix strings in memory at once.</li>
+    <li>Stage 2 replaces <code>assemble_naive</code> with a single batched <code>"\n".join(lines)</code>, cutting wall time to <code>7.11 ms</code> (<code>15.2x</code> faster than Stage 0) and dropping peak memory from <code>18,508.6 KB</code> to <code>155.4 KB</code> (a 119x reduction).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Defeat the regex LRU cache.</strong> CPython caches up to 512 compiled regex patterns (<code>re._MAXCACHE = 512</code>). In <code>split_naive(doc)</code>, change <code>PAT_STR</code> to <code>f"{PAT_STR}|doc_{id(doc)}"</code> or pass a unique pattern per doc past 512 docs. Predict what happens to <code>_compile</code> in <code>pstats</code>, then run it.</li>
+    <li><strong>Double the document count.</strong> Change <code>DOCS = 600</code> to <code>DOCS = 1200</code>. Predict whether Stage 0 wall time and Stage 1 <code>peak_mem</code> scale linearly (2x) or quadratically (4x) before running.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Call <code>snap = tracemalloc.take_snapshot()</code> inside <code>assemble_naive</code> before returning, and print <code>snap.statistics("lineno")[:3]</code> to see the exact line number and byte count of the 18.5 MB allocation.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Event loop freezes for 200 ms under load, but async I/O metrics look fine</td><td>Synchronous CPU-bound work (JSON parsing, regex, tokenizer) blocking the single event-loop thread</td><td>Attach <code>py-spy record --pid PID</code> during load, spot the wide synchronous bar, offload to <code>ProcessPoolExecutor</code> or vectorize</td></tr>
+    <tr><td><code>cProfile</code> shows 95% of time in one C extension call or <code>time.sleep</code></td><td><code>cProfile</code> cannot see inside C frames and counts wall-clock sleep depending on timer</td><td>Use <code>py-spy --native</code> for C/Rust frames, or <code>py-spy --idle</code> to separate CPU work from I/O wait</td></tr>
+    <tr><td>Multi-threaded Python worker uses 100% of one core and stalls on 8 cores</td><td>Threads contending on the CPython GIL in pure-Python bytecode</td><td>Run <code>py-spy top --gil --pid PID</code> to measure %GIL wait; switch CPU workers to multiprocessing or native releases</td></tr>
+    <tr><td>Container OOM-killed despite fast request latency in <code>cProfile</code></td><td>Short-lived allocation spikes or leaked references in caches/lists</td><td>Enable <code>tracemalloc</code> on a canary worker and diff two snapshots (<code>snap2.compare_to(snap1, "lineno")</code>)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> p95 and p99 request latency alongside event-loop lag, process RSS memory vs Python heap (<code>tracemalloc.get_traced_memory()</code>), and continuous low-rate sampling profiles (10 Hz to 100 Hz) tagged by git SHA so regressions show up as widened flame-graph bars.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>When a Python service is slow or memory-heavy, I never optimize by intuition. I pin a repeatable benchmark, measure wall-clock baseline, and use a profiler to rank hotspots by exclusive time or peak bytes. Amdahl's law governs the return: a hotspot taking 90% of runtime caps total speedup at 10x.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>In local development I run <code>cProfile</code> and inspect <code>pstats</code>. I sort by <code>cumtime</code> first to trace the slow call path, then by <code>tottime</code> to isolate the leaf function actually burning CPU cycles. If one large function dominates <code>tottime</code>, I drop down to <code>line_profiler</code>. For memory bloat, I wrap the stage in <code>tracemalloc</code> to capture peak heap bytes and diff snapshots by line number. In production, where <code>cProfile</code>'s 20% to 50% call-hook overhead is unsafe, I attach <code>py-spy</code> by PID at 100 Hz for under 2% overhead and read the flame graph.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Every fix shifts the bottleneck: in my tokenizer benchmark, switching a 1,200-item list scan to a set gave a 6.8x speedup, which exposed an 18.5 MB string-accumulation hotspot; fixing that reached 15.2x and 155 KB. When hotspots live inside PyTorch or CUDA kernels, Python profilers stop at the binding, so I switch to <code>torch.profiler</code>.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"I would profile the slow Python code, see which functions are taking the most time, and optimize the loops or data structures."</p><p class="strong">"I benchmark wall time with perf_counter, then run cProfile and sort pstats by tottime to separate leaf hotspots from high-cumtime wrappers. In a live worker I attach py-spy at 100 Hz for under 2% overhead. If a leaf takes 90% of runtime, Amdahl's law caps total speedup at 10x, so I fix that leaf first, check tracemalloc peak memory, and re-profile."</p><p>The strong answer names the exact metrics (<code>tottime</code> vs <code>cumtime</code>), the production vs dev tradeoff (<code>py-spy</code> at 100 Hz vs <code>cProfile</code>), and the mathematical bound (Amdahl's 10x ceiling at 90%).</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"To find the bottleneck in cProfile, sort by cumtime and optimize the function at the top of the list."</summary><div class="a">Sorting by <code>cumtime</code> always puts <code>main()</code> or your top-level request handler at the top, because <code>cumtime</code> includes every child call. Optimizing the wrapper does nothing when 96.4 ms of a 107.1 ms run lives inside a leaf callee. Sort by <code>cumtime</code> to trace the call chain, then sort by <code>tottime</code> to find the leaf function executing the slow code.</div></details>
+  <details class="q"><summary>"We can enable cProfile on all production API requests so we always have exact function timings."</summary><div class="a"><code>cProfile</code> instruments every function entry and exit, adding 15% to 50% CPU overhead on call-heavy Python code and distorting the very latency you want to measure. In production, use a statistical sampling profiler like <code>py-spy</code> at 100 Hz (under 2% overhead), or turn on deterministic profiling only for a tiny sampled fraction of canary requests.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain the difference between a deterministic profiler (<code>cProfile</code>) and a statistical sampling profiler (<code>py-spy</code>).</summary><div class="a"><code>cProfile</code> hooks every function call and return inside the interpreter, giving exact call counts (<code>ncalls</code>) and timings at the cost of 15% to 50% overhead on call-heavy Python code. <code>py-spy</code> reads the process call stack from outside at a fixed rate like 100 Hz, adding under 2% overhead, working on live PIDs without code changes, and seeing native C frames and GIL wait.<div class="f"><b>Follow-up</b>When can a sampling profiler mislead you? When a function runs very rarely for a few microseconds between 10 ms sample ticks, or when you need exact call counts to prove an O(N^2) call-count bug.</div></div></details>
+  <details class="q"><summary>In <code>pstats</code>, a function shows <code>ncalls = 600</code>, <code>tottime = 96.4 ms</code>, <code>cumtime = 96.9 ms</code>. Another shows <code>ncalls = 1</code>, <code>tottime = 1.2 ms</code>, <code>cumtime = 107.1 ms</code>. Interpret both rows.</summary><div class="a">The second function is a high-level orchestrator called once: its own body took 1.2 ms, and its callees took 105.9 ms. The first function is the leaf bottleneck called 600 times: virtually all of its 96.9 ms cumulative time was spent directly inside its own body (96.4 ms, or 0.16 ms per call), with almost no time in subcalls.</div></details>
+  <details class="q"><summary>You profile an ingestion job and find JSON serialization takes 80% of runtime. You switch to <code>orjson</code>, which is 10x faster on that step. What is the overall job speedup, and what is the theoretical ceiling?</summary><div class="a">By Amdahl's law, <code>S = 1 / ((1 - 0.80) + 0.80 / 10) = 1 / (0.20 + 0.08) = 1 / 0.28 = 3.57x</code>. Even if serialization became infinitely fast (0 ms), the remaining 20% serial work limits total speedup to <code>1 / 0.20 = 5x</code>.</div></details>
+  <details class="q"><summary>Why does <code>cProfile</code> bias you toward inlining Python helper functions, and how do you guard against that bias?</summary><div class="a"><code>cProfile</code> fires a hook on every Python function call and return, so a function called 1,000,000 times pays hook overhead 1,000,000 times, making it look slower in the profile than it really is. Guard against this by timing end-to-end wall clock with <code>time.perf_counter()</code> outside the profiler before and after any change, or by cross-checking with <code>py-spy</code>.</div></details>
+  <details class="q"><summary>How do you find a Python memory leak or peak allocation spike in a worker without installing third-party C extensions?</summary><div class="a">Use standard library <code>tracemalloc</code>. For a peak spike, wrap the code with <code>tracemalloc.start()</code> and <code>tracemalloc.get_traced_memory()</code>. For a leak over time, take two snapshots across N requests (<code>s1 = tracemalloc.take_snapshot()</code>, then <code>s2</code>) and inspect <code>s2.compare_to(s1, "lineno")[:10]</code> to see which exact line grew monotonically.<div class="f"><b>Follow-up</b>What memory will <code>tracemalloc</code> miss? Memory allocated outside CPython's allocator, such as NumPy arrays, PyTorch tensors on CPU or GPU, or raw C/Rust heap allocations.</div></div></details>
+  <details class="q"><summary>In the kata, Stage 0 calls <code>re.compile(PAT_STR)</code> 600 times, yet <code>_compile</code> barely registers in <code>tottime</code>. Why, and when does un-hoisted regex compilation actually hurt?</summary><div class="a">CPython caches the last 512 compiled regex patterns in <code>re._cache</code>, so repeating the exact same pattern string hits a dict lookup in C. It still pays a function call per document, and it blows up in production when patterns are built dynamically (for example, interpolating user IDs or query terms) and thrash the 512-entry cache.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its five steps, then write: the difference between <code>tottime</code> and <code>cumtime</code>, the Amdahl's law formula with worked numbers for <code>p = 0.90</code>, when to pick <code>cProfile</code> vs <code>py-spy</code> vs <code>tracemalloc</code>, and the three kata stages with their wall-clock and peak-memory numbers.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Loop (B-T-L-A-V): Baseline wall clock (<code>perf_counter</code>), Tool choice, Leaf <code>tottime</code> vs wrapper <code>cumtime</code>, Amdahl check, Verify and re-profile.</li>
+    <li><code>pstats</code> columns: <code>ncalls</code>, <code>tottime</code> (exclusive body time, finds leaves), <code>cumtime</code> (inclusive with callees, finds call spine).</li>
+    <li>Amdahl's law: <code>S = 1 / ((1 - p) + p/k)</code>, ceiling <code>1 / (1 - p)</code>. At <code>p = 0.90</code>, ceiling is 10x.</li>
+    <li><code>cProfile</code> (deterministic C hooks, 15% to 50% call overhead, dev) vs <code>py-spy</code> (100 Hz sampling, &lt; 2% overhead, attaches to PID, sees C frames and GIL).</li>
+    <li><code>tracemalloc</code>: tracks current and peak CPython heap bytes by line; blind to native C/PyTorch buffers.</li>
+    <li>Kata numbers: Stage 0 = 108.06 ms, 18,508.6 KB peak (<code>lookup_naive</code> 96.4 ms <code>tottime</code>); Stage 1 = 15.78 ms (6.8x), still 18,505.5 KB; Stage 2 = 7.11 ms (15.2x), 155.4 KB peak (119x memory drop).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A06: A test passes when run alone but fails in the full test suite, and a flaky bug appears on 10% of runs. What causes the first, and how many runs give 95% confidence of seeing the second?</summary><div class="a">Passing alone and failing in the suite indicates shared mutable state carried across tests (default mutable argument, global, cache, or database row). For a 10% failure rate, <code>n = ln(0.05) / ln(0.9) = 28.4</code>, so loop about 29 runs.</div></details>
+  <details class="q"><summary>A02: Why does calling synchronous <code>time.sleep(0.1)</code> or a 100 ms CPU tokenizer loop inside an <code>async def</code> FastAPI endpoint ruin concurrency for all other requests on that worker?</summary><div class="a">An <code>asyncio</code> event loop runs on a single OS thread and switches tasks only at <code>await</code> points. A blocking call or CPU loop never yields control, freezing every concurrent coroutine on that worker for the full 100 ms.</div></details>
+  <details class="q"><summary>A01: Why does checking membership with <code>w in vocab_list</code> inside a token loop scale as O(N * V), whereas <code>w in vocab_set</code> scales as O(N)?</summary><div class="a">A Python <code>list</code> checks membership by scanning elements one by one from index 0 (O(V) comparisons per lookup). A <code>set</code> or <code>dict</code> is a hash table that hashes the key once and probes the bucket directly in O(1) average time.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://docs.python.org/3/library/profile.html">Python Standard Library: The Python Profilers (cProfile and pstats)</a><small>Deterministic profiling hooks, ncalls, tottime, and cumtime definitions. Checked Python 3.13 docs, 2026-11-17.</small></li>
+    <li><a href="https://docs.python.org/3/library/tracemalloc.html">Python Standard Library: tracemalloc (Trace memory allocations)</a><small>CPython block allocator hooks, get_traced_memory(), and snapshot diffs by line. Checked Python 3.13 docs, 2026-11-17.</small></li>
+    <li><a href="https://github.com/benfred/py-spy">Ben Frederickson: py-spy (Sampling profiler for Python programs)</a><small>Out-of-process stack sampling at 100 Hz, native frame unwinding, and GIL detection. Checked 2026-11-17.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A07 T2 W01", "cards": [{"q": "In cProfile and pstats, how do tottime and cumtime differ, and what does each find?", "a": "tottime is time spent inside the function itself excluding subcalls (finds leaf hotspots); cumtime includes all callees (finds slow high-level pipelines or wrappers)."}, {"q": "When should you choose py-spy over cProfile on a Python service?", "a": "In production or C-extension-heavy code: py-spy samples stack traces out-of-process at ~100 Hz (\u003c2% overhead), attaches by PID, and sees C calls and GIL wait."}, {"q": "State Amdahl's law for speeding up a hotspot of fraction p by factor k, and its ceiling as k grows.", "a": "Speedup S = 1 / ((1 - p) + p/k), bounded by 1 / (1 - p). A 90% hotspot caps total speedup at 10x."}, {"q": "Why can cProfile miss an OOM or GC stall, and which standard library tool tracks peak Python heap allocations by line?", "a": "cProfile hooks only function call/return times, not byte allocations. Use tracemalloc.start() and get_traced_memory() or take_snapshot() to find peak bytes per line."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

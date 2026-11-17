@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D10 Decoding and sampling</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D10">
+<main>
+<header>
+  <div class="eyebrow"><b>D10</b><span>D Transformers and LLM internals</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Decoding and sampling</h1>
+  <p class="lede">Once the unembedding matrix produces a raw logit vector over the vocabulary, how does the inference engine turn those scores into one concrete next token without collapsing into repetitive loops or sampling incoherent tail garbage?</p>
+  <div class="chips"><span><em>Before</em>D01 What an LLM is</span><span><em>Before</em>D03 Embeddings and the unembedding</span><span><em>After</em>D11 Logits, logprobs, perplexity</span><span><em>After</em>D12 Constrained decoding</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict the three sampling traps before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read Stations 2 and 3, stepping through the pipeline and slider explorable</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run kata.py and break the sampler in three ways</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Study production failure modes, spoken 90-second answer, and traps</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall: redraw the 6-stage pipeline and equations from memory</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the 8 Anki cards and log your tracker status</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>At a SQL-generation step, the top token <code>SELECT</code> already has probability 0.884 and the second token <code>WITH</code> has 0.059. If you use nucleus sampling with <code>top_p = 0.90</code> (at <code>T = 1.0</code>), how many tokens survive in the candidate pool?</summary><div class="a"><strong>Two tokens survive (<code>SELECT</code> and <code>WITH</code>), not one.</strong> Nucleus sampling sorts tokens descending and keeps the smallest prefix whose cumulative probability reaches or exceeds <code>top_p</code>. Because <code>0.884 &lt; 0.90</code>, the sampler must include <code>WITH</code> (bringing cumulative mass to <code>0.943 &ge; 0.90</code>), giving <code>WITH</code> a <code>6.3%</code> renormalized chance of being picked even when the model is nearly certain of <code>SELECT</code>.</div></details>
+  <details class="q"><summary>Suppose an already-generated error token <code>zz_err</code> has a negative logit of <code>-0.5</code>. To penalize repetition with multiplicative factor <code>alpha = 2.0</code>, you compute <code>z_i = z_i / alpha</code>. Did you make <code>zz_err</code> less likely or more likely?</summary><div class="a"><strong>More likely.</strong> Dividing <code>-0.5</code> by <code>2.0</code> moves the logit up to <code>-0.25</code> (closer to zero), which raises its softmax probability from <code>0.0018</code> to <code>0.0038</code> in our kata. Multiplicative repetition penalty requires a sign check: divide positive logits by <code>alpha</code>, but multiply negative logits by <code>alpha</code> so they become more negative (<code>-1.00</code>).</div></details>
+  <details class="q"><summary>Does applying temperature <code>T = 0.3</code> before <code>top_p = 0.90</code> produce the exact same candidate pool as applying <code>top_p = 0.90</code> before <code>T = 0.3</code>?</summary><div class="a"><strong>No.</strong> Temperature nonlinearly changes the softmax probabilities that <code>top_p</code> sums over. In our kata's flat distribution, cooling with <code>T = 0.3</code> first concentrates mass into the top 3 tokens (<code>k = 3</code>, entropy <code>1.46</code> bits) so the 4th token falls outside the <code>0.90</code> nucleus. Running <code>top_p = 0.90</code> first locks in 4 tokens at <code>T = 1.0</code>, and cooling afterward keeps all 4 alive (<code>k = 4</code>, entropy <code>1.76</code> bits).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A transformer's forward pass ends at the unembedding projection (see D03), which outputs a vector of raw, unnormalized real numbers called <strong>logits</strong>, <code>z in R^V</code>, one per vocabulary token. The model's job is finished the instant <code>z</code> is computed; it never picks a token by itself. Choosing the next token is the job of the <strong>decoding and sampling pipeline</strong>, a deterministic or stochastic post-processor that reshapes <code>z</code>, converts it into a probability distribution <code>p</code>, prunes low-probability tail tokens, renormalizes the survivors so they sum to <code>1.0</code>, and draws one token ID to append to the sequence.</p>
+  <p>Every production inference engine (vLLM, TensorRT-LLM, llama.cpp, SGLang) executes this pipeline in a strict order. If you change the order of operations or misconfigure the thresholds, a well-trained model will either lock into deterministic repetition loops (when decoding is too greedy) or hallucinate nonsensical tokens from the long tail of <code>128,000</code> vocabulary entries (when temperature and truncation let tail mass leak through). Mastering D10 means knowing the exact six-stage pipeline, why each filter exists, and how modern adaptive truncation (<code>min_p</code>) fixes the classic failure mode of <code>top_p</code>.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The 6-stage sampler pipeline from raw logits to next token</div>
+    <svg viewBox="0 0 500 230" role="img" aria-label="Six-stage decoding pipeline showing raw logits passing through repetition penalty, temperature scaling, softmax, truncation filters, and renormalization to sample one token.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="25" width="72" height="54" rx="6" class="c-soft" data-hi="1"/>
+          <text x="46" y="48" text-anchor="middle">1. Logits</text>
+          <text x="46" y="66" text-anchor="middle" class="m">z in R^V</text>
+        </g>
+        <g data-step="2">
+          <path d="M82 52 H96" class="ink"/>
+          <rect x="96" y="25" width="76" height="54" rx="6" class="c-warn" data-hi="2"/>
+          <text x="134" y="48" text-anchor="middle">2. Penalty</text>
+          <text x="134" y="66" text-anchor="middle">rep / freq</text>
+        </g>
+        <g data-step="3">
+          <path d="M172 52 H186" class="ink"/>
+          <rect x="186" y="25" width="72" height="54" rx="6" class="c-accent" data-hi="3"/>
+          <text x="222" y="48" text-anchor="middle">3. Temp</text>
+          <text x="222" y="66" text-anchor="middle">z' = z / T</text>
+        </g>
+        <g data-step="4">
+          <path d="M258 52 H272" class="ink"/>
+          <rect x="272" y="25" width="72" height="54" rx="6" class="c-soft" data-hi="4"/>
+          <text x="308" y="48" text-anchor="middle">4. Softmax</text>
+          <text x="308" y="66" text-anchor="middle" class="m">exp(z'-M)</text>
+        </g>
+        <g data-step="5">
+          <path d="M344 52 H358" class="ink"/>
+          <rect x="358" y="25" width="66" height="54" rx="6" class="c-bad" data-hi="5"/>
+          <text x="391" y="48" text-anchor="middle">5. Filter</text>
+          <text x="391" y="66" text-anchor="middle">k / p / m</text>
+        </g>
+        <g data-step="6">
+          <path d="M424 52 H436" class="ink"/>
+          <rect x="436" y="25" width="56" height="54" rx="6" class="c-good" data-hi="6"/>
+          <text x="464" y="48" text-anchor="middle">6. Draw</text>
+          <text x="464" y="66" text-anchor="middle">p / sum</text>
+        </g>
+        <rect x="10" y="102" width="482" height="112" rx="8" class="c-paper"/>
+        <g data-step="1">
+          <text x="24" y="126">Raw peaked SQL logits: SELECT=5.2, WITH=2.5, EXPLAIN=1.9, banana=0.1, zz_err=-0.5</text>
+        </g>
+        <g data-step="2">
+          <text x="24" y="148">If seen: positive logit divides by alpha; negative multiplies by alpha (or subtract freq/pres).</text>
+        </g>
+        <g data-step="3">
+          <text x="24" y="170">Scale by 1/T before softmax: T&lt;1 sharpens peaks, T&gt;1 flattens toward uniform.</text>
+        </g>
+        <g data-step="4">
+          <text x="24" y="192">Shift by max(z) for float16 safety; at T=1.0, SELECT=0.884, WITH=0.059, tail=0.057.</text>
+        </g>
+        <g data-step="5">
+          <text x="24" y="208">Zero out tail via top_k, top_p (cumulative sum), or min_p (p &gt;= min_p * p_max).</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Stage 1 emits raw logits z in R^V from the unembedding layer, such as 5.2 for SELECT down to -0.5 for zz_err.</li>
+      <li>Stage 2 penalizes tokens already in context so the model does not loop, shrinking positive logits and pushing negative logits lower.</li>
+      <li>Stage 3 divides logits by temperature T, which reshapes relative gaps before probabilities are computed.</li>
+      <li>Stage 4 subtracts max(z) to prevent exp() overflow and normalizes into a probability vector p summing to 1.0.</li>
+      <li>Stage 5 masks out low-probability tail tokens using top-k, top-p, or min-p so 128,000 tiny probabilities cannot accumulate into garbage draws.</li>
+      <li>Stage 6 divides surviving probabilities by their new sum and takes a categorical random draw (u ~ Uniform(0,1) on the CDF).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Penalties and temperature must reshape the logits before softmax and truncation filters run, or your truncation thresholds will cut against the wrong probability distribution.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember the pipeline order with the acronym <strong>P-T-S-F-R-D</strong> (<strong>P</strong>enalty, <strong>T</strong>emperature, <strong>S</strong>oftmax, <strong>F</strong>ilter, <strong>R</strong>enormalize, <strong>D</strong>raw): <em>"Penalize The Score, Filter Remaining Draws."</em> If you filter before temperature, you freeze the guest list before checking the weather.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Repetition, frequency, and presence penalties</h3>
+  <p>Before converting logits to probabilities, the sampler adjusts scores for tokens that have already appeared in the prompt or generated output. There are two standard families. In the <strong>HuggingFace / Keskar multiplicative repetition penalty</strong> (parameter <code>alpha &ge; 1.0</code>, where <code>1.0</code> means no penalty), any token <code>i</code> in the seen set has its logit rescaled according to its sign: if <code>z_i &gt; 0</code>, set <code>z_i = z_i / alpha</code>; if <code>z_i &lt; 0</code>, set <code>z_i = z_i * alpha</code>. In the <strong>OpenAI additive penalties</strong>, the adjustment is subtractive and sign-independent, splitting into a <strong>frequency penalty</strong> (proportional to how many times token <code>i</code> has appeared, <code>count(i)</code>) and a <strong>presence penalty</strong> (a flat one-time nudge if <code>count(i) &gt; 0</code>):</p>
+  <div class="codewrap"><pre># Multiplicative (HuggingFace / llama.cpp repetition_penalty alpha >= 1.0)
+z_i = (z_i / alpha) if z_i > 0 else (z_i * alpha)   # for i in seen_tokens
+
+# Additive (OpenAI / vLLM frequency_penalty in [-2, 2], presence_penalty in [-2, 2])
+z_i = z_i - mu_freq * count(i) - mu_pres * (1 if count(i) > 0 else 0)</pre></div>
+  <p>Use presence penalty to encourage topic diversity (nudging the model away from reusing any word once), and frequency penalty to break verbatim multi-token loops (where penalty grows linearly each time a token repeats).</p>
+
+  <h3>2. Temperature scaling and numerical softmax</h3>
+  <p>Next, logits are divided by temperature <code>T &gt; 0</code>: <code>z'_i = z_i / T</code>, followed by the softmax function. Because exponentiating a float16 logit above <code>11.09</code> overflows to <code>inf</code> (<code>exp(11.1) &gt; 65504</code>), every production softmax uses the <strong>log-sum-exp shift</strong>, subtracting <code>M = max(z')</code> from every entry before calling <code>exp</code>:</p>
+  <div class="codewrap"><pre>M = max(z / T)
+p_i = exp((z_i / T) - M) / sum_j exp((z_j / T) - M)</pre></div>
+  <p>Mathematically, multiplying numerator and denominator by <code>exp(-M)</code> changes nothing, but numerically the largest exponent is guaranteed to be <code>exp(0) = 1.0</code>, making overflow impossible; underflow smoothly flushes tiny tail tokens to <code>0.0</code>. Temperature controls Shannon entropy <code>H(p) = -sum p_i log2(p_i)</code>: as <code>T -&gt; 0</code>, the gap between the top logit and all others scales to infinity, collapsing <code>p</code> to a one-hot vector on <code>argmax(z)</code> (<strong>greedy decoding</strong>, <code>H = 0</code> bits). At <code>T = 1.0</code>, the model's raw training distribution is preserved. As <code>T -&gt; infinity</code>, <code>z_i / T -&gt; 0</code> for all tokens, flattening <code>p</code> toward a uniform distribution <code>1 / V</code> with maximum entropy <code>log2(V)</code>.</p>
+
+  <details class="q"><summary>Check: Why does pure temperature sampling at <code>T = 0.8</code> without truncation still produce occasional gibberish tokens on a 128k-token vocabulary?</summary><div class="a">Because softmax assigns strictly positive probability to every token in the vocabulary. Even if 120,000 nonsensical tail tokens each have probability <code>0.0000005</code>, their combined tail mass is <code>6%</code>. Over a 500-token response, drawing from the full vocabulary virtually guarantees hitting that tail at least once, which then corrupts the autoregressive context for all subsequent steps.</div></details>
+
+  <h3>3. Truncation filters: Top-k, Top-p (nucleus), and Min-p</h3>
+  <p>To prevent tail draws, truncation filters set low-probability tokens to zero before renormalizing. <strong>Top-k</strong> keeps only the <code>k</code> highest-probability tokens (e.g., <code>k = 50</code>). Its flaw is rigidity: on a peaked SQL keyword step where 1 token is right, keeping 50 tokens admits 49 bad choices; on a flat creative step where 100 adjectives fit, keeping 50 chops off half the good options.</p>
+  <p><strong>Top-p (nucleus sampling, Holtzman et al. 2020)</strong> sorts probabilities descending (<code>p_(1) &ge; p_(2) &ge; ...</code>) and keeps the smallest prefix whose cumulative sum reaches or exceeds <code>p</code> (e.g., <code>top_p = 0.90</code>):</p>
+  <div class="codewrap"><pre># Top-p: keep smallest prefix m where cumulative mass >= p
+keep_top_p = { (1), ..., (m) }  where m = min { j : sum_{r=1..j} p_(r) >= top_p }
+
+# Min-p (Nguyen et al. 2024): scale threshold relative to the top token p_max
+keep_min_p = { i : p_i >= min_p * max_j(p_j) }</pre></div>
+  <p>Top-p adapts better than top-k, but still fails when confidence is high but just below <code>top_p</code>, or when you raise temperature <code>T &gt; 1.0</code> for creative writing. If the best token has <code>p_max = 0.884</code> and <code>top_p = 0.90</code>, top-p is <em>forced</em> to include the runner-up token to cross the <code>0.90</code> cumulative line. Worse, at <code>T = 1.8</code> with <code>top_p = 0.95</code>, our kata shows <code>SELECT</code> drops to <code>0.598</code> raw probability, so top-p keeps adding tokens until even <code>banana</code> enters the nucleus! <strong>Min-p</strong> solves this with a single relative rule: keep token <code>i</code> only if <code>p_i &ge; min_p * p_max</code> (typically <code>min_p = 0.05</code> to <code>0.10</code>). When <code>p_max = 0.884</code> and <code>min_p = 0.10</code>, any token below <code>0.0884</code> is cut immediately (leaving only <code>SELECT</code>). When the distribution is flat (<code>p_max = 0.303</code>), the threshold drops to <code>0.0303</code>, letting all 4 close contenders through while still blocking <code>banana</code> (<code>0.025</code>).</p>
+
+  <figure class="viz stepper" id="viz-mech">
+    <div class="vt">Stepper: Why Min-p beats Top-p across peaked and flat distributions</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Comparison of Top-p=0.90 and Min-p=0.10 on a peaked SQL distribution and a flat distribution, showing Top-p leaking the runner-up on peaked Steps while Min-p adapts its cutoff bar to p_max.">
+      <g font-size="12">
+        <text x="125" y="20" text-anchor="middle">PEAKED (SELECT = 0.884)</text>
+        <text x="375" y="20" text-anchor="middle">FLAT (4 close options, max = 0.303)</text>
+        <line x1="250" y1="8" x2="250" y2="210" class="ln"/>
+        <g data-step="1">
+          <rect x="20" y="34" width="180" height="22" class="c-good" data-hi="1"/>
+          <text x="25" y="49">SELECT 0.884</text>
+          <rect x="20" y="62" width="24" height="22" class="c-warn"/>
+          <text x="50" y="77">WITH 0.059</text>
+          <rect x="20" y="90" width="14" height="22" class="c-muted"/>
+          <text x="40" y="105" class="m">EXPLAIN 0.033</text>
+          <rect x="20" y="118" width="6" height="22" class="c-bad"/>
+          <text x="32" y="133" class="m">banana 0.005</text>
+        </g>
+        <g data-step="2">
+          <rect x="16" y="31" width="210" height="56" rx="4" class="ln" data-hi="2"/>
+          <text x="20" y="165">Top-p (0.90) sums to 0.884 &lt; 0.90:</text>
+          <text x="20" y="182" class="m">Forced to keep WITH (k=2, 6.3% leak)!</text>
+        </g>
+        <g data-step="3">
+          <line x1="38" y1="30" x2="38" y2="145" class="ink" data-hi="3"/>
+          <text x="20" y="204">Min-p (0.10): cut &lt; 0.088 -&gt; k=1 only!</text>
+        </g>
+        <g data-step="4">
+          <rect x="270" y="34" width="90" height="22" class="c-good" data-hi="4"/>
+          <text x="366" y="49">SELECT 0.303</text>
+          <rect x="270" y="62" width="74" height="22" class="c-good"/>
+          <text x="350" y="77">WITH 0.248</text>
+          <rect x="270" y="90" width="67" height="22" class="c-good"/>
+          <text x="343" y="105">EXPLAIN 0.225</text>
+          <rect x="270" y="118" width="55" height="22" class="c-good"/>
+          <text x="331" y="133">VALUES 0.184</text>
+          <rect x="270" y="146" width="8" height="22" class="c-bad"/>
+          <text x="284" y="161" class="m">banana 0.025 (cut!)</text>
+          <text x="270" y="192">Min-p bar drops to 0.030:</text>
+          <text x="270" y="208" class="m">Keeps all 4 good tokens, blocks banana!</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>On the peaked SQL step, SELECT holds 0.884 of the probability mass while WITH has 0.059 and tail tokens share the rest.</li>
+      <li>Top-p=0.90 requires cumulative mass &ge; 0.90; since 0.884 falls 0.016 short, Top-p admits WITH and renormalizes it to 6.3%.</li>
+      <li>Min-p=0.10 sets the cutoff at 0.10 * 0.884 = 0.0884, rejecting WITH (0.059) so only SELECT survives (k=1).</li>
+      <li>On the flat step (p_max=0.303), Min-p=0.10 automatically lowers its cutoff to 0.0303, keeping all 4 plausible SQL starters (k=4) while cutting banana (0.025).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Top-p enforces a fixed cumulative area regardless of how steep the cliff is; Min-p enforces a relative height ratio against the top token, tightening when confident and widening when uncertain.</figcaption>
+  </figure>
+
+  <h3>4. Renormalization, categorical draw, and beam search</h3>
+  <p>After zeroing out filtered tokens, the surviving probabilities <code>p_filt</code> no longer sum to <code>1.0</code>. Stage 6 divides each survivor by <code>sum(p_filt)</code> to form the final distribution <code>p_final</code>, builds its cumulative distribution function (CDF), draws a uniform random float <code>u ~ Uniform(0, 1)</code>, and returns the first token index where <code>CDF[i] &ge; u</code>. Equivalently, engines sometimes use the <strong>Gumbel-Max trick</strong>: adding independent <code>Gumbel(0, 1)</code> noise directly to the log-probabilities and taking <code>argmax</code>, which samples from the categorical distribution in a single parallel GPU reduction without building a sequential CDF scan.</p>
+  <p>What if instead of sampling one token per step, you want the single highest-probability <em>multi-token sequence</em>? Greedy decoding picks <code>argmax</code> at step 1, which can walk into a dead-end at step 2. <strong>Beam search</strong> keeps the top <code>B</code> partial sequences (beams) alive at every step, expands each beam by all <code>V</code> possible next tokens, scores the <code>B * V</code> candidates by their cumulative log-probability (often divided by a length-normalization factor <code>L^alpha</code> so beam search does not unfairly favor shorter sequences that multiply fewer probabilities), and prunes back to the top <code>B</code>. In our kata, token 0 wins step 1 (<code>0.52</code> vs <code>0.43</code>) but hits a flat dead-end at step 2 (joint logprob <code>-1.776</code>), whereas Beam Search (<code>B = 2</code>) keeps token 1 alive and discovers path <code>[1, 0]</code> with joint logprob <code>-0.899</code>. Despite this advantage in machine translation and speech recognition, beam search is rarely used in open-ended LLM chat: maximizing sequence likelihood over open-ended text causes generic, repetitive loops (Holtzman et al.), and maintaining <code>B</code> parallel beams multiplies KV-cache memory and memory-bandwidth cost by <code>B</code>.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Live sampler playground (Temperature + Top-p + Min-p)</div>
+    <p class="ask">Predict first. Switch to the Peaked distribution, raise Temperature T to 1.8, and set Top-p to 0.95 (with Min-p at 0.00). Will the nonsense token <code>banana</code> survive in the pool? Then raise Min-p to 0.10 and see what happens.</p>
+    <div class="ctl">
+      <label><span>Distribution</span><select name="dist" data-num><option value="0">Peaked SQL ([5.2, 2.5, 1.9, 1.2, 0.1, -0.5])</option><option value="1">Flat 4-way ([2.2, 2.0, 1.9, 1.7, -0.3, -0.8])</option></select></label>
+      <label><span>Temperature T</span><input type="range" name="T" min="0.2" max="2.0" step="0.1" value="1.0"><output data-for="T" data-unit=""></output></label>
+      <label><span>Top-p cutoff</span><input type="range" name="top_p" min="0.50" max="1.00" step="0.05" value="0.90"><output data-for="top_p" data-unit=""></output></label>
+      <label><span>Min-p ratio</span><input type="range" name="min_p" min="0.00" max="0.30" step="0.02" value="0.00"><output data-for="min_p" data-unit=""></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Computed directly from the exact softmax, top-p prefix sum, and min-p relative cutoff in kata.py. Notice how Min-p=0.10 eliminates tail garbage at high temperature without killing valid contenders on the flat distribution.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var names=["SELECT","WITH","EXPLAIN","VALUES","banana","zz_err"];
+    var z=v.dist===0?[5.2,2.5,1.9,1.2,0.1,-0.5]:[2.2,2.0,1.9,1.7,-0.3,-0.8];
+    var s=z.map(function(x){return x/v.T;});
+    var m=Math.max.apply(null,s);
+    var e=s.map(function(x){return Math.exp(x-m);});
+    var sumE=e.reduce(function(a,b){return a+b;},0);
+    var p=e.map(function(x){return x/sumE;});
+    var keep=[true,true,true,true,true,true];
+    if(v.top_p<1.0){
+      var csum=0,hit=false;
+      for(var i=0;i<p.length;i++){
+        if(hit){keep[i]=false;}
+        csum+=p[i];
+        if(csum>=v.top_p-1e-9){hit=true;}
+      }
+    }
+    if(v.min_p>0.0){
+      var pmax=p[0];
+      for(var j=0;j<p.length;j++){if(p[j]<v.min_p*pmax){keep[j]=false;}}
+    }
+    var pFilt=p.map(function(x,i){return keep[i]?x:0;});
+    var sumF=pFilt.reduce(function(a,b){return a+b;},0);
+    var pFin=pFilt.map(function(x){return x/sumF;});
+    var k=0,H=0;
+    for(var r=0;r<pFin.length;r++){if(pFin[r]>0){k++;H-=pFin[r]*Math.log2(pFin[r]);}}
+    var rows=names.map(function(nm,i){
+      var tone=pFin[i]===0?"muted":(i>=4?"bad":(i===0?"good":""));
+      return {label:nm+" (raw "+(p[i]*100).toFixed(1)+"%)",value:pFin[i]*100,tone:tone,text:(pFin[i]*100).toFixed(1)+"%"};
+    });
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:rows});
+    return {verdict:"Survivors k = "+k+" / 6 | Renormalized entropy H = "+Math.abs(H).toFixed(2)+" bits | Tail leak (banana + zz_err) = "+((pFin[4]+pFin[5])*100).toFixed(1)+"%"};
+  })});</script>
+
+  <details class="q"><summary>Check: In the playground above, when you select the Peaked distribution at <code>T = 1.8</code>, <code>top_p = 0.95</code>, <code>min_p = 0.00</code>, what is the renormalized probability of sampling <code>banana</code>, and what drops it to <code>0.0%</code>?</summary><div class="a">At <code>T = 1.8, top_p = 0.95, min_p = 0.00</code>, <code>k = 5</code> tokens survive and <code>banana</code> gets a <code>3.8%</code> renormalized chance of being sampled (entropy <code>1.60</code> bits). Setting <code>min_p = 0.10</code> sets the cutoff to <code>10%</code> of <code>SELECT</code>'s raw probability (<code>0.10 * 0.598 = 0.0598</code>), which immediately cuts <code>banana</code> (raw <code>0.035</code>) to <code>0.0%</code> and reduces survivors to <code>k = 4</code>.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Max float16 argument to <code>exp(x)</code> before overflow to <code>inf</code></td><td class="n">11.09 (since e^11.09 = 65,504)</td><td>Derived</td></tr>
+    <tr><td>Shannon entropy of Greedy decoding (<code>T -&gt; 0</code>) vs Uniform over <code>V = 128,256</code></td><td class="n">0.00 bits vs 17.00 bits</td><td>Derived</td></tr>
+    <tr><td>Peaked SQL step at <code>T = 1.0</code>: survivors &amp; entropy under <code>top_p = 0.90</code> vs <code>min_p = 0.10</code></td><td class="n">k = 2 (0.34 bits) vs k = 1 (0.00 bits)</td><td>Your own run</td></tr>
+    <tr><td>Flat 4-way step at <code>T = 1.0</code>: survivors &amp; entropy under <code>top_p = 0.90</code> vs <code>min_p = 0.10</code></td><td class="n">k = 4 (1.98 bits) for both</td><td>Your own run</td></tr>
+    <tr><td>High-temp leak on Peaked step (<code>T = 1.8, top_p = 0.95</code>): <code>banana</code> probability without vs with <code>min_p = 0.10</code></td><td class="n">3.8% (k = 5) vs 0.0% (k = 4)</td><td>Your own run</td></tr>
+    <tr><td>Typical production defaults for code/SQL vs creative chat</td><td class="n">T = 0.0-0.2 vs T = 0.7-1.0, min_p = 0.05-0.10</td><td>Checked 2026-11</td></tr>
+    <tr><td>Typical multiplicative <code>repetition_penalty</code> range before grammar degrades</td><td class="n">alpha = 1.05 to 1.20</td><td>Checked 2026-11</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td><strong>Greedy (T = 0)</strong></td><td>Deterministic, reproducible outputs; maximum single-step accuracy on syntax/math/SQL</td><td>Zero diversity; gets stuck in verbatim phrase loops if the model enters a cycle; misses multi-step paths where step 1 is slightly suboptimal</td><td>Repetitive tail loops on long open-ended summaries; identical retries when a tool call fails</td></tr>
+    <tr><td><strong>Temperature only (T &gt; 0, no filter)</strong></td><td>Smooth control over global entropy and creativity</td><td>All <code>V</code> tokens retain non-zero probability; long tail of ~128k tokens inevitably leaks rare garbage tokens over long generations</td><td>Single-token hallucinations (foreign characters or random subwords) that derail subsequent autoregressive tokens</td></tr>
+    <tr><td><strong>Top-k truncation</strong></td><td>Hard cap on candidate count <code>k</code>; simple GPU top-k kernel</td><td>Fixed <code>k</code> ignores distribution shape: too wide on sharp syntax steps, too narrow on flat brainstorming steps</td><td>Arbitrary cutoffs when <code>k</code> is smaller than the cluster of equally valid synonyms</td></tr>
+    <tr><td><strong>Top-p (nucleus)</strong></td><td>Adapts candidate count to cumulative probability mass</td><td>When <code>p_max &lt; top_p</code> on a peaked step, or when <code>T &gt; 1.0</code> flattens the peak, top-p reaches deep into the tail to fill the quota <code>p</code></td><td>Combining <code>T &ge; 1.2</code> with <code>top_p &ge; 0.95</code>, which pulls low-probability junk into the nucleus</td></tr>
+    <tr><td><strong>Min-p truncation</strong></td><td>Scales cutoff linearly with top token confidence (<code>min_p * p_max</code>); stays sharp on peaks and wide on flat steps even at <code>T &gt; 1.0</code></td><td>Not yet exposed in every commercial REST API (widely supported in vLLM, llama.cpp, SGLang, HuggingFace)</td><td>Setting <code>min_p &gt; 0.25</code>, which collapses almost every step to near-greedy decoding</td></tr>
+    <tr><td><strong>Beam search (width B)</strong></td><td>Finds higher joint sequence likelihood than greedy when early steps have local traps</td><td><code>B</code> times KV-cache footprint and decode memory bandwidth; open-ended text degenerates into bland, repetitive phrasing</td><td>OOM or latency spikes under high concurrency; never use for chat, only short constrained sequences or translation</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Same logits through 6 sampling strategies</h2>
+  <p>Run the exact same Peaked SQL logit vector and Flat 4-way logit vector through Greedy, Temperature, Top-k, Top-p, Min-p, Repetition Penalty, and a 2-step Beam Search, then verify the three break-it experiments.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import numpy as np
+
+TOKENS = ["SELECT", "WITH", "EXPLAIN", "VALUES", "banana", "zz_err"]
+# Peaked step (SQL start: 1 clear winner) vs Flat step (4 close options + 2 tail junk tokens)
+LOGITS_PEAK = np.array([5.2, 2.5, 1.9, 1.2, 0.1, -0.5])
+LOGITS_FLAT = np.array([2.2, 2.0, 1.9, 1.7, -0.3, -0.8])
+
+def softmax(z):
+    s = z - np.max(z)  # log-sum-exp shift prevents exp overflow
+    e = np.exp(s)
+    return e / np.sum(e)
+
+def entropy_bits(p):
+    p_nz = p[p &gt; 0]
+    return float(abs(-np.sum(p_nz * np.log2(p_nz))))
+
+def apply_rep_penalty(z, seen_ids, alpha=1.2, correct_sign=True):
+    out = z.copy()
+    for idx in set(seen_ids):
+        if correct_sign:
+            out[idx] = out[idx] / alpha if out[idx] &gt; 0 else out[idx] * alpha
+        else:
+            out[idx] = out[idx] / alpha  # BUG: dividing negative logit raises it toward 0!
+    return out
+
+def sample_pipeline(z, T=1.0, top_k=0, top_p=1.0, min_p=0.0):
+    if T == 0.0:
+        p = np.zeros_like(z); p[np.argmax(z)] = 1.0
+        return p
+    p = softmax(z / T)
+    keep = np.ones(len(p), dtype=bool)
+    if top_k &gt; 0:
+        order = np.argsort(p)[::-1]
+        keep[order[top_k:]] = False
+    if top_p &lt; 1.0:
+        order = np.argsort(p)[::-1]
+        csum = np.cumsum(p[order])
+        cutoff = np.searchsorted(csum, top_p, side="left")
+        keep[order[cutoff + 1:]] = False
+    if min_p &gt; 0.0:
+        keep &amp;= (p &gt;= min_p * np.max(p))
+    p_filt = np.where(keep, p, 0.0)
+    return p_filt / np.sum(p_filt)
+
+def fmt_dist(p):
+    parts = [f"{TOKENS[i]}:{p[i]:.3f}" for i in range(len(p)) if p[i] &gt; 0]
+    return f"k={len(parts)} H={entropy_bits(p):.2f}b | " + " ".join(parts)
+
+print("=== 1. SAME LOGITS THROUGH 6 SAMPLING STRATEGIES ===")
+strategies = [
+    ("Base (T=1.0)",      dict(T=1.0)),
+    ("Greedy (T=0.0)",    dict(T=0.0)),
+    ("Temp Cool (T=0.7)", dict(T=0.7)),
+    ("Temp Hot (T=1.5)",  dict(T=1.5)),
+    ("Top-k (k=3)",       dict(T=1.0, top_k=3)),
+    ("Top-p (p=0.90)",    dict(T=1.0, top_p=0.90)),
+    ("Min-p (m=0.10)",    dict(T=1.0, min_p=0.10)),
+]
+for label, z in [("PEAKED (SQL start)", LOGITS_PEAK), ("FLAT (4 close options)", LOGITS_FLAT)]:
+    print(f"\n--- {label}: logits={np.round(z, 1).tolist()} ---")
+    for name, kw in strategies:
+        p = sample_pipeline(z, **kw)
+        print(f"  {name:18s} -&gt; {fmt_dist(p)}")
+
+print("\n=== 2. REPETITION PENALTY &amp; BEAM SEARCH (2-step decode) ===")
+z_pen = apply_rep_penalty(LOGITS_PEAK, seen_ids=[0, 5], alpha=1.5, correct_sign=True)
+print("Rep penalty (alpha=1.5 on seen=[SELECT, zz_err]):")
+print(f"  Before: {fmt_dist(softmax(LOGITS_PEAK))}")
+print(f"  After : {fmt_dist(softmax(z_pen))}")
+
+step1_lp = np.log(softmax(np.array([2.0, 1.8, 0.1])))  # tok0=0.52, tok1=0.43
+step2_cond = {0: np.log(softmax(np.array([0.1, 0.1, 0.1]))),   # tok0 leads to flat dead-end
+              1: np.log(softmax(np.array([4.5, 0.0, 0.0])))}   # tok1 leads to high-certainty phrase
+beams = [(step1_lp[i], [i]) for i in [0, 1]]
+cand = [(lp + step2_cond[seq[-1]][j], seq + [j]) for lp, seq in beams for j in range(3)]
+cand.sort(key=lambda x: x[0], reverse=True)
+print(f"Beam B=2 best path: {cand[0][1]} (logprob={cand[0][0]:.3f}) vs Greedy path: [0, 0] (logprob={step1_lp[0]+step2_cond[0][0]:.3f})")
+
+print("\n=== 3. BREAK-IT EXPERIMENTS ===")
+# Break 1: Hot T=1.8 + Top-p=0.95 on Peaked logits leaks 'banana' into the nucleus; Min-p=0.10 blocks it
+p_leak = sample_pipeline(LOGITS_PEAK, T=1.8, top_p=0.95)
+p_safe = sample_pipeline(LOGITS_PEAK, T=1.8, min_p=0.10)
+print(f"Break 1 (T=1.8 + Top-p=0.95 leak): {fmt_dist(p_leak)}")
+print(f"Break 1 (T=1.8 + Min-p=0.10 safe): {fmt_dist(p_safe)}")
+
+# Break 2: Pipeline order (T=0.3 BEFORE Top-p=0.90 vs Top-p=0.90 BEFORE T=0.3 on Flat logits)
+p_right = sample_pipeline(LOGITS_FLAT, T=0.3, top_p=0.90)
+p_trunc_first = sample_pipeline(LOGITS_FLAT, T=1.0, top_p=0.90)
+p_wrong = softmax(np.where(p_trunc_first &gt; 0, LOGITS_FLAT / 0.3, -1e9))
+print(f"Break 2 (Right: T=0.3 then Top-p=0.90): {fmt_dist(p_right)}")
+print(f"Break 2 (Wrong: Top-p=0.90 then T=0.3): {fmt_dist(p_wrong)}")
+
+# Break 3: Sign bug in repetition penalty on negative logit (zz_err = -0.5)
+z_bug = apply_rep_penalty(LOGITS_PEAK, seen_ids=[5], alpha=2.0, correct_sign=False)
+z_fix = apply_rep_penalty(LOGITS_PEAK, seen_ids=[5], alpha=2.0, correct_sign=True)
+print(f"Break 3 (Rep penalty sign bug on zz_err=-0.5): logit becomes {z_bug[5]:+.2f} (prob={softmax(z_bug)[5]:.4f}) vs fixed {z_fix[5]:+.2f} (prob={softmax(z_fix)[5]:.4f})")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== 1. SAME LOGITS THROUGH 6 SAMPLING STRATEGIES ===
+
+--- PEAKED (SQL start): logits=[5.2, 2.5, 1.9, 1.2, 0.1, -0.5] ---
+  Base (T=1.0)       -&gt; k=6 H=0.72b | SELECT:0.884 WITH:0.059 EXPLAIN:0.033 VALUES:0.016 banana:0.005 zz_err:0.003
+  Greedy (T=0.0)     -&gt; k=1 H=0.00b | SELECT:1.000
+  Temp Cool (T=0.7)  -&gt; k=6 H=0.26b | SELECT:0.967 WITH:0.020 EXPLAIN:0.009 VALUES:0.003 banana:0.001 zz_err:0.000
+  Temp Hot (T=1.5)   -&gt; k=6 H=1.44b | SELECT:0.714 WITH:0.118 EXPLAIN:0.079 VALUES:0.050 banana:0.024 zz_err:0.016
+  Top-k (k=3)        -&gt; k=3 H=0.54b | SELECT:0.906 WITH:0.061 EXPLAIN:0.033
+  Top-p (p=0.90)     -&gt; k=2 H=0.34b | SELECT:0.937 WITH:0.063
+  Min-p (m=0.10)     -&gt; k=1 H=0.00b | SELECT:1.000
+
+--- FLAT (4 close options): logits=[2.2, 2.0, 1.9, 1.7, -0.3, -0.8] ---
+  Base (T=1.0)       -&gt; k=6 H=2.18b | SELECT:0.303 WITH:0.248 EXPLAIN:0.225 VALUES:0.184 banana:0.025 zz_err:0.015
+  Greedy (T=0.0)     -&gt; k=1 H=0.00b | SELECT:1.000
+  Temp Cool (T=0.7)  -&gt; k=6 H=2.05b | SELECT:0.341 WITH:0.256 EXPLAIN:0.222 VALUES:0.167 banana:0.010 zz_err:0.005
+  Temp Hot (T=1.5)   -&gt; k=6 H=2.33b | SELECT:0.268 WITH:0.234 EXPLAIN:0.219 VALUES:0.192 banana:0.051 zz_err:0.036
+  Top-k (k=3)        -&gt; k=3 H=1.57b | SELECT:0.391 WITH:0.320 EXPLAIN:0.289
+  Top-p (p=0.90)     -&gt; k=4 H=1.98b | SELECT:0.316 WITH:0.259 EXPLAIN:0.234 VALUES:0.192
+  Min-p (m=0.10)     -&gt; k=4 H=1.98b | SELECT:0.316 WITH:0.259 EXPLAIN:0.234 VALUES:0.192
+
+=== 2. REPETITION PENALTY &amp; BEAM SEARCH (2-step decode) ===
+Rep penalty (alpha=1.5 on seen=[SELECT, zz_err]):
+  Before: k=6 H=0.72b | SELECT:0.884 WITH:0.059 EXPLAIN:0.033 VALUES:0.016 banana:0.005 zz_err:0.003
+  After : k=6 H=1.72b | SELECT:0.574 WITH:0.218 EXPLAIN:0.120 VALUES:0.060 banana:0.020 zz_err:0.008
+Beam B=2 best path: [1, 0] (logprob=-0.899) vs Greedy path: [0, 0] (logprob=-1.776)
+
+=== 3. BREAK-IT EXPERIMENTS ===
+Break 1 (T=1.8 + Top-p=0.95 leak): k=5 H=1.60b | SELECT:0.645 WITH:0.144 EXPLAIN:0.103 VALUES:0.070 banana:0.038
+Break 1 (T=1.8 + Min-p=0.10 safe): k=4 H=1.42b | SELECT:0.671 WITH:0.150 EXPLAIN:0.107 VALUES:0.073
+Break 2 (Right: T=0.3 then Top-p=0.90): k=3 H=1.46b | SELECT:0.532 WITH:0.273 EXPLAIN:0.196
+Break 2 (Wrong: Top-p=0.90 then T=0.3): k=4 H=1.76b | SELECT:0.483 WITH:0.248 EXPLAIN:0.178 VALUES:0.091
+Break 3 (Rep penalty sign bug on zz_err=-0.5): logit becomes -0.25 (prob=0.0038) vs fixed -1.00 (prob=0.0018)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Surviving Shannon entropy (bits) across strategies from kata.py</div>
+    <div data-bars='{"unit":" bits","digits":2,"rows":[{"label":"Peaked: Base (T=1.0, k=6)","value":0.72,"tone":"muted"},{"label":"Peaked: Temp Hot (T=1.5, k=6)","value":1.44,"tone":"bad"},{"label":"Peaked: Top-k (k=3)","value":0.54,"tone":"warn"},{"label":"Peaked: Top-p (p=0.90, k=2)","value":0.34,"tone":"warn"},{"label":"Peaked: Min-p (m=0.10, k=1)","value":0.00,"tone":"good"},{"label":"Flat: Top-k (k=3, cuts 4th!)","value":1.57,"tone":"warn"},{"label":"Flat: Top-p (p=0.90, k=4)","value":1.98,"tone":"good"},{"label":"Flat: Min-p (m=0.10, k=4)","value":1.98,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> On the Peaked step, Min-p=0.10 drops entropy to 0.00 bits (k=1, matching Greedy), whereas Top-p=0.90 leaves 0.34 bits (k=2). On the Flat step, both Top-p and Min-p expand to k=4 (1.98 bits) while Top-k=3 prematurely chops off the 4th valid token.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Top-p leaks on near-certain peaks while Min-p locks in:</strong> On <code>LOGITS_PEAK</code> at <code>T = 1.0</code>, <code>SELECT</code> has raw probability <code>0.884</code>. Because <code>0.884 &lt; 0.90</code>, <code>Top-p (p=0.90)</code> keeps <code>k = 2</code> tokens and gives <code>WITH</code> a <code>0.063</code> renormalized probability (entropy <code>0.34b</code>). <code>Min-p (m=0.10)</code> sets the bar at <code>0.0884</code>, cutting <code>WITH</code> (<code>0.059</code>) and locking onto <code>SELECT:1.000</code> (<code>k = 1</code>, <code>0.00b</code>).</li>
+    <li><strong>Both adapt to flat uncertainty, unlike Top-k:</strong> On <code>LOGITS_FLAT</code>, the four valid SQL starters sit between <code>0.303</code> and <code>0.184</code>, while <code>banana</code> sits at <code>0.025</code>. Both <code>Top-p (p=0.90)</code> and <code>Min-p (m=0.10)</code> keep all <code>k = 4</code> valid tokens (<code>H = 1.98b</code>) and zero out <code>banana</code>, whereas <code>Top-k (k=3)</code> blindly drops <code>VALUES</code> (<code>0.184</code>).</li>
+    <li><strong>Beam search rescues multi-step local traps:</strong> At step 1, token <code>0</code> beats token <code>1</code> (<code>0.52</code> vs <code>0.43</code>), so Greedy commits to <code>[0, 0]</code> with total logprob <code>-1.776</code>. Beam search (<code>B = 2</code>) retains token <code>1</code> and finds <code>[1, 0]</code> with logprob <code>-0.899</code>, nearly <code>2.4x</code> higher joint probability (<code>exp(-0.899) = 0.407</code> vs <code>exp(-1.776) = 0.169</code>).</li>
+    <li><strong>Repetition penalty redistributes mass to runners-up:</strong> Applying <code>alpha = 1.5</code> to <code>SELECT</code> (<code>+5.2 -&gt; +3.47</code>) and <code>zz_err</code> (<code>-0.5 -&gt; -0.75</code>) drops <code>SELECT</code> from <code>0.884</code> to <code>0.574</code> and raises entropy from <code>0.72b</code> to <code>1.72b</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Hot temperature + Top-p tail leak (Break 1).</strong> Predict what happens on <code>LOGITS_PEAK</code> when someone wants "creative code" and sets <code>T = 1.8, top_p = 0.95</code> vs <code>T = 1.8, min_p = 0.10</code>. In the output, <code>Top-p=0.95</code> admits <code>k = 5</code> tokens including <code>banana:0.038</code> (<code>3.8%</code> chance of corrupting the SQL query!), whereas <code>Min-p=0.10</code> blocks <code>banana</code> at <code>k = 4</code>.</li>
+    <li><strong>Swapping Temperature and Top-p order (Break 2).</strong> Predict what changes on <code>LOGITS_FLAT</code> if a buggy custom sampler runs <code>top_p = 0.90</code> <em>before</em> dividing logits by <code>T = 0.3</code>. Running <code>T = 0.3</code> first sharpens the top 3 tokens so they already exceed <code>0.90</code> cumulative mass (<code>k = 3, H = 1.46b</code>). Running <code>top_p = 0.90</code> first admits <code>k = 4</code> tokens at <code>T = 1.0</code>, so <code>VALUES</code> survives with <code>9.1%</code> probability (<code>H = 1.76b</code>).</li>
+    <li><strong>Repetition penalty sign bug (Break 3).</strong> Remove the <code>if out[idx] &gt; 0</code> sign check in <code>apply_rep_penalty</code> so negative logits are divided by <code>alpha = 2.0</code> instead of multiplied. On <code>zz_err</code> (logit <code>-0.5</code>), dividing by <code>2.0</code> raises the logit to <code>-0.25</code> and more than doubles its probability from <code>0.0018</code> to <code>0.0038</code>.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a <code>typical_p</code> (locally typical sampling) filter to <code>sample_pipeline</code> that computes the conditional entropy <code>H(p)</code> and sorts tokens by <code>|-log2(p_i) - H(p)|</code>, keeping tokens whose information content is closest to the expected entropy.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Model generates 200 words well, then locks into repeating the same sentence or phrase until <code>max_tokens</code></td><td>Greedy decoding (<code>T = 0</code>) or very low temperature with zero repetition/frequency penalty entered a state cycle in context</td><td>Add a gentle <code>frequency_penalty = 0.2</code> to <code>0.5</code> or <code>repetition_penalty = 1.05</code> to <code>1.10</code>, or raise <code>T</code> to <code>0.3</code> with <code>min_p = 0.10</code></td></tr>
+    <tr><td>JSON or SQL agent occasionally emits a random word or non-ASCII subword mid-schema, breaking the parser</td><td>High temperature (<code>T &ge; 1.0</code>) paired with loose <code>top_p = 0.95-1.0</code> allowed tail tokens into the nucleus on a medium-confidence step</td><td>Lower <code>T</code> to <code>0.0-0.2</code> for structured output, add <code>min_p = 0.10</code>, and enforce grammar-constrained decoding masks (see D12)</td></tr>
+    <tr><td>After setting <code>repetition_penalty = 1.5</code>, output loses articles/prepositions ("the", "of"), stops closing quotes/braces, and invents bizarre synonyms</td><td>Multiplicative penalty <code>alpha = 1.5</code> is applied globally to every seen token including structural syntax and stop words</td><td>Drop <code>repetition_penalty</code> to <code>1.05-1.15</code>, or switch to OpenAI-style additive <code>frequency_penalty = 0.3</code> which scales linearly with count instead of crushing positive logits on first reuse</td></tr>
+    <tr><td>Calling an API with <code>temperature = 0</code> still returns slightly different completions across identical requests</td><td>GPU batched matrix multiplies (cuBLAS split-K / tensor cores) have non-associative floating-point summation, shifting two tied top logits by <code>1e-5</code> across batch sizes</td><td>Pass a fixed <code>seed</code> parameter if deterministic tie-breaking is supported, or log top-2 logprobs (see D11) to detect near-ties where <code>z_(1) - z_(2) &lt; 1e-3</code></td></tr></table></div>
+  <p><strong>Monitor:</strong> Track the <strong>realized token entropy</strong> per decode step (from top-k logprobs), the <strong>surviving candidate count <code>k</code></strong> after truncation, the <strong>4-gram repetition rate</strong> across generated responses (a spike above <code>5%</code> signals a repetition loop), and the <strong>stop-reason distribution</strong> (<code>stop</code> vs <code>length</code>; a surge in <code>length</code> truncations usually means loops are burning the token budget).</p>
+  <details class="q"><summary>Scenario: You build a voice AI clinical scribe that drafts SOAP notes (free-text narrative) and extracts ICD-10 billing codes (strict alphanumeric codes) in the same pipeline. A teammate configures a single global sampler: <code>T = 1.2, top_p = 0.95, repetition_penalty = 1.35</code>. Doctors report two bugs: billing codes occasionally contain hallucinated digits, and long patient histories start dropping repeated medical terms like "mg" and "daily" halfway through. Walk through root cause and fix.</summary><div class="a"><ol>
+    <li><strong>Diagnose the hallucinated ICD-10 digits:</strong> On structured code generation, valid digits have peaked logits, but <code>T = 1.2</code> flattens the distribution and <code>top_p = 0.95</code> forces the sampler to accumulate <code>95%</code> mass, pulling wrong digit tokens into the nucleus (just like Break 1 in our kata where <code>SELECT</code> leaked <code>banana</code>).</li>
+    <li><strong>Diagnose the missing "mg" and "daily" terms:</strong> A multiplicative <code>repetition_penalty = 1.35</code> divides positive logits by <code>1.35</code> as soon as a token appears once. In a medication list where "mg" and "daily" legitimately appear 10 times, penalizing them blocks the model from writing normal clinical syntax.</li>
+    <li><strong>Fix by decoupling sampler profiles per task:</strong> Split the call or use per-segment sampling parameters. For the SOAP narrative, use <code>T = 0.5, min_p = 0.08, frequency_penalty = 0.2, repetition_penalty = 1.0</code> so repeated units ("mg") are barely touched unless they loop tens of times. For ICD-10 extraction, use <code>T = 0.0</code> (greedy) plus constrained decoding (D12) against the valid ICD-10 prefix tree.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Decoding and sampling is the six-stage post-processing pipeline that converts a transformer's raw vocabulary logits into a single chosen next token. Because the model only outputs unnormalized scores, the sampler controls the tradeoff between deterministic accuracy for tasks like SQL or code and diverse, non-repetitive generation for open-ended chat.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>The pipeline runs in a strict sequence: Penalty, Temperature, Softmax, Filter, Renormalize, Draw. First, repetition or frequency penalties adjust logits of already-seen tokens, dividing positive logits by alpha and multiplying negative logits by alpha. Second, logits are divided by temperature T, where T approaching zero collapses to greedy argmax and T above one flattens the distribution. Third, softmax subtracts max(z) to prevent float16 overflow and normalizes scores to probabilities. Fourth, truncation filters zero out the long tail: top-k keeps a fixed count, top-p keeps the smallest prefix reaching cumulative probability p, and min-p keeps tokens above min_p times p_max. Finally, surviving probabilities are renormalized and sampled via a categorical draw.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Order and thresholds matter: applying top-p before temperature filters the wrong distribution, and combining high temperature with top-p=0.95 on a peaked step pulls tail garbage into the nucleus, whereas min-p=0.10 dynamically tightens its threshold with p_max. For multi-step search, beam search tracks B parallel hypotheses, but we avoid it in chat because maximizing sequence likelihood causes generic loops and multiplies KV-cache memory by B.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"Temperature controls how creative or random the AI is, and top-p is another randomness dial so we usually set temperature to 0.7 and top-p to 0.9 to get balanced business results."</p>
+    <p class="strong">"Temperature divides raw logits by T before softmax, scaling relative logit gaps, while top-p truncates the tail after softmax by keeping the smallest sorted token prefix whose cumulative mass reaches p. On a peaked step where the top token is at 0.88 probability, top-p=0.90 still leaks the runner-up at 6.3% renormalized probability, which is why we prefer min-p=0.10 to cut any token below 10% of p_max."</p>
+    <p>The strong answer names the exact math operation at each stage, explains why both knobs exist (reshaping vs tail truncation), and cites a concrete failure mode with numbers from the kata.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Setting temperature T = 0 guarantees bit-for-bit identical outputs across every API call and batch size."</summary><div class="a"><strong>Wrong.</strong> <code>T = 0</code> makes the sampler deterministic (<code>argmax(z)</code>), but the forward pass computing <code>z</code> on GPUs uses parallel floating-point reductions whose order changes with dynamic batch size and tensor-core split-K kernels. Because floating-point addition is non-associative, two nearly tied logits (within <code>1e-5</code>) can flip order between runs, changing token <code>t</code> and every autoregressive token after it.</div></details>
+  <details class="q"><summary>"Top-p = 0.90 means the sampler only considers tokens that each have at least a 90% probability."</summary><div class="a"><strong>Wrong.</strong> <code>top_p = 0.90</code> is a threshold on the <em>cumulative sum</em> of sorted probabilities, not on individual token probabilities. If 20 tokens each have probability <code>0.045</code>, none of them is anywhere near <code>90%</code>, yet all 20 are kept because their cumulative sum reaches <code>20 * 0.045 = 0.90</code>.</div></details>
+  <details class="q"><summary>"To apply a multiplicative repetition penalty alpha &gt; 1 to a seen token's logit z_i, you just divide z_i by alpha."</summary><div class="a"><strong>Wrong.</strong> Logits are unconstrained real numbers and are frequently negative. Dividing a negative logit like <code>-0.5</code> by <code>alpha = 2.0</code> yields <code>-0.25</code>, which is <em>higher</em> (closer to zero) and increases the token's softmax probability from <code>0.0018</code> to <code>0.0038</code>. You must divide when <code>z_i &gt; 0</code> and multiply when <code>z_i &lt; 0</code>.</div></details>
+  <details class="q"><summary>"Beam search with width B = 4 always produces better chat responses than sampling because it finds a higher-probability sequence."</summary><div class="a"><strong>Wrong.</strong> In open-ended generation, the highest-probability sequence under an LLM is notoriously dull, generic, and prone to phrase loops ("I don't know, I don't know..."), because human language naturally stays in a typical-entropy band rather than maximizing likelihood at every step. Plus, <code>B = 4</code> multiplies KV-cache memory and decode memory bandwidth by <code>4x</code>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through the exact 6-stage order of operations in a modern LLM sampler.</summary><div class="a">1. Apply repetition, frequency, and presence penalties to raw logits <code>z</code> for seen tokens. 2. Divide logits by temperature <code>T</code> (<code>z' = z / T</code>). 3. Compute numerically stable softmax by subtracting <code>max(z')</code>, exponentiating, and dividing by the sum. 4. Apply truncation filters (<code>top_k</code>, <code>top_p</code>, <code>min_p</code>) to mask out tail tokens. 5. Renormalize surviving probabilities so they sum to <code>1.0</code>. 6. Draw one token from the categorical distribution.<div class="f"><b>Follow-up</b>What breaks if you apply <code>top_p</code> before temperature scaling? Answer: <code>top_p</code> computes cumulative mass using the unscaled <code>T = 1.0</code> probabilities, so cooling with <code>T = 0.3</code> cannot prune extra tokens out of the nucleus, and heating with <code>T = 1.5</code> cannot widen the nucleus.</div></div></details>
+  <details class="q"><summary>Prove mathematically why subtracting <code>M = max(z)</code> before <code>exp()</code> does not change softmax probabilities, and give the float16 overflow threshold.</summary><div class="a">In <code>softmax(z - M)_i = exp(z_i - M) / sum_j exp(z_j - M)</code>, factor out <code>exp(-M)</code> from both numerator and denominator: <code>(exp(-M) * exp(z_i)) / (exp(-M) * sum_j exp(z_j))</code>. Since <code>exp(-M) &gt; 0</code>, it cancels out identically. In IEEE-754 float16, the maximum representable value is <code>65,504</code>, so <code>exp(x)</code> overflows to <code>inf</code> at <code>x = ln(65504) = 11.09</code>. Subtracting <code>M</code> ensures every exponent is <code>&le; 0</code>.</div></details>
+  <details class="q"><summary>Contrast how <code>top_k</code>, <code>top_p</code>, and <code>min_p</code> behave on a peaked distribution (<code>p_max = 0.884</code>) versus a flat distribution (<code>p_max = 0.303</code>).</summary><div class="a"><code>top_k = 3</code> always keeps 3 tokens: on the peaked step it admits 2 unnecessary low-probability tokens, and on the flat step with 4 close options it cuts the 4th valid option. <code>top_p = 0.90</code> keeps 2 tokens on the peaked step (because <code>0.884 &lt; 0.90</code>) and 4 on the flat step. <code>min_p = 0.10</code> keeps only 1 token on the peaked step (cutoff <code>0.0884</code>) and 4 tokens on the flat step (cutoff <code>0.0303</code>).<div class="f"><b>Follow-up</b>Why does <code>min_p</code> handle high temperature (<code>T = 1.8</code>) better than <code>top_p = 0.95</code>? Answer: Raising <code>T</code> flattens <code>p_max</code> so <code>top_p = 0.95</code> has to reach into the garbage tail (<code>banana</code> at <code>3.8%</code>) to sum to <code>0.95</code>, whereas <code>min_p = 0.10</code> still cuts anything below <code>10%</code> of <code>p_max</code>.</div></div></details>
+  <details class="q"><summary>How do OpenAI's <code>frequency_penalty</code> and <code>presence_penalty</code> differ in formula and use case?</summary><div class="a">Both subtract from the logit of seen tokens: <code>z_i = z_i - mu_freq * count(i) - mu_pres * I[count(i) &gt; 0]</code>. Presence penalty applies a flat one-time reduction regardless of whether the token appeared once or 50 times, encouraging the model to introduce new topics. Frequency penalty grows linearly with <code>count(i)</code>, specifically targeting and breaking repetitive token loops.<div class="f"><b>Follow-up</b>Why is an additive penalty safer on negative logits than a naive multiplicative penalty? Answer: Subtracting a positive constant always makes any real number (positive or negative) smaller, so no sign check is needed.</div></div></details>
+  <details class="q"><summary>What is the Gumbel-Max trick, and why do GPU inference kernels use it for categorical sampling?</summary><div class="a">Instead of computing a sequential prefix sum (CDF) over surviving probabilities and binary-searching for <code>u ~ Uniform(0,1)</code>, the Gumbel-Max trick draws independent uniform variables <code>u_i</code>, adds Gumbel noise <code>g_i = -log(-log(u_i))</code> to the log-probabilities <code>log(p_i)</code>, and takes <code>argmax_i(log(p_i) + g_i)</code>. The resulting argmax has the exact categorical distribution <code>p_i</code> and runs as a fast parallel reduction on the GPU.</div></details>
+  <details class="q"><summary>When does Beam Search beat Greedy decoding, and why do we need length normalization in Beam Search?</summary><div class="a">Beam search beats greedy when the locally optimal token at step <code>t</code> leads to low-probability continuations at step <code>t+1</code> (as in our kata where greedy path <code>[0, 0]</code> scored <code>-1.776</code> while beam width <code>B = 2</code> found <code>[1, 0]</code> at <code>-0.899</code>). Length normalization divides the cumulative log-probability by <code>L^alpha</code> (with <code>alpha</code> around <code>0.6-1.0</code>) because every additional token adds a negative log-probability, which would otherwise bias beam search to pick premature <code>EOS</code> tokens.<div class="f"><b>Follow-up</b>What is the KV-cache cost of running Beam Search with width <code>B</code>? Answer: Up to <code>B</code> times the per-request decode KV-cache memory and memory bandwidth, though prefix sharing (PagedAttention copy-on-write) shares blocks for the common prompt prefix.</div></div></details>
+  <details class="q"><summary>If you set <code>top_k = 1</code> and <code>temperature = 100.0</code>, what does the sampler do?</summary><div class="a">It performs deterministic greedy decoding! Even though <code>T = 100.0</code> flattens the softmax probabilities so they are nearly equal, <code>softmax(z / T)</code> is strictly monotonic for any <code>T &gt; 0</code>. The highest logit still has the highest probability, <code>top_k = 1</code> masks out all other tokens, and renormalization sets that single winner's probability to <code>1.0</code>.</div></details>
+  <details class="q"><summary>Why should you avoid setting both <code>top_p</code> and <code>temperature</code> to non-default aggressive values according to API documentation, and when is combining a temperature with a filter actually required?</summary><div class="a">OpenAI advises beginners to tune one at a time when using <code>T &le; 1.0</code> because both reduce entropy. However, whenever you use <code>T &gt; 0</code> in production, pairing temperature with a tail truncation filter (especially <code>min_p = 0.05-0.10</code> or <code>top_p = 0.90-0.95</code>) is essential so the 128k-token tail is zeroed out before sampling.<div class="f"><b>Follow-up</b>If a user asks for <code>n = 5</code> diverse completions for a code problem, why is <code>T = 0.0</code> useless? Answer: At <code>T = 0.0</code>, all 5 completions are identical greedy trajectories; you need <code>T ~ 0.6-0.8</code> with <code>min_p = 0.10</code> for pass@k diversity.</div></div></details>
+  <details class="q"><summary>Calculate the renormalized probability of token B if <code>top_k = 2</code> keeps only token A (raw prob <code>0.60</code>) and token B (raw prob <code>0.20</code>).</summary><div class="a">Renormalization divides each surviving token's probability by the sum of survivors (<code>0.60 + 0.20 = 0.80</code>). Token A becomes <code>0.60 / 0.80 = 0.75</code> (<code>75%</code>), and Token B becomes <code>0.20 / 0.80 = 0.25</code> (<code>25%</code>).</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the P-T-S-F-R-D pipeline stages in order, (2) the multiplicative repetition penalty sign rule vs OpenAI additive formula, (3) the log-sum-exp softmax formula, and (4) the exact mathematical difference between <code>top_p</code> and <code>min_p</code>.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Pipeline order (P-T-S-F-R-D):</strong> 1. Penalties on seen logits -&gt; 2. Temperature divide <code>z / T</code> -&gt; 3. Softmax with <code>max(z)</code> shift -&gt; 4. Filter (<code>top_k</code>, <code>top_p</code>, <code>min_p</code>) -&gt; 5. Renormalize survivors by <code>sum(p_filt)</code> -&gt; 6. Categorical draw (CDF or Gumbel-Max).</li>
+    <li><strong>Repetition penalty sign check:</strong> Multiplicative: <code>z_i / alpha</code> if <code>z_i &gt; 0</code> else <code>z_i * alpha</code>. Additive: <code>z_i - mu_freq * count(i) - mu_pres * I[count(i) &gt; 0]</code>.</li>
+    <li><strong>Stable softmax &amp; limits:</strong> <code>p_i = exp((z_i/T) - M) / sum_j exp((z_j/T) - M)</code> where <code>M = max(z/T)</code> (prevents fp16 overflow at <code>11.09</code>). <code>T -&gt; 0</code> gives greedy argmax (<code>0</code> bits); <code>T -&gt; inf</code> gives uniform <code>1/V</code>.</li>
+    <li><strong>Top-p vs Min-p:</strong> Top-p keeps smallest sorted prefix where <code>sum_{r=1..m} p_(r) &ge; top_p</code> (leaks runner-up when <code>p_max &lt; top_p</code>, or tail garbage at high <code>T</code>). Min-p keeps <code>{i : p_i &ge; min_p * p_max}</code> (adapts cutoff height to top token confidence).</li>
+    <li><strong>Beam search tradeoff:</strong> Tracks top <code>B</code> sequences by cumulative logprob (with length norm <code>L^alpha</code>), rescuing local step-1 traps (<code>-0.899</code> vs <code>-1.776</code> in kata) at the cost of <code>B</code>x decode KV-cache and repetitive loops in open-ended chat.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: Why is LLM prefill compute-bound while single-stream autoregressive decode is memory-bandwidth-bound?</summary><div class="a">During prefill, all <code>N</code> prompt tokens are processed in parallel as a dense matrix-matrix multiplication (<code>[N, d] x [d, d]</code>), reusing weight matrices across <code>N</code> tokens for high arithmetic intensity (FLOPs per byte). During single-request decode, each step processes only <code>1</code> new token (<code>[1, d] x [d, d]</code> matrix-vector multiply), streaming the entire model's weights and KV cache from HBM just to do <code>2</code> FLOPs per parameter.</div></details>
+  <details class="q"><summary>D02: Why do BPE tokenizers struggle with character-level tasks and arithmetic on multi-digit numbers unless digit-splitting rules are applied?</summary><div class="a">BPE merges frequent byte sequences greedily into variable-length subword tokens, so a number like <code>"3842"</code> may tokenize as <code>["384", "2"]</code> while <code>"38420"</code> tokenizes as <code>["38", "420"]</code>. Inconsistent digit boundaries destroy positional alignment for carry operations, which is why modern tokenizers either split every single digit or enforce 1-to-3 digit right-to-left chunking.</div></details>
+  <details class="q"><summary>D03: Where do the raw logits <code>z in R^V</code> come from right before the D10 sampler runs, and what is weight tying?</summary><div class="a">The final layer norm output <code>h in R^d</code> of the last token position is multiplied by the unembedding matrix <code>W_U in R^{d x V}</code> to produce <code>z = h * W_U in R^V</code>. Weight tying shares the exact same parameter tensor between the input token embedding matrix <code>W_E</code> and the output unembedding transpose <code>W_U^T</code>, saving <code>V * d</code> parameters (significant in smaller models).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1904.09751">Holtzman et al. (ICLR 2020): The Curious Case of Neural Text Degeneration</a><small>Introduces nucleus (top-p) sampling and proves that maximizing probability via greedy or beam search causes repetitive degeneration in open-ended text. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/2407.01082">Nguyen et al. (2024): Turning Up the Heat: Min-p Sampling for Creative and Coherent LLM Outputs</a><small>Introduces min-p truncation (p_i &ge; min_p * p_max) and demonstrates how it prevents tail leaks at high temperature while preserving diversity on flat steps. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/1909.05858">Keskar et al. (2019): CTRL: A Conditional Transformer Language Model for Controllable Generation</a><small>Defines the multiplicative repetition penalty with the positive/negative logit sign rule used in HuggingFace Transformers and llama.cpp. Checked 2026-11.</small></li>
+    <li><a href="https://docs.vllm.ai/en/latest/api/vllm/sampling_params.html">vLLM Documentation: SamplingParams Reference</a><small>Production execution order and parameter definitions for penalties, temperature, top_k, top_p, and min_p in GPU serving kernels. Checked 2026-11.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D10 T1 W01", "cards": [{"q": "In what order does an LLM sampler transform raw logits into a sampled token?", "a": "Repetition/frequency penalties first, temperature scaling (z / T), softmax with max-shift, top-k / top-p / min-p filtering, renormalization, and categorical draw."}, {"q": "Why must temperature scaling (z / T) run before top-p or min-p truncation?", "a": "Temperature reshapes probabilities; truncating first locks the candidate pool using unscaled logits, so cooling or heating cannot change which tokens survive."}, {"q": "How does multiplicative repetition penalty handle positive versus negative logits for already-seen tokens?", "a": "It divides positive logits by alpha and multiplies negative logits by alpha; dividing a negative logit moves it toward zero, raising its probability."}, {"q": "Why does min-p outperform top-p when running at high temperature (T > 1) on a peaked distribution?", "a": "Top-p accumulates fixed mass p and pulls tail garbage in when p_max \u003c p, whereas min-p cuts any token below min_p * p_max."}, {"q": "What happens to the softmax distribution as temperature T approaches 0 versus infinity?", "a": "As T approaches 0, probability collapses onto the argmax logit (greedy, 0 bits entropy); as T approaches infinity, it flattens toward uniform 1/V."}, {"q": "How do OpenAI-style frequency penalty and presence penalty differ in how they modify logits?", "a": "Frequency penalty subtracts count * mu_freq (scaling with repetitions), while presence penalty subtracts a flat mu_pres if the token appeared at least once."}, {"q": "Why must you subtract max(z) from logits before computing exp(z) in softmax?", "a": "Subtracting max(z) keeps probabilities identical while capping the largest exponent at 0 (exp(0) = 1), preventing float16 overflow above z = 11.09."}, {"q": "Why is beam search rarely used for open-ended LLM chat despite working well for translation?", "a": "Maximizing sequence likelihood in open-ended chat favors generic, repetitive loops while multiplying decode KV-cache memory and bandwidth by beam width B."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

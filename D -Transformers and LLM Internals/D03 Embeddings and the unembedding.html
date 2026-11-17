@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D03 Embeddings and the unembedding</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D03">
+<main>
+<header>
+  <div class="eyebrow"><b>D03</b><span>D Transformers and LLM internals</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Embeddings and the unembedding</h1>
+  <p class="lede">How does an integer token ID become a dense vector in the residual stream, and how does the final hidden state become vocabulary logits at the other end? This page covers the input embedding table W_E, embedding space geometry and norm distortion, the output unembedding projection W_U, weight tying, and vocabulary surgery. Tokenization is D02, retrieval bi-encoder embeddings are H01, and vector math basics are A08.</p>
+  <div class="chips"><span><em>Before</em>D02 Tokenization</span><span><em>After</em>D04 Self-attention</span><span><em>After</em>D10 Decoding and sampling</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production, then say the 90-second answer aloud</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page and write the blank-page recall</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards, log misses in the tracker</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In Llama 3.2 1B (vocabulary V = 128,256, width d = 2,048), if the input embedding table W_E and output unembedding matrix W_U are untied, roughly what share of the entire model's parameters do those two matrices alone consume: 5%, 15% or 35%?</summary><div class="a">About 35% (35.1% in the kata). Each matrix has 128,256 × 2,048 = 262.7 million parameters (0.53 GB in bf16). Untied, they total 525.3 million parameters (1.05 GB) against a 973 million parameter transformer body. That is why Llama 3.2 1B ties W_U = W_E.T to cut the embedding share to 21.3%, whereas Llama 3.1 8B leaves them untied (13.1%).</div></details>
+  <details class="q"><summary>You inspect nearest neighbors in a trained embedding table W_E using raw dot product (u · v) and then using cosine similarity. Do they return the same top neighbors?</summary><div class="a">No. Dot product equals ||u|| ||v|| cos(θ), so tokens with large L2 norms win even when their angle is worse. In the kata, "naproxen" is closer in angle to "ibuprofen" (cosine 0.96) than to "aspirin" (cosine 0.92), but "aspirin" appears 3x as often and has norm 1.14 versus 0.75, flipping the dot-product ranking to put "aspirin" first (0.43 vs 0.29).</div></details>
+  <details class="q"><summary>You add 8 new clinical special tokens to a pretrained model by resizing W_E and initializing the new rows with standard normal np.random.randn(8, d). Before any fine-tuning steps, what happens to next-token predictions?</summary><div class="a">The new tokens hijack softmax output probability (stealing 78.6% of probability mass in the kata). A vector drawn from N(0, 1) in d dimensions has expected L2 norm roughly sqrt(d) (4.26 in the kata at d = 16, or 64.0 at d = 4,096), whereas trained embeddings sit near norm 1.0. Under weight tying or shared init, the huge norm creates massive positive logits before training even starts.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A transformer only computes on continuous vectors in R^d, called the residual stream, while a tokenizer speaks in discrete integers from 0 to V - 1. The embedding table W_E (shape V by d) and the unembedding matrix W_U (shape d by V) are the two bookends that translate between those two worlds. At the input, token ID i selects row i of W_E to start the residual stream as a d-dimensional vector. After all attention and MLP layers have refined that vector into a final normalized hidden state h in R^d, the unembedding matrix multiplies h by W_U to produce V raw scores (logits), one for every token in the vocabulary.</p>
+  <p>Although the two bookends have transpose shapes, their hardware costs are completely asymmetric. The input embedding is a dictionary lookup: copying one contiguous row of d floats from memory takes O(d) memory reads and zero arithmetic FLOPs. The output unembedding is a dense matrix-vector multiplication h @ W_U across every single vocabulary column, which costs 2 × d × V FLOPs at every generated token. When a model uses weight tying, it sets W_U = W_E.T so both bookends share the exact same physical tensor in memory, forcing the vector a token injects at the bottom of the network to equal the target vector the final hidden state must align with at the top.</p>
+  <p><strong>Mental model.</strong> Think of the residual stream as a conference room where everyone speaks in d-dimensional arrows. W_E is the badge desk at the entrance: you hand over integer badge #i and receive your assigned starting arrow. The transformer layers rotate and add notes to that arrow. W_U is the exit poll at the door: your final arrow is compared by dot product against all V badge arrows simultaneously, and whichever badge arrow points closest (with the largest projection) wins the next token.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The two bookends from token ID to vocabulary logits</div>
+    <svg viewBox="0 0 480 215" role="img" aria-label="Input token ID i indexes row i of W_E in O(d) memory reads, flows through transformer layers and final RMSNorm into hidden state h, and multiplies by W_U in 2dV FLOPs to produce V logits, with weight tying sharing W_U = W_E transpose">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="22" width="96" height="54" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="58" y="44" text-anchor="middle">Token ID i</text>
+          <text x="58" y="62" text-anchor="middle" class="m">W_E[i] lookup</text>
+        </g>
+        <g data-step="2">
+          <path d="M106 49 H126" class="ink"/>
+          <rect x="126" y="22" width="110" height="54" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="181" y="44" text-anchor="middle">x = e_i in R^d</text>
+          <text x="181" y="62" text-anchor="middle" class="m">O(d) copy, 0 FLOPs</text>
+        </g>
+        <g data-step="3">
+          <path d="M236 49 H256" class="ink"/>
+          <rect x="256" y="22" width="104" height="54" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="308" y="44" text-anchor="middle">Layers + Norm</text>
+          <text x="308" y="62" text-anchor="middle" class="m">h = RMSNorm(x_L)</text>
+        </g>
+        <g data-step="4">
+          <path d="M360 49 H380" class="ink"/>
+          <rect x="380" y="22" width="90" height="54" rx="6" class="c-paper ln" data-hi="4"/>
+          <rect x="380" y="22" width="90" height="6" rx="2" class="c-good"/>
+          <text x="425" y="45" text-anchor="middle">z = h @ W_U</text>
+          <text x="425" y="62" text-anchor="middle" class="m">2dV FLOPs -&gt; R^V</text>
+        </g>
+        <g data-step="5">
+          <path d="M58 76 V125 H425 V76" class="ink" stroke-dasharray="4 3" data-hi="5"/>
+          <rect x="90" y="104" width="300" height="44" rx="6" class="c-paper ln" data-hi="5"/>
+          <rect x="90" y="104" width="8" height="44" rx="2" class="c-accent"/>
+          <text x="244" y="123" text-anchor="middle" data-hi="5">Weight tying: W_U = W_E^T (shares V x d tensor)</text>
+          <text x="244" y="140" text-anchor="middle" class="m">Saves 262.7M params (0.53 GB bf16) in Llama 3.2 1B</text>
+        </g>
+        <text x="240" y="185" text-anchor="middle" class="m">Input is an O(d) row gather; output is an O(Vd) matrix-vector projection</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>An integer token ID i enters and indexes directly into the V by d embedding matrix W_E.</li>
+      <li>Row W_E[i] is copied into the residual stream in O(d) memory reads, avoiding an O(Vd) one-hot matrix multiply.</li>
+      <li>Transformer blocks refine the residual vector, and a final RMSNorm stabilizes its length to produce h in R^d.</li>
+      <li>The unembedding multiplies h by W_U (d by V) in 2dV FLOPs, scoring every token to produce V logits.</li>
+      <li>Weight tying sets W_U = W_E.T, cutting Llama 3.2 1B embedding memory in half from 1.05 GB to 0.53 GB.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Embeddings translate integer IDs to d-dimensional residual vectors by O(d) row lookup at the entrance and score all V tokens by a 2dV matmul at the exit.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>L-C-N-P-T</strong> (Lookup, Cone, Norm, Project, Tie): <strong>L</strong>ookup row W_E[i] in O(d) bytes; vectors cluster in an anisotropic <strong>C</strong>one where frequency inflates norms; final RMS<strong>N</strong>orm bounds hidden state length; <strong>P</strong>roject logits z = h W_U in 2dV FLOPs; <strong>T</strong>ie W_U = W_E.T to save V × d parameters and pool rare-token gradients.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Input lookup: one-hot equivalence without the FLOPs</h3>
+  <p>Mathematically, mapping token ID i to a vector is written as multiplying a one-hot row vector e_i in R^V (all zeros except a 1 at index i) by the embedding matrix W_E in R^(V × d): x = e_i @ W_E. Executing that formula literally as a dense matrix multiplication would multiply V - 1 zeros by d columns, wasting 2 × V × d FLOPs per token. Instead, frameworks implement <code>nn.Embedding</code> as a pointer offset: row i starts at byte offset i × d × sizeof(dtype), so the hardware issues a contiguous memory gather of d numbers (for d = 4,096 in bf16, just 8 KB per token). During backpropagation, gradients flow back only to the rows that appeared in the batch via a sparse scatter-add (<code>np.add.at(dW_E, ids, dx)</code>), leaving unseen vocabulary rows untouched.</p>
+  <div class="codewrap"><pre>Mathematical form:  x = one_hot(i) @ W_E      # 2 * V * d FLOPs (wasteful)
+Hardware execution: x = W_E[i]                # O(d) memory read, 0 FLOPs
+Backward pass:      scatter_add(dW_E, i, dx)  # only active rows get input gradients</pre></div>
+  <details class="q"><summary>Check: for V = 128,256 and d = 4,096 in bf16, how many bytes does W_E[i] read for one input token, and how many FLOPs would a naive one-hot matmul waste?</summary><div class="a">W_E[i] reads 4,096 × 2 = 8,192 bytes (8 KB) and does 0 FLOPs. A dense one-hot matmul would execute 2 × 128,256 × 4,096 = 1.05 billion FLOPs to produce the exact same 4,096 numbers.</div></details>
+
+  <h3>Embedding geometry: cosine vs dot product and the anisotropy cone</h3>
+  <p>Two tokens end up close in W_E when they appear in interchangeable contexts and force similar next-token predictions. However, how you measure "close" changes what you see. The dot product between two rows u and v is u · v = ||u|| ||v|| cos(θ), whereas cosine similarity divides out the norms: cos(θ) = (u · v) / (||u|| ||v||). During training, token frequency shapes vector length ||u|| because frequent tokens receive far more gradient updates (and different softmax repulsive pressure) than rare tokens. If you search W_E by dot product, high-norm tokens dominate the neighbor list even when their angle is worse. In addition, transformer embeddings are not isotropic (uniformly spread around the origin with average cosine 0); they cluster inside a narrow forward cone (anisotropy) where random pairs have positive cosine similarity, because every token shares common-mode gradients from predicting dominant words.</p>
+  <details class="q"><summary>Check: in the kata, why does "naproxen" rank "ibuprofen" first by cosine similarity (0.96 vs 0.92) but rank "aspirin" first by dot product (0.43 vs 0.29)?</summary><div class="a">"Aspirin" appears 24 times and grows to norm ||e|| = 1.14, while "ibuprofen" appears 8 times with norm 0.75 and "naproxen" has norm 0.41. Multiplying the norms into the cosine (0.41 × 1.14 × 0.92 = 0.43 vs 0.41 × 0.75 × 0.96 = 0.29) lets the higher norm of "aspirin" override the closer angle of "ibuprofen".</div></details>
+
+  <h3>The unembedding projection and final RMSNorm</h3>
+  <p>At the top of the transformer, the final residual state x_L passes through a final normalization layer (RMSNorm in Llama, Qwen, and Mistral) to produce h = x_L / sqrt(mean(x_L^2) + eps) * gamma, and then multiplies by the unembedding matrix W_U in R^(d × V) to produce the logit vector z = h @ W_U in R^V. Each logit z_j = h · W_U[:, j] is the dot product between the normalized hidden state and token j's unembedding column. Softmax converts those logits into next-token probabilities P(j | h) = exp(z_j) / sum_k exp(z_k). Unlike the input lookup, the unembedding must score all V candidates on every forward pass, costing 2 × d × V FLOPs per generated token. The final RMSNorm is essential: residual stream magnitudes grow with depth, so skipping final normalization multiplies every logit by the residual stream's raw RMS scale, acting like a near-zero temperature that collapses softmax entropy.</p>
+
+  <h3>Weight tying: sharing W_E and W_U</h3>
+  <p>Weight tying sets W_U = W_E.T, eliminating a separate d by V matrix. This has two effects. First, it saves V × d parameters. On a small model with a large modern vocabulary, that saving is massive: in Llama 3.2 1B (V = 128,256, d = 2,048), a single table is 262.7M parameters (0.53 GB in bf16), so tying drops embedding share from 35.1% of the model to 21.3%. On an 8B+ model (d = 4,096), the second table is only 6% to 7% of total parameters, so Llama 3.1 8B and 70B leave W_E and W_U untied to give input representation and output scoring independent capacity. Second, tying couples gradients: every time token j is evaluated in the softmax output, the cross-entropy gradient dz_j * h directly updates row W_E[j], even on steps where token j did not appear in the input prompt.</p>
+  <figure class="viz stepper" id="viz-tying-trace">
+    <div class="vt">Stepper: How weight tying rescues rare tokens and why bad surgery hijacks logits</div>
+    <svg viewBox="0 0 470 195" role="img" aria-label="Four-step trace showing untied rare token naproxen getting zero input gradients when seen only as a target, weight tying routing output gradients into W_E, and unscaled N(0,1) vocabulary surgery hijacking softmax logits">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="14" y="14" width="442" height="36" rx="5" class="c-paper ln" data-hi="1"/>
+          <text x="26" y="36">1. Untied target "naproxen": dW_U[:, j] updated, dW_E[j] = 0</text>
+        </g>
+        <g data-step="2">
+          <rect x="14" y="58" width="442" height="36" rx="5" class="c-soft ln" data-hi="2"/>
+          <text x="26" y="80">2. Tied W_U = W_E^T: output grad dz_j * h updates row W_E[j]</text>
+        </g>
+        <g data-step="3">
+          <rect x="14" y="102" width="442" height="36" rx="5" class="c-paper ln" data-hi="3"/>
+          <rect x="14" y="102" width="6" height="36" rx="2" class="c-good"/>
+          <text x="26" y="124">3. Zero-shot input "naproxen now": P("fever") 0.761 vs 0.489 untied</text>
+        </g>
+        <g data-step="4">
+          <rect x="14" y="146" width="442" height="36" rx="5" class="c-paper ln" data-hi="4"/>
+          <rect x="14" y="146" width="6" height="36" rx="2" class="c-bad"/>
+          <text x="26" y="168">4. Bad surgery N(0,1): ||e_new|| = 4.26 vs 1.03 -&gt; hijacks 78.6% prob</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>When rare token "naproxen" appears only as a target at the end of a note, untied training updates column W_U[:, j] but leaves input row W_E[j] untrained.</li>
+      <li>With weight tying (W_U = W_E.T), predicting "naproxen" after "patient took" pulls W_E[naproxen] into the drug subspace alongside "ibuprofen" (cosine 0.96).</li>
+      <li>When "naproxen" later appears as an input token, the tied model predicts "fever" with 0.761 probability versus 0.489 when untied.</li>
+      <li>If new tokens are added with N(0, 1) init instead of mean(W_E), their norm (4.26 vs 1.03) explodes h @ W_E.T and hijacks 78.6% of probability mass.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Weight tying shares output gradients with input rows so rare tokens learn usable input embeddings, but shared scale means unnormalized new rows immediately corrupt logits.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Tied vs untied embedding VRAM and parameter share across model scales</div>
+    <p class="ask">Predict first. Hold V = 128,256 and switch from Llama 3.2 1B (d = 2,048, body = 973M) to Llama 3.1 8B (d = 4,096, body = 6,980M). Does untying add a larger percentage of total parameters to the 1B model or the 8B model?</p>
+    <div class="ctl">
+      <label><span>Vocabulary V</span><select name="v" data-num><option value="32000">32,000 (Llama 2)</option><option value="50257">50,257 (GPT-2)</option><option value="128256" selected>128,256 (Llama 3)</option><option value="151936">151,936 (Qwen 2.5)</option></select></label>
+      <label><span>Model width d</span><select name="d" data-num><option value="2048" selected>2,048 (1B scale)</option><option value="3072">3,072 (3B scale)</option><option value="4096">4,096 (8B scale)</option><option value="8192">8,192 (70B scale)</option></select></label>
+      <label><span>Transformer body</span><input type="range" name="body" min="500" max="15000" step="250" value="975"><output data-for="body" data-unit="M params"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Because V × d scales with width d while the transformer body scales with L × d^2, embedding matrices dominate small models (21% to 35% at 1B) and shrink in relative share as models grow.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var oneM=v.v*v.d/1e6, twoM=2*oneM, tiedPct=100*oneM/(v.body+oneM), untiedPct=100*twoM/(v.body+twoM);
+    var tiedGb=oneM*2/1e3, untiedGb=twoM*2/1e3, flopsG=2*v.v*v.d/1e9;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"% of model",digits:1,max:50,rows:[
+      {label:"Tied (W_U = W_E.T)",value:tiedPct,tone:"good"},
+      {label:"Untied (W_E + W_U)",value:untiedPct,tone:untiedPct>25?"warn":"muted"}
+    ]});
+    return {verdict:"Tied: "+tl.fmt(oneM,1)+"M params ("+tl.fmt(tiedGb,2)+" GB bf16, "+tl.fmt(tiedPct,1)+"%). Untied: "+tl.fmt(twoM,1)+"M params ("+tl.fmt(untiedGb,2)+" GB bf16, "+tl.fmt(untiedPct,1)+"%). Unembedding: "+tl.fmt(flopsG,2)+" GFLOPs/tok."};
+  })});</script>
+
+  <h3>Vocabulary surgery: resizing W_E and W_U safely</h3>
+  <p>When you add special tokens (such as <code>&lt;|triage|&gt;</code> or tool-call markers) to a pretrained checkpoint, you resize W_E from V × d to (V + K) × d and W_U from d × V to d × (V + K). Calling a default random initializer like <code>N(0, 1)</code> is a classic production bug: trained embedding rows typically have L2 norm around 0.5 to 1.5, whereas an isotropic standard normal vector in d dimensions has expected norm sqrt(d) (64.0 when d = 4,096). In the first forward pass, the dot product h · e_new is tens of times larger than any trained logit, so the model emits the new token everywhere and the first backward step sends a massive gradient spike into the transformer body. Instead, initialize new rows to the mean vector of existing embeddings <code>W_E.mean(dim=0)</code> plus tiny noise (1e-4), or to the average of the existing subword embeddings that spell out the new token's meaning (for example, averaging the tokens for "clinical" and "triage").</p>
+  <details class="q"><summary>Check: why does a vector sampled from N(0, 1) in R^4096 have an expected L2 norm near 64, and what two initialization recipes prevent logit hijacking during vocabulary surgery?</summary><div class="a">Each of the 4,096 coordinates has variance 1, so the sum of squares has expected value 4,096 and the L2 norm is roughly sqrt(4,096) = 64. Prevent logit hijacking by initializing new rows to the mean of all existing rows (mean(W_E) plus tiny noise) or to the average of the subword embeddings of a descriptive phrase.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Input lookup cost per token vs naive one-hot matmul</td><td class="n">O(d) memory reads (0 FLOPs) vs 2Vd FLOPs</td><td>Derived</td></tr>
+    <tr><td>Bytes read per input token lookup at d = 4,096 in bf16</td><td class="n">4,096 × 2 = 8,192 bytes (8 KB)</td><td>Derived</td></tr>
+    <tr><td>Output unembedding compute per generated token</td><td class="n">2 × d × V FLOPs</td><td>Derived</td></tr>
+    <tr><td>Llama 3.2 1B (V = 128,256, d = 2,048): single embedding table</td><td class="n">262.7M params, 0.53 GB in bf16</td><td>Derived (V, d checked 17 Nov 2026, Hugging Face config)</td></tr>
+    <tr><td>Llama 3.2 1B embedding share: tied (default) vs untied</td><td class="n">21.3% (tied) vs 35.1% (untied)</td><td>Your own run</td></tr>
+    <tr><td>Llama 3.1 8B (V = 128,256, d = 4,096): tied vs untied embedding memory</td><td class="n">1.05 GB (525.3M) vs 2.10 GB (1,050.7M, default untied)</td><td>Derived (V, d checked 17 Nov 2026, Hugging Face config)</td></tr>
+    <tr><td>Expected L2 norm of an N(0, σ^2) vector in R^d</td><td class="n">σ × sqrt(d) (at σ = 1, d = 4,096 -> 64.0)</td><td>Derived</td></tr>
+    <tr><td>Standard transformer embedding initialization std (GPT-2, Llama)</td><td class="n">σ = 0.02 (or 1 / sqrt(d))</td><td>Checked 17 Nov 2026 (Hugging Face Transformers docs)</td></tr>
+    <tr><td>Kata: "naproxen" top neighbor by cosine vs by dot product</td><td class="n">ibuprofen (cos 0.96) vs aspirin (dot 0.43, norm 1.14)</td><td>Your own run</td></tr>
+    <tr><td>Kata: zero-shot input P("fever" | "naproxen now"), tied vs untied</td><td class="n">0.761 (tied) vs 0.489 (untied)</td><td>Your own run</td></tr>
+    <tr><td>Kata: probability mass hijacked by 8 new tokens, mean(W_E) vs N(0, 1) init</td><td class="n">0.047 (4.7%) vs 0.786 (78.6%)</td><td>Your own run</td></tr>
+    <tr><td>Kata: max logit and entropy with final RMSNorm vs without (--no-norm)</td><td class="n">logit 5.18 (1.14 bits) vs 25.65 (0.01 bits)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Tied weights (W_U = W_E.T)</td><td>Saves V × d parameters (0.53 GB at 1B); output gradients train rare input rows</td><td>Input representation and output scoring must share one geometry and scale</td><td>Small models (Llama 3.2 1B/3B, GPT-2, Gemma) use this by default</td></tr>
+    <tr><td>Untied weights (separate W_E and W_U)</td><td>Decouples input feature space from output logit scoring; slightly lower loss at scale</td><td>Doubles embedding parameters and VRAM (2.10 GB in bf16 on Llama 3.1 8B)</td><td>Rare tokens seen only in input or output drift apart between W_E and W_U</td></tr>
+    <tr><td>Cosine similarity on W_E</td><td>Norm-invariant angle comparison; finds true distributional synonyms across frequencies</td><td>Requires dividing by L2 norms; ignores magnitude signal that dot-product attention uses</td><td>Anisotropy cone makes raw cosine baselines positive (> 0)</td></tr>
+    <tr><td>Dot-product similarity on W_E</td><td>Matches the exact linear projection used by W_U and attention matrices</td><td>Heavily biased toward high-norm tokens (often driven by token frequency)</td><td>High-norm outlier or uninitialized tokens dominating rankings</td></tr>
+    <tr><td>Mean / subword embedding init on resize</td><td>New tokens start inside the existing norm shell and semantic manifold; zero logit shock</td><td>New tokens initially behave like averages of existing words until trained</td><td>If noise is 0 for multiple new tokens, they receive identical gradients</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: embedding geometry, weight tying and surgery in 90 lines</h2>
+  <p>This self-contained NumPy script audits real-model tied versus untied memory, trains a miniature language model on a clinical and systems corpus where "naproxen" appears only as a sentence-final target, compares cosine versus dot-product nearest neighbors, and tests three failure modes: untying weights, bad N(0, 1) vocabulary surgery, and skipping final RMSNorm.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Embeddings and unembedding kata. Run: python kata.py [--untie] [--bad-init] [--no-norm]"""
+import argparse, numpy as np
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--untie", action="store_true", help="untie W_U from W_E.T")
+ap.add_argument("--bad-init", action="store_true", help="init new tokens with N(0,1) instead of mean(W_E)")
+ap.add_argument("--no-norm", action="store_true", help="skip final RMSNorm before unembedding")
+args = ap.parse_args()
+np.random.seed(4)
+
+# 1. Scale audit: tied vs untied embedding memory and parameter share
+print("=== 1. Real-model embedding scale (bf16 = 2 bytes/param) ===")
+for name, V, d, body_m in [("Llama-3.2-1B", 128256, 2048, 973.0), ("Llama-3.1-8B", 128256, 4096, 6980.0)]:
+    we_m = V * d / 1e6
+    tied_pct = 100 * we_m / (body_m + we_m)
+    untied_pct = 100 * (2 * we_m) / (body_m + 2 * we_m)
+    print(f"{name:12} V={V} d={d} | Tied: {we_m:6.1f}M ({we_m*2/1e3:.2f} GB, {tied_pct:4.1f}%) | Untied: {2*we_m:7.1f}M ({we_m*4/1e3:.2f} GB, {untied_pct:4.1f}%)")
+
+# 2. Clinic + systems corpus: "naproxen" appears ONLY as a target at sentence end
+SENTS = (
+    [["the", "patient", "took", "aspirin", "now", "fever"]] * 24 +
+    [["the", "patient", "took", "ibuprofen", "now", "fever"]] * 8 +
+    [["the", "patient", "took", "naproxen"]] * 3 +
+    [["the", "server", "logged", "latency", "now", "alert"]] * 22 +
+    [["the", "server", "logged", "jitter", "now", "alert"]] * 3
+)
+vocab = []
+for s in SENTS:
+    for w in s:
+        if w not in vocab: vocab.append(w)
+stoi = {w: i for i, w in enumerate(vocab)}
+V, d = len(vocab), 16
+triples = np.array([[stoi[s[i]], stoi[s[i+1]], stoi[s[i+2]]] for s in SENTS for i in range(len(s) - 2)])
+X1, X2, Y = triples[:, 0], triples[:, 1], triples[:, 2]
+counts = {w: sum(w in s for s in SENTS) for w in vocab}
+
+# Verify lookup W_E[i] == one_hot(i) @ W_E
+W_E = np.random.randn(V, d) * 0.04 + 0.08  # small init + slight common cone offset
+W_U = (np.random.randn(d, V) * 0.04 + 0.08) if args.untie else W_E.T
+W_1, W_2 = np.random.randn(d, d) * 0.15, np.random.randn(d, d) * 0.15
+assert np.allclose(W_E[X1[:4]], np.eye(V)[X1[:4]] @ W_E)
+
+def rmsnorm(h, skip=False):
+    return h if skip else h / np.sqrt(np.mean(h * h, axis=-1, keepdims=True) + 1e-6)
+
+lr = 0.10
+for _ in range(260):
+    e1, e2 = W_E[X1], W_E[X2]
+    h_raw = 5.0 * (e1 @ W_1 + e2 @ W_2 + 0.6 * (e1 + e2))  # residual stream builds magnitude
+    h = rmsnorm(h_raw, skip=False)
+    logits = h @ (W_U if args.untie else W_E.T)
+    probs = np.exp(logits - logits.max(axis=1, keepdims=True))
+    probs /= probs.sum(axis=1, keepdims=True)
+    dz = (probs - np.eye(V)[Y]) / len(Y)
+    dh = dz @ (W_U.T if args.untie else W_E)
+    if args.untie:
+        W_U = 0.997 * W_U - lr * (h.T @ dz)
+    else:
+        W_E = 0.997 * W_E - lr * (dz.T @ h)  # tied: output gradient shapes W_E directly
+    np.add.at(W_E, X1, -lr * (dh @ W_1.T + 0.6 * dh))
+    np.add.at(W_E, X2, -lr * (dh @ W_2.T + 0.6 * dh))
+    W_1 -= lr * (e1.T @ dh); W_2 -= lr * (e2.T @ dh)
+
+# 3. Geometry: norms, cosine vs dot-product neighbors
+norms = np.linalg.norm(W_E, axis=1)
+unit_E = W_E / norms[:, None]
+print(f"\n=== 2. Embedding geometry (V={V}, d={d}, {'UNTIED' if args.untie else 'TIED'}) ===")
+for w in ["aspirin", "ibuprofen", "naproxen", "jitter"]:
+    i = stoi[w]
+    cos_s = unit_E @ unit_E[i]; cos_s[i] = -2
+    dot_s = W_E @ W_E[i]; dot_s[i] = -1e9
+    c_top = [(vocab[j], round(float(cos_s[j]), 2)) for j in np.argsort(-cos_s)[:2]]
+    d_top = [(vocab[j], round(float(dot_s[j]), 2)) for j in np.argsort(-dot_s)[:2]]
+    print(f"  {w:10} n={counts[w]:2d} ||e||={norms[i]:.2f} | cosine top: {c_top} | dot top: {d_top}")
+
+# 4. Zero-shot input transfer ("naproxen", "now") -&gt; "fever" (naproxen was ONLY a target in training!)
+e1_t, e2_t = W_E[stoi["naproxen"]], W_E[stoi["now"]]
+h_raw_t = 5.0 * (e1_t @ W_1 + e2_t @ W_2 + 0.6 * (e1_t + e2_t))
+h_eval = rmsnorm(h_raw_t, skip=args.no_norm)
+z_eval = h_eval @ (W_U if args.untie else W_E.T)
+p_eval = np.exp(z_eval - z_eval.max()); p_eval /= p_eval.sum()
+ent = -np.sum(p_eval * np.log2(p_eval + 1e-12))
+print(f"Eval ('naproxen now' -&gt; 'fever'): P('fever')={p_eval[stoi['fever']]:.3f} | max_logit={z_eval.max():.2f} | entropy={ent:.2f} bits")
+
+# 5. Vocabulary surgery: add 8 new clinical tokens (&lt;|triage|&gt;, &lt;|hipaa|&gt;, ...)
+rng = np.random.RandomState(12)
+new_E = rng.randn(8, d) if args.bad_init else (W_E.mean(axis=0) + rng.randn(8, d) * 1e-3)
+W_E_ext = np.vstack([W_E, new_E])
+z_ext = h_eval @ W_E_ext.T
+p_ext = np.exp(z_ext - z_ext.max()); p_ext /= p_ext.sum()
+print(f"Surgery ({'N(0,1) bad init' if args.bad_init else 'mean(W_E) init'}): new ||e||={np.linalg.norm(new_E, axis=1).mean():.2f} vs old ||e||={norms.mean():.2f} | hijacked prob={p_ext[V:].sum():.3f}")</pre></div>
+  <p class="cap">Output from a real run (baseline plus three break-it flags)</p><div class="codewrap"><pre class="out">$ python kata.py
+=== 1. Real-model embedding scale (bf16 = 2 bytes/param) ===
+Llama-3.2-1B V=128256 d=2048 | Tied:  262.7M (0.53 GB, 21.3%) | Untied:   525.3M (1.05 GB, 35.1%)
+Llama-3.1-8B V=128256 d=4096 | Tied:  525.3M (1.05 GB,  7.0%) | Untied:  1050.7M (2.10 GB, 13.1%)
+
+=== 2. Embedding geometry (V=13, d=16, TIED) ===
+  aspirin    n=24 ||e||=1.14 | cosine top: [('ibuprofen', 0.98), ('naproxen', 0.92)] | dot top: [('ibuprofen', 0.85), ('fever', 0.48)]
+  ibuprofen  n= 8 ||e||=0.75 | cosine top: [('aspirin', 0.98), ('naproxen', 0.96)] | dot top: [('aspirin', 0.85), ('naproxen', 0.29)]
+  naproxen   n= 3 ||e||=0.41 | cosine top: [('ibuprofen', 0.96), ('aspirin', 0.92)] | dot top: [('aspirin', 0.43), ('ibuprofen', 0.29)]
+  jitter     n= 3 ||e||=0.58 | cosine top: [('latency', 0.94), ('alert', 0.48)] | dot top: [('latency', 0.71), ('alert', 0.38)]
+Eval ('naproxen now' -&gt; 'fever'): P('fever')=0.761 | max_logit=5.18 | entropy=1.14 bits
+Surgery (mean(W_E) init): new ||e||=0.27 vs old ||e||=1.03 | hijacked prob=0.047
+
+$ python kata.py --untie
+=== 1. Real-model embedding scale (bf16 = 2 bytes/param) ===
+Llama-3.2-1B V=128256 d=2048 | Tied:  262.7M (0.53 GB, 21.3%) | Untied:   525.3M (1.05 GB, 35.1%)
+Llama-3.1-8B V=128256 d=4096 | Tied:  525.3M (1.05 GB,  7.0%) | Untied:  1050.7M (2.10 GB, 13.1%)
+
+=== 2. Embedding geometry (V=13, d=16, UNTIED) ===
+  aspirin    n=24 ||e||=0.98 | cosine top: [('ibuprofen', 0.94), ('alert', 0.66)] | dot top: [('ibuprofen', 0.57), ('patient', 0.22)]
+  ibuprofen  n= 8 ||e||=0.62 | cosine top: [('aspirin', 0.94), ('alert', 0.76)] | dot top: [('aspirin', 0.57), ('logged', 0.23)]
+  naproxen   n= 3 ||e||=0.38 | cosine top: [('fever', 0.84), ('alert', 0.75)] | dot top: [('logged', 0.25), ('aspirin', 0.21)]
+  jitter     n= 3 ||e||=0.46 | cosine top: [('latency', 0.8), ('fever', 0.76)] | dot top: [('latency', 0.36), ('the', 0.23)]
+Eval ('naproxen now' -&gt; 'fever'): P('fever')=0.489 | max_logit=3.77 | entropy=1.73 bits
+Surgery (mean(W_E) init): new ||e||=0.38 vs old ||e||=0.77 | hijacked prob=0.256
+
+$ python kata.py --bad-init
+=== 1. Real-model embedding scale (bf16 = 2 bytes/param) ===
+Llama-3.2-1B V=128256 d=2048 | Tied:  262.7M (0.53 GB, 21.3%) | Untied:   525.3M (1.05 GB, 35.1%)
+Llama-3.1-8B V=128256 d=4096 | Tied:  525.3M (1.05 GB,  7.0%) | Untied:  1050.7M (2.10 GB, 13.1%)
+
+=== 2. Embedding geometry (V=13, d=16, TIED) ===
+  aspirin    n=24 ||e||=1.14 | cosine top: [('ibuprofen', 0.98), ('naproxen', 0.92)] | dot top: [('ibuprofen', 0.85), ('fever', 0.48)]
+  ibuprofen  n= 8 ||e||=0.75 | cosine top: [('aspirin', 0.98), ('naproxen', 0.96)] | dot top: [('aspirin', 0.85), ('naproxen', 0.29)]
+  naproxen   n= 3 ||e||=0.41 | cosine top: [('ibuprofen', 0.96), ('aspirin', 0.92)] | dot top: [('aspirin', 0.43), ('ibuprofen', 0.29)]
+  jitter     n= 3 ||e||=0.58 | cosine top: [('latency', 0.94), ('alert', 0.48)] | dot top: [('latency', 0.71), ('alert', 0.38)]
+Eval ('naproxen now' -&gt; 'fever'): P('fever')=0.761 | max_logit=5.18 | entropy=1.14 bits
+Surgery (N(0,1) bad init): new ||e||=4.26 vs old ||e||=1.03 | hijacked prob=0.786
+
+$ python kata.py --no-norm
+=== 1. Real-model embedding scale (bf16 = 2 bytes/param) ===
+Llama-3.2-1B V=128256 d=2048 | Tied:  262.7M (0.53 GB, 21.3%) | Untied:   525.3M (1.05 GB, 35.1%)
+Llama-3.1-8B V=128256 d=4096 | Tied:  525.3M (1.05 GB,  7.0%) | Untied:  1050.7M (2.10 GB, 13.1%)
+
+=== 2. Embedding geometry (V=13, d=16, TIED) ===
+  aspirin    n=24 ||e||=1.14 | cosine top: [('ibuprofen', 0.98), ('naproxen', 0.92)] | dot top: [('ibuprofen', 0.85), ('fever', 0.48)]
+  ibuprofen  n= 8 ||e||=0.75 | cosine top: [('aspirin', 0.98), ('naproxen', 0.96)] | dot top: [('aspirin', 0.85), ('naproxen', 0.29)]
+  naproxen   n= 3 ||e||=0.41 | cosine top: [('ibuprofen', 0.96), ('aspirin', 0.92)] | dot top: [('aspirin', 0.43), ('ibuprofen', 0.29)]
+  jitter     n= 3 ||e||=0.58 | cosine top: [('latency', 0.94), ('alert', 0.48)] | dot top: [('latency', 0.71), ('alert', 0.38)]
+Eval ('naproxen now' -&gt; 'fever'): P('fever')=0.999 | max_logit=25.65 | entropy=0.01 bits
+Surgery (mean(W_E) init): new ||e||=0.27 vs old ||e||=1.03 | hijacked prob=0.000</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Probability mass on target vs hijacked across kata experiments</div>
+    <div data-bars='{"unit":"","digits":3,"max":1.0,"rows":[{"label":"Tied P(fever | naproxen now)","value":0.761,"tone":"good"},{"label":"Untied P(fever | naproxen now)","value":0.489,"tone":"warn"},{"label":"Surgery hijack: mean(W_E) init","value":0.047,"tone":"good"},{"label":"Surgery hijack: N(0,1) bad init","value":0.786,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Weight tying lifts zero-shot rare-token input accuracy from 0.489 to 0.761, while unscaled N(0, 1) surgery hijacks 78.6% of next-token probability versus 4.7% with mean(W_E) initialization.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>In Llama 3.2 1B (V = 128,256, d = 2,048), untying W_E and W_U consumes 525.3M parameters (1.05 GB in bf16), or 35.1% of the entire model. Tying cuts that to 262.7M parameters (21.3%). In Llama 3.1 8B (d = 4,096), the untied pair is 2.10 GB, or 13.1% of the model.</li>
+    <li>Look at "naproxen" (count = 3, norm = 0.41) in the tied run: by cosine similarity its top neighbor is "ibuprofen" (0.96) followed by "aspirin" (0.92). By raw dot product, "aspirin" (0.43) flips ahead of "ibuprofen" (0.29) because "aspirin" occurred 24 times and grew to norm 1.14 versus 0.75.</li>
+    <li>For "aspirin" itself, cosine top neighbors are the two other drugs ("ibuprofen" 0.98, "naproxen" 0.92), whereas dot product pulls in the high-frequency word "fever" (0.48) ahead of "naproxen". Always normalize rows before inspecting semantic neighbors in W_E.</li>
+    <li>"Naproxen" never appeared as an input token during training (only at the end of "the patient took naproxen"). Yet with tied weights, predicting "naproxen" as an output trained its input row W_E[naproxen], giving P("fever" | "naproxen now") = 0.761.</li>
+    <li>When 8 new clinical tokens are initialized around <code>W_E.mean(axis=0)</code>, their average norm is 0.27 and they take only 4.7% of probability mass before fine-tuning.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Untie W_U from W_E.T.</strong> Run <code>python kata.py --untie</code>. Predict first: since "naproxen" only appears as a target Y in the training sentences, what happens to its cosine similarity with "ibuprofen" in W_E and to P("fever" | "naproxen now")?</li>
+    <li><strong>Bad vocabulary surgery initialization.</strong> Run <code>python kata.py --bad-init</code>, which initializes the 8 new tokens with <code>N(0, 1)</code> instead of <code>W_E.mean(axis=0)</code>. Predict the expected L2 norm of a 16-dimensional standard normal vector (sqrt(16) = 4.0) and see how much probability mass the untrained tokens steal.</li>
+    <li><strong>Remove final RMSNorm.</strong> Run <code>python kata.py --no-norm</code>, which skips normalizing the residual stream before <code>h @ W_U</code>. Predict what happens to <code>max_logit</code> and next-token entropy when residual magnitude 5x hits the unembedding directly.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Subtract the mean vector <code>W_E.mean(axis=0)</code> from every row of W_E (post-processing centering, Mu et al.) before computing dot products, and check whether "aspirin" still pulls in "fever" as a top dot-product neighbor.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>After adding special tokens (<code>resize_token_embeddings</code>), loss spikes on step 1 and the model outputs only the new tokens</td><td>New rows initialized with large variance (or unscaled normal) so ||e_new|| &gt;&gt; ||e_old||</td><td>Initialize new rows to <code>mean(W_E)</code> plus tiny noise (or HF <code>mean_resizing=True</code>) or average of descriptive subword rows</td></tr>
+    <tr><td>Fine-tuning with LoRA on a chat template with newly added role tokens ignores the new role markers</td><td>LoRA adapters target attention projections, leaving W_E and W_U frozen so new token rows never update</td><td>Pass <code>modules_to_save=["embed_tokens", "lm_head"]</code> (or unfreeze the new rows) when adding tokens</td></tr>
+    <tr><td>Saving a fine-tuned small model doubles checkpoint size or throws a shared-tensor error in <code>safetensors</code></td><td>Weight tying pointer between <code>embed_tokens.weight</code> and <code>lm_head.weight</code> was broken during surgery or state-dict copy</td><td>Re-tie weights via <code>model.tie_weights()</code> after resizing and verify both attributes point to the same storage</td></tr>
+    <tr><td>CUDA device-side assert (index out of bounds) inside embedding lookup or unembedding cross-entropy</td><td>Tokenizer has more tokens (for example extra special tokens) than <code>model.config.vocab_size</code></td><td>Assert <code>len(tokenizer) &lt;= model.get_input_embeddings().weight.shape[0]</code> at startup</td></tr>
+    <tr><td>Distributed tensor-parallel decoding has high all-gather latency on a 128K+ vocabulary</td><td>Unembedding matmul <code>h @ W_U</code> produces a large V-dimensional logit tensor on every GPU</td><td>Shard W_E and W_U column/row-wise with <code>VocabParallelEmbedding</code> and compute parallel cross-entropy without gathering full logits</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> L2 norm distribution of W_E and W_U rows (especially newly added tokens versus base vocabulary), max logit magnitude before softmax (a sudden rise signals norm growth or missing final norm), and tokenizer length versus embedding matrix row count at startup.</p>
+  <details class="q"><summary>Scenario: you add 12 custom clinical workflow tokens (such as &lt;|soap_subjective|&gt; and &lt;|icd10_code|&gt;) to a Llama 3.2 1B model and start LoRA fine-tuning. On the first evaluation batch, perplexity explodes from 6.2 to 480 and generated text repeats &lt;|icd10_code|&gt; endlessly. Walk through the root cause and fix.</summary><div class="a"><ol>
+    <li>Inspect the L2 norms of the 12 new rows in <code>embed_tokens.weight</code> against the base 128,256 rows. If they were initialized with high variance instead of the existing distribution mean/covariance, their norms are far larger than trained rows, hijacking <code>h @ W_U</code> logits.</li>
+    <li>Check whether weight tying in Llama 3.2 1B was preserved after resizing: call <code>model.tie_weights()</code> so <code>lm_head.weight</code> and <code>embed_tokens.weight</code> share the same resized tensor.</li>
+    <li>Re-initialize each new token row to the average embedding of its constituent English subwords (for example averaging the embeddings of "icd", "10", and "code") or use <code>model.resize_token_embeddings(len(tokenizer), mean_resizing=True)</code>.</li>
+    <li>Check your LoRA configuration: because base weights are frozen in LoRA, the new token rows cannot learn unless you include <code>embed_tokens</code> (and <code>lm_head</code> if untied) in <code>modules_to_save</code> or register a gradient mask that updates only the 12 new rows.</li>
+    <li>Run a zero-step forward pass on a held-out clinical prompt before training to verify that the new tokens have near-zero probability mass prior to seeing training examples.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>The embedding table W_E and unembedding matrix W_U are the two bookends of a transformer. W_E translates each integer token ID into a d-dimensional residual stream vector at the input, and W_U projects the final hidden state back across all V vocabulary tokens to produce next-token logits at the output.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Mathematically, input embedding is a one-hot vector times W_E of shape V by d, but in hardware it runs as an O(d) row lookup that copies d floats with zero arithmetic FLOPs. At the exit, the final residual vector passes through RMSNorm to bound its magnitude, then multiplies by W_U of shape d by V. That unembedding is a dense matrix-vector multiply costing 2dV FLOPs per generated token. Weight tying sets W_U equal to W_E transpose so both ends share one physical tensor, saving V times d parameters and letting output gradients train rare input rows.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In Llama 3.2 1B, V is 128,256 and d is 2,048, so one bf16 table is 262.7 million parameters or 0.53 GB; tying drops embedding share from 35% to 21%. Trained embeddings form an anisotropic cone where frequency inflates vector norms, distorting dot-product neighbors relative to cosine. When adding tokens, initialize to the mean or subword average, never N(0,1), or huge norms hijack logits.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p>Question: how do you add custom special tokens to a pretrained LLM for fine-tuning, and what can go wrong?</p><p class="weak">"You add the tokens to the tokenizer, call resize_token_embeddings on the model, and then fine-tune it on your dataset so the model learns what they mean."</p><p class="strong">"Adding K tokens resizes W_E from V by d to (V + K) by d and W_U to d by (V + K). Three things break if you just resize and run. First, initialization scale: trained embeddings have small L2 norms around 1, while a raw N(0,1) vector in d dimensions has norm sqrt(d), which hijacks logits in h @ W_U on step 1; in my toy run N(0,1) init stole 78.6% of probability mass versus 4.7% when initialized to mean(W_E). Second, if the model ties W_U = W_E.T like Llama 3.2 1B, you must preserve the tied pointer after resizing. Third, under LoRA, W_E and W_U are frozen by default, so you must unfreeze the new rows or add embed_tokens to modules_to_save."</p><p>The strong answer names the matrix shapes, the norm mechanism (sqrt(d)), an illustrative number from the kata (78.6% vs 4.7%), and the LoRA freeze trap.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"The input embedding layer multiplies a one-hot vector of length V by the V × d matrix W_E on the GPU."</summary><div class="a">That is the mathematical identity, not what runs in hardware. A dense one-hot matmul would waste 2Vd FLOPs multiplying zeros. <code>nn.Embedding</code> executes an O(d) indexed memory gather (8 KB at d = 4,096 in bf16) with zero arithmetic FLOPs.</div></details>
+  <details class="q"><summary>"Dot product and cosine similarity in W_E give the same nearest neighbors because embeddings have roughly unit length."</summary><div class="a">Trained token embeddings do not have unit length; their L2 norms vary systematically with token frequency and weight decay. In the kata, "aspirin" (count 24, norm 1.14) beats "ibuprofen" (count 8, norm 0.75) in dot product with "naproxen" (0.43 vs 0.29) even though "ibuprofen" is closer in cosine angle (0.96 vs 0.92).</div></details>
+  <details class="q"><summary>"All modern LLMs tie their input and output embeddings because it saves memory with no downside."</summary><div class="a">Small models (Llama 3.2 1B and 3B, GPT-2, Gemma) tie weights because V × d is 20% to 35% of total parameters. Large models with big vocabularies (Llama 3.1 8B and 70B) leave W_E and W_U untied: at 8B+, the extra 1.05 GB is only 6.5% of the model, and decoupling input features from output logit scoring improves perplexity.</div></details>
+  <details class="q"><summary>"When you add new special tokens for LoRA fine-tuning, calling resize_token_embeddings is enough for the model to learn them."</summary><div class="a">Two things fail: if the new rows are initialized with large variance, they hijack logits immediately; and because standard LoRA freezes W_E and W_U, the newly added rows receive zero parameter updates unless you explicitly make <code>embed_tokens</code> and <code>lm_head</code> trainable.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain embeddings and the unembedding in 90 seconds.</summary><div class="a">Follow the three levels above: the bookend roles of W_E (V × d) and W_U (d × V); O(d) input lookup versus 2dV output matmul after final RMSNorm plus weight tying; and the 1B versus 8B parameter math, anisotropy/frequency norms, and safe vocabulary surgery.<div class="f"><b>Follow-up</b>Why is the output layer so much more expensive in FLOPs than the input layer? Input knows the single integer ID i and reads one row of d floats; output must compute a dot product against all V columns to score the full probability distribution.</div></div></details>
+  <details class="q"><summary>Compare the parameter count and bf16 memory of W_E and W_U in Llama 3.2 1B (V = 128,256, d = 2,048) versus Llama 3.1 8B (V = 128,256, d = 4,096).</summary><div class="a">At 1B (d = 2,048), one matrix is 262.7M parameters (0.53 GB in bf16). Untied is 525.3M (1.05 GB, 35.1% of the model); tied is 262.7M (21.3%). At 8B (d = 4,096), one matrix is 525.3M parameters (1.05 GB) and untied is 1,050.7M (2.10 GB, 13.1% of the model).<div class="f"><b>Follow-up</b>Why does the embedding share shrink as model size grows? Embedding parameters grow linearly with d (as V × d), while transformer layer parameters grow quadratically with d (as L × d^2).</div></div></details>
+  <details class="q"><summary>How does weight tying help rare tokens learn better representations?</summary><div class="a">With W_U = W_E.T, every softmax cross-entropy step pushes row W_E[j] toward or away from the final hidden state h. In the kata, "naproxen" appeared only as a target token, yet tying trained its input row to 0.96 cosine similarity with "ibuprofen" and lifted zero-shot input accuracy from 0.489 to 0.761.<div class="f"><b>Follow-up</b>What is the theoretical downside of tying W_U = W_E.T? Input embeddings want to group words that have the same effect on future context, while unembeddings want to group words that are probable in the same current context, and tying forces one vector to serve both roles.</div></div></details>
+  <details class="q"><summary>Why do dot-product nearest neighbors in W_E differ from cosine nearest neighbors?</summary><div class="a">Dot product multiplies cosine similarity by both vector norms (||u|| ||v|| cos θ). Because training gives different norms to frequent and rare tokens, high-norm tokens dominate dot-product queries even when another token has a smaller angle.</div></details>
+  <details class="q"><summary>What is the anisotropy cone in transformer embeddings, and why does it happen?</summary><div class="a">Instead of pointing uniformly in all directions with average pairwise cosine 0, trained token embeddings cluster in a narrow cone with positive cosine similarity. Common-mode gradients from the unembedding softmax push all tokens along shared background directions.<div class="f"><b>Follow-up</b>How can you quickly check for anisotropy in a checkpoint's W_E? Normalize all rows to unit length, sample 1,000 random pairs, and compute their mean dot product; a value well above 0 confirms a narrow cone.</div></div></details>
+  <details class="q"><summary>What does the final RMSNorm right before W_U do, and what happens if you remove it?</summary><div class="a">Residual stream activations accumulate across layers, so their RMS magnitude grows with depth. Final RMSNorm projects h back to a controlled shell before the dot product with W_U. Without it (as in <code>--no-norm</code>), logits scale up 5x (from 5.18 to 25.65) and softmax entropy collapses (from 1.14 to 0.01 bits).</div></details>
+  <details class="q"><summary>Derive why initializing a new embedding row with N(0, 1) in d = 4,096 dimensions breaks generation before training starts.</summary><div class="a">For e ~ N(0, I_d), E[||e||^2] = d = 4,096, so ||e|| is about sqrt(4,096) = 64. Trained embeddings initialized at σ = 0.02 sit near norm 1. In z = h @ W_U, the new token's logit scales with ||e||, overwhelming trained logits.<div class="f"><b>Follow-up</b>Give two safe ways to initialize new tokens when resizing W_E. Set each new row to <code>W_E.mean(dim=0)</code> plus tiny noise (or match the empirical mean and covariance of W_E), or average the existing subword embeddings of a short phrase describing the token.</div></div></details>
+  <details class="q"><summary>During backward propagation on a prompt of length S, how do the gradient updates to W_E and W_U differ in sparsity?</summary><div class="a">The output gradient dW_U = h.T @ dz is dense across all V columns because softmax scores every vocabulary token at every position. The input gradient dW_E from the bottom of the residual stream is sparse: only the S token IDs present in the prompt receive scatter-add updates.</div></details>
+  <details class="q"><summary>Can static rows in W_E distinguish "discharge" in "hospital discharge" from "battery discharge"?</summary><div class="a">No. W_E assigns a single static vector per token ID regardless of surrounding words. Disambiguating polysemous senses happens inside the subsequent self-attention and MLP layers as context gets mixed into the residual stream (D04).<div class="f"><b>Follow-up</b>Why can't you use a single token's row in W_E as a sentence embedding for RAG retrieval? W_E holds uncontextualized subword vectors; retrieval requires pooling contextualized representations trained with a contrastive objective (H01).</div></div></details>
+  <details class="q"><summary>How are W_E and W_U sharded across GPUs in tensor-parallel serving when V = 128,256?</summary><div class="a">Using <code>VocabParallelEmbedding</code>, the V rows of W_E (and columns of W_U) are split evenly across N GPUs (V / N tokens per GPU). Each GPU looks up its local token range at the input and computes 1/N of the logits at the output, avoiding full-table replication.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its five steps, then write: the L-C-N-P-T memory hook; the input lookup versus output unembedding complexity; the bf16 memory and parameter share of W_E and W_U in Llama 3.2 1B (tied vs untied) and Llama 3.1 8B; why dot product and cosine neighbors differ in the kata; and the two rules for safe vocabulary surgery under LoRA.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Bookends: W_E (V × d) maps token ID i to R^d via O(d) memory gather (0 FLOPs); final RMSNorm stabilizes h; W_U (d × V) computes logits z = h @ W_U in 2dV FLOPs.</li>
+    <li>Scale math: Llama 3.2 1B (V = 128,256, d = 2,048) single table = 262.7M params (0.53 GB bf16, 21.3% tied vs 35.1% untied). Llama 3.1 8B (d = 4,096) single table = 525.3M params (1.05 GB bf16; untied = 2.10 GB, 13.1%).</li>
+    <li>Geometry: dot product is ||u|| ||v|| cos θ, so high-norm frequent tokens ("aspirin", norm 1.14) flip ahead of closer-angle tokens ("ibuprofen", cos 0.96 vs 0.92). Anisotropy cone means random pairs have positive cosine.</li>
+    <li>Weight tying (W_U = W_E.T): halves embedding memory and routes dense output gradients into rare input rows (lifting zero-shot "naproxen" accuracy from 0.489 to 0.761 in the kata).</li>
+    <li>Vocabulary surgery: N(0, 1) in R^d has norm sqrt(d) (4.26 in kata, hijacking 78.6% prob vs 4.7% for mean(W_E) init). Initialize to mean(W_E) or subword average, re-tie weights, and unfreeze embeddings in LoRA (<code>modules_to_save</code>).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: why is autoregressive decoding memory-bandwidth-bound at batch size 1 while prefill is compute-bound?</summary><div class="a">Prefill processes all S prompt tokens in parallel with matrix-matrix multiplies that reuse model weights across S tokens. Decoding generates one token at a time with matrix-vector multiplies, reading all model weights from HBM for just one token of compute.</div></details>
+  <details class="q"><summary>D02: why does a byte-level BPE tokenizer trained on English charge 4x to 5x as many tokens for Telugu or Hindi text with the same meaning?</summary><div class="a">Indic characters take 3 bytes in UTF-8, and BPE only merges byte pairs that occurred frequently in the training corpus. With English-only merges, Telugu stays near raw UTF-8 byte counts (337 vs 71 tokens, or 4.75x in the D02 kata).</div></details>
+  <details class="q"><summary>K03: how many bytes per parameter do fp32, bf16, fp16, int8 and int4 use, and why do modern LLMs prefer bf16 over fp16 for training?</summary><div class="a">4, 2, 2, 1 and 0.5 bytes per parameter. bf16 keeps the same 8 exponent bits as fp32 (with 7 mantissa bits instead of fp16's 5 exponent and 10 mantissa), giving fp32's dynamic range so gradients and activations rarely overflow.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1608.05859">Press and Wolf (2017): Using the Output Embedding to Improve Language Models</a><small>Introduces weight tying (W_U = W_E.T) in neural language models, showing parameter reduction and shared gradient updates. Checked 17 Nov 2026.</small></li>
+    <li><a href="https://huggingface.co/meta-llama/Llama-3.2-1B/blob/main/config.json">Meta AI / Hugging Face: Llama 3.2 1B and Llama 3.1 8B config.json</a><small>Confirms vocab_size = 128,256, hidden_size = 2,048 with tie_word_embeddings = true on 1B, and hidden_size = 4,096 with tie_word_embeddings = false on 8B. Checked 17 Nov 2026.</small></li>
+    <li><a href="https://arxiv.org/abs/1909.00512">Ethayarajh (2019): How Contextual are Contextualized Word Representations?</a><small>Demonstrates that transformer embeddings occupy a narrow anisotropic cone rather than being isotropic. Checked 17 Nov 2026.</small></li>
+    <li><a href="https://huggingface.co/docs/transformers/main_classes/model#transformers.PreTrainedModel.resize_token_embeddings">Hugging Face Transformers: PreTrainedModel.resize_token_embeddings (mean_resizing)</a><small>Documents multivariate normal mean/covariance initialization for newly added vocabulary rows to prevent logit spikes. Checked 17 Nov 2026.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D03 T1 W01", "cards": [{"q": "Why is input embedding implemented as a row lookup W_E[i] instead of multiplying a one-hot vector by W_E?", "a": "Both return row i of W_E, but indexing copies d floats in O(d) memory reads while a one-hot matmul wastes 2Vd FLOPs."}, {"q": "How do the shapes and per-token compute costs of W_E and W_U differ?", "a": "W_E is V by d and costs O(d) memory reads per token. W_U is d by V and costs 2dV FLOPs per token to score all V logits."}, {"q": "Why do cosine similarity and dot product return different nearest neighbors in a trained embedding table?", "a": "Dot product multiplies by both vector norms, favoring high-norm frequent tokens, whereas cosine similarity normalizes norms to measure angle alone."}, {"q": "What is the anisotropy or representation cone problem in transformer token embeddings?", "a": "Trained embeddings cluster in a narrow forward cone with positive pairwise cosine similarity instead of spreading uniformly across all directions."}, {"q": "What is weight tying between W_E and W_U, and why do small models use it more often than large models?", "a": "It sets W_U = W_E.T, saving V x d parameters (21.3% of Llama 3.2 1B vs 7.0% of 8B) and pooling gradients for rare tokens."}, {"q": "How much bf16 memory do W_E and W_U consume in Llama 3.2 1B (V = 128,256, d = 2,048) when tied versus untied?", "a": "One table is 262.7M parameters (0.53 GB in bf16, 21.3% of the model). Untied doubles that to 525.3M parameters (1.05 GB, 35.1%)."}, {"q": "What breaks when you add new tokens to W_E and initialize them with standard normal N(0,1) noise?", "a": "In d dimensions an N(0,1) vector has norm sqrt(d), far larger than trained embeddings, so its dot product with h hijacks softmax logits."}, {"q": "How should you initialize newly added special or domain tokens when resizing an embedding table?", "a": "Initialize each new row to the mean of existing embeddings (plus tiny noise) or the average of subword embeddings describing the token."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

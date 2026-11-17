@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>W19 Active listening and summarizing back</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="W19">
+<main>
+<header>
+  <div class="eyebrow"><b>W19</b><span>People skills</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Active listening and summarizing back</h1>
+  <p class="lede">How do you listen to a five-minute stakeholder monologue or interview prompt without rehearsing your reply, and compress it into a three-bullet summary that triggers "That's right" before you propose an architecture? Mirrors, labels and calibrated questions live in W01; BATNA and ZOPA live in W02.</p>
+  <div class="chips"><span><em>Before</em>W01 Tactical empathy</span><span><em>Before</em>L01 Requirements clarification and logical design</span><span><em>After</em>W02 Principled negotiation</span><span><em>After</em>W04 Structured communication</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Answer the three warm-up guesses</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5, answer each check</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the 5-minute monologue drill and score your 3 bullets</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, record the 90-second answer</span><small>7 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, blank-page recall, then flashcards</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards into Anki, fill the tracker row</span><small>3 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>After you summarize a client's problem back to them, they say "You're right." Is that a win or a failure mode, and why?</summary><div class="a">A failure mode. According to Chris Voss (2016), "You're right" usually means "I am agreeing with your statement so you will stop talking." It changes zero behaviour. The target response is "That's right", where the speaker feels you captured their world accurately.</div></details>
+  <details class="q"><summary>During a 5-minute (300 s) discovery monologue, you try to write down every sentence verbatim. What breaks, and what three buckets should your scratchpad hold instead?</summary><div class="a">Transcribing verbatim overloads working memory, so you miss tone, emphasis and the real risk. Instead, divide your scratchpad into three buckets: Facts and Numbers, Constraints and Risks, and Emotion or Personal Stake.</div></details>
+  <details class="q"><summary>You finish a 3-bullet summary of a system design prompt. How long should that spoken summary take, and what must happen before you name a single database or model?</summary><div class="a">Under 45 seconds (about 90 to 110 words). You must close with a check trigger ("Did I get that right, or what did I miss?") and wait for confirmation before proposing any architecture.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Most engineers listen only long enough to pattern-match a problem to a solution they already know, and then spend the rest of the speaker's turn rehearsing their pitch. When they start talking, they solve the wrong constraint or ignore the personal risk on the other side of the table. Active listening means shutting off your internal pitch generator so you can sort what the speaker says into signal: concrete facts and numbers, hard constraints, and the emotion or personal stake underneath.</p>
+  <p>Summarizing back is how you prove you heard that signal. You compress a five-minute monologue into three structured bullets in under 45 seconds: the situation and numbers they stated, the constraint or failure mode blocking them, and why that failure matters to them personally. When you combine the facts with the stake and close with a check question, the speaker says "That's right." Only when that gate opens do you transition into an engineering proposal.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From 5-minute monologue to "That's right"</div>
+    <svg viewBox="0 0 480 220" role="img" aria-label="Five-step active listening loop: bucket notes into Facts, Constraints and Stakes during a 300 s monologue, synthesize into 3 bullets under 45 s, ask a check question, compare the failure mode You're right against the target That's right, and only then propose the architecture.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="14" width="140" height="76" rx="6" class="c-soft" data-hi="1"/>
+          <rect x="10" y="14" width="140" height="10" rx="3" class="c-accent"/>
+          <text x="80" y="38" text-anchor="middle" font-weight="600">1. Bucket Notes</text>
+          <text x="80" y="56" text-anchor="middle" class="m">300 s input, 0 pitch</text>
+          <text x="80" y="74" text-anchor="middle">Facts | Limits | Stake</text>
+        </g>
+        <g data-step="2">
+          <path d="M150 52 H170" class="ink"/>
+          <rect x="170" y="14" width="140" height="76" rx="6" class="c-soft" data-hi="2"/>
+          <rect x="170" y="14" width="140" height="10" rx="3" class="c-accent"/>
+          <text x="240" y="38" text-anchor="middle" font-weight="600">2. 3-Bullet Summary</text>
+          <text x="240" y="56" text-anchor="middle" class="m">Speak &lt;= 45 s</text>
+          <text x="240" y="74" text-anchor="middle">Numbers + Risk + Stake</text>
+        </g>
+        <g data-step="3">
+          <path d="M310 52 H330" class="ink"/>
+          <rect x="330" y="14" width="140" height="76" rx="6" class="c-soft" data-hi="3"/>
+          <rect x="330" y="14" width="140" height="10" rx="3" class="c-good"/>
+          <text x="400" y="38" text-anchor="middle" font-weight="600">3. Check Trigger</text>
+          <text x="400" y="56" text-anchor="middle" class="m">"What did I miss?"</text>
+          <text x="400" y="74" text-anchor="middle">Pause for verdict</text>
+        </g>
+        <g data-step="4">
+          <rect x="10" y="112" width="220" height="88" rx="6" class="c-soft" data-hi="4"/>
+          <rect x="10" y="112" width="10" height="88" rx="3" class="c-bad"/>
+          <text x="125" y="138" text-anchor="middle" font-weight="600">Fail: "You're right"</text>
+          <text x="125" y="158" text-anchor="middle" class="m">Pitched early or missed stake</text>
+          <text x="125" y="178" text-anchor="middle">Polite brush-off, 0 buy-in</text>
+        </g>
+        <g data-step="5">
+          <rect x="250" y="112" width="220" height="88" rx="6" class="c-soft" data-hi="5"/>
+          <rect x="250" y="112" width="10" height="88" rx="3" class="c-good"/>
+          <text x="365" y="138" text-anchor="middle" font-weight="600">Pass: "That's right"</text>
+          <text x="365" y="158" text-anchor="middle" class="m">Gate opens: shared problem</text>
+          <text x="365" y="178" text-anchor="middle">Now propose architecture</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Listen for up to 300 seconds without rehearsing a fix, sorting keywords into Facts, Constraints, and Stake.</li>
+      <li>Synthesize those notes into 3 crisp bullets in under 45 seconds: numbers first, hard constraint second, personal stake third.</li>
+      <li>End with an open check trigger ("What did I miss?") and pause so they can confirm or correct the frame.</li>
+      <li>If you pitched early or skipped the stake, you get "You're right", which is a polite brush-off that hides objections.</li>
+      <li>When both facts and stake land, they say "That's right", opening the gate to propose your engineering design.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Sort what you hear into Facts, Constraints and Stake, summarize back in 3 bullets under 45 seconds, and wait for "That's right" before designing.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>F-C-S, then Check.</strong> Three columns on your pad: <strong>F</strong>acts and numbers, <strong>C</strong>onstraints and risks, <strong>S</strong>take and emotion. Read them back as 3 bullets in 45 seconds, ask "What did I miss?", and do not touch the whiteboard until you hear "That's right."</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>Shutting off the pitch rehearsal</h3>
+  <p>Human speech runs at about 130 to 160 words per minute, while internal thought runs two to three times faster. Engineers use that spare bandwidth to design a solution while the stakeholder is still talking. The moment you start mentally architecting at second 40 of a 300-second explanation, you stop hearing new constraints introduced at minute three. The fix is physical: force your hand to sort incoming statements into a three-column scratchpad so your working memory tracks their structure instead of your reply.</p>
+
+  <h3>Signal note-taking vs transcript</h3>
+  <p>Never write full sentences. Draw three columns labeled <code>F</code> (Facts and numbers: QPS, latency targets, call volume, team size), <code>C</code> (Constraints and risks: compliance deadlines, legacy databases, budget caps, failure modes), and <code>S</code> (Stake and emotion: why this person cares, whose credibility is on the line, what happens if the project slips). Twelve to fifteen short tokens across those three columns can hold five minutes of dense conversation.</p>
+  <details class="q"><summary>Check: a clinic director says, "We handle 1,200 calls a day, we cannot store patient audio on third-party servers, and if another patient complaint reaches the board I lose my budget." Put this into F, C, and S tokens.</summary><div class="a">F: 1,200 calls/day. C: zero third-party audio storage (compliance). S: board complaint = loses budget (personal survival stake).</div></details>
+
+  <h3>Anatomy of the 3-bullet summary back</h3>
+  <p>According to Chris Voss in <em>Never Split the Difference</em> (2016), a full summary equals paraphrasing the facts plus labeling the emotion. In technical work, turn your three columns directly into three spoken bullets that take 30 to 45 seconds total:</p>
+  <div class="codewrap"><pre>Bullet 1 (Facts):      "So first, on the numbers, you are running [F]..."
+Bullet 2 (Constraint): "Second, the hard constraint is [C], which breaks when..."
+Bullet 3 (Stake):      "And third, it sounds like the real risk for you is [S]."
+Check trigger:         "Did I get that right, or what did I miss?"</pre></div>
+
+  <h3>"That's right" vs "You're right"</h3>
+  <p>When you argue a point or pitch a solution and ask "Don't you think?", the other person says "You're right" to get you to leave them alone. When you summarize their world back to them without pitching, including the constraint and the personal stake they are carrying, they say "That's right" (or "Exactly"). Even better, if one number or priority is slightly off, they correct it immediately. A corrected summary before you design saves twenty minutes of building the wrong architecture in an interview or a forward-deployed engineering (FDE) discovery call.</p>
+  <details class="q"><summary>Check: why is a summary that only repeats the technical numbers ("So you have 1,200 calls a day and need on-prem storage") incomplete on an FDE discovery call?</summary><div class="a">It paraphrases facts and constraints but omits the stake (why the buyer is worried or what happens if it fails). Without the stake, you rarely trigger "That's right" and you miss the urgency driving the decision.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Summary formula in Voss (2016)</td><td class="n">Paraphrase (facts) + Label (emotion/stake)</td><td>Checked 17 Nov 2026</td></tr>
+    <tr><td>Target confirmation phrase vs brush-off</td><td class="n">"That's right" vs "You're right"</td><td>Checked 17 Nov 2026</td></tr>
+    <tr><td>Normal speech rate vs internal thought rate</td><td class="n">~150 wpm speech vs ~400 wpm thought</td><td>From memory, verify</td></tr>
+    <tr><td>Drill input clip duration</td><td class="n">5 min (300 s)</td><td>Index kata spec</td></tr>
+    <tr><td>Summary back target length</td><td class="n">3 bullets in 30 to 45 s (90 to 110 words)</td><td>Own design</td></tr>
+    <tr><td>Scratchpad token budget per 5-min clip</td><td class="n">12 to 15 keywords across 3 columns (F, C, S)</td><td>Own design</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>3-bullet F-C-S summary before proposing</td><td>Shared problem definition; catches hidden constraints early</td><td>30 to 45 seconds upfront before showing technical depth</td><td>Turning Bullet 3 into a sales pitch instead of naming their stake</td></tr>
+    <tr><td>Paraphrase facts only (skip emotion/stake)</td><td>Feels safe and strictly technical in coding/design interviews</td><td>Misses what the interviewer or stakeholder actually cares about most</td><td>Lukewarm "Yeah, basically" instead of "That's right"</td></tr>
+    <tr><td>Transcribe everything verbatim</td><td>Exact quotes of every number mentioned</td><td>You lose eye contact, miss vocal stress, and drown in 2 pages of raw notes</td><td>Taking 2 minutes to read back a messy chronological list</td></tr>
+    <tr><td>Jump straight to architecture at second 60</td><td>Shows speed when the problem is trivial and unambiguous</td><td>Builds the wrong system when a constraint was buried at minute 4</td><td>Interviewer interrupting with "Wait, did you consider..."</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 5-minute clip to 3-bullet summary</h2>
+  <p>Read or listen to the 5-minute stakeholder monologue below (or play any 5-minute customer/system-design clip at 1x speed) while taking F-C-S notes, then record a 3-bullet spoken summary in under 45 seconds.</p>
+  <p class="cap">How to run it in chat</p><div class="codewrap"><pre data-copy>1. Draw three columns on paper: F (Facts/Numbers), C (Constraints/Risks), S (Stake).
+2. Read the monologue below once without stopping (or ask Claude in chat: "Read me a 5-minute FDE customer monologue").
+3. Start a 45-second timer and speak your 3-bullet summary + check trigger aloud.
+4. Paste your 3 bullets in chat and say: "Grade my W19 summary against the rubric."</pre></div>
+
+  <h3>5-minute FDE discovery monologue (clinic compliance &amp; voice AI)</h3>
+  <div class="box model"><b>Stakeholder transcript (read once, do not highlight, take F-C-S notes only)</b>
+    <p>"Thanks for jumping on. Look, we run 14 outpatient clinics across two states, handling about 4,200 inbound patient calls every weekday. Right now, 38 percent of callers hang up before a human picks up because hold times spike past six minutes between 8 a.m. and 11 a.m. Every abandoned call is roughly 180 dollars in lost appointment revenue, or at least that is what finance tells me, though honestly my bigger headache is the nursing union. Last quarter we tried an offshore call centre and they misrouted twelve urgent post-op calls to general voicemail. Two surgeons went straight to the CEO and threatened to pull their clinic privileges if we ever put an unvetted script in front of post-op patients again. So if your voice agent hallucinates medical advice or fails to escalate a post-op fever within 15 seconds, I am the one who gets fired. Also, our EHR is an old on-prem Epic build with a brittle HL7 wrapper that caps concurrent writes at 20 requests per second, and IT froze all schema changes until October. We need Phase 1 live in 6 weeks for the morning appointment-booking surge, under a 15,000 dollar monthly run-rate, without touching the post-op triage line until the surgeons sign off."</p>
+  </div>
+
+  <details class="q"><summary>Open after you speak your 45-second summary: compare against the reference F-C-S notes and model summary</summary><div class="a">
+    <p><strong>Scratchpad (14 tokens):</strong> <code>F:</code> 14 clinics, 4,200 calls/day, 38% abandon (&gt;6m hold, 8-11am), $15k/mo cap, 6-wk deadline. <code>C:</code> Epic HL7 20 writes/s max, schema freeze till Oct, post-op escalation &lt;15s, 0 medical hallucination. <code>S:</code> Surgeons threatened CEO after 12 misrouted post-op calls; director gets fired if post-op fails.</p>
+    <p><strong>Reference 3-bullet summary (38 seconds, 98 words):</strong></p>
+    <ul>
+      <li><strong>Bullet 1 (Facts):</strong> "So first, on the numbers: you have 4,200 weekday calls across 14 clinics, with 38 percent abandoning during the 8 to 11 a.m. surge, and you need Phase 1 live in 6 weeks under 15,000 dollars a month."</li>
+      <li><strong>Bullet 2 (Constraints):</strong> "Second, your technical guardrails are an on-prem Epic HL7 interface capped at 20 writes per second with frozen schemas until October, and zero tolerance for misrouting post-op calls."</li>
+      <li><strong>Bullet 3 (Stake):</strong> "And third, it sounds like after the offshore vendor misrouted twelve post-op calls, surgeon trust and your own credibility with the CEO are on the line if anything touches post-op triage prematurely."</li>
+      <li><strong>Check trigger:</strong> "Did I capture that right, or what did I miss before we scope Phase 1?"</li>
+    </ul>
+  </div></details>
+
+  <figure class="viz">
+    <div class="vt">Chart: Time and token budget for the 5-minute summary drill</div>
+    <div data-bars='{"unit":"","digits":0,"rows":[{"label":"Monologue listen window (s)","value":300,"tone":"muted","text":"300 s"},{"label":"Max spoken summary (s)","value":45,"tone":"good","text":"45 s"},{"label":"Scratchpad token cap","value":15,"tone":"good","text":"15 tokens"},{"label":"Summary bullet count","value":3,"tone":"good","text":"3 bullets"},{"label":"Premature pitches allowed","value":0,"tone":"bad","text":"0 pitches"}]}'></div>
+    <figcaption><b>Takeaway.</b> Compress 300 seconds of input into at most 15 scratchpad tokens and 3 spoken bullets under 45 seconds, with 0 architecture pitches before confirmation.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: 3-bullet summary rubric and "That's right" scorer</div>
+    <p class="ask">Predict first. If you nail the exact numbers (4,200 calls, 20 writes/s) in 3 bullets under 40 seconds, but omit the surgeon/CEO stake or pitch your RAG architecture before pausing, what response do you get and do you pass the 8 / 10 bar?</p>
+    <div class="ctl">
+      <label><span>Key numbers captured (of 4)</span><input type="range" name="nums" min="0" max="4" step="1" value="4"><output data-for="nums" data-unit=" / 4"></output></label>
+      <label><span>Bullet count</span><input type="range" name="bullets" min="1" max="7" step="1" value="3"><output data-for="bullets" data-unit=" bullets"></output></label>
+      <label><span>Spoken duration</span><input type="range" name="secs" min="15" max="90" step="5" value="38"><output data-for="secs" data-unit=" s"></output></label>
+      <label><span>Stake &amp; close habit</span><select name="stake" data-num><option value="2">Named surgeon/CEO stake + asked check Q</option><option value="1">Named technical constraint only, skipped personal stake</option><option value="0">Pitched architecture before confirmation</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Passing (8 / 10) and triggering "That's right" requires concrete numbers, exactly 3 bullets under 45 seconds, and naming the personal stake without pitching early.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var sNum=v.nums>=3?3:v.nums>=2?2:v.nums>=1?1:0;
+    var sBul=v.bullets===3?2:v.bullets<=4&&v.bullets>=2?1:0;
+    var sDur=v.secs>=25&&v.secs<=45?2:v.secs<=60?1:0;
+    var sStk=v.stake===2?3:v.stake===1?1:0;
+    var total=sNum+sBul+sDur+sStk;
+    var resp=v.stake===0?"\"You're right\" (polite brush-off, defending against pitch)":(total>=8&&v.stake===2)?"\"That's right\" (full buy-in + gate open)":"\"Yeah, mostly\" (partial alignment, hidden risk remains)";
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" / 10",digits:0,max:10,rows:[
+      {label:"Pass bar",value:8,tone:"muted"},
+      {label:"Your summary score",value:total,tone:total>=8?"good":total>=5?"warn":"bad"}
+    ]});
+    return {verdict:"Score: "+total+" / 10 ("+(total>=8?"PASS":"BELOW PASS")+"). Counterpart response: "+resp+"."};
+  })});</script>
+
+  <h3>What to notice</h3>
+  <ol>
+    <li>Notice how the speaker buried the hard technical limit (20 HL7 writes/s, schema freeze) and the real career risk (surgeons threatening the CEO) in the second half of the monologue, after the decoy $180 revenue number.</li>
+    <li>Check your stopwatch: 3 bullets at 150 words per minute is about 95 words in 38 seconds. Anything past 45 seconds means you read back a chronological transcript instead of synthesizing.</li>
+    <li>Notice how naming the surgeon/CEO risk in Bullet 3 naturally leads to the architecture boundary: isolate Phase 1 to morning appointment booking only and hard-bypass post-op calls.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Pitch at second 30.</strong> Interrupt right after "38 percent hang up" to pitch your low-latency voice agent. Predict which two constraints you would violate (the 20 writes/s HL7 limit and the post-op surgeon ban), then check the transcript.</li>
+    <li><strong>Facts-only summary.</strong> Deliver Bullet 1 and Bullet 2 only, skipping the surgeon/CEO stake. Predict whether the stakeholder feels safe signing off on a 6-week pilot, then compare the emotional weight against the 3-bullet version.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Take the next 5-minute podcast clip or system design mock video you watch today, write at most 15 tokens across F, C and S, and speak a 3-bullet summary into your phone timer in under 45 seconds.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Stakeholder replies "You're right" and goes quiet</td><td>You slipped a pitch or opinion into the summary, or skipped their personal stake</td><td>Drop the pitch; label the unspoken risk ("It seems like there is still a risk we haven't covered") and wait</td></tr>
+    <tr><td>Your summary runs past 60 seconds and they interrupt</td><td>Chronological playback of every detail instead of F-C-S synthesis</td><td>Cap at 3 numbered bullets ("Three things I heard: the scale, the hard limit, and the main risk")</td></tr>
+    <tr><td>You blank on the numbers mentioned at minute 1</td><td>Rehearsing your architecture while they were still giving metrics</td><td>Write numbers into the <code>F</code> column the instant you hear a digit, before interpreting it</td></tr>
+    <tr><td>They say "No, that's not the main issue"</td><td>They gave five complaints and you guessed the wrong primary stake</td><td>Treat the correction as a win: "Got it, so the real blocker is X. What else did I miss?"</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> in every system design mock and discovery call, track two numbers: whether your summary stayed under 45 seconds, and whether you received a "That's right" (or an explicit correction) before proposing a single component.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Active listening and summarizing back is compressing a stakeholder's or interviewer's problem statement into a structured three-bullet synthesis before proposing any architecture. It prevents building the wrong system by surfacing hidden constraints and personal stakes upfront, aiming for "That's right" instead of a polite brush-off.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>While the other person speaks, I shut off my internal solution pitch and take notes in three columns: Facts and numbers, hard Constraints and failure modes, and the personal Stake or emotion behind the request. When they finish a five-minute prompt, I summarize back in three bullets under 45 seconds. Bullet one states the scale and metrics, bullet two names the technical or operational bottlenecks, and bullet three labels what is at stake for them if it fails. I always close with a check question like "Did I get that right, or what did I miss?" and wait for confirmation before touching the whiteboard.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>It fails in two ways. If I only repeat numbers without the stake, or if I smuggle a pitch into the summary, I get "You're right", which means they want me to stop talking. And if I transcribe verbatim instead of bucketing, my summary drags past 60 seconds and loses the room.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I am a great active listener. I always make sure the client feels heard and aligned on business value before we build."</p>
+    <p class="strong">"Before I draw a single box in a design review or customer call, I sort what they said into three buckets: numbers, hard constraints, and the risk they care about most. Then I read that back in three bullets in under 45 seconds and ask 'What did I miss?' Until they say 'That's right' or correct my numbers, I do not propose an architecture."</p>
+    <p>The strong answer names a concrete mechanism (three-column F-C-S bucketing), a number (3 bullets under 45 seconds), a failure mode (proposing before confirmation), and a clear gate ("That's right").</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"When a client or interviewer says 'You're right' after your summary, you have achieved alignment and can start designing."</summary><div class="a">Wrong. In Voss's framework, "You're right" means you stated an opinion or pitch and they are agreeing just to make you stop talking. Alignment requires "That's right", which only happens when you summarize their facts, constraints, and stake without pitching.</div></details>
+  <details class="q"><summary>"In a technical system design interview, summarizing back means repeating the QPS and latency numbers so you can start drawing the architecture."</summary><div class="a">Wrong. Repeating QPS and latency covers only Facts and Constraints. You also need the third bullet: the primary failure mode or stake the interviewer cares about most (for example, why stale reads or runaway token costs would break the business case), followed by a check question.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>State the formula for a full summary in Voss's framework and how it maps to the 3-bullet engineering summary.</summary><div class="a">Paraphrase (the facts) + Label (the emotion or stake). In engineering, Bullet 1 states the facts and numbers, Bullet 2 states the hard constraints and failure modes, and Bullet 3 labels the personal or business stake, ending with a check question.</div></details>
+  <details class="q"><summary>Why do engineers miss constraints stated in the middle of a 5-minute monologue, and what physical habit prevents it?</summary><div class="a">Internal thought (~400 wpm) runs faster than speech (~150 wpm), so engineers use the spare bandwidth to rehearse their architecture pitch after the first minute. Sorting keywords into three physical columns (F, C, S) occupies working memory with structure instead of pitching.</div></details>
+  <details class="q"><summary>What is the difference between "That's right" and "You're right", and what causes each one?</summary><div class="a">"That's right" means the speaker feels you captured their situation and stake completely, which opens them to your proposal. "You're right" is a polite brush-off triggered when you argue, pitch early, or ask for agreement with your own idea.<div class="f"><b>Follow-up</b>What if they reply "No, actually the real problem is X"? That is a win: a wrong summary that gets corrected surfaces the real constraint before you waste time designing the wrong thing.</div></div></details>
+  <details class="q"><summary>What are the time and bullet targets when summarizing a 5-minute discovery monologue?</summary><div class="a">Exactly 3 bullets spoken in 30 to 45 seconds (about 90 to 110 words), distilled from at most 12 to 15 scratchpad tokens, with 0 architecture pitches before confirmation.</div></details>
+  <details class="q"><summary>How do you transition from a confirmed 3-bullet summary into your system design proposal?</summary><div class="a">Once they say "That's right", link each architectural choice directly to the bullets they just confirmed: "Since the HL7 wrapper caps us at 20 writes per second and post-op calls cannot be touched, let's scope Phase 1 to an async queue for morning bookings only."</div></details>
+  <details class="q"><summary>You realize 50 seconds into your summary that you are rambling through a chronological list of everything the client said. How do you recover live?</summary><div class="a">Stop immediately, own the ramble, and compress to the stake and check question: "Let me cut that down: the core constraint is X and the main risk to you is Y. Did I get that priority right?"</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: the F-C-S 3-bullet formula + check trigger, Voss's summary equation, the difference between "That's right" and "You're right", and the time and token targets for a 5-minute clip.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Why listening breaks: rehearsing your pitch at ~400 wpm while they speak at ~150 wpm.</li>
+    <li>3 scratchpad columns (12 to 15 tokens max): Facts/Numbers (F), Constraints/Risks (C), Stake/Emotion (S).</li>
+    <li>Voss summary formula: Paraphrase (facts) + Label (emotion/stake).</li>
+    <li>3-bullet summary in 30 to 45 seconds (90 to 110 words), ending with a check trigger ("What did I miss?").</li>
+    <li>"That's right" = shared frame, gate open to design; "You're right" = polite brush-off caused by early pitching or missing the stake.</li>
+    <li>Zero architecture pitches until confirmation or correction lands.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>W01: State the M-L-C sequence in tactical empathy and how long you pause after a mirror or label.</summary><div class="a">Mirror (repeat last 1 to 3 words to dig for detail), Label ("It sounds like..." to name emotion or stake), Calibrated question ("How" or "What", never "Why", to hand over the problem). Pause about 4 seconds in silence after each mirror or label.</div></details>
+  <details class="q"><summary>V01: What four ingredients distinguish engineer voice from business voice?</summary><div class="a">A mechanism, a concrete number, a failure mode, and a tradeoff. Business framing may follow in one sentence at the end, never instead of them.</div></details>
+  <details class="q"><summary>L01: Before drawing boxes in a system design interview, what three categories of requirements must you clarify?</summary><div class="a">Functional scope (what the system must do and not do), scale numbers (users, QPS, data volume), and non-functional constraints (latency, availability, consistency, cost).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li>Chris Voss and Tahl Raz: Never Split the Difference, Chapter 6 ("Get That's Right") (Harper Business, 2016)<small>Primary source for the summary formula (paraphrasing + labeling) and the distinction between "That's right" and "You're right". Checked 17 Nov 2026.</small></li>
+    <li><a href="https://www.grahammann.net/book-notes/never-split-the-difference-chris-voss">Graham Mann: Never Split the Difference book notes</a><small>Supports the Chapter 6 summary definition and "That's right" vs "You're right" mechanics. Checked 17 Nov 2026.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::W People skills: negotiation, influence, speaking", "tags": "W19 T2 W01", "cards": [{"q": "What are the three bullets and closing trigger of an engineering summary back?", "a": "1. Facts and numbers. 2. Hard constraints and failure modes. 3. Personal or business stake. Close with: Did I get that right, or what did I miss?"}, {"q": "Why do you aim for That's right instead of You're right after a summary?", "a": "That's right confirms shared problem framing and opens the gate to propose; You're right is a polite brush-off to make you stop talking."}, {"q": "What are the time and scratchpad budgets for summarizing a 5-minute discovery clip?", "a": "Capture at most 12 to 15 keywords across F-C-S columns and speak 3 bullets in 30 to 45 seconds with 0 premature pitches."}, {"q": "Why does taking verbatim transcript notes fail during technical discovery?", "a": "It overloads working memory and produces a rambling 60+ second playback that misses vocal stress, hidden constraints, and personal stake."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

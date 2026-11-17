@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A08 Vectors, dot product, norms, cosine similarity</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A08">
+<main>
+<header>
+  <div class="eyebrow"><b>A08</b><span>A Foundations and applied math</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Vectors, dot product, norms, cosine similarity</h1>
+  <p class="lede">Every token embedding, retrieval chunk, and attention head speaks in vectors in R^d. How do dot product, cosine similarity, and Euclidean distance actually compare two vectors, when do they disagree on the top result, and why does one normalization line at index time speed up search by an order of magnitude? This page covers vectors in R^d, algebraic and geometric dot product, L1, L2, and L_infinity norms, unit normalization, and metric ranking divergence. Matrix multiplication and broadcasting are A09; retrieval bi-encoder benchmarks are H01.</p>
+  <div class="chips"><span><em>Before</em>A01 Python for AI engineering</span><span><em>Before</em>D02 Tokenization</span><span><em>After</em>A09 Matrices, matmul, tensor shapes, broadcasting, einsum</span><span><em>After</em>H01 Embeddings for retrieval</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production, then say the 90-second answer aloud</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page and write the blank-page recall</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards, log misses in the tracker</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>Query q = [4.0, 0.0] searches three candidate vectors: doc_clean = [0.9, 0.1] (angle 6.3 deg), doc_verbose = [3.2, 2.4] (angle 36.9 deg), and doc_spam = [6.0, 8.0] (angle 53.1 deg). Do raw dot product, raw Euclidean (L2) distance, and cosine similarity agree on the winner?</summary><div class="a">No. Every metric picks a different winner. Cosine similarity picks doc_clean (0.9939) because it only measures angle. Raw dot product picks doc_spam (24.00 vs 3.60) because its L2 norm of 10.0 overwhelms its 53.1 deg angle. Raw L2 distance picks doc_verbose (distance 2.5298 vs 3.1016 for doc_clean) because its norm of 4.0 matches the query norm of 4.0.</div></details>
+  <details class="q"><summary>Two vectors u and v are L2-normalized so ||u||_2 = ||v||_2 = 1, and their dot product is u . v = 0.80. Without touching coordinates or a square root, what is their squared Euclidean distance ||u - v||_2^2?</summary><div class="a">Exactly 0.40. Expand ||u - v||_2^2 = ||u||_2^2 + ||v||_2^2 - 2(u . v). Because both vectors have unit L2 norm, ||u||_2^2 = 1 and ||v||_2^2 = 1, so ||u - v||_2^2 = 2(1 - u . v) = 2(1 - 0.80) = 0.40.</div></details>
+  <details class="q"><summary>You search 100,000 float32 vectors of width d = 384 with cosine similarity. If you L2-normalize the vectors once at index time and run a plain dot product at query time instead of computing norms on the fly, is the query speedup closer to 1.2x, 3x, or 15x?</summary><div class="a">About 15x. In the kata benchmark, on-the-fly cosine similarity takes 61.44 ms per query while a pre-normalized dot product takes 4.02 ms per query, a 15.3x speedup with a maximum numerical difference of 5.7e-08.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A vector x in R^d is an ordered list of d real numbers that represents a point in d-dimensional space or an arrow from the origin. Every arrow has two separable properties: its direction (the unit ray it points along, where semantic meaning usually lives) and its magnitude or norm (how long the arrow is, which often encodes document length, token frequency, or model confidence). The dot product multiplies both lengths by the cosine of the angle between them: a . b = ||a||_2 ||b||_2 cos(theta).</p>
+  <p>Because raw dot product mixes direction with length, a noisy vector with a large norm can outscore a clean vector that points almost directly at your query. Cosine similarity strips length out by dividing each vector by its L2 norm, projecting every point onto the surface of the unit sphere. Once all vectors sit on that unit sphere, dot product, cosine similarity, and negative Euclidean distance become mathematically equivalent in rank order.</p>
+  <p><strong>Mental model.</strong> Picture a lighthouse beam shining along the query vector q. Raw dot product measures how far a ship's shadow reaches along the beam multiplied by how tall the mast is, so a giant barge 53 degrees off course casts a bigger score than a small kayak right in the beam. L2 normalization pulls every boat onto a fixed circular buoy ring of radius 1 around the lighthouse; on that ring, largest shadow (dot product), smallest angle (cosine), and shortest straight-line rope (Euclidean distance) always pick the exact same boat.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: How magnitude hijacks dot and L2, and how the unit circle fixes both</div>
+    <svg viewBox="0 0 480 230" role="img" aria-label="Geometric comparison of query q, doc_clean A, doc_verbose B, and doc_spam C showing how L2 normalization onto the unit circle aligns dot product, cosine, and L2 rankings">
+      <g font-size="12">
+        <line x1="40" y1="190" x2="450" y2="190" class="ln"/>
+        <line x1="40" y1="190" x2="40" y2="20" class="ln"/>
+        <g data-step="1">
+          <line x1="40" y1="190" x2="200" y2="190" class="ink" data-hi="1"/>
+          <circle cx="200" cy="190" r="4" class="c-accent" data-hi="1"/>
+          <text x="200" y="208" text-anchor="middle">q [4,0] ||q||=4</text>
+          <line x1="40" y1="190" x2="76" y2="186" class="ink" data-hi="1"/>
+          <circle cx="76" cy="186" r="4" class="c-good" data-hi="1"/>
+          <text x="95" y="176">A clean (6.3 deg, cos=0.994)</text>
+        </g>
+        <g data-step="2">
+          <rect x="255" y="148" width="205" height="32" rx="5" class="c-paper ln" data-hi="2"/>
+          <text x="265" y="168">A: dot=3.60, L2 dist=3.10</text>
+        </g>
+        <g data-step="3">
+          <line x1="40" y1="190" x2="168" y2="94" class="ink" data-hi="3"/>
+          <circle cx="168" cy="94" r="4" class="c-warn" data-hi="3"/>
+          <text x="176" y="92">B verbose [3.2,2.4]</text>
+          <text x="176" y="108" class="m">36.9 deg, dot=12.8, L2=2.53</text>
+        </g>
+        <g data-step="4">
+          <line x1="40" y1="190" x2="280" y2="30" class="ink" data-hi="4"/>
+          <circle cx="280" cy="30" r="5" class="c-bad" data-hi="4"/>
+          <text x="290" y="34">C spam [6,8] ||C||=10</text>
+          <text x="290" y="50" class="m">53.1 deg, raw dot=24.0 (#1!)</text>
+        </g>
+        <g data-step="5">
+          <path d="M 120 190 A 80 80 0 0 0 40 110" class="ink" stroke-dasharray="4 3" data-hi="5"/>
+          <circle cx="119" cy="181" r="4" class="c-good" data-hi="5"/>
+          <circle cx="104" cy="142" r="4" class="c-warn" data-hi="5"/>
+          <circle cx="88" cy="126" r="4" class="c-bad" data-hi="5"/>
+          <rect x="255" y="72" width="205" height="62" rx="5" class="c-soft ln" data-hi="5"/>
+          <text x="265" y="92" data-hi="5">Unit circle (||v||_2 = 1):</text>
+          <text x="265" y="108">dot = cos: A .994 &gt; B .80 &gt; C .60</text>
+          <text x="265" y="124" class="m">||u-v||^2 = 2(1-cos): A .012 &lt; B .40</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Query q = [4.0, 0.0] sets the target direction; doc_clean A = [0.9, 0.1] sits only 6.3 deg away with cosine 0.9939.</li>
+      <li>Because A has a small norm (||A||_2 = 0.91), its raw dot product q . A is only 3.60 and its tip sits 3.10 units from q.</li>
+      <li>Noisy doc_verbose B = [3.2, 2.4] sits at 36.9 deg (cos = 0.8000), yet ||B||_2 = 4.00 pushes its dot product to 12.80 and cuts L2 distance to 2.53.</li>
+      <li>Keyword-stuffed doc_spam C = [6.0, 8.0] at 53.1 deg (cos = 0.6000) hijacks raw dot product with q . C = 24.00 because ||C||_2 = 10.0.</li>
+      <li>Dividing every vector by its L2 norm pulls A, B, and C onto the unit circle, where dot product, cosine, and -L2 distance all rank A &gt; B &gt; C.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Unnormalized dot product and L2 distance are corrupted by vector length; projecting onto the L2 unit circle makes dot product, cosine similarity, and L2 distance rank-identical.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>D-N-S: Dot is length times angle, Norms measure the arrow, Sphere locks the triple.</strong> Write <code>a . b = ||a||_2 ||b||_2 cos(theta)</code>. On the unit sphere (<code>||u||_2 = ||v||_2 = 1</code>), expand <code>||u - v||_2^2 = 1 + 1 - 2 cos(theta) = 2(1 - cos(theta))</code>: one formula gives you dot, cosine, and L2 distance at once.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Vectors in R^d and the two faces of the dot product</h3>
+  <p>An embedding model or transformer layer represents a token or document as a column of d floating-point numbers x = [x_1, x_2, ..., x_d] in R^d (for example d = 384 in small sentence encoders or d = 4,096 in 8B LLMs). Given two vectors a and b in R^d, the <strong>algebraic dot product</strong> (or inner product) multiplies matching coordinates and adds them up, costing d multiplications and d - 1 additions (2d - 1 FLOPs). The <strong>geometric dot product</strong> comes from applying the law of cosines to the triangle formed by a, b, and a - b:</p>
+  <div class="codewrap"><pre>Algebraic:  a . b = sum_{i=1..d} a_i * b_i
+Law of cosines: ||a - b||_2^2 = ||a||_2^2 + ||b||_2^2 - 2 * ||a||_2 * ||b||_2 * cos(theta)
+Expand LHS:     sum (a_i - b_i)^2 = sum a_i^2 + sum b_i^2 - 2 * sum a_i * b_i
+Equate terms:   a . b = ||a||_2 * ||b||_2 * cos(theta)</pre></div>
+  <p>When theta = 0 deg, cos(theta) = 1 and the vectors point in the same direction. When theta = 90 deg, cos(theta) = 0 and the vectors are orthogonal (a . b = 0, sharing no linear component). When theta = 180 deg, cos(theta) = -1 and they point in opposite directions.</p>
+
+  <h3>Measuring size: L1, L2, and L_infinity norms</h3>
+  <p>A <strong>norm</strong> ||x|| is a function that assigns a non-negative length to a vector, satisfying positivity, scaling (||c * x|| = |c| * ||x||), and the triangle inequality (||x + y|| &lt;= ||x|| + ||y||). Three norms from the L_p family (||x||_p = (sum |x_i|^p)^(1/p)) show up constantly in AI engineering:</p>
+  <div class="codewrap"><pre>L1 (Manhattan / taxicab):  ||x||_1   = sum_{i=1..d} |x_i|
+L2 (Euclidean length):     ||x||_2   = sqrt(sum_{i=1..d} x_i^2) = sqrt(x . x)
+L_inf (Max / Chebyshev):   ||x||_inf = max_{i=1..d} |x_i|
+Ordering in R^d:           ||x||_inf &lt;= ||x||_2 &lt;= ||x||_1 &lt;= sqrt(d) * ||x||_2</pre></div>
+  <p>In the kata, <code>doc_verbose = [3.2, 2.4]</code> has <code>||x||_inf = 3.20</code>, <code>||x||_2 = 4.00</code>, and <code>||x||_1 = 5.60</code>, matching <code>3.20 &lt;= 4.00 &lt;= 5.60 &lt;= sqrt(2) * 4.00 = 5.66</code>. L1 promotes sparsity in regularization because its unit ball has sharp corners on the coordinate axes; L_infinity governs worst-case quantization clipping error (absmax scaling divides by ||x||_inf); L2 is rotation-invariant and defines standard geometric length.</p>
+
+  <figure class="viz stepper" id="viz-norms">
+    <div class="vt">Stepper: Unit balls (||x||_p = 1) and why only L2 preserves angles</div>
+    <svg viewBox="0 0 480 215" role="img" aria-label="Comparison of L1 diamond, L2 circle, and L_infinity square unit balls in 2D, showing that only L2 normalization preserves constant Euclidean radius and makes cosine a dot product">
+      <g font-size="12">
+        <line x1="120" y1="20" x2="120" y2="195" class="ln"/>
+        <line x1="25" y1="108" x2="215" y2="108" class="ln"/>
+        <g data-step="1">
+          <polygon points="120,38 190,108 120,178 50,108" class="c-soft ln" data-hi="1"/>
+          <text x="235" y="48" data-hi="1">1. L1 unit ball: |x_1| + |x_2| = 1</text>
+          <text x="235" y="66" class="m">Diamond; diagonal has ||x||_2 = 0.71</text>
+        </g>
+        <g data-step="2">
+          <rect x="50" y="38" width="140" height="140" class="ln" stroke-dasharray="4 3" data-hi="2"/>
+          <text x="235" y="96" data-hi="2">2. L_inf ball: max(|x_1|, |x_2|) = 1</text>
+          <text x="235" y="114" class="m">Square box; corner has ||x||_2 = 1.41</text>
+        </g>
+        <g data-step="3">
+          <circle cx="120" cy="108" r="70" class="ink" data-hi="3"/>
+          <circle cx="176" cy="66" r="4" class="c-good" data-hi="3"/>
+          <text x="235" y="144" data-hi="3">3. L2 ball: sqrt(x_1^2 + x_2^2) = 1</text>
+          <text x="235" y="162" class="m">Round circle; every angle has ||x||_2 = 1</text>
+        </g>
+        <g data-step="4">
+          <rect x="235" y="172" width="230" height="30" rx="5" class="c-paper ln" data-hi="4"/>
+          <text x="245" y="191" data-hi="4">4. Pre-norm L2: 61.4 ms -&gt; 4.0 ms (15.3x)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>The L1 unit ball (||x||_1 = 1) is a diamond whose corners touch the axes; a diagonal vector [0.5, 0.5] has L2 length 0.707, shrinking its dot product.</li>
+      <li>The L_infinity unit ball (||x||_inf = 1) is a square box; its corners [1, 1] reach L2 length sqrt(2) = 1.414, inflating diagonal dot products.</li>
+      <li>The L2 unit ball (||x||_2 = 1) is a circle where every direction has identical Euclidean length 1.0, so u . v equals cos(theta) everywhere.</li>
+      <li>Normalizing vectors onto the L2 ball once at index time removes per-query norms and speeds up 100K-vector search by 15.3x in the kata.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Only the L2 unit ball has uniform Euclidean radius in all directions, which is why L2 normalization (not L1) turns cosine similarity into a dot product.</figcaption>
+  </figure>
+
+  <details class="q"><summary>Check: for the vector x = [3, -4], compute ||x||_1, ||x||_2, ||x||_inf, and its L2-normalized unit vector x_hat.</summary><div class="a">||x||_1 = |3| + |-4| = 7. ||x||_2 = sqrt(3^2 + (-4)^2) = sqrt(9 + 16) = 5. ||x||_inf = max(3, 4) = 4. The unit vector is x_hat = x / ||x||_2 = [3/5, -4/5] = [0.6, -0.8], which satisfies 0.6^2 + (-0.8)^2 = 0.36 + 0.64 = 1.0.</div></details>
+
+  <h3>Unit normalization and the unit-sphere equivalence</h3>
+  <p>Dividing any non-zero vector v by its Euclidean norm produces a unit vector <code>v_hat = v / ||v||_2</code> with <code>||v_hat||_2 = 1</code>. <strong>Cosine similarity</strong> between two vectors a and b is defined as the dot product of their L2-normalized unit vectors:</p>
+  <div class="codewrap"><pre>cos(a, b) = (a . b) / (||a||_2 * ||b||_2) = a_hat . b_hat   (range: -1 to +1)
+For unit vectors u, v (||u||_2 = ||v||_2 = 1):
+||u - v||_2^2 = ||u||_2^2 + ||v||_2^2 - 2(u . v) = 1 + 1 - 2 * cos(theta) = 2 * (1 - cos(theta))</pre></div>
+  <p>This identity is one of the most useful formulas in applied ML. Because <code>||u - v||_2^2 = 2 - 2 * cos(theta)</code> is a strictly decreasing linear function of <code>cos(theta)</code>, sorting unit-normalized candidates by highest dot product, highest cosine similarity, or smallest Euclidean distance always yields the exact same ranking. In the kata, after L2 normalization, <code>doc_clean</code> has <code>dot = cos = 0.9939</code> and <code>||u - v||_2^2 = 2(1 - 0.9939) = 0.0122</code>, winning on all three metrics.</p>
+
+  <h3>Why pre-normalizing at index time gives a 15x query speedup</h3>
+  <p>Suppose you store N = 100,000 document embeddings of width d = 384 in a matrix X of shape (N, d). If you compute cosine similarity on the fly for a query q, every query must compute the matrix-vector product <code>X @ q</code> (about 2Nd FLOPs), square and sum every row of X to get <code>||X_i||_2</code> (another 2Nd FLOPs plus N square roots and a full second pass over 153.6 MB of memory), and divide N elements. If instead you store <code>X_unit = X / ||X||_2</code> once when indexing and normalize q once per query (only 2d FLOPs), query-time scoring reduces to a single hardware-fused BLAS matrix-vector multiply <code>X_unit @ q_unit</code>. In the kata, that single change cuts latency from 61.44 ms to 4.02 ms per query (15.3x faster).</p>
+
+  <details class="q"><summary>Check: why does on-the-fly cosine similarity cost 15.3x more time than pre-normalized dot product in NumPy when the raw FLOP count is only about 2x to 3x higher?</summary><div class="a"><code>X_unit @ q_unit</code> runs inside a single multi-threaded BLAS SGEMV kernel over contiguous memory. Computing <code>np.linalg.norm(X, axis=1)</code> on the fly allocates temporary arrays, reads the 153.6 MB matrix from RAM a second time in a single-threaded reduction, and runs N square roots and divisions. It is memory-bandwidth and allocation bound.</div></details>
+
+  <h3>When dot product and cosine rankings diverge</h3>
+  <p>Dot product and cosine similarity produce different rankings whenever candidate vectors have unequal L2 norms. Specifically, candidate B beats candidate A under raw dot product while losing under cosine similarity whenever <code>cos(q, B) &lt; cos(q, A)</code> but <code>||B||_2 * cos(q, B) &gt; ||A||_2 * cos(q, A)</code>, which happens as soon as <code>||B||_2 / ||A||_2 &gt; cos(q, A) / cos(q, B)</code>.</p>
+  <p>Sometimes that divergence is a bug, and sometimes it is by design. In text retrieval with unnormalized embeddings (or mean-pooled token embeddings without a final norm layer), repeated words or longer chunks inflate <code>||d||_2</code>, letting repetitive boilerplate hijack top-k search. Conversely, inside transformer self-attention (<code>q_i . k_j / sqrt(d_k)</code>) and the LLM output unembedding layer (<code>h . w_v</code>), raw dot product is used deliberately: a larger vector norm allows the model to express high confidence and sharpen the softmax distribution, whereas cosine similarity caps every score in [-1, 1] unless multiplied by a learned temperature scale.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: When does Candidate B hijack Dot Product while losing Cosine Similarity?</div>
+    <p class="ask">Predict first. Candidate A is fixed at angle 15 deg with norm ||A||_2 = 1.0 (so cos = dot = 0.966). If Candidate B sits at angle 45 deg (cos = 0.707), how large must ||B||_2 be before B beats A on raw dot product?</p>
+    <div class="ctl">
+      <label><span>Candidate B angle</span><input type="range" name="ang" min="5" max="80" step="1" value="45"><output data-for="ang" data-unit=" deg"></output></label>
+      <label><span>Candidate B norm ||B||_2</span><input type="range" name="norm" min="0.5" max="3.0" step="0.05" value="1.60"><output data-for="norm"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Whenever ||B||_2 / ||A||_2 exceeds cos(theta_A) / cos(theta_B) (here 0.966 / 0.707 = 1.37 at 45 deg), raw dot product flips the winner from A to B while cosine similarity still ranks A first.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var cosA=Math.cos(15*Math.PI/180), dotA=1.0*cosA;
+    var cosB=Math.cos(v.ang*Math.PI/180), dotB=v.norm*cosB;
+    var cosWin=cosA>=cosB?"A":"B", dotWin=dotA>=dotB?"A":"B";
+    var flip=cosWin!==dotWin;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"",digits:3,rows:[
+      {label:"A cosine (15 deg, ||A||=1)",value:cosA,tone:"good"},
+      {label:"B cosine ("+v.ang+" deg)",value:cosB,tone:cosB>cosA?"good":"muted"},
+      {label:"A raw dot",value:dotA,tone:"good"},
+      {label:"B raw dot (||B||="+tl.fmt(v.norm,2)+")",value:dotB,tone:flip?"bad":(dotB>dotA?"good":"muted")}
+    ]});
+    return {verdict:(flip?"RANK FLIP: Cosine picks "+cosWin+" ("+tl.fmt(cosA,3)+" vs "+tl.fmt(cosB,3)+"), but Raw Dot picks "+dotWin+" ("+tl.fmt(dotB,3)+" vs "+tl.fmt(dotA,3)+").":"Both agree: Cosine picks "+cosWin+" and Raw Dot picks "+dotWin+".")+" Threshold ||B||_2 at "+v.ang+" deg is "+tl.fmt(cosA/cosB,2)+"."};
+  })});</script>
+
+  <details class="q"><summary>Check: Candidate A has angle 15 deg (cos = 0.966) and ||A||_2 = 1.0. Candidate B has angle 60 deg (cos = 0.500). At what minimum norm ||B||_2 does B overtake A under raw dot product?</summary><div class="a">B overtakes A when ||B||_2 * cos(60 deg) &gt; ||A||_2 * cos(15 deg), so ||B||_2 &gt; 0.966 / 0.500 = 1.932. Any norm above 1.94 lets a vector 60 degrees off target beat a vector 15 degrees on target.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>FLOPs for dot product of two vectors in R^d</td><td class="n">2d - 1 (d muls, d - 1 adds)</td><td>Derived</td></tr>
+    <tr><td>Cosine similarity range and key angles (0 deg, 60 deg, 90 deg, 180 deg)</td><td class="n">[-1, 1]; 1.0, 0.5, 0.0, -1.0</td><td>Derived</td></tr>
+    <tr><td>Norm inequality in R^d</td><td class="n">||x||_inf &lt;= ||x||_2 &lt;= ||x||_1 &lt;= sqrt(d) * ||x||_2</td><td>Derived</td></tr>
+    <tr><td>Unit-sphere squared L2 distance from cosine</td><td class="n">||u - v||_2^2 = 2 * (1 - cos(theta))</td><td>Derived</td></tr>
+    <tr><td>Unit-sphere squared L2 range (theta from 0 deg to 180 deg)</td><td class="n">0.0 (identical) to 4.0 (opposite); 2.0 at 90 deg</td><td>Derived</td></tr>
+    <tr><td>Memory of 100,000 float32 vectors at d = 384</td><td class="n">100,000 * 384 * 4 B = 153.6 MB</td><td>Derived</td></tr>
+    <tr><td>Kata: doc_clean [0.9, 0.1] vs doc_spam [6.0, 8.0] cosine similarity</td><td class="n">0.9939 vs 0.6000 (doc_clean wins)</td><td>Your own run</td></tr>
+    <tr><td>Kata: doc_clean vs doc_spam raw dot product with q = [4.0, 0.0]</td><td class="n">3.60 vs 24.00 (doc_spam wins 6.67x)</td><td>Your own run</td></tr>
+    <tr><td>Kata: doc_clean vs doc_verbose [3.2, 2.4] raw L2 distance to q</td><td class="n">3.1016 vs 2.5298 (doc_verbose wins)</td><td>Your own run</td></tr>
+    <tr><td>Kata: 100K x 384 float32 search, on-the-fly cosine vs pre-norm dot</td><td class="n">61.44 ms vs 4.02 ms (15.3x faster)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Pre-normalized dot product (Cosine on unit sphere)</td><td>Direction-only matching; fastest query time (1 BLAS matmul); identical rank to cosine and L2</td><td>Magnitude signal is erased; must normalize every vector at ingest and query time</td><td>Forgetting to normalize the query or newly upserted vectors</td></tr>
+    <tr><td>On-the-fly cosine similarity</td><td>Works on raw unnormalized vectors without mutating stored norms</td><td>Computes norms on every query (15.3x slower in kata); extra memory traffic</td><td>NaN or Inf if a zero vector (all zeros) slips into the index</td></tr>
+    <tr><td>Raw dot product (Maximum Inner Product Search)</td><td>Preserves vector norm when magnitude carries confidence, popularity, or logit sharpness</td><td>Long or repetitive vectors hijack rankings; not a proper metric (a . a need not beat a . b)</td><td>Unnormalized embeddings from encoders that were trained with cosine loss</td></tr>
+    <tr><td>Raw Euclidean (L2) distance</td><td>True metric with triangle inequality; sensitive to both position and scale</td><td>Penalizes candidates whose norm differs from the query norm even at angle 0 deg</td><td>High-dimensional concentration where all pairwise L2 distances cluster together</td></tr>
+    <tr><td>L1 (Manhattan) / L_inf (Chebyshev) distance</td><td>L1 is robust to single-coordinate outliers; L_inf bounds worst-case coordinate drift (quantization)</td><td>Not rotation-invariant; L1/L_inf normalization distorts angles and breaks cosine equivalence</td><td>Using L1 normalization before an inner-product index</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: norms, ranking inversions, and the 15x pre-norm speedup</h2>
+  <p>It verifies hand-written L1, L2, and L_infinity norms, dot product, cosine similarity, and squared L2 distance against NumPy, constructs a 3-document ranking scenario where raw dot product, raw L2 distance, and cosine similarity each pick a different winner, proves that L2 normalization collapses all three into the same ranking, and benchmarks 100,000-vector search at d = 384.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Vectors, norms, dot product &amp; cosine similarity. Run: python kata.py"""
+import argparse, time
+import numpy as np
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--norm", choices=["l2", "l1", "none"], default="l2")
+ap.add_argument("--zero", action="store_true", help="inject a zero vector")
+args = ap.parse_args()
+
+def l1_hand(v): return sum(abs(x) for x in v)
+def l2_hand(v): return sum(x * x for x in v) ** 0.5
+def linf_hand(v): return max(abs(x) for x in v)
+def dot_hand(a, b): return sum(x * y for x, y in zip(a, b))
+def cos_hand(a, b, eps=0.0):
+    return dot_hand(a, b) / (max(l2_hand(a) * l2_hand(b), eps))
+def l2sq_hand(a, b): return sum((x - y) ** 2 for x, y in zip(a, b))
+
+q = [4.0, 0.0]  # query vector (||q||_2 = 4.0)
+docs = {
+    "doc_clean":   [0.9, 0.1],   # concise on-topic note (theta = 6.3 deg, ||d||_2 = 0.91)
+    "doc_verbose": [3.2, 2.4],   # 4x longer tangential note (theta = 36.9 deg, ||d||_2 = 4.00)
+    "doc_spam":    [6.0, 8.0],   # keyword-stuffed boilerplate (theta = 53.1 deg, ||d||_2 = 10.00)
+}
+if args.zero:
+    docs["doc_empty"] = [0.0, 0.0]
+
+print("1. Hand vs NumPy verification (max abs diff across norms, dot, cos, l2sq):")
+q_np = np.array(q)
+for name, d in docs.items():
+    d_np = np.array(d)
+    diffs = [
+        abs(l1_hand(d) - np.linalg.norm(d_np, 1)),
+        abs(l2_hand(d) - np.linalg.norm(d_np, 2)),
+        abs(linf_hand(d) - np.linalg.norm(d_np, np.inf)),
+        abs(dot_hand(q, d) - float(q_np @ d_np)),
+        abs(l2sq_hand(q, d) - float(np.sum((q_np - d_np) ** 2))),
+    ]
+    print(f"  {name:&lt;12} L1={l1_hand(d):5.2f}  L2={l2_hand(d):5.2f}  Linf={linf_hand(d):5.2f}  max_err={max(diffs):.1e}")
+
+print("\n2. Raw (unnormalized) rankings (magnitude corrupts both dot and L2):")
+print(f"  {'candidate':&lt;12}{'angle':&gt;8}{'L2_norm':&gt;9}{'raw_dot':&gt;9}{'cos_sim':&gt;9}{'raw_L2_dist':&gt;13}")
+raw_rows = []
+for name, d in docs.items():
+    c = cos_hand(q, d)
+    deg = np.degrees(np.arccos(np.clip(c, -1.0, 1.0)))
+    raw_rows.append((name, deg, l2_hand(d), dot_hand(q, d), c, l2sq_hand(q, d) ** 0.5))
+    print(f"  {name:&lt;12}{deg:6.1f} deg{l2_hand(d):8.2f}{dot_hand(q, d):9.2f}{c:9.4f}{l2sq_hand(q, d)**0.5:13.4f}")
+
+print("  Rank by raw dot     :", [r[0] for r in sorted(raw_rows, key=lambda r: -r[3])])
+print("  Rank by raw -L2 dist:", [r[0] for r in sorted(raw_rows, key=lambda r: r[5])])
+print("  Rank by cosine sim  :", [r[0] for r in sorted(raw_rows, key=lambda r: -r[4])])
+
+def normalize(v, mode):
+    v = np.asarray(v, dtype=np.float64)
+    if mode == "l2": return v / np.linalg.norm(v, 2)
+    if mode == "l1": return v / np.linalg.norm(v, 1)
+    return v
+
+print(f"\n3. After {args.norm.upper()} normalization (identity ||u-v||_2^2 = 2(1 - u.v) holds on unit sphere):")
+qn = normalize(q, args.norm)
+norm_rows = []
+for name, d in docs.items():
+    dn = normalize(d, args.norm)
+    dot_v = float(qn @ dn)
+    cos_v = float((qn @ dn) / (np.linalg.norm(qn) * np.linalg.norm(dn)))
+    l2_sq = float(np.sum((qn - dn) ** 2))
+    formula_sq = 2.0 * (1.0 - dot_v)
+    norm_rows.append((name, dot_v, cos_v, l2_sq))
+    print(f"  {name:&lt;12} dot={dot_v:7.4f}  cos={cos_v:7.4f}  ||u-v||^2={l2_sq:7.4f}  2(1-dot)={formula_sq:7.4f}")
+
+r_dot = [r[0] for r in sorted(norm_rows, key=lambda r: -r[1])]
+r_cos = [r[0] for r in sorted(norm_rows, key=lambda r: -r[2])]
+r_l2  = [r[0] for r in sorted(norm_rows, key=lambda r: r[3])]
+print(f"  Rankings identical? {r_dot == r_cos == r_l2} -&gt; {r_dot}")
+
+print("\n4. Throughput benchmark: N=100,000 vectors, d=384 (float32, 50 runs):")
+rng = np.random.default_rng(42)
+X = rng.standard_normal((100_000, 384), dtype=np.float32)
+qv = rng.standard_normal(384, dtype=np.float32)
+X_unit = X / np.linalg.norm(X, axis=1, keepdims=True)
+q_unit = qv / np.linalg.norm(qv)
+
+t0 = time.perf_counter()
+for _ in range(50):
+    scores_cos = (X @ qv) / (np.linalg.norm(X, axis=1) * np.linalg.norm(qv) + 1e-12)
+ms_cos = (time.perf_counter() - t0) * 1000 / 50
+
+t0 = time.perf_counter()
+for _ in range(50):
+    scores_dot = X_unit @ q_unit
+ms_dot = (time.perf_counter() - t0) * 1000 / 50
+max_diff = float(np.max(np.abs(scores_cos - scores_dot)))
+print(f"  On-the-fly cosine : {ms_cos:6.2f} ms/query")
+print(f"  Pre-normalized dot: {ms_dot:6.2f} ms/query  ({ms_cos / ms_dot:.1f}x faster, max_diff={max_diff:.1e})")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">1. Hand vs NumPy verification (max abs diff across norms, dot, cos, l2sq):
+  doc_clean    L1= 1.00  L2= 0.91  Linf= 0.90  max_err=0.0e+00
+  doc_verbose  L1= 5.60  L2= 4.00  Linf= 3.20  max_err=0.0e+00
+  doc_spam     L1=14.00  L2=10.00  Linf= 8.00  max_err=0.0e+00
+
+2. Raw (unnormalized) rankings (magnitude corrupts both dot and L2):
+  candidate      angle  L2_norm  raw_dot  cos_sim  raw_L2_dist
+  doc_clean      6.3 deg    0.91     3.60   0.9939       3.1016
+  doc_verbose   36.9 deg    4.00    12.80   0.8000       2.5298
+  doc_spam      53.1 deg   10.00    24.00   0.6000       8.2462
+  Rank by raw dot     : ['doc_spam', 'doc_verbose', 'doc_clean']
+  Rank by raw -L2 dist: ['doc_verbose', 'doc_clean', 'doc_spam']
+  Rank by cosine sim  : ['doc_clean', 'doc_verbose', 'doc_spam']
+
+3. After L2 normalization (identity ||u-v||_2^2 = 2(1 - u.v) holds on unit sphere):
+  doc_clean    dot= 0.9939  cos= 0.9939  ||u-v||^2= 0.0122  2(1-dot)= 0.0122
+  doc_verbose  dot= 0.8000  cos= 0.8000  ||u-v||^2= 0.4000  2(1-dot)= 0.4000
+  doc_spam     dot= 0.6000  cos= 0.6000  ||u-v||^2= 0.8000  2(1-dot)= 0.8000
+  Rankings identical? True -&gt; ['doc_clean', 'doc_verbose', 'doc_spam']
+
+4. Throughput benchmark: N=100,000 vectors, d=384 (float32, 50 runs):
+  On-the-fly cosine :  61.44 ms/query
+  Pre-normalized dot:   4.02 ms/query  (15.3x faster, max_diff=5.7e-08)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata query latency over 100,000 vectors (d = 384, float32) and raw vs unit scores</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"On-the-fly cosine (100K x 384)","value":61.44,"tone":"bad"},{"label":"Pre-normalized dot (100K x 384)","value":4.02,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Pre-normalizing embeddings once at index time cuts 100,000-vector query latency from 61.44 ms to 4.02 ms (15.3x faster) while matching cosine similarity to within 5.7e-08.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Every hand formula matches NumPy to <code>0.0e+00</code>, and the norms of every vector obey <code>||x||_inf &lt;= ||x||_2 &lt;= ||x||_1</code>: for <code>doc_verbose = [3.2, 2.4]</code>, <code>3.20 &lt;= 4.00 &lt;= 5.60</code>.</li>
+    <li>Before normalization, the three metrics completely disagree on the winner for <code>q = [4.0, 0.0]</code>: raw dot product ranks <code>doc_spam</code> first (24.00 vs 3.60), raw L2 distance ranks <code>doc_verbose</code> first (2.5298 vs 3.1016), and only cosine similarity ranks <code>doc_clean</code> first (0.9939).</li>
+    <li><code>doc_verbose</code> beats <code>doc_clean</code> on raw L2 distance even though its angle is 6x worse (36.9 deg vs 6.3 deg) because its length <code>||B||_2 = 4.00</code> matches <code>||q||_2 = 4.00</code>, whereas <code>doc_clean</code> has length 0.91.</li>
+    <li>After L2 normalization, <code>dot</code> and <code>cos</code> are identical to 4 decimals (0.9939, 0.8000, 0.6000), <code>||u - v||_2^2</code> equals <code>2(1 - dot)</code> (0.0122, 0.4000, 0.8000), and all three rankings become <code>['doc_clean', 'doc_verbose', 'doc_spam']</code>.</li>
+    <li>In the 100,000-vector benchmark at d = 384, pre-normalized dot product runs in 4.02 ms against 61.44 ms for on-the-fly cosine (15.3x faster), with a max float32 discrepancy of <code>5.7e-08</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Normalize with L1 instead of L2.</strong> Run <code>python kata.py --norm l1</code>. Predict first: will <code>dot</code> still equal <code>cos</code> after L1 normalization, and will <code>||u - v||_2^2</code> still equal <code>2(1 - dot)</code>? Why does <code>doc_verbose</code> get penalized more than <code>doc_clean</code> on the L1 diamond?</li>
+    <li><strong>Skip normalization in an inner-product index.</strong> Run <code>python kata.py --norm none</code>. Check what happens to the identity <code>2(1 - dot)</code> (it goes negative: -46.0 for <code>doc_spam</code>!) and see how the dot and L2 rankings split apart.</li>
+    <li><strong>Inject an empty-chunk zero vector.</strong> Run <code>python kata.py --zero</code>. Predict what happens in <code>cos_hand</code> and <code>normalize</code> when <code>doc_empty = [0.0, 0.0]</code> enters the pipeline without an epsilon clamp.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a <code>--dim 1536</code> flag to the benchmark and compare the speedup ratio at d = 384 vs d = 1536, then add a safe L2 normalizer <code>v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-12)</code> so <code>--zero</code> runs cleanly without dividing by zero.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Top-k retrieval returns long, repetitive, or boilerplate chunks over concise answers</td><td>Vector DB index configured for Inner Product (IP) or L2, but embeddings were not L2-normalized before upsert</td><td>L2-normalize embeddings at both ingest and query time, or switch the index metric to Cosine (which normalizes internally)</td></tr>
+    <tr><td>Search returns NaN scores or random documents jump to rank 1</td><td>An empty string or whitespace-only chunk produced a zero vector [0, ..., 0], causing 0/0 = NaN during normalization</td><td>Reject empty chunks before embedding, clamp norms with <code>max(||v||_2, 1e-12)</code>, and assert <code>np.isfinite(vec).all()</code> on ingest</td></tr>
+    <tr><td>Cosine similarity search CPU latency spikes as collection grows past 50K vectors</td><td>Computing L2 norms on the fly per query or looping in Python instead of calling a pre-normalized BLAS matrix multiply</td><td>Store unit-normalized float32/float16 vectors and score with a single matrix-vector product <code>X_unit @ q_unit</code></td></tr>
+    <tr><td>After quantizing embeddings to int8, L2 distances jump wildly</td><td>A few outlier dimensions have large magnitude, stretching the int8 scale factor</td><td>Check <code>||x||_inf / ||x||_2</code> before quantization; clip outliers or apply a random rotation (Hadamard transform) to spread energy across dimensions</td></tr>
+    <tr><td>Distances from an L2 index (like FAISS IndexFlatL2) look twice as large as 1 - cos</td><td>FAISS returns squared L2 distance <code>||u - v||_2^2 = 2(1 - cos)</code> rather than <code>1 - cos</code></td><td>Convert squared L2 on unit vectors back to cosine via <code>cos = 1 - d_sq / 2</code> before applying similarity thresholds</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> L2 norm distribution of ingested and query vectors (mean, min, max; alert if <code>|norm - 1.0| &gt; 1e-3</code> on a unit-normalized pipeline), zero-vector rejection count, p95 similarity score distribution, and ratio of <code>||x||_inf / ||x||_2</code> when using quantization.</p>
+  <details class="q"><summary>Scenario: your clinic RAG pipeline switches from a managed embedding API (which returned unit-normalized vectors) to a self-hosted encoder into a FAISS IndexFlatIP (inner product) index. Suddenly, multi-page intake templates outrank exact 2-line discharge notes. How do you diagnose and fix it?</summary><div class="a"><ol>
+    <li>Inspect vector norms first: sample 100 stored vectors and queries, compute <code>np.linalg.norm(v, 2)</code>, and verify whether norms vary with chunk token count instead of sitting at 1.0.</li>
+    <li>Explain the mechanism: <code>IndexFlatIP</code> computes raw dot product <code>||q||_2 ||d||_2 cos(theta)</code>. Without L2 normalization, longer or repetitive intake templates have larger <code>||d||_2</code> and hijack the inner product over concise discharge notes with higher <code>cos(theta)</code>.</li>
+    <li>Fix the query path immediately: normalize incoming query vectors and, if raw vectors are in memory, run <code>faiss.normalize_L2(X)</code> before indexing so inner product equals cosine similarity.</li>
+    <li>Add an ingestion guard: reject zero-norm chunks, normalize every embedding to unit L2 norm at write time, and add a unit test asserting <code>abs(np.linalg.norm(emb) - 1.0) &lt; 1e-5</code>.</li>
+    <li>Recalibrate score thresholds: verify downstream cutoff filters against the restored [-1, 1] cosine range and re-run the retrieval evaluation set.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Dot product, cosine similarity, and Euclidean distance are the three ways we score vector similarity in embeddings and transformers. Knowing how vector magnitude separates them lets you prevent noisy vectors from hijacking retrieval rankings and speeds up cosine search by over 15x in production.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Algebraically, the dot product sums elementwise products in 2d minus 1 FLOPs; geometrically, it equals the L2 norm of a times the L2 norm of b times cosine theta. Because raw dot product scales with length, a verbose or repetitive document with a huge L2 norm can outscore a concise document at a much smaller angle. Cosine similarity removes length by dividing each vector by its L2 norm, projecting every point onto the unit sphere. On that unit sphere, squared Euclidean distance is 2 times 1 minus cosine theta, so maximizing dot product, maximizing cosine, and minimizing L2 distance produce identical rankings.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In production, we L2-normalize vectors once at index time so query-time cosine becomes a single BLAS matrix-vector dot product, cutting 100,000-vector search at dimension 384 in my benchmark from 61.4 ms down to 4.0 ms. Only keep raw dot product when magnitude intentionally carries confidence, like transformer attention or unembedding logits, and always clamp norms against zero vectors producing NaN.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p>Question: how do you choose between cosine similarity, dot product, and Euclidean distance for a vector index?</p><p class="weak">"Cosine similarity is usually best for text embeddings because it looks at the angle instead of the size of the vector, while dot product is faster to compute."</p><p class="strong">"You do not have to trade cosine quality for dot-product speed. If you L2-normalize embeddings once at index time and normalize the query vector, unit vectors satisfy ||u - v||_2^2 = 2(1 - u . v), so dot product, cosine similarity, and Euclidean distance give the exact same ranking. In my benchmark on 100,000 384-d float32 vectors, pre-normalized dot product ran in 4.02 ms versus 61.44 ms for on-the-fly cosine, a 15.3x speedup. I only use unnormalized dot product when the encoder was specifically trained for Maximum Inner Product Search where norm encodes document importance."</p><p>The strong answer states the algebraic equivalence on the unit sphere, quotes the concrete latency speedup from the toy benchmark (noting it is from your own NumPy run), and names the exact exception when unnormalized dot product is appropriate.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Euclidean (L2) distance and cosine similarity measure completely different geometries, so an L2-only vector index cannot rank by cosine similarity."</summary><div class="a">On raw vectors they differ, as the kata showed (raw L2 picked doc_verbose while cosine picked doc_clean). On L2-normalized unit vectors, ||u - v||_2^2 = 2(1 - cos(theta)). Because 2(1 - c) is strictly decreasing in c, an L2-only index fed unit-normalized vectors returns the exact same ranking as cosine similarity.</div></details>
+  <details class="q"><summary>"Normalizing vectors with L1 norm (so absolute values sum to 1) works just as well as L2 normalization for turning cosine similarity into a dot product."</summary><div class="a">No. Cosine similarity is defined with L2 norms: (a . b) / (||a||_2 ||b||_2). L1 normalization puts vectors on a flat-sided diamond where diagonal vectors in R^d have L2 norm 1 / sqrt(d) while axis-aligned vectors have L2 norm 1, distorting dot products by up to a factor of d.</div></details>
+  <details class="q"><summary>"If a cosine similarity score is 0.5, the two vectors are halfway (45 degrees) between identical and orthogonal."</summary><div class="a">No. Cosine is non-linear in angle: cos(60 deg) = 0.5, whereas cos(45 deg) = 0.7071. At 60 degrees in 2D, the chord distance on the unit circle is already 1.0, the same as the radius.</div></details>
+  <details class="q"><summary>"You should always L2-normalize query and key vectors inside transformer self-attention so long vectors do not dominate attention weights."</summary><div class="a">Standard scaled dot-product attention uses q . k / sqrt(d_k) without unit normalization because vector magnitude lets the head vary attention entropy: a large query/key norm sharpens softmax onto one token, while a small norm attends uniformly. If you use cosine attention, you must multiply by a learned temperature scale tau or softmax saturates to a flat distribution.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain vectors, dot product, norms, and cosine similarity in 90 seconds.</summary><div class="a">Use the three-level answer above: outcome (why magnitude vs direction matters for ranking and speed), mechanism (algebraic and geometric dot product, L2 normalization onto the unit sphere, and ||u - v||_2^2 = 2(1 - cos)), and internals/limits (15.3x speedup at index time, attention logits exception, zero-vector NaN guard).</div></details>
+  <details class="q"><summary>Derive the formula connecting squared Euclidean distance and cosine similarity on unit vectors.</summary><div class="a">Write ||u - v||_2^2 = (u - v) . (u - v) = ||u||_2^2 + ||v||_2^2 - 2(u . v). When ||u||_2 = 1 and ||v||_2 = 1, u . v = cos(theta), so ||u - v||_2^2 = 1 + 1 - 2 cos(theta) = 2(1 - cos(theta)).<div class="f"><b>Follow-up</b>If FAISS IndexFlatL2 returns a squared distance of 0.40 on unit-normalized vectors, what is their cosine similarity? Solve 0.40 = 2(1 - cos), giving cos = 1 - 0.20 = 0.80.</div></div></details>
+  <details class="q"><summary>Construct a concrete 2D example where raw dot product and cosine similarity disagree on the winner.</summary><div class="a">From the kata: let query q = [4, 0]. Let Candidate A = [0.9, 0.1] (angle 6.3 deg, ||A||_2 = 0.91) and Candidate B = [3.2, 2.4] (angle 36.9 deg, ||B||_2 = 4.0). Cosine ranks A first (0.9939 vs 0.8000), but raw dot product ranks B first (12.80 vs 3.60) because ||B||_2 is 4.4x larger.<div class="f"><b>Follow-up</b>Which candidate wins under raw Euclidean distance in that same example, and why? Candidate B wins (distance 2.53 vs 3.10 for A) because ||B||_2 = 4.0 matches ||q||_2 = 4.0, whereas A sits near the origin.</div></div></details>
+  <details class="q"><summary>State the definitions of L1, L2, and L_infinity norms and their inequality in R^d.</summary><div class="a">||x||_1 = sum |x_i|, ||x||_2 = sqrt(sum x_i^2), and ||x||_inf = max |x_i|. For any x in R^d, ||x||_inf &lt;= ||x||_2 &lt;= ||x||_1 &lt;= sqrt(d) * ||x||_2.<div class="f"><b>Follow-up</b>When does ||x||_1 equal sqrt(d) * ||x||_2? When all d coordinates have equal magnitude (|x_1| = |x_2| = ... = |x_d|), pointing along the main diagonal.</div></div></details>
+  <details class="q"><summary>Why is pre-normalizing vectors at index time 15x faster than computing cosine similarity at query time, even though the FLOP count only drops by ~3x?</summary><div class="a">Pre-normalized scoring runs a single BLAS matrix-vector multiply X_unit @ q_unit over contiguous memory. On-the-fly cosine must also compute row norms across X on every query, reading the entire N x d matrix from RAM a second time, allocating intermediate arrays, and running N square roots and divisions.</div></details>
+  <details class="q"><summary>When would you intentionally use raw dot product instead of cosine similarity?</summary><div class="a">In transformer attention (q . k / sqrt(d_k)), LLM output unembedding (h . w_v), and Maximum Inner Product Search (MIPS) models where vector magnitude is trained to encode confidence, token salience, or document popularity.<div class="f"><b>Follow-up</b>What happens if you replace raw dot product with raw cosine similarity in an LLM output layer without adding a temperature scalar? Logits get clamped to [-1, 1], so the maximum logit gap is 2 and the softmax distribution cannot become sharp (minimum entropy stays high).</div></div></details>
+  <details class="q"><summary>How many FLOPs does it take to score one query vector against N = 100,000 pre-normalized vectors of width d = 384?</summary><div class="a">Each dot product takes 2d - 1 = 767 FLOPs (384 multiplies and 383 adds), so 100,000 dot products cost about 2 * 100,000 * 384 = 76.8 MFLOPs, plus 3 * 384 FLOPs once to normalize the query.</div></details>
+  <details class="q"><summary>What happens if an empty text chunk produces a zero vector in a cosine similarity pipeline, and how do you prevent it?</summary><div class="a">||0||_2 = 0, so dividing by the norm produces NaN (0.0 / 0.0). Because IEEE 754 NaN comparisons are false, NaN scores can corrupt argsort or top-k heaps. Prevent it by filtering empty chunks before embedding, clamping the denominator with max(||v||_2, 1e-12), and asserting np.isfinite on ingest.</div></details>
+  <details class="q"><summary>Why does absmax int8 quantization depend on the L_infinity norm, and how do you spot a vector that will quantize poorly?</summary><div class="a">Symmetric int8 quantization scales a vector by 127 / ||x||_inf so the largest coordinate hits 127. If one outlier coordinate makes ||x||_inf close to ||x||_2, all other coordinates get crushed near zero.<div class="f"><b>Follow-up</b>What transform fixes high ||x||_inf / ||x||_2 before quantization without changing dot products? Multiplying both query and document vectors by an orthogonal rotation matrix (such as a randomized Hadamard transform), which preserves L2 norms and dot products while spreading energy evenly across coordinates.</div></div></details>
+  <details class="q"><summary>If two unit vectors in R^384 are orthogonal, what are their dot product, cosine similarity, and Euclidean distance?</summary><div class="a">Dot product is 0, cosine similarity is 0, squared Euclidean distance is 2(1 - 0) = 2, and Euclidean distance is sqrt(2) = 1.4142, regardless of the dimension d.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the algebraic and geometric dot product formulas; the definitions and ordering of L1, L2, and L_infinity norms; the derivation of <code>||u - v||_2^2 = 2(1 - cos(theta))</code> on the unit sphere; the kata's 3-candidate numbers showing raw dot, raw L2, and cosine picking different winners; the 100K-vector benchmark latency numbers; and two cases where dot product and cosine rankings diverge.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Dot product: <code>a . b = sum(a_i * b_i) = ||a||_2 * ||b||_2 * cos(theta)</code> (2d - 1 FLOPs).</li>
+    <li>Norms: <code>||x||_1 = sum |x_i|</code> (diamond), <code>||x||_2 = sqrt(sum x_i^2)</code> (circle), <code>||x||_inf = max |x_i|</code> (square), with <code>||x||_inf &lt;= ||x||_2 &lt;= ||x||_1 &lt;= sqrt(d) * ||x||_2</code>.</li>
+    <li>Unit sphere identity: for <code>||u||_2 = ||v||_2 = 1</code>, <code>||u - v||_2^2 = ||u||_2^2 + ||v||_2^2 - 2(u . v) = 2(1 - cos(theta))</code>, making dot, cosine, and -L2 rank-identical.</li>
+    <li>Kata ranking inversion (<code>q = [4, 0]</code>): <code>doc_clean [0.9, 0.1]</code> wins cosine (0.9939), <code>doc_verbose [3.2, 2.4]</code> wins raw L2 distance (2.53 vs 3.10), and <code>doc_spam [6, 8]</code> wins raw dot product (24.00 vs 3.60).</li>
+    <li>Kata benchmark (100K x 384 float32): on-the-fly cosine 61.44 ms vs pre-normalized dot 4.02 ms (15.3x faster, max diff 5.7e-08).</li>
+    <li>Divergence cases: unnormalized retrieval chunks (bug: length/repetition hijacks rank) vs attention and unembedding logits (by design: norm encodes confidence/sharpness).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A01: why does a Python list of 100,000 floats lose by orders of magnitude to a NumPy float32 array when computing a dot product?</summary><div class="a">A Python list stores 8-byte pointers to boxed PyFloat objects scattered across the heap, requiring type checks and pointer chasing on every element. A NumPy float32 array is a contiguous C buffer of 4-byte floats processed by SIMD vector instructions and cache-friendly BLAS loops.</div></details>
+  <details class="q"><summary>D01: what is the output of an LLM forward pass before sampling, and how does it become a probability distribution over the vocabulary?</summary><div class="a">The forward pass outputs a vector of raw unnormalized scores (logits) of length V, computed by taking the dot product of the final hidden state with each row of the unembedding matrix, then softmax exponentiates and normalizes those logits to sum to 1.</div></details>
+  <details class="q"><summary>D02: why does byte-level BPE start from a base vocabulary of 256 tokens, and what is the cost for scripts underrepresented in the training corpus?</summary><div class="a">Starting from all 256 UTF-8 byte values guarantees that every string can be encoded with zero unknown tokens. However, scripts with few learned merges must fall back toward raw UTF-8 bytes (3 bytes per Indic character), costing up to 4.75x more tokens in the D02 kata.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://numpy.org/doc/stable/reference/generated/numpy.linalg.norm.html">NumPy Reference: numpy.linalg.norm</a><small>Definitions and axis behavior for vector L1, L2, and L_infinity norms. Checked 17 Nov 2026.</small></li>
+    <li><a href="https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances">FAISS Wiki: MetricType and distances</a><small>Documents METRIC_INNER_PRODUCT, METRIC_L2 (squared L2), and using faiss.normalize_L2 for cosine similarity. Checked 17 Nov 2026.</small></li>
+    <li><a href="https://nlp.stanford.edu/IR-book/html/htmledition/dot-products-1.html">Manning, Raghavan, Schutze: Introduction to Information Retrieval (Ch. 6, Vector Space Model)</a><small>Length normalization, unit vectors, and why cosine similarity prevents long documents from dominating dot-product retrieval. Cited from memory.</small></li>
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al.: Attention Is All You Need</a><small>Scaled dot-product attention q . k / sqrt(d_k) where vector norms modulate softmax sharpness. Cited from memory.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A08 T1 W01", "cards": [{"q": "How do the algebraic and geometric definitions of the dot product connect?", "a": "Sum of elementwise products sum(a_i * b_i) equals ||a||_2 * ||b||_2 * cos(theta), blending directional alignment with both vector lengths."}, {"q": "What formula links squared L2 distance and cosine similarity on unit-normalized vectors?", "a": "||u - v||_2^2 = 2 * (1 - cos(theta)), derived from ||u||_2^2 + ||v||_2^2 - 2(u . v) with unit norms."}, {"q": "Why do you L2-normalize embeddings at index time instead of computing cosine similarity at query time?", "a": "Unit norms reduce cosine similarity to a single matrix-vector dot product, skipping per-row norm divisions (15.3x faster in the kata)."}, {"q": "When does raw dot product rank candidates differently from cosine similarity?", "a": "Whenever candidate vectors have different L2 norms; a high-magnitude vector at a wider angle can beat a short vector aligned with the query."}, {"q": "Why do transformer attention and LLM output layers use raw dot product instead of cosine similarity?", "a": "Vector magnitude carries confidence and sharpens softmax probabilities; unit normalization strips that norm signal and flattens logits unless rescaled."}, {"q": "How are the L1, L2, and L_infinity norms of a vector x in R^d ordered?", "a": "||x||_inf \u003c= ||x||_2 \u003c= ||x||_1 \u003c= sqrt(d) * ||x||_2, corresponding to a square, circle, and diamond unit ball in 2D."}, {"q": "Why does L1 normalization fail to make dot product and cosine rankings match?", "a": "L1 normalization projects onto a flat-sided diamond where L2 norms vary from 1/sqrt(d) on diagonals to 1 on axes, distorting dot products."}, {"q": "What happens when a zero vector enters cosine similarity or L2 normalization, and how do you guard against it?", "a": "Dividing by ||v||_2 = 0 produces NaN or Inf and poisons top-k sorting; clamp the denominator with max(||v||_2, 1e-12) and reject empty inputs."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
