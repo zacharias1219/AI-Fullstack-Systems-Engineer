@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D02 Tokenization</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D02">
+<main>
+<header>
+  <div class="eyebrow"><b>D02</b><span>D Transformers and LLM internals</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Tokenization</h1>
+  <p class="lede">How does text become the integers a model actually sees, and why does that one step set your cost, your context budget and which languages get a worse deal? This page covers byte-level BPE in depth, WordPiece and unigram briefly, special tokens, and the vocabulary size tradeoff. The embedding table itself is D03.</p>
+  <div class="chips"><span><em>Before</em>D01 What an LLM is</span><span><em>After</em>D03 Embeddings and the unembedding</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production, then say the 90-second answer aloud</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page and write the blank-page recall</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards, log misses in the tracker</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A tokenizer trained only on English sees a Telugu sentence and an English sentence with the same meaning. Does the Telugu one need about 1x, 2x or 5x the tokens?</summary><div class="a">About 5x. In the kata, the English-only tokenizer needs 337 tokens for the Telugu pair of sentences and 71 for the English pair, which is 4.75x. Even with no learning at all (pure bytes) Telugu is 3.01x, because each Telugu character takes 3 bytes in UTF-8. Learning English merges then widens the gap.</div></details>
+  <details class="q"><summary>In a GPT-style tokenizer, are "token" and " token" (with a leading space) the same token, or different?</summary><div class="a">Different. In the kata, " token" is a single token while "token" without the space splits into t, o, k, en. The space is glued to the front of the word, so a word at the start of a text and the same word mid-sentence are different ids.</div></details>
+  <details class="q"><summary>A byte-level BPE tokenizer meets a character it never saw in training. Does it emit an unknown token?</summary><div class="a">No. The base vocabulary is all 256 byte values, so any character can be written as 1 to 4 byte tokens. The price is length, not failure: a rare character costs several tokens instead of one.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A network takes numbers, so text has to become integers. Characters give sequences that are far too long, and attention cost grows with the square of length. Whole words give a vocabulary that is huge and breaks on any word it never saw. Subword tokenization sits between the two: common strings get one token, rare strings are spelled out from smaller pieces.</p>
+  <p>Byte-pair encoding (BPE) builds that vocabulary greedily. Start with single units. Count adjacent pairs. Merge the most frequent pair into a new unit. Repeat until the vocabulary reaches the size you chose. In byte-level BPE the starting units are the 256 possible byte values, so every string in every language can be written down. The ordered list of merges is the tokenizer.</p>
+  <p><strong>Mental model.</strong> A stenographer writes a shorthand dictionary. Each time they notice the same two symbols together again and again, they invent one new symbol for that pair. The dictionary stops when it hits its page limit. Writing a sentence in shorthand means replaying their inventions in the order they made them. The stenographer only learned shorthand for what they were shown, which is why a dictionary built from English text is poor at Telugu.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From raw text to token IDs</div>
+    <svg viewBox="0 0 480 205" role="img" aria-label="Byte-level BPE splits text with a regex, converts chunks to 256 base UTF-8 bytes, replays learned merges in rank order, and outputs token IDs that index the embedding table">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="20" width="102" height="52" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="61" y="42" text-anchor="middle">regex split</text>
+          <text x="61" y="60" text-anchor="middle" class="m">" token"</text>
+        </g>
+        <g data-step="2">
+          <path d="M112 46 H132" class="ink"/>
+          <rect x="132" y="20" width="104" height="52" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="184" y="42" text-anchor="middle">UTF-8 bytes</text>
+          <text x="184" y="60" text-anchor="middle" class="m">256 base ids</text>
+        </g>
+        <g data-step="3">
+          <path d="M236 46 H256" class="ink"/>
+          <rect x="256" y="20" width="104" height="52" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="308" y="42" text-anchor="middle">replay</text>
+          <text x="308" y="60" text-anchor="middle" class="m">rank order</text>
+        </g>
+        <g data-step="4">
+          <path d="M360 46 H380" class="ink"/>
+          <rect x="380" y="20" width="90" height="52" rx="6" class="c-paper ln" data-hi="4"/>
+          <rect x="380" y="20" width="90" height="6" rx="2" class="c-good"/>
+          <text x="425" y="44" text-anchor="middle">token ids</text>
+          <text x="425" y="61" text-anchor="middle" class="m">V x d rows</text>
+        </g>
+        <g data-step="5">
+          <rect x="20" y="102" width="440" height="46" rx="6" class="c-paper ln" data-hi="5"/>
+          <rect x="20" y="102" width="8" height="46" rx="2" class="c-warn"/>
+          <text x="38" y="122" data-hi="5">Multilingual tax: English 71 tok vs Telugu 337 tok</text>
+          <text x="38" y="138" class="m">4.75x tokens in kata when merges come from English only</text>
+        </g>
+        <text x="240" y="180" text-anchor="middle" class="m">merge list learned once; encoding replays it deterministically</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Raw text enters; a pre-tokenization regex splits it into chunks and glues leading spaces to words (" token").</li>
+      <li>Each chunk becomes UTF-8 bytes from the 256-byte base vocabulary, so no character is ever unknown.</li>
+      <li>BPE replays learned merges in rank order (256, 257, ...) rather than searching for the shortest split.</li>
+      <li>Each final piece maps to an integer ID that selects one row of the V by d embedding table.</li>
+      <li>Where it costs: scripts missing from training earn few merges, so Telugu needs 4.75x as many tokens as English in the kata.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Byte-level BPE eliminates unknown tokens via 256 base bytes, but greedy merge replay charges more tokens to under-represented scripts.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Bytes in, count pairs, glue the top pair, repeat until the vocabulary is full. The glue list in order is the tokenizer. Encoding replays the glue list. Vocabulary size is one dial between sequence length and table size.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Training: count, merge, repeat</h3>
+  <p>Take a corpus as sequences of byte values. Count every adjacent pair, weighted by how often the word occurs. Pick the most frequent pair, give it the next unused id (256, then 257, and so on), and rewrite the corpus with that pair replaced. Repeat. After M merges the vocabulary has 256 + M entries. Each merge is recorded as a rule "pair (a, b) becomes id n". A small trace on the string aaabdaaabac:</p>
+  <div class="codewrap"><pre>aaabdaaabac   pairs: aa=4 ab=2 bd da ba ac  -&gt; merge aa as Z
+ZabdZabac     pairs: Za=2 ab=2 ...          -&gt; tie, merge ab as Y
+ZYdZYac       pairs: ZY=2 ...               -&gt; merge ZY as X
+XdXac         11 symbols became 5</pre></div>
+  <figure class="viz stepper" id="viz-bpe-trace">
+    <div class="vt">Stepper: BPE training on "aaabdaaabac"</div>
+    <svg viewBox="0 0 460 190" role="img" aria-label="BPE training compresses the 11-symbol string aaabdaaabac to 5 symbols XdXac in three greedy merges">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="16" y="14" width="428" height="34" rx="5" class="c-paper ln" data-hi="1"/>
+          <text x="28" y="35">1. aaabdaaabac</text>
+          <text x="230" y="35" class="m">aa=4, ab=2 (11 symbols)</text>
+        </g>
+        <g data-step="2">
+          <rect x="16" y="56" width="428" height="34" rx="5" class="c-soft ln" data-hi="2"/>
+          <text x="28" y="77">2. ZabdZabac</text>
+          <text x="230" y="77" class="m">aa -&gt; Z (9 symbols)</text>
+        </g>
+        <g data-step="3">
+          <rect x="16" y="98" width="428" height="34" rx="5" class="c-paper ln" data-hi="3"/>
+          <rect x="16" y="98" width="6" height="34" rx="2" class="c-warn"/>
+          <text x="28" y="119">3. ZYdZYac</text>
+          <text x="230" y="119" class="m">tie Za=2, ab=2 -&gt; Y (7)</text>
+        </g>
+        <g data-step="4">
+          <rect x="16" y="140" width="428" height="34" rx="5" class="c-paper ln" data-hi="4"/>
+          <rect x="16" y="140" width="6" height="34" rx="2" class="c-good"/>
+          <text x="28" y="161">4. XdXac</text>
+          <text x="230" y="161" class="m">ZY -&gt; X (5 symbols, done)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Start with 11 symbols: "aaabdaaabac". Count adjacent pairs: aa appears 4 times, ab 2, others 1.</li>
+      <li>Merge the top pair aa into Z. Rewriting gives "ZabdZabac" (9 symbols).</li>
+      <li>Recount pairs: Za and ab tie at 2. A fixed tie rule merges ab into Y, giving "ZYdZYac" (7 symbols).</li>
+      <li>Merge ZY into X to reach "XdXac" (5 symbols); no pair repeats, so 11 symbols compressed to 5.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> BPE greedily replaces the most frequent adjacent pair one rank at a time, and tie-breaking rules make the merge list part of the model.</figcaption>
+  </figure>
+  <details class="q"><summary>Check: in the trace, why is the first merge aa and not ab, and what does a tie mean for your tokenizer?</summary><div class="a">aa occurs 4 times as an adjacent pair (the run aaa contains two overlapping aa pairs), ab only 2. A tie such as Za versus ab is broken by a fixed rule (for example the lowest ids first), and the choice changes which tokens exist. Two BPE trainers with different tie rules produce different tokenizers, so the tokenizer file is part of the model.</div></details>
+
+  <h3>Encoding: replay the merges in rank order</h3>
+  <p>To tokenize new text you do not search for the best split. You take each word as bytes and apply the merges in the order they were learned: merge 256 first if it applies anywhere, then 257, and so on. This is greedy replay, so BPE does not guarantee the shortest possible token sequence. Real implementations use the lowest-ranked adjacent pair at each step, which gives the same result as the full replay without scanning all merges.</p>
+  <details class="q"><summary>Check: does BPE encoding find the segmentation with the fewest tokens?</summary><div class="a">No. It replays learned merges by rank, which is deterministic and fast but greedy. Unigram tokenizers (below) do search for the most probable segmentation with the Viterbi algorithm.</div></details>
+
+  <h3>Why bytes, and what UTF-8 does to non-English text</h3>
+  <p>UTF-8 writes ASCII in 1 byte, most accented Latin, Greek and Cyrillic in 2, most Indic scripts and Chinese in 3, and emoji in 4. A byte-level tokenizer starts from those bytes, so a Hindi character begins life as 3 tokens and can only get cheaper if the training corpus contained enough Hindi for those byte triples to win merges. Starting from bytes instead of characters means the base vocabulary is exactly 256 for every language, with no unknown token, and no character set to design.</p>
+  <details class="q"><summary>Check: with zero merges, how many tokens does the kata's Hindi sentence pair need compared with English, and why?</summary><div class="a">289 versus 112, which is 2.58x. The Hindi pair is 109 characters but 289 UTF-8 bytes (about 2.65 bytes per character), the English pair is 112 characters and 112 bytes. With no merges, tokens equal bytes.</div></details>
+
+  <h3>Pre-tokenization: where merges are not allowed to go</h3>
+  <p>Before any merging, a regex cuts text into chunks, and BPE runs inside each chunk. GPT-2 style splitting attaches the leading space to the word (" token"), keeps letters, digits and punctuation apart, and keeps whitespace runs together. Without this step a merge like "s " (end of one word plus the space) can form and cross word boundaries, giving tokens that mean nothing on their own. Newer tokenizers tune this regex for digits and code. Two consequences you can use in interviews: a prompt that ends in a space leaves a lone space token, which the model rarely saw in that position, so strip trailing whitespace; and numbers are split into chunks by the regex, not by place value, which is one reason arithmetic is hard.</p>
+
+  <h3>Other families: WordPiece and unigram</h3>
+  <p>WordPiece (BERT) also grows a vocabulary by merging, but it picks the pair with the best likelihood score, roughly count(ab) divided by count(a) times count(b), not the raw count. It encodes by longest-match-first and marks continuation pieces with "##". Unigram (used in SentencePiece models such as T5) goes the other way: start with a large candidate vocabulary, fit a probability to each piece with EM, and repeatedly drop the pieces whose removal hurts the corpus likelihood least. It encodes with Viterbi and can sample alternative segmentations. SentencePiece is a library that runs BPE or unigram directly on raw text, treating the space as a symbol, so it needs no language-specific pre-splitting.</p>
+  <details class="q"><summary>Check: name one concrete difference between BPE and unigram, in training direction and in encoding.</summary><div class="a">BPE grows from small units by merging, and encodes by replaying merges in rank order. Unigram shrinks from a large candidate set by pruning, and encodes by finding the highest probability segmentation, which can also be sampled.</div></details>
+
+  <h3>Special tokens</h3>
+  <p>Special tokens are ids added outside the learned merges: end of text, beginning of sequence, padding, and the role markers of a chat template. GPT-2 has one, <code>&lt;|endoftext|&gt;</code>, which is why its vocabulary is 256 + 50,000 + 1 = 50,257. The model learns what they mean during training. The danger is parsing: if your encoder turns the literal text "&lt;|im_start|&gt;" inside a user message into the real special id, the user can forge a system or assistant turn. This is a prompt injection path at the tokenizer layer, the same family of problem ROPE measures at the prompt layer.</p>
+  <details class="q"><summary>Check: how do you stop user text from creating real special tokens?</summary><div class="a">Encode untrusted text with special-token parsing disabled so the literal characters become ordinary tokens, and only the template code inserts real special ids. Add a test that a user message containing a role marker string does not produce the special id.</div></details>
+
+  <h3>Vocabulary size: the one dial</h3>
+  <p>Raising vocabulary size V compresses text better, so sequences get shorter, which cuts prefill compute, decode steps and KV cache per piece of text. You pay three ways. The embedding table has V rows of width d, so V × d parameters. The output layer multiplies the hidden state by a d by V matrix every step, which is 2 × d × V FLOPs per generated token. And rare tokens appear so seldom in training that their vectors stay poorly trained. Compression gains shrink as V grows while the table grows linearly. Llama 3 moved from 32,000 to 128,256 tokens, so its table is 128,256 × 4,096 = 525,336,576 parameters, about 1.05 GB in bf16 (d is from memory, verify). The output matmul is about 1.05 GFLOPs per token against roughly 16 GFLOPs for the whole 8B model, so about 6.5 percent of per-token compute goes to scoring the vocabulary.</p>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Vocabulary size V vs embedding table and output FLOPs</div>
+    <p class="ask">Predict first. Moving from Llama 2 (V = 32,000) to Llama 3 (V = 128,256) at d = 4,096 in bf16 multiplies the embedding table by 4. Does it cross 1 GB?</p>
+    <div class="ctl">
+      <label><span>Vocabulary V</span><select name="v" data-num><option value="32000">32,000 (Llama 2)</option><option value="50257">50,257 (GPT-2)</option><option value="100000">100,000 (GPT-4 era)</option><option value="128256" selected>128,256 (Llama 3)</option></select></label>
+      <label><span>Model width d</span><input type="range" name="d" min="1024" max="8192" step="512" value="4096"><output data-for="d"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Raising V from 32,000 to 128,256 at d = 4,096 grows the bf16 embedding table from 0.26 GB to 1.05 GB and output projection to 1.05 GFLOPs per token.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var params=v.v*v.d,gb=params*2/1e9,gflops=2*v.d*v.v/1e9,baseGb=32000*v.d*2/1e9;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GB",digits:2,rows:[
+      {label:"Selected V (bf16)",value:gb,tone:gb>=1?"warn":"good"},
+      {label:"32K baseline (bf16)",value:baseGb,tone:"muted"}
+    ]});
+    return {verdict:"Table: "+tl.fmt(params/1e6,1)+"M params ("+tl.fmt(gb,2)+" GB in bf16). Output matmul: "+tl.fmt(gflops,2)+" GFLOPs per token."};
+  })});</script>
+  <details class="q"><summary>Check: compute the embedding table size in GB for V = 32,000 and d = 4,096 in bf16, and say what changed from 32,000 to 128,256.</summary><div class="a">32,000 × 4,096 = 131,072,000 parameters, times 2 bytes is 0.26 GB. At 128,256 it is 1.05 GB, four times larger, bought to get shorter sequences and better coverage of non-English text and code.</div></details>
+
+  <h3>The multilingual tax</h3>
+  <p>Cost, latency and context window are all measured in tokens, not characters. A tokenizer whose merges were learned mostly from English gives other scripts more tokens for the same meaning, so the same Telugu call costs more, prefills slower, and fits fewer turns in the context window. This matters directly for voice AI for clinics in Hindi or Telugu: price per token tells you nothing until you measure tokens per sentence in your own languages.</p>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Base vocabulary of byte-level BPE</td><td class="n">256</td><td>Derived</td></tr>
+    <tr><td>UTF-8 bytes per character: ASCII, accented Latin, Indic or CJK, emoji</td><td class="n">1, 2, 3, 4</td><td>Derived</td></tr>
+    <tr><td>GPT-2 vocabulary = 256 bytes + 50,000 merges + 1 special</td><td class="n">50,257</td><td>Checked 16 Nov 2026 (Hugging Face docs)</td></tr>
+    <tr><td>Llama 2 to Llama 3 vocabulary</td><td class="n">32,000 to 128,256</td><td>Checked 16 Nov 2026 (Hugging Face blog)</td></tr>
+    <tr><td>Llama 3 claim: up to 15 percent fewer tokens than Llama 2</td><td class="n">15%</td><td>From a third-party summary of Meta's post, verify</td></tr>
+    <tr><td>GPT-4 era tokenizer vocabulary</td><td class="n">about 100K</td><td>From memory, verify</td></tr>
+    <tr><td>BERT WordPiece vocabulary</td><td class="n">30,522</td><td>From memory, verify</td></tr>
+    <tr><td>English text per token, GPT-style tokenizers</td><td class="n">about 4 characters, 0.75 words</td><td>From memory, verify</td></tr>
+    <tr><td>Embedding table, V = 128,256, d = 4,096, bf16</td><td class="n">525,336,576 params, 1.05 GB</td><td>Derived (d from memory, verify)</td></tr>
+    <tr><td>Output projection per token, same V and d</td><td class="n">2 × d × V = 1.05 GFLOPs, about 6.5% of an 8B model's per-token compute</td><td>Derived</td></tr>
+    <tr><td>Kata, no merges: tokens for English, Hindi, Telugu</td><td class="n">112, 289, 337</td><td>Your own run</td></tr>
+    <tr><td>Kata, 108 English merges: Hindi and Telugu versus English tokens</td><td class="n">4.07x and 4.75x</td><td>Your own run</td></tr>
+    <tr><td>Kata, same 108 merges trained on multilingual text: Hindi and Telugu tokens</td><td class="n">121 and 136 (from 289 and 337)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Characters or raw bytes only</td><td>Tiny vocabulary, no unknowns, simple</td><td>Sequences 3x to 4x longer, attention and KV cache grow with them</td><td>Latency and memory on long inputs</td></tr>
+    <tr><td>Whole words</td><td>Short sequences, readable tokens</td><td>Huge vocabulary, unknown words, no sharing across forms</td><td>An unknown token in names and codes</td></tr>
+    <tr><td>Byte-level BPE</td><td>No unknowns, one scheme for every language, fast</td><td>Greedy, quality depends on training corpus mix</td><td>Non-English cost, split numbers</td></tr>
+    <tr><td>WordPiece</td><td>Likelihood-based merges, simple longest-match encoding</td><td>Needs an unknown token and a pre-split</td><td>Rare characters mapping to [UNK]</td></tr>
+    <tr><td>Unigram (SentencePiece)</td><td>Probabilistic, can sample segmentations as regularization</td><td>Heavier training, Viterbi at encode time</td><td>Nondeterminism if sampling is left on at serving time</td></tr>
+    <tr><td>Larger vocabulary</td><td>Shorter sequences, better non-English and code coverage</td><td>Bigger embedding and output matrices, more undertrained tokens</td><td>Rarely seen tokens that behave oddly</td></tr>
+    <tr><td>Smaller vocabulary</td><td>Small table, every token well trained</td><td>Longer sequences, more compute per text</td><td>Context window filling up early</td></tr>
+    <tr><td>Byte-level models, no tokenizer</td><td>No tokenizer bias, any language equal</td><td>Very long sequences, so a quadratic attention model suffers</td><td>Linear-time architectures such as state space models change this tradeoff (MambaByte, from memory, verify)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: byte-level BPE in 80 lines</h2>
+  <p>It trains a byte-level BPE tokenizer on a 714-character English corpus, then encodes held-out sentences in five languages and prints how many tokens each needs. It needs only Python 3 and no downloads.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Byte-level BPE from scratch. Run: python kata.py [--merges 300] [--multi]"""
+import re, argparse
+from collections import Counter
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--merges", type=int, default=300, help="max merges to learn")
+ap.add_argument("--multi", action="store_true", help="also train on non-English text")
+args = ap.parse_args()
+
+EN = ("The tokenizer splits the text into pieces and maps each piece to an integer. "
+      "The model never sees the letters. It sees the integers, and each integer picks one row from the embedding table. "
+      "If the tokenizer splits a word into many pieces, the model spends more tokens on it. "
+      "More tokens means more compute, more memory in the cache, and a higher bill. "
+      "A larger vocabulary gives shorter sequences, but the embedding table gets bigger. "
+      "The tokenizer is trained once, before the model, and the model is trained on its tokens. "
+      "The inference server reads the prompt, runs the tokenizer, and then the model predicts the next token. "
+      "The tokenizer decides how many tokens a prompt costs. The model decides what comes next.")
+OTHER = {
+ "Spanish": "El tokenizador divide el texto en trozos pequeños. Cada trozo recibe un número entero. El modelo no ve las letras, solo ve números. Más tokens significan más cálculo y más costo. El modelo predice el siguiente token. Un vocabulario más grande da secuencias más cortas.",
+ "Hindi": "टोकनाइज़र पाठ को छोटे टुकड़ों में बाँटता है। हर टुकड़े को एक संख्या दी जाती है। मॉडल अक्षर नहीं देखता, वह केवल संख्याएँ देखता है। ज़्यादा टोकन का मतलब है ज़्यादा गणना और ज़्यादा खर्च। मॉडल अगला टोकन अनुमान लगाता है। शब्दकोश बड़ा हो तो अनुक्रम छोटा होता है।",
+ "Telugu": "టోకనైజర్ వచనాన్ని చిన్న ముక్కలుగా విభజిస్తుంది. ప్రతి ముక్కకు ఒక సంఖ్య ఇవ్వబడుతుంది. మోడల్ అక్షరాలను చూడదు, సంఖ్యలను మాత్రమే చూస్తుంది. ఎక్కువ టోకెన్లు అంటే ఎక్కువ లెక్కింపు, ఎక్కువ ఖర్చు. మోడల్ తరువాతి టోకెన్ను అంచనా వేస్తుంది. పదకోశం పెద్దదైతే క్రమం చిన్నదవుతుంది.",
+ "Chinese": "分词器把文本切成小块。 每一块都会对应一个整数。 模型看不到字母，只能看到整数。 词元越多，计算越多，费用也越高。 模型预测下一个词元。 词表越大，序列越短。",
+}
+EVAL = {  # held out: none of these sentences appear in the training text
+ "English": "Summarize the patient's discharge notes in two lines. The server returns the next token after each forward pass.",
+ "Spanish": "Resume las notas de alta del paciente en dos líneas. El servidor devuelve el siguiente token después de cada pasada.",
+ "Hindi": "मरीज़ के डिस्चार्ज नोट्स को दो पंक्तियों में सारांशित करें। सर्वर हर फ़ॉरवर्ड पास के बाद अगला टोकन लौटाता है।",
+ "Telugu": "రోగి డిశ్చార్జ్ నోట్స్ను రెండు పంక్తుల్లో సంగ్రహించండి. సర్వర్ ప్రతి ఫార్వర్డ్ పాస్ తర్వాత తదుపరి టోకెన్ను తిరిగి ఇస్తుంది.",
+ "Chinese": "请用两行总结患者的出院记录。 服务器在每次前向传播后返回下一个词元。",
+}
+PRE = re.compile(r" ?\S+|\s+")  # pre-tokenize: a word keeps its leading space (GPT-2 style, simplified)
+
+def merge(w, pair, new):
+    out, i = [], 0
+    while i &lt; len(w):
+        if i &lt; len(w) - 1 and (w[i], w[i + 1]) == pair: out.append(new); i += 2
+        else: out.append(w[i]); i += 1
+    return tuple(out)
+
+def train(text, n):
+    vocab, merges = Counter(tuple(w.encode()) for w in PRE.findall(text)), []
+    for _ in range(n):
+        pairs = Counter()
+        for w, c in vocab.items():
+            for p in zip(w, w[1:]): pairs[p] += c
+        if not pairs or pairs.most_common(1)[0][1] &lt; 2: break  # a pair seen once teaches nothing
+        best, new, nv = pairs.most_common(1)[0][0], 256 + len(merges), Counter()
+        merges.append(best)
+        for w, c in vocab.items(): nv[merge(w, best, new)] += c
+        vocab = nv
+    return merges
+
+def encode(text, merges):
+    ids = []
+    for w in PRE.findall(text):
+        t = tuple(w.encode())
+        for k, p in enumerate(merges): t = merge(t, p, 256 + k)  # apply merges in the order they were learned
+        ids += t
+    return ids
+
+def table(merges):
+    tok = {i: bytes([i]) for i in range(256)}
+    for k, (a, b) in enumerate(merges): tok[256 + k] = tok[a] + tok[b]
+    return tok
+
+text = EN + (" " + " ".join(OTHER.values()) if args.multi else "")
+merges = train(text, args.merges)
+tok = table(merges)
+print(f"trained on {len(text)} chars ({'multilingual' if args.multi else 'English only'}); learned {len(merges)} merges; vocab = 256 + {len(merges)} = {256 + len(merges)}")
+print("first merges (bytes):", [tok[256 + k] for k in range(min(8, len(merges)))])
+for lang, s in EVAL.items():
+    assert b"".join(tok[i] for i in encode(s, merges)).decode() == s  # lossless round trip
+print(f"\n{'language':&lt;9}{'chars':&gt;6}{'bytes':&gt;7}{'tokens':&gt;8}{'bytes/tok':&gt;11}{'x English':&gt;11}")
+base = len(encode(EVAL["English"], merges))
+for lang, s in EVAL.items():
+    n = len(encode(s, merges))
+    print(f"{lang:&lt;9}{len(s):&gt;6}{len(s.encode()):&gt;7}{n:&gt;8}{len(s.encode()) / n:&gt;11.2f}{n / base:&gt;11.2f}")
+print("\nsame word, with and without a leading space:")
+for w in ["token", " token"]:
+    print(f"  {w!r:9} -&gt; {[tok[i].decode(errors='replace') for i in encode(w, merges)]}")</pre></div>
+  <p class="cap">Output from a real run (python 3.13, five runs, including the three break-its)</p><div class="codewrap"><pre class="out">$ python kata.py 
+trained on 714 chars (English only); learned 108 merges; vocab = 256 + 108 = 364
+first merges (bytes): [b' t', b'he', b'er', b' the', b' m', b'en', b' to', b' i']
+
+language  chars  bytes  tokens  bytes/tok  x English
+English     112    112      71       1.58       1.00
+Spanish     116    118      86       1.37       1.21
+Hindi       109    289     289       1.00       4.07
+Telugu      123    337     337       1.00       4.75
+Chinese      34    100     100       1.00       1.41
+
+same word, with and without a leading space:
+  'token'   -&gt; ['t', 'o', 'k', 'en']
+  ' token'  -&gt; [' token']
+
+$ python kata.py --merges 0
+trained on 714 chars (English only); learned 0 merges; vocab = 256 + 0 = 256
+first merges (bytes): []
+
+language  chars  bytes  tokens  bytes/tok  x English
+English     112    112     112       1.00       1.00
+Spanish     116    118     118       1.00       1.05
+Hindi       109    289     289       1.00       2.58
+Telugu      123    337     337       1.00       3.01
+Chinese      34    100     100       1.00       0.89
+
+same word, with and without a leading space:
+  'token'   -&gt; ['t', 'o', 'k', 'e', 'n']
+  ' token'  -&gt; [' ', 't', 'o', 'k', 'e', 'n']
+
+$ python kata.py --merges 20
+trained on 714 chars (English only); learned 20 merges; vocab = 256 + 20 = 276
+first merges (bytes): [b' t', b'he', b'er', b' the', b' m', b'en', b' to', b' i']
+
+language  chars  bytes  tokens  bytes/tok  x English
+English     112    112      85       1.32       1.00
+Spanish     116    118      98       1.20       1.15
+Hindi       109    289     289       1.00       3.40
+Telugu      123    337     337       1.00       3.96
+Chinese      34    100     100       1.00       1.18
+
+same word, with and without a leading space:
+  'token'   -&gt; ['t', 'o', 'k', 'en']
+  ' token'  -&gt; [' token']
+
+$ python kata.py --multi --merges 108
+trained on 1587 chars (multilingual); learned 108 merges; vocab = 256 + 108 = 364
+first merges (bytes): [b'\xe0\xb0', b'\xe0\xa4', b'\xe0\xb1', b' \xe0\xa4', b'\xe0\xa5', b' t', b' \xe0\xb0', b'\xe0\xb1\x8d']
+
+language  chars  bytes  tokens  bytes/tok  x English
+English     112    112      76       1.47       1.00
+Spanish     116    118      91       1.30       1.20
+Hindi       109    289     121       2.39       1.59
+Telugu      123    337     136       2.48       1.79
+Chinese      34    100      91       1.10       1.20
+
+same word, with and without a leading space:
+  'token'   -&gt; ['t', 'o', 'k', 'en']
+  ' token'  -&gt; [' token']
+
+$ python kata.py   # with PRE changed to re.compile(r"[\s\S]+") (no pre-tokenization)
+trained on 714 chars (English only); learned 110 merges; vocab = 256 + 110 = 366
+first merges (bytes): [b' t', b'he', b'er', b' the', b's ', b'en', b' to', b' i']
+
+language  chars  bytes  tokens  bytes/tok  x English
+English     112    112      74       1.51       1.00
+Spanish     116    118      90       1.31       1.22
+Hindi       109    289     289       1.00       3.91
+Telugu      123    337     336       1.00       4.54
+Chinese      34    100     100       1.00       1.35</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Tokens for the same meaning across 5 languages (108 English-only merges)</div>
+    <div data-bars='{"unit":" tok","digits":0,"rows":[{"label":"English","value":71,"tone":"good"},{"label":"Spanish","value":86},{"label":"Chinese","value":100,"tone":"warn"},{"label":"Hindi","value":289,"tone":"bad"},{"label":"Telugu","value":337,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> With 108 English-only merges, English drops to 71 tokens while Hindi (289, 4.07x) and Telugu (337, 4.75x) stay at raw UTF-8 byte counts.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>With zero merges, tokens equal bytes: English 112, Hindi 289, Telugu 337. Before any learning, Indic scripts already cost 2.58x and 3.01x because of UTF-8.</li>
+    <li>After 108 English-only merges, English falls from 112 to 71 tokens (1.58 bytes per token) while Hindi stays at 289 and Telugu at 337. The multiple grows to 4.07x and 4.75x. Compression is learned, and only for what the corpus contained.</li>
+    <li>The first merges are b' t', b'he', b'er', b' the'. Later merges build on earlier ones: ' the' is ' t' plus 'he'. The merge list is a tree of reuse.</li>
+    <li>Training stopped at 108 merges, not the 300 allowed, because no pair repeated any more. A 714-character corpus cannot support a large vocabulary. Real tokenizers train on very large corpora.</li>
+    <li>" token" is one token but "token" is t, o, k, en. The space belongs to the word, and the training text always had "token" after a space.</li>
+    <li>These numbers come from a toy corpus and short held-out sentences. They show the direction and mechanism, not the size of the effect in a production tokenizer.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Fewer merges.</strong> Run <code>python kata.py --merges 20</code> and <code>--merges 0</code>. Predict first: how many tokens will Hindi need at 0, at 20, at 108? And what happens to the Telugu-to-English multiple as English gets better?</li>
+    <li><strong>Same budget, different corpus.</strong> Run <code>python kata.py --multi --merges 108</code>. Predict Hindi tokens and English tokens before you look. Who gains and who loses at a fixed vocabulary size? Look at the first merges: what are they?</li>
+    <li><strong>Remove pre-tokenization.</strong> Change the PRE line to <code>re.compile(r"[\s\S]+")</code> so the whole text is one chunk. Predict which kind of merge appears that did not before, and whether English tokens go up or down.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Print <code>encode("strawberry", merges)</code> as pieces and ask how a model could count its r letters from those. Then replace the PRE regex with a GPT-2 style one that separates letters, digits and punctuation, and compare how it splits "2026-11-17".</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Hindi or Telugu traffic costs and lags far more than English for the same content</td><td>Tokenizer merges learned mostly from English; 3-byte characters</td><td>Measure tokens per character per language with the model's own tokenizer; shorten and cache the fixed prompt; compare models on tokens per sentence</td></tr>
+    <tr><td>Your token estimate differs from the API's usage number</td><td>Client counts with a different tokenizer, or words times a constant</td><td>Count with the same tokenizer as the model and reconcile against the usage field</td></tr>
+    <tr><td>Output quality changes when the prompt ends with a space or newline</td><td>The trailing space becomes its own rare token</td><td>Strip trailing whitespace; end prompts on a natural boundary</td></tr>
+    <tr><td>Fine-tuned model ignores roles or produces junk</td><td>Training or serving used a different tokenizer or chat template</td><td>Load tokenizer and template from the same checkpoint; add a test that renders one conversation and compares ids</td></tr>
+    <tr><td>User text containing a role marker changes behavior</td><td>Special tokens parsed from untrusted input</td><td>Disable special-token parsing for user text; test with marker strings</td></tr>
+    <tr><td>Streamed output shows broken characters</td><td>One character spans several byte tokens and a chunk ended in the middle</td><td>Use an incremental decoder that holds partial UTF-8 until complete</td></tr>
+    <tr><td>Model fails at spelling, letter counts or digit arithmetic</td><td>Tokens hide the letters; digits are split by regex, not place value</td><td>Use a tool for counting and arithmetic</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> input and output tokens per request split by language and tenant, characters per token per language, the share of requests near the context limit, and the gap between your client-side estimate and billed usage.</p>
+  <details class="q"><summary>Scenario: your clinic voice agent sends ASR transcripts to an LLM. A Telugu call costs about 4x an English call and answers arrive later. Finance asks why and what you will do.</summary><div class="a"><ol>
+    <li>Measure before explaining: log input tokens and characters per call by language, and compute tokens per character with the model's own tokenizer on 50 real transcripts.</li>
+    <li>Explain the mechanism: Telugu characters are 3 UTF-8 bytes and the merges favor English, so one meaning needs several times the tokens. Cost scales with tokens, prefill time scales with prompt tokens, and the KV cache grows with them.</li>
+    <li>Fix cheaply first: cut and cache the fixed system prompt, trim old turns, summarize earlier transcript, keep instructions short.</li>
+    <li>Compare models by tokens per sentence on your own transcripts, not by price per token. A larger vocabulary that covers Indic scripts better can be cheaper at a higher price per token.</li>
+    <li>Re-run your eval set after any change, because a different tokenizer or shorter prompt can change accuracy.</li>
+    <li>Report cost per call by language, not cost per token.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A tokenizer turns text into integer ids drawn from a fixed vocabulary of subword pieces. The model only ever sees those ids, so cost, context length and latency are all counted in tokens. That makes the tokenizer the first place where price and quality get decided.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Most modern LLMs use byte-level BPE. Start with the 256 byte values, so any string can be represented and nothing is unknown. Count every adjacent pair in a corpus, merge the most frequent pair into a new token, and repeat until the vocabulary reaches its target size. The ordered merge list is the tokenizer. To encode, split the text into words with a regex, convert each word to UTF-8 bytes, and replay the merges in the order they were learned. WordPiece picks merges by likelihood and encodes by longest match. Unigram starts large and prunes. Special tokens are extra ids for end of text and chat roles.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Vocabulary size is the main dial. GPT-2 uses 50,257 tokens and Llama 3 uses 128,256, which costs a 128,256 by 4,096 table, about 1 GB in bf16, but shortens sequences. The tax lands on languages missing from training: in my toy run an English-only tokenizer needed 4.75 times the tokens for Telugu. Failure modes are undertrained rare tokens, letter-level tasks, and special-token injection.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p>Question: why does the same sentence cost more in Telugu than in English?</p><p class="weak">"The tokenizer is not as good at Telugu, so it uses more tokens, and tokens cost money."</p><p class="strong">"Telugu characters are 3 bytes in UTF-8, and the merge list was learned mostly from English, so few Telugu pairs earned merges. In my toy run, an English-only tokenizer took 337 tokens for a Telugu pair of sentences against 71 for the English pair, 4.75x. A production tokenizer is far better than my toy, but the direction holds, so I would measure tokens per character per language with the real tokenizer before pricing anything."</p><p>The strong answer names the mechanism (UTF-8 bytes, merge learning), gives a number, and ends with a decision. Those 4.75x and 71 figures come from the toy kata, so say that they are illustrative and not production results.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Tokens are basically words, so a 1,000-token prompt is about 1,000 words."</summary><div class="a">English averages about 0.75 words per token (from memory, verify), and other scripts are much worse. In the kata, " token" is one token, "token" without a space is four, and Hindi needs 289 tokens for 109 characters. Tokens are pieces of bytes, so always count with the model's tokenizer.</div></details>
+  <details class="q"><summary>"BPE tokenizes a sentence by searching for the split that gives the fewest tokens."</summary><div class="a">No. BPE replays the learned merges in rank order, which is greedy and deterministic. It does not search. Unigram tokenizers are the ones that search with Viterbi for the most probable segmentation.</div></details>
+  <details class="q"><summary>"A bigger vocabulary is always better, because the sequences get shorter."</summary><div class="a">Shorter sequences are the gain, but the embedding table grows by V × d, the output matmul costs 2 × d × V per generated token, and rare tokens are undertrained. Compression gains flatten while the table grows linearly. The best V depends on the languages, the code share and the model size.</div></details>
+  <details class="q"><summary>"A byte-level tokenizer can still produce an unknown token for a very rare character."</summary><div class="a">No. All 256 byte values are in the base vocabulary, so any character is representable. The failure is cost: a rare character becomes up to 4 tokens. A different problem is generation stopping inside a character, which gives invalid UTF-8 until the next token arrives.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain tokenization to me in 90 seconds.</summary><div class="a">Use the three levels above: outcome, then byte-level BPE training and encoding, then vocabulary size, the multilingual tax and failure modes, each with its number.<div class="f"><b>Follow-up</b>Why not just use words, or just characters? Words give a huge vocabulary and unknown words. Characters give sequences several times longer, and attention cost grows with the square of length. Subwords sit between the two.</div></div></details>
+  <details class="q"><summary>Corpus aaabdaaabac. Which pair merges first, and what does the text become after two merges?</summary><div class="a">aa, which occurs 4 times, giving ZabdZabac. The second step ties between Za and ab at 2 each. With ab merged, the text is ZYdZYac. The tie rule affects the result, so tokenizers must ship their merge list.</div></details>
+  <details class="q"><summary>Why does the same meaning cost more tokens in Hindi or Telugu?</summary><div class="a">Indic characters are 3 bytes in UTF-8 and the merge list was learned from data dominated by English. In the kata even zero merges give 2.58x for Hindi, and English-only merges widen it to 4.07x.<div class="f"><b>Follow-up</b>How do you fix it for a product? Measure tokens per sentence in your languages with candidate models, prefer a tokenizer with better coverage even at a higher price per token, shorten and cache prompts, and track cost per call by language.</div></div></details>
+  <details class="q"><summary>How do you choose a vocabulary size?</summary><div class="a">Pick the size where extra compression stops paying for the larger table and output matmul. Consider the language and code mix, model width and the training token budget. GPT-2 used 50,257, Llama 3 uses 128,256.<div class="f"><b>Follow-up</b>What does the vocabulary add to per-token compute? The output projection costs 2 × d × V FLOPs, about 1.05 GFLOPs for V = 128,256 and d = 4,096, roughly 6.5 percent of an 8B model's per-token compute.</div></div></details>
+  <details class="q"><summary>Compare BPE, WordPiece and unigram.</summary><div class="a">BPE merges the most frequent pair and encodes by replaying merges. WordPiece merges by a likelihood score and encodes by longest match with "##" continuations. Unigram prunes a large vocabulary by likelihood and encodes with Viterbi, so it can sample segmentations.<div class="f"><b>Follow-up</b>Which one has an unknown token problem? WordPiece and word-level schemes can emit [UNK]. Byte-level BPE cannot, because every byte is in the base vocabulary.</div></div></details>
+  <details class="q"><summary>What breaks when training and serving use different tokenizers or chat templates?</summary><div class="a">The ids no longer mean what the model learned, so outputs degrade or roles are ignored. Load the tokenizer and template from the same checkpoint, and add a test that renders a fixed conversation and compares the ids.</div></details>
+  <details class="q"><summary>Why is the leading space part of the token, and what does that mean for prompts?</summary><div class="a">GPT-style pre-tokenization attaches the space to the word, so " token" is one id and "token" is another. A prompt ending in a space leaves a lone space token that rarely appears there in training, so strip trailing whitespace.</div></details>
+  <details class="q"><summary>Why do LLMs struggle to count the r letters in a word or do long-digit arithmetic?</summary><div class="a">The model sees token ids, not letters, so spelling must be memorized per token. Digits are split by a regex into chunks, not by place value. Use a tool for counting and arithmetic.<div class="f"><b>Follow-up</b>Would a bigger vocabulary help? Not reliably. It changes the chunks but still hides letters. Tool use or character-level inputs fix the task.</div></div></details>
+  <details class="q"><summary>What is a special token and how can it be abused?</summary><div class="a">An id added outside the learned merges, for end of text or chat roles. If untrusted text is encoded with special-token parsing on, a user can forge a system turn. Disable parsing for user text and test it.</div></details>
+  <details class="q"><summary>How would you estimate the token cost of Telugu clinic call transcripts before launch?</summary><div class="a">Sample 50 real transcripts, tokenize them with each candidate model's own tokenizer, record tokens per character and tokens per call, then multiply by price per token and calls per day. Include the system prompt and output tokens.<div class="f"><b>Follow-up</b>What else would you track after launch? Billed usage versus your estimate, p95 prompt length, and the share of calls near the context limit, split by language.</div></div></details>
+  <details class="q"><summary>Why start from 256 bytes instead of characters?</summary><div class="a">The base vocabulary is exactly 256 for every language and no character can be unknown. A character-based base would need tens of thousands of entries and would still meet unseen characters.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the BPE training loop in four steps; the encoding rule; UTF-8 bytes per character for ASCII, Indic and emoji; the three costs of a bigger vocabulary; the vocabulary sizes of GPT-2 and Llama 3; the kata's headline numbers; two production failure modes.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Training: start from 256 bytes, count adjacent pairs, merge the most frequent into a new id, repeat until the vocabulary hits its target.</li>
+    <li>Encoding: regex split into words, bytes, replay merges in learned order. Greedy, not shortest.</li>
+    <li>UTF-8: ASCII 1 byte, accented Latin 2, Indic and CJK 3, emoji 4.</li>
+    <li>Bigger vocabulary: gain shorter sequences. Pay V × d table, 2 × d × V output FLOPs per token, undertrained rare tokens.</li>
+    <li>Sizes: GPT-2 50,257 = 256 + 50,000 + 1. Llama 2 32,000, Llama 3 128,256.</li>
+    <li>Kata: zero merges English 112, Hindi 289, Telugu 337. English-only merges English 71, Hindi 4.07x, Telugu 4.75x. Multilingual at the same 108 merges Hindi 121, Telugu 136.</li>
+    <li>Failures: multilingual cost, trailing-space prompts, tokenizer or template mismatch, special-token injection, letter and digit tasks.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: what does the model predict at each position during training, and how does inference differ?</summary><div class="a">Training predicts the next token at every position in parallel from the true previous tokens, and the loss is cross-entropy over the vocabulary. Inference generates one token at a time and feeds its own output back in, so it is sequential.</div></details>
+  <details class="q"><summary>A02: why does one blocking call such as time.sleep inside an async handler slow every other request?</summary><div class="a">asyncio runs coroutines on one event loop thread. A blocking call holds that thread, so no other coroutine runs until it returns. Use an awaitable version or move the work to a thread with asyncio.to_thread.</div></details>
+  <details class="q"><summary>L01: you are asked to design a chatbot for a clinic. Name four clarifying questions before drawing anything.</summary><div class="a">Who the users are and how many at peak; the latency target (p95); data sensitivity and rules such as PHI, GDPR or DPDPA; which languages are needed; what a wrong answer costs. Each one changes the design.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://huggingface.co/blog/llama3">Hugging Face: Welcome Llama 3</a><small>Vocabulary grew to 128,256 from 32K. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://huggingface.co/docs/transformers/model_doc/gpt2">Hugging Face Transformers: GPT-2 documentation</a><small>GPT-2 vocab_size default 50,257. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://ai.meta.com/blog/meta-llama-3/">Meta AI: Introducing Meta Llama 3</a><small>Llama 3 uses a 128K-token vocabulary tokenizer. Checked 16 Nov 2026; the 15 percent figure was read in a third-party summary only.</small></li>
+    <li><a href="https://www.fast.ai/posts/2025-10-16-karpathy-tokenizers">fast.ai: Let's Build the GPT Tokenizer, a guide to Karpathy's lecture</a><small>Byte-level BPE walk-through and tokenizer failure cases. Seen in search results 16 Nov 2026, not read in full.</small></li>
+    <li><a href="https://arxiv.org/abs/1508.07909">Sennrich, Haddow, Birch: Neural Machine Translation of Rare Words with Subword Units</a><small>Origin of BPE for subword vocabularies. Cited from memory, not re-opened in this session.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D02 T1 W01", "cards": [{"q": "Why does byte-level BPE start from 256 bytes instead of words or characters?", "a": "Any string is representable, so there is no unknown token and the base vocabulary is fixed. The cost is longer sequences for rare text."}, {"q": "What are the steps of one BPE training iteration?", "a": "Count adjacent pairs, merge the most frequent into a new token id, rewrite the corpus, repeat until the target vocabulary size."}, {"q": "How does BPE encode new text at inference time?", "a": "Split into words with a regex, convert to bytes, then replay the learned merges in rank order. It is greedy replay, not a search for the fewest tokens."}, {"q": "Why does the same sentence cost more tokens in Telugu than English?", "a": "Telugu characters are 3 UTF-8 bytes and merges were learned mostly from English. Kata: an English-only tokenizer needed 4.75x the English token count."}, {"q": "What does a larger vocabulary trade off?", "a": "Gain: shorter sequences, less compute and KV cache. Pay: a bigger V x d table, more output FLOPs per token, undertrained rare tokens."}, {"q": "How large is the embedding table for V = 128,256 and d = 4,096 in bf16?", "a": "128,256 x 4,096 = 525 million parameters, about 1.05 GB. Double that if the output matrix is not tied to the input."}, {"q": "Why do \" token\" and \"token\" get different ids in a GPT-style tokenizer?", "a": "Pre-tokenization attaches the leading space to the word. So a prompt ending in a space leaves a lone space token the model rarely saw there."}, {"q": "How can special tokens become a security hole?", "a": "If untrusted text is encoded with special-token parsing on, a user can forge a role marker. Encode user text with parsing off."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

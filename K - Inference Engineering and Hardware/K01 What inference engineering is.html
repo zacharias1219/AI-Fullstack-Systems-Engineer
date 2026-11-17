@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K01 What inference engineering is</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K01">
+<main>
+<header>
+  <div class="eyebrow"><b>K01</b><span>Inference engineering and hardware</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>What inference engineering is</h1>
+  <p class="lede">When a model answers one request, where does every millisecond go, and who owns each one? This page gives you the map of the stack and the first numbers. Later topics open each layer.</p>
+  <p class="sub">Out of scope here: the KV cache (K06), memory math (K07), the metric definitions in full (K08) and batching schedulers (K13). This page only names them.</p>
+  <div class="chips"><span><em>Before</em>none, first K topic</span><span><em>After</em>K02 Inference setup</span><span><em>After</em>K04 One token end to end</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the warm-up questions before reading</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 once</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it twice</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production, then say the 90-second answer aloud</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank page, then the flashcards</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards and update the tracker</span><small>2 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. Numbers come from the kata in station 6.</p>
+  <details class="q"><summary>An 8B-parameter model in BF16 on one H100 answers a 1,500-token prompt with 300 tokens. Which stage takes most of the wall-clock time: network, queue, prefill or decode? Roughly what share?</summary><div class="a">Decode. In the kata it is 2,075 ms of 2,328 ms total, 89%. Prefill, the 1,500-token prompt, is only 49 ms, about 2%.</div></details>
+  <details class="q"><summary>You move the same model from an A100 to an H100. The H100 has about 3.2x the dense BF16 compute. How much faster is each decoded token?</summary><div class="a">About 1.64x, not 3.2x (11.40 ms to 6.94 ms in the kata). Decode is limited by memory bandwidth, and bandwidth grew only 1.64x (2.039 to 3.35 TB/s). Prefill, which is compute-bound, does get close to the 3.2x.</div></details>
+  <details class="q"><summary>A user says the first word takes too long to appear, but once it starts the text streams fine. Which stages of the request do you look at first?</summary><div class="a">Everything before the first token: network, gateway, queue wait, tokenize and prefill. In the kata the 192 ms to first token is mostly queue wait (97 ms) and prefill (49 ms). Decode speed is not the problem here.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Inference engineering is the work of making a trained model answer real requests fast, cheaply and reliably. Training happens once and produces weights. Inference happens for every request, forever, and it is where most of the running cost of an AI product lives. The unit of work is a single request, and the craft starts by knowing what that request crosses on its way through.</p>
+  <p>A request passes through five layers, and a fleet runs many copies of them. Each layer has its own owner and its own kind of fix. The three numbers you are always trading are latency (how long a user waits), cost (tokens per second per GPU dollar) and reliability (whether it holds under load and failure). Most of the craft is the fact that making one better usually makes another worse.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: One request across the five layers</div>
+    <svg viewBox="0 0 460 280" role="img" aria-label="A request crosses five layers inside a fleet: Client (40 ms network), Gateway (5 ms), Engine (97 ms queue), Kernels (49 ms prefill then 2,075 ms decode), and Hardware (H100 3.35 TB/s, 989 TFLOPS).">
+      <rect x="4" y="4" width="452" height="252" rx="10" class="ln" stroke-dasharray="6 4"/>
+      <text x="14" y="272" font-size="12" class="m">Fleet: replicas, routing, autoscaling, monitoring</text>
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="16" y="14" width="170" height="36" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="26" y="36">1 Client &amp; product</text>
+          <rect x="198" y="18" width="90" height="28" rx="5" class="c-muted"/>
+          <text x="243" y="36" text-anchor="middle" class="c-paper">40 ms net</text>
+          <text x="298" y="36" class="m">stream, retry</text>
+        </g>
+        <g data-step="2">
+          <path d="M101 50 V60" class="ink"/>
+          <rect x="16" y="60" width="170" height="36" rx="6" class="c-soft ln" data-hi="2"/>
+          <text x="26" y="82">2 Gateway</text>
+          <rect x="198" y="64" width="90" height="28" rx="5" class="c-muted"/>
+          <text x="243" y="82" text-anchor="middle" class="c-paper">5 ms</text>
+          <text x="298" y="82" class="m">auth, rate limit</text>
+        </g>
+        <g data-step="3">
+          <path d="M101 96 V106" class="ink"/>
+          <rect x="16" y="106" width="170" height="36" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="26" y="128">3 Engine</text>
+          <rect x="198" y="110" width="90" height="28" rx="5" class="c-warn"/>
+          <text x="243" y="128" text-anchor="middle" class="c-paper">97 ms wait</text>
+          <text x="298" y="128" class="m">queue, batch, KV</text>
+        </g>
+        <g data-step="4">
+          <path d="M101 142 V152" class="ink"/>
+          <rect x="16" y="152" width="170" height="44" rx="6" class="c-soft ln" data-hi="4"/>
+          <text x="26" y="170">4 Kernels</text>
+          <text x="26" y="188" class="m">prefill + decode</text>
+          <rect x="198" y="156" width="90" height="26" rx="5" class="c-accent" data-hi="4"/>
+          <text x="243" y="173" text-anchor="middle" class="c-paper">49 ms PF</text>
+          <text x="298" y="173" class="m">TTFT 192 ms</text>
+        </g>
+        <g data-step="5">
+          <rect x="298" y="180" width="146" height="24" rx="5" class="c-bad" data-hi="5"/>
+          <text x="371" y="196" text-anchor="middle" class="c-paper">2,075 ms decode (89%)</text>
+        </g>
+        <g data-step="6">
+          <path d="M101 196 V210" class="ink"/>
+          <rect x="16" y="210" width="170" height="36" rx="6" class="c-good" data-hi="6"/>
+          <text x="26" y="232" class="c-paper">5 Hardware (H100)</text>
+          <text x="198" y="232" class="m">3.35 TB/s, 989 TFLOPS</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Client sends the prompt and pays 40 ms of network round-trip latency before any GPU work starts.</li>
+      <li>Gateway authenticates, checks rate limits, and routes the request in 5 ms.</li>
+      <li>Engine scheduler queues the request for 97 ms behind two running prefills and reserves KV cache memory.</li>
+      <li>Prefill kernels read all 1,500 prompt tokens in parallel in 49 ms (compute-bound), emitting token 1 at 192 ms TTFT.</li>
+      <li>Decode loops 299 times, re-reading 16.06 GB of weights per token for 2,075 ms, which is 89.2% of total time.</li>
+      <li>Hardware sets both ceilings: 989 TFLOPS caps prefill, and 3.35 TB/s HBM bandwidth caps decode.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> One request crosses five layers, and decode's repeated weight reads dominate 89% of its latency.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>Can Great Engineers Keep Hardware busy?</strong> Client, Gateway, Engine, Kernels, Hardware, with the Fleet around them. The question mark is the job: keep the expensive hardware busy without making users wait.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>One request, two phases</h3>
+  <p>Inside the model, a request has two phases. Prefill reads the whole prompt in one parallel pass and produces the first output token. Decode then produces one token per step, each step depending on the last. Time to first token (TTFT) is everything up to the end of prefill. Time per output token (TPOT) is the length of a decode step. Full definitions come in K08.</p>
+  <h3>Why the phases are limited by different things</h3>
+  <p>Prefill does about 2 x parameters x prompt tokens of arithmetic, so it is limited by compute. Decode must read every weight from GPU memory to produce a single token, so it is limited by memory bandwidth. For 8.03B parameters in BF16 the weights are 16.06 GB, and at 3.35 TB/s that read alone takes 4.8 ms. Arithmetic for one token is about 0.03 ms. The tensor cores wait for memory.</p>
+  <pre>prefill FLOPs  ~ 2 x params x prompt_tokens
+decode step    ~ (weight_bytes + KV_bytes_read) / (bandwidth x efficiency)</pre>
+  <details class="q"><summary>Check: why does a slower GPU hurt prefill more than decode?</summary><div class="a">Prefill is compute-bound and the H100 has about 3.2x the A100's dense BF16 compute. Decode is bandwidth-bound and the H100 has only 1.64x the bandwidth. The kata shows prefill 154 ms on A100 against 49 ms on H100 (3.2x), but decode step 11.40 ms against 6.94 ms (1.64x).</div></details>
+  <h3>Three goals that pull against each other</h3>
+  <p>Because a decode step costs about the same whether it serves one request or many, the engine batches requests into the same step. Derived from the kata's model: 32 concurrent 1,500-token requests read 16.06 GB of weights plus 6.3 GB of KV cache, so the step grows from about 6.9 ms to about 9.5 ms (roughly 38% slower per user) while the GPU emits 32 tokens instead of 1. That is about 23x the throughput. The price is KV memory, which each request consumes, and the extra wait each user feels. This is the central tradeoff of the field. Your clinic voice agents sit at the latency end of it, since a caller feels TTFT. Your SSM edge research sits at batch size 1, where decode is pure bandwidth.</p>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Batch size vs decode step latency and throughput</div>
+    <p class="ask">Predict first. If you raise batch size from 1 to 32 at 1,500 tokens on an H100, does decode step time rise by 32x or less than 2x?</p>
+    <div class="ctl">
+      <label><span>Batch size</span><input type="range" name="batch" min="1" max="64" step="1" value="32"><output data-for="batch" data-unit=" req"></output></label>
+      <label><span>Context tokens</span><input type="range" name="ctx" min="500" max="8000" step="500" value="1500"><output data-for="ctx" data-unit=" tok"></output></label>
+      <label><span>GPU</span><select name="bw" data-num><option value="3.35e12">H100 (3.35 TB/s)</option><option value="2.039e12">A100 (2.039 TB/s)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Weights (16.06 GB) are read once per step and shared across the batch, so throughput scales far faster than step latency.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var W=16.06e9, KV=131072, eff=0.70;
+    var s1=(W+KV*v.ctx)/(v.bw*eff)*1e3;
+    var sb=(W+v.batch*KV*v.ctx)/(v.bw*eff)*1e3;
+    var tput=v.batch*1000/sb, kvGB=v.batch*KV*v.ctx/1e9;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" ms",digits:2,rows:[
+      {label:"Batch 1 step",value:s1,tone:"muted"},
+      {label:"Batched step",value:sb,tone:sb>s1*2?"warn":"good"}
+    ]});
+    return {verdict:"Step "+tl.fmt(sb,2)+" ms (+"+tl.fmt((sb/s1-1)*100,0)+"% vs batch 1) | "+tl.fmt(tput,0)+" tok/s ("+tl.fmt(tput/(1000/s1),1)+"x) | KV "+tl.fmt(kvGB,1)+" GB"};
+  })});</script>
+  <h3>Levels of the craft</h3>
+  <p>A working ladder, which is this curriculum's framing and not a quote from any source. Call: use an API and manage tokens. Run: host a model on one GPU and measure it (K02 to K11). Tune: engine configuration, batching, KV memory, caching (K12 to K18). Go below: quantization, profiling, kernels, the roofline (K19 to K28). Scale: multi-GPU, fleets, routing, autoscaling, economics (K32 to K48). Interviewers listen for which rung you can speak from.</p>
+  <details class="q"><summary>Check: why can batching 32 requests give about 23x the throughput for a step that is only about 38% slower, and where does it stop?</summary><div class="a">The weights are read once per step and shared by every request in the batch, so the dominant cost does not scale with batch size. Only the KV reads do. It stops when KV memory runs out (each request adds about 197 MB at 1,500 tokens), when compute catches up with memory time, or when the added wait breaks the latency target.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>H100 SXM memory and bandwidth</td><td class="n">80 GB HBM3, 3.35 TB/s</td><td>Checked 14 Nov 2026 (NVIDIA)</td></tr>
+    <tr><td>H100 SXM dense BF16</td><td class="n">989 TFLOPS (1,979 with sparsity)</td><td>Checked 14 Nov 2026; headline figures assume sparsity, dense is half</td></tr>
+    <tr><td>A100 80GB SXM bandwidth and dense BF16</td><td class="n">2.039 TB/s, 312 TFLOPS</td><td>Checked 14 Nov 2026 (secondary tables; NVIDIA says "over 2 TB/s")</td></tr>
+    <tr><td>8B model weights in BF16</td><td class="n">16.06 GB (8.03B x 2 bytes)</td><td>Derived</td></tr>
+    <tr><td>KV bytes per token, 32 layers, 8 KV heads, head dim 128, BF16</td><td class="n">131,072 B (128 KiB)</td><td>From memory, verify against the model card (D23)</td></tr>
+    <tr><td>Decode lower bound, weights / bandwidth, H100</td><td class="n">4.79 ms per token</td><td>Derived</td></tr>
+    <tr><td>Kata decode step, single request, H100</td><td class="n">6.94 ms (144 tok/s)</td><td>Your own run, assumes 70% of peak bandwidth</td></tr>
+    <tr><td>Kata prefill, 1,500 tokens, H100</td><td class="n">48.7 ms</td><td>Your own run, assumes 50% of peak FLOPs</td></tr>
+    <tr><td>Kata TTFT and total</td><td class="n">192 ms and 2,328 ms</td><td>Your own run; network, gateway and CPU times are assumed</td></tr>
+    <tr><td>Decode share of total time in the kata</td><td class="n">89.2%</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Managed API</td><td>No operations, fastest start</td><td>Per-token price, little control of latency tail or engine</td><td>Rate limits, provider queueing, model deprecations</td></tr>
+    <tr><td>Self-host on rented GPUs</td><td>Control, privacy inside your network, custom models</td><td>Operations work, paying for idle GPUs</td><td>GPU utilization and cost per million tokens</td></tr>
+    <tr><td>Bigger batch</td><td>Throughput per GPU dollar</td><td>Slower steps per user, KV memory</td><td>TPOT p95, out-of-memory errors</td></tr>
+    <tr><td>Smaller or quantized model</td><td>Less memory read per token, so faster decode</td><td>Possible quality loss</td><td>Eval regressions, not just speed</td></tr>
+    <tr><td>More replicas</td><td>Capacity and failure headroom</td><td>Idle cost, cold starts</td><td>Autoscaler lag, queue depth</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: the request ledger</h2>
+  <p>A simulation of one request through the stack, with the real hardware numbers and a few assumed constants. It prints where each millisecond goes. It needs only Python and no GPU.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""K01 kata: where does each millisecond of ONE LLM request go?
+Model: Llama-3-8B-like, BF16. Run: python kata.py [--prompt N] [--out N] [--ahead N] [--gpu h100|a100]
+Spec numbers are from NVIDIA datasheets (dense BF16, no sparsity). MFU, bandwidth efficiency and the
+CPU/network constants are ASSUMPTIONS: change them and watch the shares move."""
+import argparse
+
+GPUS = {  # name: (dense BF16 FLOP/s, HBM bytes/s)
+    "h100": (989e12, 3.35e12),   # H100 SXM 80GB
+    "a100": (312e12, 2.039e12),  # A100 SXM 80GB
+}
+P = 8.03e9                       # parameters
+W_BYTES = P * 2                  # BF16 weights
+KV_PER_TOK = 2 * 32 * 8 * 128 * 2  # K and V * layers * kv_heads * head_dim * 2 bytes = 131072
+MFU, BW_EFF = 0.50, 0.70         # assumed: share of peak FLOPs / bandwidth you actually get
+NET_UP, NET_DOWN = 20.0, 20.0    # ms, assumed one-way user&lt;-&gt;region
+GATEWAY = 5.0                    # ms, assumed auth + rate limit + routing
+TOKENIZE = 1.0                   # ms, assumed CPU
+PER_TOKEN_CPU = 0.2              # ms per output token: sampling, detokenize, stream, assumed
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--prompt", type=int, default=1500)
+ap.add_argument("--out", type=int, default=300)
+ap.add_argument("--ahead", type=int, default=2, help="prefills queued ahead of you")
+ap.add_argument("--gpu", default="h100", choices=GPUS)
+a = ap.parse_args()
+flops, bw = GPUS[a.gpu]
+
+# prefill: all prompt tokens at once. Time is the slower of compute and one pass over the weights.
+pf_compute = 2 * P * a.prompt / (flops * MFU) * 1e3
+pf_memory = W_BYTES / (bw * BW_EFF) * 1e3
+prefill = max(pf_compute, pf_memory)
+pf_bound = "compute" if pf_compute &gt;= pf_memory else "memory"
+
+# decode: one token per step. Reads all weights plus the KV cache so far.
+avg_ctx = a.prompt + a.out / 2
+dec_memory = (W_BYTES + KV_PER_TOK * avg_ctx) / (bw * BW_EFF) * 1e3
+dec_compute = 2 * P / (flops * MFU) * 1e3
+step = max(dec_memory, dec_compute)
+dec_bound = "memory" if dec_memory &gt;= dec_compute else "compute"
+
+queue = a.ahead * prefill        # each prefill ahead of you blocks the GPU for its full duration
+decode = step * (a.out - 1)      # first token already came out of prefill
+cpu = PER_TOKEN_CPU * a.out
+
+stages = [("network up", NET_UP, "network"), ("gateway", GATEWAY, "cpu"), ("queue wait", queue, "scheduler"),
+          ("tokenize", TOKENIZE, "cpu"), ("prefill", prefill, pf_bound), ("decode", decode, dec_bound),
+          ("sample+stream", cpu, "cpu"), ("network down", NET_DOWN, "network")]
+total = sum(ms for _, ms, _ in stages)
+ttft = NET_UP + GATEWAY + queue + TOKENIZE + prefill + NET_DOWN
+
+print(f"{a.gpu.upper()}  prompt={a.prompt} out={a.out} ahead={a.ahead}")
+print(f"{'stage':&lt;15}{'ms':&gt;9}{'share':&gt;8}  bound by")
+for name, ms, kind in stages:
+    print(f"{name:&lt;15}{ms:&gt;9.1f}{ms / total:&gt;7.1%}  {kind:&lt;9} {'#' * round(40 * ms / total)}")
+print(f"{'total':&lt;15}{total:&gt;9.1f}")
+print(f"TTFT {ttft:.0f} ms | decode step {step:.2f} ms ({1000 / step:.0f} tok/s) | KV for this prompt {KV_PER_TOK * a.prompt / 1e6:.0f} MB")
+gpu_ms = prefill + decode
+print(f"GPU-bound share (prefill+decode): {gpu_ms / total:.1%}; everything else: {1 - gpu_ms / total:.1%}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">H100  prompt=1500 out=300 ahead=2
+stage                 ms   share  bound by
+network up          20.0   0.9%  network   
+gateway              5.0   0.2%  cpu       
+queue wait          97.4   4.2%  scheduler ##
+tokenize             1.0   0.0%  cpu       
+prefill             48.7   2.1%  compute   #
+decode            2075.3  89.2%  memory    ####################################
+sample+stream       60.0   2.6%  cpu       #
+network down        20.0   0.9%  network   
+total             2327.5
+TTFT 192 ms | decode step 6.94 ms (144 tok/s) | KV for this prompt 197 MB
+GPU-bound share (prefill+decode): 91.3%; everything else: 8.7%</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Where the 2,327.5 ms went in the kata run (H100, prompt=1500, out=300)</div>
+    <div data-bars='{"unit":" ms","digits":1,"rows":[{"label":"Decode (299 steps)","value":2075.3,"tone":"bad"},{"label":"Queue wait (2 ahead)","value":97.4,"tone":"warn"},{"label":"Sample + stream (CPU)","value":60.0,"tone":"muted"},{"label":"Prefill (1,500 tok)","value":48.7},{"label":"Network (up + down)","value":40.0,"tone":"muted"},{"label":"Gateway + tokenize","value":6.0,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> Decode accounts for 89.2% of total request time, while prefill is only 2.1%.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Decode is 2,075 ms of 2,328 ms, or 89.2%. The whole 1,500-token prompt costs 48.7 ms, about 7 decode steps (48.7 / 6.94).</li>
+    <li>Per token, prefill costs about 0.03 ms (48.7 / 1,500) and decode costs 6.94 ms, more than 200 times more. Prefill shares each weight read across all prompt tokens. Decode cannot.</li>
+    <li>TTFT is 192 ms. Only 49 ms is the GPU doing prompt math. Queue wait is 97 ms, because two prefills run ahead of you.</li>
+    <li>The "bound by" column flips from compute to memory between prefill and decode. The same GPU is limited by different things in different phases.</li>
+    <li>Everything outside the GPU phases (network, gateway, tokenize, queue, sampling) adds up to 8.7% of this request. That share depends heavily on the workload, which the second break-it shows.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Long prompt.</strong> Run <code>python kata.py --prompt 30000 --ahead 0</code>. Predict prefill time and TTFT before running.</li>
+    <li><strong>Short answer.</strong> Run <code>python kata.py --out 20</code>. Predict which stage now dominates.</li>
+  </ol></div>
+  <details class="q"><summary>Break it 1: with --prompt 30000 --ahead 0, what happens to prefill, TTFT and the decode step?</summary><div class="a">Prefill rises about 20x with the prompt, to 974 ms, and TTFT to 1,020 ms. The decode step also grows, from 6.94 to 8.53 ms, because the KV cache is now 3.9 GB to read each step. Decode share falls to 70%. Long prompts move the bottleneck to the front of the request.</div></details>
+  <details class="q"><summary>Break it 2: with --out 20, which stage dominates, and how big is the non-GPU share?</summary><div class="a">Decode is still the largest at 40% (131.7 ms), but queue wait is 30% and network 12%. Non-GPU time is 45% of the request. With short answers, queueing and network matter as much as the GPU, so the profile depends on the workload shape.</div></details>
+  <p><strong>Stretch.</strong> Change <code>W_BYTES</code> to 1 byte per parameter, like FP8 weights, and predict the new decode step before running. Then run <code>--gpu a100</code> and confirm the 1.64x. This is the doorway to K19.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Slow first token, normal streaming</td><td>Queue wait, or long prompts making prefill expensive</td><td>Add capacity, cap prompt size, cache shared prefixes (K18), chunk prefill (K17)</td></tr>
+    <tr><td>Fast start, slow stream</td><td>Batch too large, bandwidth-bound decode, KV pressure</td><td>Lower concurrency, quantize, move to higher-bandwidth GPUs</td></tr>
+    <tr><td>Errors or rejections as contexts grow</td><td>KV cache exhausts free GPU memory</td><td>Cap context, quantize the KV cache, paged KV memory (K15)</td></tr>
+    <tr><td>Great in testing, bad in production</td><td>Test traffic does not match production lengths and arrivals</td><td>Replay real traffic shapes (K09)</td></tr>
+    <tr><td>Long queue while GPUs look idle</td><td>Scheduler or CPU limits, or poor routing between replicas</td><td>Read engine metrics, fix routing (K40)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> TTFT and TPOT at p50, p95 and p99, queue depth, KV cache usage, tokens per second per GPU, error rate and cost per million tokens. Alone, a high GPU utilization number does not prove efficiency; it only says a kernel was running.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Inference engineering is making a trained model serve real requests fast, cheaply and reliably. One request crosses a stack: client, gateway, engine, kernels and hardware, with a fleet of replicas around it. The job is to keep expensive GPUs busy without making users wait.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>A request has two phases. Prefill reads the whole prompt in parallel, is compute-bound, and sets time to first token. Decode makes one token per step and must read every weight each step, so it is memory-bandwidth-bound and sets per-token speed. The engine batches many requests into one decode step, since the weights are read once and shared, so throughput climbs while each user's step barely slows. It also manages the KV cache, which holds each active request's history in the memory left after the weights.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Take an 8B model in BF16 on an H100: 16 GB of weights over 3.35 TB/s means decode near 5 ms a token at peak, about 7 in practice. A 300-token answer takes two seconds, a 1,500-token prefill about 50 milliseconds. Batching stops paying when KV memory fills, and it costs latency. A full KV cache or a cold replica shows up as queueing, so I watch TTFT, TPOT and queue depth together.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"Inference engineering is about deploying models efficiently and reducing cost so the business gets value."</p>
+    <p class="strong">"An 8B model in BF16 reads 16 GB of weights for every decoded token, so on an H100 at 3.35 TB/s each token costs about 5 ms at the limit. Decode is memory-bound, so I batch: the weights are read once per step for everyone. The price is KV memory and per-user latency, so I tune against a TTFT and TPOT target."</p>
+    <p>The strong answer names the mechanism, gives a number, names the tradeoff and ends with how you would decide. These numbers come from this page's model, not from a production run of yours. Do not present them as your results. If you want one business sentence, add it after the mechanism: this sets cost per million tokens and whether the product feels instant.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Inference is about running the model's math faster, so the best GPU is the one with the most TFLOPS."</summary><div class="a">Only prefill is compute-bound. Decode, which was 89% of the kata's request, is limited by memory bandwidth. The H100 has 3.2x the A100's compute but 1.64x its bandwidth, and decode got 1.64x faster. For chat workloads, read the bandwidth number first.</div></details>
+  <details class="q"><summary>"To cut latency for a single user, add more GPU replicas."</summary><div class="a">Replicas add capacity. They can remove queue wait (97 ms of 2,328 ms in the kata) but do not shorten one request's prefill or decode. To speed one request you need more bandwidth, a smaller or quantized model, speculation, or tensor parallelism across GPUs (K33), which adds communication cost.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>What is inference engineering, and what does it optimize?</summary><div class="a">Making a trained model answer real requests fast, cheaply and reliably. The three numbers are latency (TTFT and TPOT), cost (tokens per second per GPU dollar) and reliability under load and failure.<div class="f"><b>Follow-up</b>Which two fight each other most? Latency and cost, through batching: bigger batches raise throughput per dollar and slow each user's steps.</div></div></details>
+  <details class="q"><summary>Name the layers a request crosses and who owns each.</summary><div class="a">Client and product, gateway, engine (queue, batching, KV memory), kernels (the math), hardware (bandwidth and compute ceilings), with a fleet layer for replicas, routing, scaling and monitoring.<div class="f"><b>Follow-up</b>TTFT doubled overnight. Where do you look first? Queue depth and prompt lengths, then prefill time. Decode speed is not part of TTFT.</div></div></details>
+  <details class="q"><summary>Why does one decoded token cost so much more time than one prompt token?</summary><div class="a">Prefill processes all prompt tokens together, so each weight read serves many tokens. Decode reads every weight to produce one token. In the kata, about 0.03 ms per prompt token against 6.94 ms per generated token.</div></details>
+  <details class="q"><summary>Why does batching raise throughput without much hurting each user, and where does it stop?</summary><div class="a">Weights are read once per step and shared by the whole batch. Derived: 32 requests take the step from about 6.9 to 9.5 ms and give about 23x the tokens per second. It stops at KV memory, at compute, or at the latency target.<div class="f"><b>Follow-up</b>What grows with each added request? KV cache memory and KV read time, about 197 MB per 1,500-token request here.</div></div></details>
+  <details class="q"><summary>A customer says the chatbot feels slow. What do you establish before changing anything?</summary><div class="a">Whether the first word is slow (TTFT) or the stream is slow (TPOT), the typical prompt and output lengths, concurrency at the bad moments, and then queue depth versus GPU time using a ledger like the kata's.<div class="f"><b>Follow-up</b>TTFT is bad only at peak. Queue wait is the suspect: add capacity or autoscale, shorten prompts, cache shared prefixes.</div></div></details>
+  <details class="q"><summary>How does the ledger tell you which level of the craft a problem lives at?</summary><div class="a">Network or gateway time points to product and API design. Queue points to capacity and scheduling. Prefill points to prompt length, caching and compute. Decode points to bandwidth, batching and quantization. Fix at the level where most milliseconds sit.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the five layers in order with what each owns; the two phases with what bounds each; the three goals and the main tradeoff; and the kata's headline numbers (decode share, TTFT, prefill time, decode step).</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Client, gateway, engine, kernels, hardware, with a fleet around them.</li>
+    <li>Prefill: parallel, compute-bound, sets TTFT. Decode: one token per step, bandwidth-bound, sets TPOT.</li>
+    <li>Goals: latency, cost, reliability. Batching is the central tradeoff.</li>
+    <li>Kata: decode 89%, TTFT 192 ms, prefill 49 ms, decode step about 7 ms.</li>
+    <li>H100 3.35 TB/s and 989 dense BF16 TFLOPS. A100 2.039 TB/s and 312.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">K01 is the first topic, so nothing is scheduled before it. These three are cold checks on ideas this page leans on, labeled with the topic that teaches each properly later this week.</p>
+  <details class="q"><summary>D01: Why does generating 300 tokens take 300 forward passes, and what differs from training?</summary><div class="a">Each token depends on the ones before it, so tokens come out one at a time and each needs a pass. Training updates weights from a loss over known text. Inference uses fixed weights.</div></details>
+  <details class="q"><summary>A09: A (1500, 4096) matrix times a (4096, 4096) matrix. What is the output shape and about how many FLOPs?</summary><div class="a">Output (1500, 4096). That is 1500 x 4096 x 4096 = 2.5e10 multiply-adds, so about 5.0e10 FLOPs. This is the 2 x params x tokens rule for one layer's matrix.</div></details>
+  <details class="q"><summary>L03: A service gets 1 million requests a day, spread evenly. What is the average requests per second, and what would you plan for?</summary><div class="a">1,000,000 / 86,400 is about 11.6 per second. Plan for peak, a rule-of-thumb 2 to 3x the average, so roughly 25 to 35 per second.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://www.nvidia.com/en-us/data-center/h100.html">NVIDIA: H100 Tensor Core GPU</a><small>H100 SXM 80 GB and 3.35 TB/s bandwidth. TFLOPS on the page are quoted with sparsity, so the dense 989 TFLOPS is half of 1,979, per the datasheet footnote. Checked 14 Nov 2026.</small></li>
+    <li><a href="https://www.nvidia.com/en-eu/data-center/a100/">NVIDIA: A100 Tensor Core GPU</a><small>States A100 80GB bandwidth "over 2 TB/s". The exact 2,039 GB/s and 312 TFLOPS dense BF16 came from secondary spec tables that copy NVIDIA's datasheet. Checked 14 Nov 2026.</small></li>
+    <li>Not sourced: the model configuration (32 layers, 8 KV heads, head dim 128) is from memory. You check it against real model cards in D23. The stack and the levels of the craft are this curriculum's framing; I did not read the source module text.</li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K01 T2 W01", "cards": [{"q": "Why is decode memory-bandwidth-bound while prefill is compute-bound?", "a": "Decode reads every weight to emit one token, so bytes dominate. Prefill reuses each weight across all prompt tokens, so FLOPs dominate."}, {"q": "Name the layers one request crosses, and the goal of the whole stack.", "a": "Client, gateway, engine, kernels, hardware, with a fleet around them. Goal: keep GPUs busy without making users wait."}, {"q": "About how long is one decode step for an 8B BF16 model on an H100?", "a": "About 7 ms: 16 GB of weights over 3.35 TB/s is 4.8 ms at peak, and 70% of peak bandwidth gives about 6.9 ms."}, {"q": "Why does a 3.2x faster GPU not make decode 3.2x faster?", "a": "Decode is limited by memory bandwidth, which grew only 1.64x from A100 to H100, not by the 3.2x gain in compute."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

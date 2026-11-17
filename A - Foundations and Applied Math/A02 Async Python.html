@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A02 Async Python</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A02">
+<main>
+<header>
+  <div class="eyebrow"><b>A02</b><span>Foundations and applied math</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Async Python</h1>
+  <p class="lede">How does one Python process keep dozens of LLM calls in flight, how do you cap them so the provider does not reject you, and what breaks it? This page covers the event loop, gather, semaphores, the GIL and the failure modes that interviews probe.</p>
+  <div class="chips"><span><em>Before</em>A01 Python for AI engineering</span><span><em>After</em>K04 One token end to end</span><span><em>Neighbour</em>L04 How a server handles many requests</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: guess the three kata numbers</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production and interview: traps, question bank</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page. Blank-page recall, then record the 90-second answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards into Anki, fill the tracker row</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. The kata fires 50 fake LLM calls, each taking 0.1 s of pure waiting.</p>
+  <details class="q"><summary>Called one after another with await, how long do the 50 calls take?</summary><div class="a">About 5.0 s. Latency adds up: 50 x 0.1 s. The kata measured 5.02 s.</div></details>
+  <details class="q"><summary>You start all 50 at once with gather. The fake server rejects any call that arrives while 20 are already in flight. How long does it take, and how many calls succeed?</summary><div class="a">About 0.10 s, because everything waits at the same time. But only 20 succeed. The other 30 fail with a 429, since all 50 are in flight together. Fast and wrong.</div></details>
+  <details class="q"><summary>Inside each call you replace <code>await asyncio.sleep(0.1)</code> with <code>time.sleep(0.1)</code> and run gather again. What is the total time?</summary><div class="a">About 5.0 s. <code>time.sleep</code> never yields, so the event loop is frozen for 0.1 s per call and nothing overlaps. The code still looks concurrent and is not.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>An LLM call is almost all waiting. Your code sends a request, then sits idle while the provider prefills, decodes and streams tokens back. The CPU cost on your side is microseconds; the wall-clock cost is seconds. Sequential code wastes that idle time because it waits for call 1 to finish before it starts call 2.</p>
+  <p><strong>Concurrency</strong> means many things are in progress at once. <strong>Parallelism</strong> means many things are executing at the same instant on different cores. Asyncio gives you concurrency on one thread: a single event loop runs one coroutine at a time, but whenever a coroutine hits an <code>await</code> on something that is not ready, it steps aside and the loop runs another. Fifty waits overlap, so the total is roughly one wait, not fifty.</p>
+  <p><strong>Mental model: one cook, many timers.</strong> The cook never stands staring at one pot. They start every pot, then handle whichever timer rings. This works only if the cook never does a long job without looking up, and only if the stove has enough burners.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: 50 calls of 0.1 s, three ways</div>
+    <svg viewBox="0 0 460 215" role="img" aria-label="Timeline for 50 calls of 0.1 seconds with server limit 20. Sequential takes 5.02 seconds. Gather starts all 50 in 0.10 seconds but 30 fail with 429. Semaphore 10 runs five waves in 0.50 seconds with 0 failures. A blocking sleep collapses gather back to 5.01 seconds.">
+      <g font-size="12">
+        <g data-step="1">
+          <text x="8" y="18" class="m">50 calls, L = 0.1 s, server limit = 20</text>
+          <line x1="95" y1="26" x2="450" y2="26" class="ln"/>
+        </g>
+        <g data-step="2">
+          <text x="8" y="54">sequential</text>
+          <rect x="95" y="38" width="350" height="22" rx="4" class="c-muted" data-hi="2"/>
+          <text x="270" y="53" text-anchor="middle">50 x 0.1 s = 5.02 s (1 in flight)</text>
+        </g>
+        <g data-step="3">
+          <text x="8" y="96">gather(all)</text>
+          <rect x="95" y="80" width="12" height="22" rx="3" class="c-bad" data-hi="3"/>
+          <text x="114" y="95">0.10 s, but 30 of 50 get 429 (peak 21)</text>
+        </g>
+        <g data-step="4">
+          <text x="8" y="138">semaphore(10)</text>
+          <rect x="95" y="122" width="10" height="22" rx="2" class="c-good" data-hi="4"/>
+          <rect x="107" y="122" width="10" height="22" rx="2" class="c-good"/>
+          <rect x="119" y="122" width="10" height="22" rx="2" class="c-good"/>
+          <rect x="131" y="122" width="10" height="22" rx="2" class="c-good"/>
+          <rect x="143" y="122" width="10" height="22" rx="2" class="c-good"/>
+          <text x="162" y="137">5 waves of 10: 0.50 s, 0 failures</text>
+        </g>
+        <g data-step="5">
+          <text x="8" y="180">blocking sleep</text>
+          <rect x="95" y="164" width="350" height="22" rx="4" class="c-warn" data-hi="5"/>
+          <text x="270" y="179" text-anchor="middle">time.sleep freezes loop: 5.01 s</text>
+        </g>
+        <text x="95" y="206" class="m">scale: bar length proportional to wall-clock seconds</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>You have 50 LLM calls of 0.1 s latency each, against a server that rejects the 21st concurrent call.</li>
+      <li>Awaiting one call at a time runs sequentially, taking 5.02 s because 49 waits never overlap.</li>
+      <li>Unbounded gather launches all 50 at once in 0.10 s, but 30 calls fail with 429 over the 20 limit.</li>
+      <li>Semaphore(10) caps concurrency to 5 waves of 10, finishing in 0.50 s with zero failures.</li>
+      <li>One blocking time.sleep inside a coroutine stalls the single event loop, collapsing gather back to 5.01 s.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Bound concurrency with a semaphore and never block the event loop: 0.50 s with zero failures beats 5.02 s or 30 dropped calls.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>Cook with timers.</strong> Never stare at a pot (no blocking calls). Start all the pots (gather). Only as many burners as you own (semaphore). A timer on every pot (timeout). A second cook for the chopping (process pool for CPU work). Five clauses, five parts of the topic.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Coroutines do nothing until something runs them</h3>
+  <p>Calling an <code>async def</code> function returns a coroutine object and runs no code. Two things run it. <code>await coro</code> runs it inline, to completion, before your line continues, so awaiting in a loop is sequential. <code>asyncio.create_task(coro)</code> or <code>gather</code> hands it to the event loop as a Task that runs alongside others. The first kata variant, a list comprehension of awaits, is the sequential trap people write by accident.</p>
+
+  <h3>The event loop is a ready queue plus a selector</h3>
+  <p>Each turn the loop does three things: run every callback in the ready queue, ask the operating system which sockets are ready (the selector, <code>epoll</code> on Linux), and move tasks whose I/O or timer has finished back to the ready queue. A task only gives up the thread at an <code>await</code> that actually suspends. Between awaits it runs uninterrupted. That is why a single blocking call, <code>time.sleep</code>, a synchronous <code>requests.get</code>, a big JSON parse, stalls every other task.</p>
+  <figure class="viz stepper" id="viz-loop">
+    <div class="vt">Stepper: How one event loop turn switches tasks</div>
+    <svg viewBox="0 0 420 175" role="img" aria-label="Event loop cycle: Ready Queue runs Task A until await, suspends Task A in OS selector epoll while Task B runs, then epoll moves Task A back to Ready Queue when I/O finishes.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="24" width="120" height="58" rx="8" class="c-accent" data-hi="1"/>
+          <text x="72" y="48" text-anchor="middle">Ready Queue</text>
+          <text x="72" y="66" text-anchor="middle">Task A, Task B</text>
+        </g>
+        <g data-step="2">
+          <path d="M132 53 H166" class="ink" fill="none"/>
+          <rect x="166" y="24" width="110" height="58" rx="8" class="c-good" data-hi="2"/>
+          <text x="221" y="48" text-anchor="middle">1 Thread</text>
+          <text x="221" y="66" text-anchor="middle">runs until await</text>
+        </g>
+        <g data-step="3">
+          <path d="M276 53 H308" class="ink" fill="none"/>
+          <rect x="308" y="24" width="100" height="58" rx="8" class="c-soft" data-hi="3"/>
+          <text x="358" y="48" text-anchor="middle">OS Selector</text>
+          <text x="358" y="66" text-anchor="middle">(epoll) waits</text>
+        </g>
+        <g data-step="4">
+          <path d="M358 82 V118 H72 V82" class="ink" fill="none"/>
+          <rect x="125" y="102" width="170" height="32" rx="6" class="c-warn" data-hi="4"/>
+          <text x="210" y="122" text-anchor="middle">I/O ready -> back to queue</text>
+          <text x="210" y="158" text-anchor="middle" class="m">Blocking without await stalls the entire loop (slow callback &gt; 0.1 s)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Ready tasks sit in the ready queue waiting for the single Python thread.</li>
+      <li>The loop runs Task A uninterrupted until it hits an await that suspends on I/O or a timer.</li>
+      <li>Task A's socket is handed to epoll while the thread immediately runs Task B from the queue.</li>
+      <li>When epoll reports Task A ready, it returns to the queue; a blocking call freezes this whole cycle.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> One thread multiplexes many tasks only because each task yields control at suspending awaits.</figcaption>
+  </figure>
+  <details class="q"><summary>Check: your coroutine awaits a function that returns immediately without waiting on anything. Does the loop switch to another task at that await?</summary><div class="a">No. Awaiting a coroutine that completes without suspending just continues; the loop only regains control when something suspends on I/O, a timer or a future. A long loop of such awaits can still starve other tasks.</div></details>
+
+  <h3>Concurrency, parallelism and the GIL</h3>
+  <p>In the standard CPython build, the Global Interpreter Lock lets one thread execute Python bytecode at a time per process. Threads still help with I/O, because the lock is released while a thread waits on a socket. They do not speed up pure-Python CPU work. For CPU work you use processes (<code>ProcessPoolExecutor</code>) or native code that releases the lock, such as NumPy. Python 3.13 added an experimental free-threaded build, and 3.14 made it officially supported, but it is still optional and the GIL build remains the default. In an async service, push blocking or CPU work off the loop with <code>asyncio.to_thread</code> (threads, good for blocking I/O libraries) or <code>run_in_executor</code> with a process pool (good for CPU).</p>
+  <details class="q"><summary>Check: you must call a library that only has a blocking client, from an async service. What do you do, and why does it not freeze the loop?</summary><div class="a">Wrap it in <code>asyncio.to_thread</code>. The blocking call runs in a worker thread, the GIL is released while it waits on the network, and the loop thread stays free. The default thread pool is limited (here <code>min(32, cpus + 4)</code> = 6 on 2 CPUs), so it is not unlimited either.</div></details>
+
+  <h3>Bounding concurrency: the semaphore and Little's law</h3>
+  <p>Unbounded <code>gather</code> is the beginner bug. Providers enforce limits on requests and tokens per minute, your HTTP client has a connection pool, and each in-flight call holds memory. An <code>asyncio.Semaphore(C)</code> lets at most C coroutines past the gate at once. With N calls of latency L, total time is about <code>ceil(N / C) x L</code>. Throughput follows Little's law: in-flight = rate x latency, so rate = C / L. A cap of 10 at 0.1 s gives 100 calls per second. In production, work backwards: to sustain 20 requests per second at 2 s latency you need about 40 in flight, and you set the cap just under the provider's limit, not at it.</p>
+  <figure class="viz" id="viz-littles-law">
+    <div class="vt">Explore: Semaphore cap C, total time, and Little's law</div>
+    <p class="ask">Predict first. With N = 50 calls of L = 0.1 s and a server limit of 20, what happens to total time and 429 failures when you raise cap C from 10 to 25?</p>
+    <div class="ctl">
+      <label><span>Calls (N)</span><input type="range" name="n" min="10" max="100" step="10" value="50"><output data-for="n" data-unit=""></output></label>
+      <label><span>Latency (L)</span><input type="range" name="l" min="0.1" max="2.0" step="0.1" value="0.1"><output data-for="l" data-unit=" s"></output></label>
+      <label><span>Semaphore cap (C)</span><input type="range" name="c" min="1" max="50" step="1" value="10"><output data-for="c" data-unit=""></output></label>
+      <label><span>Server limit</span><input type="range" name="s" min="5" max="50" step="5" value="20"><output data-for="s" data-unit=""></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Raising C cuts wall-clock time as ceil(N / C) x L until C passes the server limit and triggers 429 rejections.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-littles-law",function(v,fig){
+    var waves=Math.ceil(v.n/v.c), semT=waves*v.l, seqT=v.n*v.l, rate=v.c/v.l;
+    var over=Math.max(0,Math.min(v.n,v.c)-v.s), tone=over>0?"bad":"good";
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" s",digits:2,rows:[
+      {label:"sequential (N x L)",value:seqT,tone:"muted"},
+      {label:"semaphore("+v.c+") ("+waves+" waves)",value:semT,tone:tone}
+    ]});
+    var status=over>0?"OVER LIMIT: "+over+" calls in wave 1 hit 429":"SAFE: 0 rejected";
+    return {verdict:"Throughput C/L = "+tl.fmt(rate,1)+" calls/s. "+status+"."};
+  })});</script>
+  <details class="q"><summary>Check: latency is 2 s, the provider allows 50 requests per second, and you want to stay near 80 percent of that. What cap?</summary><div class="a">Target rate 40 per second. In-flight = 40 x 2 = 80, so a semaphore of about 80. If limits are in tokens per minute, requests are not the binding constraint and you need a token-aware limiter.</div></details>
+
+  <h3>Failure, cancellation and timeouts</h3>
+  <p>By default <code>gather</code> raises the first exception to the caller and leaves the other awaitables running, so you can return an error to a user while forty calls keep spending money in the background. <code>return_exceptions=True</code> turns exceptions into results, which is what the kata uses. <code>asyncio.TaskGroup</code> (3.11+) is the structured version: if one child fails, it cancels the siblings and raises an <code>ExceptionGroup</code>. Always bound a wait with <code>asyncio.timeout</code> (3.11+) or <code>wait_for</code>, because a hung provider connection otherwise holds a semaphore slot forever. Retry 429 and 5xx with exponential backoff and jitter, respect <code>Retry-After</code>, and let <code>CancelledError</code> propagate rather than swallowing it.</p>
+  <details class="q"><summary>Check: why add jitter to retry backoff?</summary><div class="a">Without it, every client that failed at the same moment retries at the same moment, recreating the burst that caused the 429. Random spread breaks the synchronization.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>50 calls x 0.1 s, sequential</td><td class="n">5.02 s</td><td>Your own run</td></tr>
+    <tr><td>50 calls, gather, server limit 20</td><td class="n">0.10 s, 20 ok, 30 failed</td><td>Your own run</td></tr>
+    <tr><td>50 calls, semaphore 10</td><td class="n">0.50 s, 0 failed</td><td>Your own run</td></tr>
+    <tr><td>Blocking sleep inside gather</td><td class="n">5.01 s</td><td>Your own run</td></tr>
+    <tr><td>Time with cap C</td><td class="n">ceil(N / C) x L</td><td>Derived</td></tr>
+    <tr><td>Little's law</td><td class="n">in-flight = rate x latency</td><td>Derived</td></tr>
+    <tr><td>Event loop selector on Linux</td><td class="n">epoll</td><td>Your own run (EpollSelector)</td></tr>
+    <tr><td>GIL thread switch interval</td><td class="n">5 ms</td><td>Your own run (sys.getswitchinterval)</td></tr>
+    <tr><td>Default thread pool size</td><td class="n">min(32, cpus + 4)</td><td>Your own run (6 on 2 CPUs)</td></tr>
+    <tr><td>Loop slow-callback warning in debug mode</td><td class="n">0.1 s</td><td>Your own run (slow_callback_duration)</td></tr>
+    <tr><td>TaskGroup, asyncio.timeout</td><td class="n">Python 3.11+</td><td>From memory, verify</td></tr>
+    <tr><td>Free-threaded build: experimental in 3.13, officially supported but optional in 3.14</td><td class="n">GIL build still default</td><td>Checked 15 Nov 2026 (PEP 779)</td></tr>
+    <tr><td>Typical LLM call latency</td><td class="n">about 1 to 30 s, set by output length</td><td>From memory, verify</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Sequential await</td><td>Simple, predictable, easy to debug</td><td>Latency adds up: 5.0 s for 50 calls</td><td>Awaiting inside a loop by accident</td></tr>
+    <tr><td>gather, no cap</td><td>Fastest wall-clock for small N</td><td>Bursts that trip provider limits</td><td>429 rate, memory at large N</td></tr>
+    <tr><td>gather + semaphore</td><td>Fast and bounded; tuneable</td><td>Cap must be sized and kept in sync with limits</td><td>Slots held by hung calls without a timeout</td></tr>
+    <tr><td>TaskGroup</td><td>Siblings cancelled on failure; no orphans</td><td>One failure kills the batch; ExceptionGroup handling</td><td>Needs per-task try/except if partial results matter</td></tr>
+    <tr><td>Worker pool on a queue</td><td>Steady concurrency, natural backpressure, easy retries</td><td>More code than gather</td><td>Queue growth when producers outrun workers</td></tr>
+    <tr><td>Threads (to_thread)</td><td>Reuse blocking libraries</td><td>Thread pool limit, GIL for CPU</td><td>Pool exhaustion, thread-unsafe code</td></tr>
+    <tr><td>Processes</td><td>Real CPU parallelism</td><td>Serialization cost, memory, startup time</td><td>Passing large objects between processes</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 50 fake LLM calls, three ways</h2>
+  <p>It shows the three timings, the 429 failure when you skip the cap, and the collapse back to sequential when one blocking call sits inside a coroutine. No API key, no network, about a minute to run.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""A02 kata: 50 fake LLM calls, three ways. Run: python kata.py [--block] [--limit N]"""
+import asyncio, sys, time
+
+N, LATENCY, SERVER_LIMIT = 50, 0.1, 20   # server rejects the 21st in-flight call
+BLOCK = "--block" in sys.argv            # break it 1: blocking sleep inside the coroutine
+SEM = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 10
+
+in_flight = peak = 0
+
+async def fake_llm(i):
+    global in_flight, peak
+    in_flight += 1
+    peak = max(peak, in_flight)
+    try:
+        if in_flight &gt; SERVER_LIMIT:
+            raise RuntimeError("429 too many requests")
+        if BLOCK:
+            time.sleep(LATENCY)              # blocks the whole event loop
+        else:
+            await asyncio.sleep(LATENCY)     # yields to the loop while "waiting on the network"
+        return i
+    finally:
+        in_flight -= 1
+
+async def sequential():
+    return [await fake_llm(i) for i in range(N)]
+
+async def gather_all():
+    return await asyncio.gather(*(fake_llm(i) for i in range(N)), return_exceptions=True)
+
+async def with_semaphore():
+    sem = asyncio.Semaphore(SEM)
+    async def guarded(i):
+        async with sem:
+            return await fake_llm(i)
+    return await asyncio.gather(*(guarded(i) for i in range(N)), return_exceptions=True)
+
+async def run(name, fn):
+    global peak
+    peak = 0
+    t = time.perf_counter()
+    out = await fn()
+    dt = time.perf_counter() - t
+    bad = sum(isinstance(r, Exception) for r in out)
+    print(f"{name:&lt;14} {dt:6.2f}s  ok={len(out) - bad:&lt;3} failed={bad:&lt;3} peak_in_flight={peak}")
+
+async def main():
+    print(f"N={N} latency={LATENCY}s server_limit={SERVER_LIMIT} semaphore={SEM} block={BLOCK}")
+    print(f"ideal: sequential={N * LATENCY:.1f}s  fully parallel={LATENCY:.1f}s  "
+          f"semaphore={-(-N // SEM) * LATENCY:.1f}s")
+    await run("sequential", sequential)
+    await run("gather(all)", gather_all)
+    await run(f"semaphore({SEM})", with_semaphore)
+
+asyncio.run(main())</pre></div>
+  <p class="cap">Output from a real run (Python 3.13, 2 CPUs)</p><div class="codewrap"><pre class="out">N=50 latency=0.1s server_limit=20 semaphore=10 block=False
+ideal: sequential=5.0s  fully parallel=0.1s  semaphore=0.5s
+sequential       5.02s  ok=50  failed=0   peak_in_flight=1
+gather(all)      0.10s  ok=20  failed=30  peak_in_flight=21
+semaphore(10)    0.50s  ok=50  failed=0   peak_in_flight=10</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata run wall-clock time (50 calls x 0.1 s, server limit 20)</div>
+    <div data-bars='{"unit":" s","digits":2,"rows":[{"label":"sequential","value":5.02,"tone":"muted","text":"5.02 s (50 ok, 0 failed)"},{"label":"gather --block","value":5.01,"tone":"warn","text":"5.01 s (loop stalled)"},{"label":"semaphore(10)","value":0.50,"tone":"good","text":"0.50 s (50 ok, 0 failed)"},{"label":"gather(all)","value":0.10,"tone":"bad","text":"0.10 s (20 ok, 30 failed)"}]}'></div>
+    <figcaption><b>Takeaway.</b> Semaphore(10) is 10x faster than sequential and avoids the 30 failures of unbounded gather.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Sequential took 5.02 s, almost exactly 50 x 0.1 s. No surprise: nothing overlapped.</li>
+    <li>gather finished in 0.10 s, which is one latency, not fifty. All 50 waits overlapped.</li>
+    <li>That speed was fake: 30 of 50 calls failed. Peak in flight was 21, because the 21st call increments the counter before it is rejected, and all 50 coroutines start before any finishes.</li>
+    <li>The semaphore run took 0.50 s, five waves of 10, and peak in flight stayed at 10 with zero failures. It is 5x slower than the unsafe run, but it is the only fast run that is also correct.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Block the loop.</strong> Run <code>python kata.py --block</code>. Predict the three timings first. Result: all three take about 5.0 s, peak in flight 1, no 429s. The single blocking <code>time.sleep</code> serialized everything, and gather could not help.</li>
+    <li><strong>Cap exactly at the limit.</strong> Run <code>python kata.py --limit 20</code>. Predict the time and failures. Result: 0.30 s, zero failures, because ceil(50 / 20) = 3 waves.</li>
+    <li><strong>Cap above the limit.</strong> Run <code>python kata.py --limit 25</code>. Predict. Result: 0.10 s with 30 failures, the same as no semaphore at all. A cap larger than the server's limit protects nothing, and the cap must be derived from the limit, not guessed.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Replace the semaphore with a queue and 10 worker tasks that pull from it, and confirm the same 0.50 s. Then add a failure that raises on one call, remove <code>return_exceptions=True</code>, and watch what happens to the other 49 (hint: count how many still run to completion).</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Bursts of 429 errors, then quiet</td><td>Unbounded gather or a cap above the provider limit</td><td>Semaphore sized from the limit and Little's law; backoff with jitter; honor Retry-After</td></tr>
+    <tr><td>Every request slows down when one endpoint runs</td><td>Blocking or CPU-heavy call on the event loop</td><td>to_thread for blocking I/O, process pool for CPU; find it with debug mode</td></tr>
+    <tr><td>Requests hang, concurrency slots stay used</td><td>No timeout on a stalled connection</td><td>asyncio.timeout on every external call, cancel on expiry</td></tr>
+    <tr><td>"Task exception was never retrieved" in logs</td><td>Fire-and-forget task whose exception nobody awaited</td><td>Keep a reference, await it or use a TaskGroup, add a done-callback that logs</td></tr>
+    <tr><td>Memory climbs under load</td><td>Unbounded task creation or queue growth</td><td>Bounded queue with backpressure, cap the producers</td></tr>
+    <tr><td>One core at 100 percent, throughput flat</td><td>CPU-bound work running in the single loop thread</td><td>Process pool, or more worker processes behind a load balancer</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> in-flight count, time spent waiting for the semaphore, event loop lag (schedule a tiny task and measure its delay), 429 and timeout rates, and p99 latency by endpoint.</p>
+  <details class="q"><summary>Scenario: your voice AI service for clinics streams audio over WebSockets in one asyncio process. After you add on-device embedding with NumPy inside the handler, callers report audio stuttering for everyone while one call is processing. What do you check and fix?</summary><div class="a"><ol><li>Suspect the loop is blocked. The embedding runs synchronously inside a coroutine, so every other call's audio frames wait for it.</li><li>Confirm with debug mode (<code>PYTHONASYNCIODEBUG=1</code>), which logs callbacks slower than 0.1 s, and with a loop-lag metric.</li><li>Fix: move the embedding to <code>run_in_executor</code> with a process pool (NumPy may release the GIL, but a model with Python overhead may not), or to a separate service.</li><li>Cap concurrent embeddings so the pool does not queue unboundedly, and add a timeout.</li><li>Add a regression alert on loop lag so the next blocking call is caught in staging.</li></ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Async lets one Python process keep many LLM calls in flight on a single thread, because those calls are almost all network wait. In my kata, fifty 100 millisecond calls took 5 seconds one after another and half a second with a concurrency cap of ten. That is the difference between a usable batch job or chat backend and a slow one.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>An event loop runs coroutines on one thread. When a coroutine awaits a socket that is not ready, it yields, and the loop runs another ready task, using epoll to learn which sockets are ready. Gather schedules all the coroutines at once. A semaphore caps how many are in flight, which matters because providers rate limit. Throughput is concurrency divided by latency, so a cap of ten at 100 milliseconds is about a hundred calls per second. CPU-bound work gains nothing from this, so it goes to a process pool.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>One blocking call, like time.sleep or a synchronous HTTP client, freezes every task, and my kata went straight back to 5 seconds. Without a cap, fifty simultaneous calls against a limit of twenty gave thirty failures. By default gather leaves siblings running when one fails, while TaskGroup cancels them. And the GIL means threads do not speed up Python CPU work; processes do.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p>Question: "How would you run 1,000 LLM calls quickly?"</p>
+    <p class="weak">"I would use async so the calls run in parallel and it is much faster."</p>
+    <p class="strong">"The calls are latency-bound, so I fan out with asyncio behind a semaphore. I size the cap from the provider's limit and Little's law: at a 2 second latency and a ceiling of 50 requests per second, steady state is about 100 in flight, so I would start lower, near 80 percent, and tune. Every call gets a timeout, 429s retry with jittered backoff, and I use return_exceptions so one failure does not orphan the rest. The numbers here are illustrative, not from my own results."</p>
+    <p>The strong answer names the mechanism, derives a number, states the failure mode and the tradeoff. The weak one says "parallel", which is also technically wrong.</p></div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Async makes Python run on multiple cores in parallel."</summary><div class="a">Wrong. Asyncio runs one thread. It gives concurrency of waiting, not parallel execution. For CPU work on several cores you need processes (or the optional free-threaded build).</div></details>
+  <details class="q"><summary>"If I mark the function <code>async def</code>, it will not block."</summary><div class="a">Wrong. The keyword changes how the function is called, not what is inside it. A <code>time.sleep</code> or synchronous HTTP call in the body blocks the whole loop. In the kata, <code>--block</code> took gather from 0.10 s back to 5.01 s.</div></details>
+  <details class="q"><summary>"asyncio.gather cancels the other calls as soon as one fails."</summary><div class="a">Wrong by default. The first exception is propagated to the caller but the other awaitables keep running. TaskGroup is the one that cancels siblings. Use return_exceptions=True if you want every result.</div></details>
+  <details class="q"><summary>"Because of the GIL, threads are useless in Python."</summary><div class="a">Wrong. The lock is released while a thread waits on I/O, so threads work fine for blocking network calls (that is what to_thread relies on). They are useless only for pure-Python CPU-bound work.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain concurrency versus parallelism, and say which one asyncio gives you.</summary><div class="a">Concurrency is many tasks in progress, interleaved; parallelism is many executing at the same instant on separate cores. Asyncio gives concurrency on one thread. Waiting overlaps; computation does not.<div class="f"><b>Follow-up</b>How would you get parallelism? Processes (ProcessPoolExecutor or multiple worker processes), native code that releases the GIL, or the optional free-threaded build.</div></div></details>
+  <details class="q"><summary>Why does async help with LLM API calls but not with computing embeddings locally on the CPU?</summary><div class="a">API calls spend nearly all their time waiting on the network, and waits overlap on one thread. Local embedding is CPU work: it holds the thread the whole time, so nothing overlaps, and in the loop it blocks everyone else.<div class="f"><b>Follow-up</b>Where does it go? A process pool or separate service, with a cap on concurrent jobs.</div></div></details>
+  <details class="q"><summary>For 50 calls at 0.1 s, predict sequential, gather and semaphore(10) times.</summary><div class="a">About 5.0 s, 0.1 s and 0.5 s, from N x L, L and ceil(N / C) x L.<div class="f"><b>Follow-up</b>What if the server allows only 20 in flight and you set the semaphore to 25? You get the gather result: 0.1 s and 30 failures. The cap must sit at or below the real limit.</div></div></details>
+  <details class="q"><summary>What exactly happens at an <code>await</code>?</summary><div class="a">If the awaited thing is not ready, the coroutine suspends and control returns to the event loop, which runs another ready task. When the I/O or timer completes, the selector reports it and the task resumes where it left off.<div class="f"><b>Follow-up</b>What if it is already done? Execution continues with no switch, so a tight loop of already-complete awaits can starve other tasks.</div></div></details>
+  <details class="q"><summary>How do you choose the semaphore size?</summary><div class="a">Start from the provider's requests and tokens per minute limits and Little's law: in-flight = target rate x latency. Stay below the limit (around 80 percent), check connection pool size and memory, then tune on measured 429 rate and p99.<div class="f"><b>Follow-up</b>The limit is tokens per minute, not requests. A semaphore counts calls, so you need a token-aware limiter such as a token bucket.</div></div></details>
+  <details class="q"><summary>Compare gather and TaskGroup.</summary><div class="a">gather returns results in order and, by default, raises the first exception while siblings keep running; return_exceptions=True collects everything. TaskGroup (3.11+) is structured: scope exit waits for children, and a failure cancels the siblings and raises an ExceptionGroup.<div class="f"><b>Follow-up</b>Which for a batch where partial results matter? gather with return_exceptions, or per-task try/except inside a TaskGroup.</div></div></details>
+  <details class="q"><summary>Your async service gets slow for every user when one endpoint is busy. How do you find the cause?</summary><div class="a">Suspect a blocking call on the loop. Enable asyncio debug mode, which logs callbacks slower than 0.1 s, chart event loop lag, and look at the stack of the slow callback. Then move that work to to_thread or a process pool.<div class="f"><b>Follow-up</b>How do you stop it recurring? A loop-lag alert in staging and a lint rule against blocking calls in async functions.</div></div></details>
+  <details class="q"><summary>When do you choose asyncio, threads or processes?</summary><div class="a">Asyncio for very many concurrent waits with async-capable libraries. Threads for blocking I/O libraries you cannot change. Processes for CPU-bound Python. Mixed services combine them: loop for I/O, pools for the rest.</div></details>
+  <details class="q"><summary>How do you handle timeouts and retries on LLM calls?</summary><div class="a">Wrap each call in asyncio.timeout, retry 429 and 5xx with exponential backoff plus jitter, honor Retry-After, cap total attempts, and make sure the call is safe to repeat. Let CancelledError propagate.<div class="f"><b>Follow-up</b>Why not retry forever? It multiplies load during an outage and holds semaphore slots, turning a provider incident into your own.</div></div></details>
+  <details class="q"><summary>What does the GIL do, and what changed in Python 3.13 and 3.14?</summary><div class="a">In the standard build it lets one thread run Python bytecode at a time per process, protecting interpreter internals. 3.13 added an experimental free-threaded build; 3.14 made it officially supported (PEP 779), still optional, with the GIL build as default.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the three kata timings and the formula behind each, the five-part spine from the memory hook, the four failure modes (blocked loop, no cap, no timeout, orphaned siblings), and your 90-second answer in three levels.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Sequential N x L = 5.0 s; gather = L = 0.1 s but 30 of 50 rejected; semaphore(10) = ceil(N / C) x L = 0.5 s</li>
+    <li>Spine: no blocking calls, gather, semaphore, timeout, process pool for CPU</li>
+    <li>Little's law: in-flight = rate x latency; rate = C / L</li>
+    <li>Blocking call in the loop collapses everything to sequential (5.01 s)</li>
+    <li>gather leaves siblings running on error; TaskGroup cancels them</li>
+    <li>GIL: threads fine for I/O, not for CPU; processes for CPU</li>
+    <li>Retries: backoff, jitter, Retry-After, timeout on every call</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from the prerequisites, which are scheduled the same day. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A01: Why parse an LLM's JSON output with a pydantic model instead of reading dict keys directly?</summary><div class="a">Models return malformed or missing fields at some nonzero rate. Pydantic fails at the boundary with a clear error, so you can retry or repair, instead of a KeyError deep in your code.</div></details>
+  <details class="q"><summary>A01: When do you use a dataclass and when a pydantic model?</summary><div class="a">Pydantic where untrusted data enters and needs parsing and validation. Dataclasses for plain internal structures where types are already trusted, since they do no runtime validation.</div></details>
+  <details class="q"><summary>D01: Why can't you parallelize the generation of one response across its output tokens?</summary><div class="a">Decoding is autoregressive: each token depends on all previous ones. Within a request it is sequential; you parallelize across requests, which is exactly where async fan-out helps.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://peps.python.org/pep-0779/">Python.org: PEP 779, criteria for supported status for free-threaded Python</a><small>Supports: free-threaded build is supported but optional in 3.14. Checked 15 Nov 2026 via search results.</small></li>
+    <li><a href="https://docs.python.org/3/library/asyncio-task.html">Python docs: asyncio coroutines and tasks (gather, TaskGroup, timeout)</a><small>Supports: gather's default error behavior and TaskGroup cancelling siblings. I saw the gather wording quoted from this page in search results on 15 Nov 2026 but could not fetch the page directly; re-read it once to confirm, and confirm the 3.11 version for TaskGroup and timeout.</small></li>
+    <li>Your own kata run, Python 3.13, 2 CPUs, 15 Nov 2026<small>Supports: every timing, the epoll selector, switch interval 5 ms, default pool size and the 0.1 s slow-callback threshold.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A02 T1 W01", "cards": [{"q": "Why can one thread keep hundreds of LLM calls in flight?", "a": "Calls are mostly network wait. At an await the coroutine yields and the loop runs another ready one, so the waits overlap."}, {"q": "Why does time.sleep(0.1) inside a coroutine turn 50 gathered calls from 0.1 s into about 5 s?", "a": "It never yields, so the whole loop freezes for each call and nothing overlaps. asyncio.sleep yields to the loop."}, {"q": "How long do N calls of latency L take with a semaphore of size C?", "a": "About ceil(N / C) x L. Fifty calls at 0.1 s with a cap of 10 take 0.5 s."}, {"q": "What does Little's law say about sizing concurrency?", "a": "In-flight = rate x latency, so rate = C / L. A cap of 10 at 0.1 s gives 100 calls per second."}, {"q": "Why did gather over 50 calls fail 30 while semaphore(10) failed none?", "a": "All 50 started together, past the server limit of 20 in flight. The semaphore held in-flight at 10."}, {"q": "When one task raises, what does gather do to its siblings by default, and what does TaskGroup do?", "a": "gather propagates the first exception and leaves siblings running. TaskGroup (3.11+) cancels them and raises an ExceptionGroup."}, {"q": "Despite the GIL, when do Python threads help and when do they not?", "a": "They help with blocking I/O, since the GIL is released while waiting. They do not speed up pure-Python CPU work."}, {"q": "Where should CPU-bound work go in an async service, and why?", "a": "A process pool via run_in_executor. On the loop it freezes every task, and threads share the GIL."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

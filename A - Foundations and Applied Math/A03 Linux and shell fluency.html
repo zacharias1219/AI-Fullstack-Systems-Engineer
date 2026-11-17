@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A03 Linux and shell fluency</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A03">
+<main>
+<header>
+  <div class="eyebrow"><b>A03</b><span>Foundations and applied math</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Linux and shell fluency</h1>
+  <p class="lede">How do you find what a machine is really doing, stop one bad process without corrupting its work, and keep long jobs alive on a remote GPU box? This page covers processes, signals, pipes, memory columns, tmux and nvidia-smi. It does not cover Docker or systemd internals.</p>
+  <div class="chips"><span><em>Before</em>A02 Async Python</span><span><em>After</em>A06 Debugging method</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up answers</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 once</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it twice</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production table and interview answer, aloud</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page. Blank-page recall</span><small>7 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards, record the 90 seconds</span><small>3 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A Python worker allocates exactly 150 MB and touches every page. What RSS does ps report for it, roughly?</summary><div class="a">About 161 MB in the kata run. The interpreter itself adds about 11 MB, and the 20 MB and 60 MB workers showed 31 MB and 71 MB. RSS is real resident memory, not your allocation.</div></details>
+  <details class="q"><summary>You reach for kill -9 as your first move on a stuck worker. What can that cost you?</summary><div class="a">SIGKILL cannot be caught, so the process gets no chance to flush buffers, write a checkpoint or release locks. SIGTERM first, a short wait, then SIGKILL only if it is still alive.</div></details>
+  <details class="q"><summary>In <code>yes | head -1</code>, yes runs forever by design. Why does the pipeline end, and what are the two exit statuses?</summary><div class="a">head exits after one line and closes the pipe. The next write by yes raises SIGPIPE and kills it. The kata box printed 141 and 0, and 141 is 128+13.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Everything running on a Linux box is a process with a PID. You control a process by sending it a signal, and you connect processes by pipes, where the output of one is the input of the next. Fluency means you can answer three questions fast: what is running, who is using the memory or GPU, and how do I stop it without losing work.</p>
+  <p>The safe stop is a short protocol, not one command. You ask politely, wait, force only if needed, then check the result. The diagram shows the timing from the kata.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The safe stop protocol</div>
+    <svg viewBox="0 0 440 200" role="img" aria-label="Safe stop timeline: find top RSS PID 519 at 161 MB, send SIGTERM at 0 ms, handled path cleans up and exits 0 around 106 ms, ignored path waits 3000 ms then sends SIGKILL for exit 137 at 3042 ms, verify with kill -0 and restart PID 537.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="16" width="130" height="36" rx="6" class="c-soft" data-hi="1"/>
+          <text x="75" y="38" text-anchor="middle">ps --sort=-rss: 519</text>
+        </g>
+        <g data-step="2">
+          <line x1="24" y1="92" x2="416" y2="92" class="ln"/>
+          <rect x="24" y="74" width="76" height="32" rx="6" class="c-accent" data-hi="2"/>
+          <text x="62" y="94" text-anchor="middle">SIGTERM 15</text>
+          <text x="62" y="68" text-anchor="middle" class="m">0 ms</text>
+        </g>
+        <g data-step="3">
+          <rect x="120" y="74" width="124" height="32" rx="6" class="c-good" data-hi="3"/>
+          <text x="182" y="94" text-anchor="middle">exit 0 (~106 ms)</text>
+          <text x="182" y="122" text-anchor="middle" class="m">handled: flush &amp; quit</text>
+        </g>
+        <g data-step="4">
+          <path d="M100 144 H270" class="ln" fill="none"/>
+          <rect x="270" y="74" width="146" height="32" rx="6" class="c-bad" data-hi="4"/>
+          <text x="343" y="94" text-anchor="middle">SIGKILL 9 (exit 137)</text>
+          <text x="343" y="68" text-anchor="middle" class="m">after 3000 ms (3042 ms)</text>
+        </g>
+        <g data-step="5">
+          <rect x="270" y="138" width="146" height="34" rx="6" class="c-good" data-hi="5"/>
+          <text x="343" y="159" text-anchor="middle">kill -0, restart (537)</text>
+          <text x="140" y="159" text-anchor="middle" class="m">ignored SIGTERM -> force</text>
+        </g>
+        <text x="220" y="190" text-anchor="middle" class="m">Ask, wait, force, verify, restart.</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Find the top memory hog with ps sorted by RSS (PID 519 holding 161 MB).</li>
+      <li>Send SIGTERM (15) at 0 ms to ask the process politely to flush checkpoints and exit.</li>
+      <li>If it handles SIGTERM, it cleans up and exits with status 0 in about 106 ms.</li>
+      <li>If it ignores SIGTERM, wait 3000 ms (3042 ms in kata) then escalate to SIGKILL (9), yielding exit 137.</li>
+      <li>Verify the PID is gone with kill -0, then start the replacement (new PID 537 at 51 MB).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Always send SIGTERM and wait before escalating to SIGKILL so clean processes flush state instead of corrupting files.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Safe stop is a landlord story: find the room (ps sorted by RSS), knock (SIGTERM), wait a few seconds, break the door (SIGKILL), check the room is empty (kill -0), move the new tenant in (restart).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Processes and signals</h3>
+  <p>A signal is a small numbered message to a PID. The ones to know: SIGHUP 1 (terminal hung up), SIGINT 2 (Ctrl-C), SIGKILL 9, SIGTERM 15, SIGSTOP 19 on x86-64. A process may catch or ignore SIGTERM, which is how it flushes a checkpoint. SIGKILL and SIGSTOP cannot be caught. A process that dies from a signal reports an exit status of 128 plus the signal number: 143 for SIGTERM, 137 for SIGKILL.</p>
+  <details class="q"><summary>Check: a container job exits with status 137 and no error in its logs. What is the first thing you suspect?</summary><div class="a">It received SIGKILL. In containers that is most often the kernel out-of-memory killer, so check dmesg or the container's OOM event and its memory limit before anything else.</div></details>
+  <h3>Pipes</h3>
+  <p>Each stage of a pipeline is its own process and all of them run at once. The kernel pipe between them holds 65,536 bytes by default on this box, so a fast writer blocks when the buffer is full. If the reader exits early, the next write raises SIGPIPE. The pipeline's exit status is the last command's unless you run <code>set -o pipefail</code>, and then it is the last failing one.</p>
+  <details class="q"><summary>Check: <code>false | true; echo $?</code> prints what, and how do you make it report the failure?</summary><div class="a">It prints 0, because only the last command counts. Run <code>set -o pipefail</code> first and it prints 1. This is how broken stages hide in CI scripts.</div></details>
+  <h3>Reading memory and the machine</h3>
+  <p>In ps and top, RSS is the pages the process holds in RAM right now, and VSZ is the virtual address space it has mapped, which can be huge and harmless. Shared library pages count in every process that maps them, so summed RSS overcounts. For whole-machine memory read the available column of <code>free -h</code>, not free. htop shows load per core and per process at a glance.</p>
+  <h3>Remote work and the GPU</h3>
+  <p>When an SSH connection drops, the shell sends SIGHUP to its jobs and a plain foreground training run dies. tmux keeps a session alive on the server: <code>tmux new -s train</code>, detach with Ctrl-b then d, return with <code>tmux attach -t train</code>. nvidia-smi lists GPU memory used and total, utilization, and the PIDs holding memory. Its utilization number is the share of time any kernel was running, not how much of the chip was busy.</p>
+  <details class="q"><summary>Check: nvidia-smi says 40 GB used and you have no job running. Which two commands find the holder?</summary><div class="a">Read the PID column in nvidia-smi, then <code>ps -fp PID</code> to see what it is. In containers the PID may be hidden, so <code>fuser -v /dev/nvidia*</code> is the fallback. Stop it with SIGTERM, then SIGKILL.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Signals: HUP, INT, KILL, TERM, STOP</td><td class="n">1, 2, 9, 15, 19</td><td>Your own run (kill -l)</td></tr>
+    <tr><td>Exit status after SIGKILL, SIGTERM (no handler)</td><td class="n">137, 143</td><td>Your own run</td></tr>
+    <tr><td>Exit status after SIGPIPE</td><td class="n">141</td><td>Your own run</td></tr>
+    <tr><td>Default pipe buffer</td><td class="n">65,536 bytes</td><td>Your own run, this Linux box</td></tr>
+    <tr><td>Python interpreter RSS overhead</td><td class="n">about 11 MB</td><td>Your own run (161, 71, 31 vs 150, 60, 20)</td></tr>
+    <tr><td>Handled SIGTERM to exit</td><td class="n">106 ms</td><td>Your own run (100 ms poll granularity)</td></tr>
+    <tr><td>Process ignoring SIGTERM, time to SIGKILL escalation</td><td class="n">3042 ms</td><td>Your own run, 3 s timeout in the script</td></tr>
+    <tr><td>nvidia-smi utilization definition</td><td class="n">time any kernel ran</td><td>From memory, verify in the NVML docs</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>SIGTERM, wait, then SIGKILL</td><td>Clean checkpoints, released locks</td><td>A few seconds of waiting</td><td>A process that ignores SIGTERM and hangs</td></tr>
+    <tr><td>SIGKILL straight away</td><td>Instant, always works</td><td>No cleanup, possible corrupt output</td><td>Half-written checkpoint files, stale lock files</td></tr>
+    <tr><td>tmux</td><td>Job survives SSH loss, you can reattach and watch</td><td>Manual, not restarted after a reboot</td><td>Forgotten sessions holding GPU memory</td></tr>
+    <tr><td>nohup with a log file</td><td>Simple, no extra tool</td><td>No interactive reattach</td><td>Log file growing without bound</td></tr>
+    <tr><td>A service manager or job queue</td><td>Restarts, logs, resource limits</td><td>Setup time</td><td>Overkill for a one-off experiment</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: find the hog, stop it cleanly, restart it</h2>
+  <p>It starts three Python workers that hold 20, 60 and 150 MB, finds the biggest with one pipeline, stops it with the SIGTERM protocol, verifies it is gone, and restarts a smaller one. It needs bash, python3 and Linux ps. On macOS use a Linux shell, since the ps flags differ.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>bash kata.sh</pre></div>
+  <p class="cap">kata.sh</p><div class="codewrap"><pre data-copy>#!/usr/bin/env bash
+# A03 kata: find the memory hog with one pipeline, stop it cleanly, restart it.
+# Run: bash kata.sh        Break it: STUBBORN=1 bash kata.sh   or   NOWAIT=1 bash kata.sh
+set -u
+MB=${MB:-150}
+PIDS=()
+
+hog() {  # name, megabytes, ignore_sigterm(0/1): hold real memory until signalled
+  python3 -c "
+import signal, sys, time
+buf = bytearray($2 * 1024 * 1024)
+for i in range(0, len(buf), 4096): buf[i] = 1      # touch pages so RSS is real
+if $3: signal.signal(signal.SIGTERM, signal.SIG_IGN)
+else: signal.signal(signal.SIGTERM, lambda *a: (print('  [$1] got SIGTERM, cleaning up', flush=True), sys.exit(0)))
+print('  [$1] up, holding $2 MB', flush=True)
+while True: time.sleep(0.2)
+" &amp;
+  PIDS+=($!)
+}
+top3() { ps -p "$(IFS=,; echo "${PIDS[*]}")" -o pid=,rss= --sort=-rss 2&gt;/dev/null | awk 'NR&lt;=3 {printf "%s %.0f MB\n",$1,$2/1024}'; }
+now_ms() { echo $(( $(date +%s%N) / 1000000 )); }
+
+echo "== 1. start three workers (20, 60, $MB MB)"
+hog small 20 0; hog medium 60 0; hog big "$MB" "${STUBBORN:-0}"
+sleep 1.5
+
+echo; echo "== 2. one pipeline: top memory hogs (by resident memory)"
+top3 | tee /tmp/a03_top.txt
+BIG_PID=$(head -1 /tmp/a03_top.txt | cut -d' ' -f1)
+
+echo; echo "== 3. stop PID $BIG_PID: SIGTERM, wait up to 3s, then SIGKILL"
+t0=$(now_ms); kill -TERM "$BIG_PID"
+while kill -0 "$BIG_PID" 2&gt;/dev/null; do
+  [ -n "${NOWAIT:-}" ] &amp;&amp; break
+  [ $(( $(now_ms) - t0 )) -ge 3000 ] &amp;&amp; break
+  sleep 0.1
+done
+if kill -0 "$BIG_PID" 2&gt;/dev/null; then
+  echo "  still alive after $(( $(now_ms) - t0 )) ms: escalating to SIGKILL"; kill -KILL "$BIG_PID"
+else
+  echo "  exited after SIGTERM in $(( $(now_ms) - t0 )) ms"
+fi
+wait "$BIG_PID" 2&gt;/dev/null; echo "  exit status: $? (0 = handled SIGTERM, 137 = SIGKILL)"
+
+echo; echo "== 4. verify it is gone, then restart it smaller"
+sleep 0.2
+kill -0 "$BIG_PID" 2&gt;/dev/null &amp;&amp; echo "  FAIL: PID $BIG_PID still running" || echo "  PID $BIG_PID gone"
+hog big2 40 0; sleep 1
+
+echo; echo "== 5. memory now"
+top3
+
+echo; echo "== 6. cleanup (SIGKILL our own PIDs only)"
+kill -KILL "${PIDS[@]}" 2&gt;/dev/null; wait 2&gt;/dev/null; echo "  done"</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">== 1. start three workers (20, 60, 150 MB)
+  [medium] up, holding 60 MB
+  [small] up, holding 20 MB
+  [big] up, holding 150 MB
+
+== 2. one pipeline: top memory hogs (by resident memory)
+519 161 MB
+518 71 MB
+517 31 MB
+
+== 3. stop PID 519: SIGTERM, wait up to 3s, then SIGKILL
+  [big] got SIGTERM, cleaning up
+  exited after SIGTERM in 106 ms
+  exit status: 0 (0 = handled SIGTERM, 137 = SIGKILL)
+
+== 4. verify it is gone, then restart it smaller
+  PID 519 gone
+  [big2] up, holding 40 MB
+
+== 5. memory now
+518 71 MB
+537 51 MB
+517 31 MB
+
+== 6. cleanup (SIGKILL our own PIDs only)
+  done</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Worker RSS memory in kata.sh (data + ~11 MB Python overhead)</div>
+    <div data-bars='{"unit":" MB","digits":0,"rows":[{"label":"big (150 MB data, killed)","value":161,"tone":"bad"},{"label":"medium (60 MB data)","value":71,"tone":"muted"},{"label":"big2 (40 MB restart)","value":51,"tone":"good"},{"label":"small (20 MB data)","value":31,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> RSS exceeds allocated data by ~11 MB of Python interpreter overhead, and replacing big (161 MB) with big2 (51 MB) cuts total memory.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>RSS read 161, 71 and 31 MB for allocations of 150, 60 and 20 MB. The constant 11 MB is the interpreter, so sorting by RSS finds the right process but the number is not your data size.</li>
+    <li>The worker caught SIGTERM, printed its cleanup line and exited with status 0 in 106 ms. That status 0 is the proof it handled the signal itself.</li>
+    <li>The restarted worker has a new PID (537 in this run). A restart is a new process, not the old one coming back.</li>
+    <li>After the kill, step 5 shows 71, 51 and 31 MB. The 161 MB hog is gone and the 40 MB replacement (51 MB with overhead) took its place.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>A worker that ignores SIGTERM.</strong> Run <code>STUBBORN=1 bash kata.sh</code>. Predict first: how long until the script escalates, and what exit status do you get? (Run result: still alive after 3042 ms, status 137.)</li>
+    <li><strong>No waiting.</strong> Run <code>NOWAIT=1 bash kata.sh</code>. Predict whether the cleanup line still prints before the kill. (Run result: it often does, but the escalation came after 1 ms and the status was 137, so the cleanup was racing the SIGKILL and cannot be relied on.)</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Run <code>MB=400 bash kata.sh</code> inside a shell with <code>ulimit -v</code> set low and watch the allocation fail, then read dmesg for OOM lines if your box has a real memory limit.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Training job gone after you closed the laptop</td><td>SIGHUP when SSH dropped</td><td>Run it in tmux or with nohup</td></tr>
+    <tr><td>GPU memory full, no job visible</td><td>Orphaned python or dataloader worker holding memory</td><td>Find PID in nvidia-smi, SIGTERM, wait, SIGKILL</td></tr>
+    <tr><td>kill has no effect</td><td>Process ignores SIGTERM, or is a zombie, or stuck in disk wait</td><td>SIGKILL for the first; for a zombie fix or restart the parent; for disk wait fix the storage</td></tr>
+    <tr><td>Script reports success but a stage failed</td><td>Pipeline status is the last command's</td><td>Use set -o pipefail and check PIPESTATUS</td></tr>
+    <tr><td>Container exits with 137</td><td>Out-of-memory kill</td><td>Raise the limit or cut memory; confirm in dmesg</td></tr></table></div>
+  <p><strong>Monitor:</strong> the available column of <code>free -h</code>, GPU memory and utilization via <code>nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv -l 1</code>, and OOM lines in dmesg.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Linux fluency is how I find out what a machine is actually doing when a job is slow, stuck or dead. On a GPU box I can find the process holding the memory, stop it without corrupting its work, and keep long jobs alive when my SSH session drops. That turns a vague "the server is broken" into a named process and a one-line fix.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Everything is a process with a PID, and small tools connect through pipes, where one process's output feeds the next, all running at once. To find a memory hog I sort ps by RSS, the resident memory, and take the top. To stop it I send SIGTERM, which the process can catch to flush and clean up, wait a few seconds, then send SIGKILL, which cannot be caught. Then I check it is gone with kill -0 and restart it. For remote work I run inside tmux so the job survives a dropped SSH connection, and I use nvidia-smi to see which PID holds GPU memory.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In my kata the 150 MB worker showed 161 MB RSS, so about 11 MB is interpreter overhead, and it exited 106 ms after SIGTERM. SIGKILL skips cleanup and gives status 137, so it is the last step. RSS double counts shared pages. A pipeline reports its last command's status unless pipefail is set. A zombie cannot be killed, so you fix its parent.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"If a job hangs on the GPU server I would look into it and restart things so the team can get back to work quickly."</p>
+    <p class="strong">"I run nvidia-smi to find which PID holds the GPU memory, check that PID in ps for its state and RSS, send SIGTERM and wait a few seconds so it can write its checkpoint, and only then SIGKILL. I confirm the memory was freed in nvidia-smi, then restart it inside tmux."</p>
+    <p>The strong answer names the tool, the mechanism, the order of signals and the reason for the order. The weak one names nothing you could check.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"kill -9 is the reliable way to stop a process, so I just use it every time."</summary><div class="a">It always works, which is the problem. SIGKILL cannot be caught, so the process cannot flush a checkpoint or release locks, and you get status 137 with possibly corrupt output. Use SIGTERM, wait, then SIGKILL.</div></details>
+  <details class="q"><summary>"I sorted ps by RSS and added up the numbers, so the box is using that much memory."</summary><div class="a">RSS counts shared pages once per process that maps them, so the sum overcounts. For whole-machine use read the available column in <code>free -h</code>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>How do you find the top memory hog on a server and stop it safely?</summary><div class="a">Sort ps by RSS and take the top rows. Send SIGTERM, wait a few seconds, send SIGKILL only if it is still alive, confirm with kill -0 that the PID is gone, then restart.
+    <div class="f"><b>Follow-up</b>What if it ignores SIGTERM? Then it stays alive past the wait, you escalate to SIGKILL, and you accept losing unflushed work. Our run took 3042 ms to reach that decision.</div></div></details>
+  <details class="q"><summary>What is the difference between SIGTERM and SIGKILL, and what exit codes do they give?</summary><div class="a">SIGTERM (15) can be caught or ignored and allows cleanup. SIGKILL (9) cannot be caught. Exit status is 128 plus the signal, so 143 and 137.</div></details>
+  <details class="q"><summary>What are RSS and VSZ, and why can summed RSS exceed physical memory?</summary><div class="a">RSS is pages currently in RAM, VSZ is the mapped virtual address space. Shared pages are counted in every process that maps them, so the sum overcounts.</div></details>
+  <details class="q"><summary>How does a pipeline's exit status work, and what does pipefail change?</summary><div class="a">By default it is the last command's status, so <code>false | true</code> gives 0. With pipefail it is the last non-zero status, so 1.
+    <div class="f"><b>Follow-up</b>Why did yes stop in <code>yes | head -1</code>? head closed the pipe, the next write raised SIGPIPE, and yes exited with 141.</div></div></details>
+  <details class="q"><summary>Your training job dies every time your SSH connection drops. Why, and what do you do?</summary><div class="a">The shell sends SIGHUP to its jobs on disconnect. Run it in tmux, detach with Ctrl-b d and reattach later, or use nohup with a log file.</div></details>
+  <details class="q"><summary>nvidia-smi shows 20 GB of GPU memory used and nothing of yours is running. What do you do?</summary><div class="a">Read the PIDs in nvidia-smi, inspect them with ps, and stop the leftover python or dataloader worker with SIGTERM then SIGKILL. In containers use <code>fuser -v /dev/nvidia*</code> if the PID column is empty.
+    <div class="f"><b>Follow-up</b>Does 90 percent utilization mean the GPU is 90 percent busy? Not exactly. It means a kernel was running for 90 percent of the sample period, however small that kernel was (from memory, verify).</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the five signal numbers and the two exit statuses to decode, how a pipeline's exit status works and what pipefail does, and the tools you use to keep a remote job alive and to see the GPU holder.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Find by RSS, SIGTERM, wait, SIGKILL, kill -0 verify, restart</li>
+    <li>HUP 1, INT 2, KILL 9, TERM 15, STOP 19; exit status 128 plus signal: 143, 137</li>
+    <li>Pipeline status is the last command's; pipefail makes it the last failure; closed pipe gives SIGPIPE, status 141</li>
+    <li>tmux (new, detach, attach) or nohup for remote jobs; nvidia-smi PID column for the GPU holder</li>
+    <li>RSS versus VSZ, and why summed RSS overcounts</li></ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A02: You fire 50 LLM calls with asyncio.gather. What does adding a Semaphore change?</summary><div class="a">Gather alone starts all 50 at once. A semaphore caps in-flight calls at N, which protects you from rate limits and connection exhaustion while still overlapping the waiting.</div></details>
+  <details class="q"><summary>A02: Does the GIL stop threads from speeding up a batch of LLM API calls?</summary><div class="a">No. The GIL is released while waiting on network I/O, so threads overlap those waits. It does block parallel speedup for CPU-bound Python code.</div></details>
+  <details class="q"><summary>A01: Type hints exist, so why validate config with pydantic?</summary><div class="a">Hints are not enforced at runtime. Pydantic checks and coerces values at the boundary and raises clear errors, so bad input fails at load time instead of deep in a run.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://man7.org/linux/man-pages/man7/signal.7.html">man7.org: signal(7)</a><small>Signal numbers and which signals cannot be caught. Not re-fetched this session. Numbers and exit statuses here were confirmed by running them.</small></li>
+    <li><a href="https://man7.org/linux/man-pages/man7/pipe.7.html">man7.org: pipe(7)</a><small>Pipe buffering and SIGPIPE on a closed read end. Not re-fetched this session. Capacity of 65,536 bytes was read with fcntl on this box.</small></li>
+    <li><a href="https://www.gnu.org/software/bash/manual/bash.html">GNU Bash manual</a><small>Pipeline exit status and the pipefail option. Not re-fetched this session. Behavior confirmed by running it.</small></li>
+    <li><a href="https://docs.nvidia.com/deploy/nvml-api/structnvmlUtilization__t.html">NVIDIA NVML: nvmlUtilization_t</a><small>Definition of GPU utilization. From memory, verify; not re-fetched this session.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A03 T2 W01", "cards": [{"q": "Why send SIGTERM first and SIGKILL only after a wait when stopping a worker?", "a": "SIGTERM can be caught, so the process can flush buffers and checkpoint. SIGKILL cannot be caught or cleaned up after, and the process exits with status 137."}, {"q": "How do you decode exit status 137 or 143?", "a": "Above 128 means 128 plus the signal number. 137 is 128+9 (SIGKILL), 143 is 128+15 (SIGTERM). In containers 137 often signals an out-of-memory kill."}, {"q": "Why does a training job die when your SSH session drops, and what fixes it?", "a": "The shell sends SIGHUP to its jobs when the connection closes. Run the job inside tmux (or nohup) so it is not tied to that session."}, {"q": "What does RSS measure in ps, and why can summing RSS overcount real memory use?", "a": "Pages of the process currently in RAM. Shared library pages count once per process that maps them, so the sum can exceed physical use."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

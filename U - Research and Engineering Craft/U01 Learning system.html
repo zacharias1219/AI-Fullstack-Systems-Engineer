@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U01 Learning system</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="U01">
+<main>
+<header>
+  <div class="eyebrow"><b>U01</b><span>Research and engineering craft</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>How to learn this curriculum</h1>
+  <p class="lede">How do you keep 630 topics for months and say them fluently under pressure? This page covers the four mechanisms the whole plan runs on (retrieval, spacing, interleaving, spoken output), the topic package built from them, and the setup you do once: Anki, the tracker, the question log.</p>
+  <div class="chips"><span><em>Before</em>None, this is the first page</span><span><em>After</em>X02 The question log</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 once, answer the check questions</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Do the setup, run the kata, break it three ways</span><small>25 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, record the 90 second answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank page recall</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards into Anki, set the tracker row</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>Group A reads a passage four times. Group B reads it once and tests itself three times. Who remembers more after 5 minutes, and who after a week?</summary><div class="a">Five minutes: the rereaders, about 83% against 71% (secondary source). One week: the self-testers, 61% against 40%. The ranking flips with delay. Rereading wins the moment you measure it, and loses when it matters.</div></details>
+  <details class="q"><summary>In the kata, four retrieval passes squeezed into day 0 versus four spread over days 1, 3, 7 and 16: what retention is left at day 30 for each?</summary><div class="a">0% for the massed plan, 74% for the spaced plan (toy model, your own run). Same number of passes, very different result.</div></details>
+  <details class="q"><summary>You add 43 new cards a day, not Anki's default 20. By week 12, about how many reviews a day does the kata predict, and how many minutes at 20 seconds each?</summary><div class="a">About 184 reviews a day, around 61 minutes on average and 72 at the peak. Real Anki will run higher because the kata ignores lapses.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>You do not have a learning problem. You have a forgetting problem. Understanding a topic takes an hour. Keeping it for three months takes a system, because memory decays on a curve and every unrefreshed fact slides down it. The plan is built to catch each fact on the way down, and to make you produce it from nothing, because that is what an interview asks for.</p>
+  <p>Four mechanisms do the work, in this order of importance: retrieval (answer from a blank page before you see the answer), spacing (do it again just as it starts to fade), small implementations (build the mechanism so you have something to remember with), and spoken answers (practice the output format, not only the knowledge). Interleaving, mixing topics, runs across all four so you learn to pick the right idea, not just apply the one in front of you.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: How retrieval, spacing, and interleaving beat forgetting</div>
+    <svg viewBox="0 0 460 220" role="img" aria-label="Timeline from day 0 to day 90: day 0 learn, kata, recall and cards; day 7 cold retest 1 (61% vs 40%); day 30 cold retest 2; Sunday interleaving (72% vs 38%); and the 75 min daily cap that breaks to 143 min if 3 days are skipped.">
+      <g font-size="12">
+        <line x1="36" y1="145" x2="424" y2="145" class="ln" stroke-width="2"/>
+        <text x="36" y="166" text-anchor="start">Day 0</text>
+        <text x="120" y="166" text-anchor="middle">Day 7</text>
+        <text x="250" y="166" text-anchor="middle">Day 30</text>
+        <text x="424" y="166" text-anchor="end">Day 90</text>
+        <g data-step="1">
+          <circle cx="36" cy="145" r="7" class="c-accent" data-hi="1"/>
+          <rect x="16" y="42" width="126" height="42" rx="6" class="c-soft"/>
+          <text x="79" y="60" text-anchor="middle" font-weight="600">Learn + kata</text>
+          <text x="79" y="76" text-anchor="middle" class="m">recall + cards</text>
+          <path d="M36 92 C 62 126, 92 138, 120 138" class="ink" stroke-width="2"/>
+        </g>
+        <g data-step="2">
+          <circle cx="120" cy="145" r="7" class="c-good" data-hi="2"/>
+          <rect x="92" y="90" width="114" height="36" rx="6" class="c-soft"/>
+          <text x="149" y="106" text-anchor="middle" font-weight="600">Retest 1</text>
+          <text x="149" y="120" text-anchor="middle" class="m">61% vs 40%</text>
+          <path d="M120 100 C 160 124, 205 135, 250 136" class="ink" stroke-width="2"/>
+        </g>
+        <g data-step="3">
+          <circle cx="250" cy="145" r="7" class="c-good" data-hi="3"/>
+          <rect x="218" y="90" width="130" height="36" rx="6" class="c-soft"/>
+          <text x="283" y="106" text-anchor="middle" font-weight="600">Retest 2</text>
+          <text x="283" y="120" text-anchor="middle" class="m">t = 0.105 S @ 90%</text>
+          <path d="M250 96 C 310 116, 368 126, 424 130" class="ink" stroke-width="2"/>
+        </g>
+        <g data-step="4">
+          <rect x="162" y="12" width="282" height="34" rx="6" class="c-soft" data-hi="4"/>
+          <rect x="162" y="12" width="10" height="34" rx="3" class="c-accent"/>
+          <text x="308" y="33" text-anchor="middle" font-weight="600">Sunday interleaving: 72% vs 38%</text>
+        </g>
+        <g data-step="5">
+          <rect x="16" y="180" width="428" height="30" rx="6" class="c-soft" data-hi="5"/>
+          <rect x="16" y="180" width="10" height="30" rx="3" class="c-bad"/>
+          <text x="235" y="199" text-anchor="middle">Cap: 75 min/d (wk 12 peak 72 min) | Skip 3d -> 143 min</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>On day 0 you read once, run the kata, recall from a blank page, and add cards, starting stability S low so memory decays via exp(-t/S).</li>
+      <li>At day 7, cold retest 1 forces retrieval while recall is effortful (61% vs 40% for rereading) and multiplies stability S.</li>
+      <li>At day 30, cold retest 2 meets the fact again at a wider gap (t = S ln(1/r), about 0.105 S at 90%), flattening decay toward day 90.</li>
+      <li>Sunday interleaving mixes topics across weeks (72% vs 38% on unannounced tests) so you practice choosing the right method.</li>
+      <li>Reviews accumulate to 184/day (72 min peak) by week 12, and skipping 3 days or adding 30 extra cards/day breaks the 75 min cap.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Timed retrieval lifts stability on the way down, interleaving trains method selection, and the 75-minute cap keeps review debt sustainable.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Close the page. Set the clock. Break the toy. Say it aloud. Four verbs, four mechanisms: retrieval, spacing, the kata, the spoken answer. Interleaving is the shuffle you apply to all four on Sundays.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Retrieval beats rereading</h3>
+  <p>When you reread, the text is in front of you, so everything feels familiar. Familiarity is a signal that you can recognise the answer, not that you can produce it. Retrieval forces you to rebuild the answer from cues, which strengthens that path and shows you exactly where it breaks. In Roediger and Karpicke (2006), the self-testers had read the material about 3.4 times against four for the rereaders, felt less sure, and still recalled 61% a week later against 40%. The rereaders were the more confident group.</p>
+  <details class="q"><summary>Check: your friend rereads each page twice and says it all feels familiar. What is wrong with using that feeling as evidence?</summary><div class="a">Familiarity measures recognition, not recall. In the study the restudy group was more confident and remembered less after a week (40% against 61%). Test yourself instead.</div></details>
+
+  <h3>Spacing: catch the fact on the way down</h3>
+  <p>A simple model of forgetting is R = exp(-t / S), where R is the chance you can recall, t is days since the last pass and S is stability in days. Every successful retrieval raises S, and it raises it more when recall was harder, meaning R had dropped further. That is the whole reason spacing works: a pass at R near 1 teaches almost nothing, a pass at R near 0 finds nothing to strengthen. The sweet spot is in between. If you want to meet the fact at retention r, solve for t:</p>
+  <div class="codewrap"><pre>t = S * ln(1 / r)
+r = 0.9  ->  t = 0.105 * S      (S = 10 days: review after about 1.05 days)</pre></div>
+  <p>As S grows, the gaps grow, so the review load per card falls over time. Anki's scheduler does a version of this for you: each time you press Good, the next interval is the current interval times the card's ease, 250% by default.</p>
+  <details class="q"><summary>Check: S = 20 days and you want to meet the fact at 90% retention. When do you review it?</summary><div class="a">t = 20 * ln(1/0.9) = 20 * 0.105, about 2.1 days. Then S grows, so the next gap is longer.</div></details>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: When to review at retention r, and decay without review</div>
+    <p class="ask">Predict first. With stability S = 20 days and target retention r = 90%, after how many days do you review, and what is recall R at day 30 if you skip the review?</p>
+    <div class="ctl">
+      <label><span>Stability S</span><input type="range" name="s" min="2" max="60" step="1" value="20"><output data-for="s" data-unit=" days"></output></label>
+      <label><span>Target retention r</span><input type="range" name="r" min="70" max="95" step="1" value="90"><output data-for="r" data-unit="%"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Higher stability S widens the review interval t = S ln(1/r) linearly, while skipping reviews lets R = exp(-t/S) slide down the curve.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var t=v.s*Math.log(1/(v.r/100));
+    var r7=100*Math.exp(-7/v.s), r30=100*Math.exp(-30/v.s);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"Target retention r",value:v.r,tone:"good"},
+      {label:"Unreviewed R at day 7",value:r7,tone:r7>=v.r?"good":"warn"},
+      {label:"Unreviewed R at day 30",value:r30,tone:r30>=v.r?"good":"bad"}
+    ]});
+    return {verdict:"Review at t = "+tl.fmt(t,2)+" days (factor "+tl.fmt(Math.log(1/(v.r/100)),3)+" x S). Without review: day 7 = "+tl.fmt(r7,1)+"%, day 30 = "+tl.fmt(r30,1)+"%."};
+  })});</script>
+
+  <h3>Interleaving: practice choosing</h3>
+  <p>Blocked practice, ten problems of one type in a row, lets you apply the same method without deciding. Interleaved practice mixes types, so each problem makes you work out which method applies. Practice scores look worse, test scores look better. In a classroom study of grade 7 students, interleaved practice scored 72% against 38% on an unannounced test two weeks later (Rohrer, Dedrick and Burgess, 2014). Interviews are interleaved by nature: nobody announces the topic. That is why Sunday review mixes cards from every week and why station 10 of every page asks about older topics.</p>
+  <details class="q"><summary>Check: why do interleaved learners score lower during practice yet higher on the later test?</summary><div class="a">Mixing forces them to identify the problem type each time, which is harder now but is the skill the test needs. Blocked learners never practise choosing the method.</div></details>
+
+  <h3>The topic package</h3>
+  <p>Every topic follows the same loop, so you never decide how to study. Read the page once. Run the kata and break it on purpose. Close the page and answer from memory. Put what you missed in the question log. Add the cards to Anki. Record a 90 second answer for T1 and T2 topics. Then retest cold at 7 and 30 days. The tracker holds the status and fills in the retest dates for you.</p>
+  <h3>Cards and the question log</h3>
+  <p>A card is one idea in question form with an answer under about 25 words, weighted toward why, when, what breaks and how much. A definition card tests recognition of a sentence; a why card tests whether you can reconstruct a mechanism. The question log holds every question you could not answer cleanly, with a model answer and a retest date a week out, so your misses are spaced as well. It is your highest-value deck, because it is made of your own gaps.</p>
+  <details class="q"><summary>Check: which is the better card, "What is a KV cache?" or "Why does a KV cache shrink the cost of decoding each new token?" Say why.</summary><div class="a">The second. It asks for a mechanism you must reconstruct, not a definition you can recognise. Interviews ask why, how much and what breaks.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Recall after 1 week: self-testing vs rereading (Roediger and Karpicke 2006)</td><td class="n">61% vs 40%</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Same study at 5 minutes: rereading vs self-testing</td><td class="n">83% vs 71%</td><td>Checked 16 Nov 2026, secondary summary only</td></tr>
+    <tr><td>Interleaved vs blocked maths practice, test 2 weeks later (Rohrer et al. 2014)</td><td class="n">72% vs 38%</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Time to meet a fact at retention r</td><td class="n">t = S ln(1/r)</td><td>Derived</td></tr>
+    <tr><td>t at 90% retention</td><td class="n">0.105 * S</td><td>Derived</td></tr>
+    <tr><td>Cards, topics, daily card cap, retest days</td><td class="n">3,150, 630, 75 min, 7 and 30</td><td>Project plan</td></tr>
+    <tr><td>New cards per study day for 3,150 cards over 72 study days</td><td class="n">43</td><td>Derived</td></tr>
+    <tr><td>Anki defaults: new cards a day, max reviews a day</td><td class="n">20, 200</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Anki defaults: learning steps, graduating interval, starting ease</td><td class="n">1m 10m, 1 day, 250%</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Anki default easy interval</td><td class="n">4 days</td><td>From memory, verify</td></tr>
+    <tr><td>Anki manual rule of thumb: 20 new a day gives about this many reviews a day</td><td class="n">about 200</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Kata, week 12: average reviews a day, peak minutes</td><td class="n">184, 72</td><td>Your own run, toy model</td></tr>
+    <tr><td>Kata, total reviews over 12 weeks</td><td class="n">11,696 (65.0 h)</td><td>Your own run, toy model</td></tr>
+    <tr><td>Kata, skip 3 days: days over the 75 min cap, peak</td><td class="n">6 of 84, 143 min</td><td>Your own run, toy model</td></tr>
+    <tr><td>Kata, 30 extra cards a day: days over the cap, total hours</td><td class="n">36 of 84, 110.3 h</td><td>Your own run, toy model</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Rereading and highlighting</td><td>Feels fast and safe</td><td>Poor retention after a week; false confidence</td><td>"It all looks familiar" with a blank page you cannot fill</td></tr>
+    <tr><td>Blank page self-test</td><td>Strongest single boost to retention; shows gaps at once</td><td>Feels hard and slow; no feedback unless you check</td><td>Skipping the checklist comparison, so errors stay</td></tr>
+    <tr><td>Anki cards</td><td>Automatic spacing across 630 topics</td><td>Daily minutes that compound; about 65 h of reviews in the toy model</td><td>Reviews past 75 min a day; suspend low-value cards</td></tr>
+    <tr><td>Katas</td><td>A mechanism you can rebuild, not just recite</td><td>Time to run and break each one</td><td>Kata grows past 100 lines and becomes a project</td></tr>
+    <tr><td>Interleaved review</td><td>Learn to pick the right idea; matches interviews</td><td>Lower scores and more frustration in the moment</td><td>Dropping it because Sundays feel bad</td></tr>
+    <tr><td>Spoken 90 second answers</td><td>Fluency in the real output format</td><td>Awkward and time-boxed; 60 min a day shared with role-plays</td><td>Recording once and never playing it back</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: forgetting curve and review bill</h2>
+  <p>Part 1 compares five passes over a topic under four plans using the toy forgetting model. Part 2 schedules all 3,150 cards and prints the daily review bill. The model is a toy: the constants are made up to show the shape, and you should not quote its percentages as findings.</p>
+  <h3>Setup, once (15 min)</h3>
+  <ol>
+    <li>Install Anki. Create the deck <code>AI Mastery::U Research and engineering craft</code> and import <code>U01-cards.txt</code> from this chat. In the import dialog pick the Basic note type and tick Allow HTML.</li>
+    <li>In deck options, leave scheduling defaults for the first weeks (the manual advises this), and raise New cards/day to about 45 and Maximum reviews/day to about 250. Both are derived from the numbers below: 43 new cards per study day, 184 reviews a day at the toy peak.</li>
+    <li>Make your own copy of the AI Mastery tracker. On the Topics tab set U01 to Learned when you finish this page. On the Question log tab, paste one test row with the seven columns, then delete it.</li>
+    <li>Write the first question log row yourself: Date, Question, Topic, Level reached, What was missing, Model answer, Retest due (7 days out).</li>
+  </ol>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy># U01 kata: why spaced retrieval wins, and what it costs per day. Toy model, stdlib only.
+# Run: python kata.py        Break it: change the constants in the BREAK block below.
+import math
+
+# ---- Part 1: forgetting curve. R = exp(-t / S), S = stability in days. TOY numbers, not measured. ----
+S0 = 1.5            # stability after first exposure (days)
+REREAD_GAIN = 1.1   # rereading right now barely helps: you recognise, you do not retrieve
+BASE, DIFF = 0.2, 3.0   # a retrieval multiplies S by (1 + BASE + DIFF * (1 - R)): harder recall, bigger gain
+
+def stability_after(times, day, gain):
+    """Replay the plan up to `day`; return (stability, day of last pass)."""
+    s, last = S0, 0.0
+    for t in times:
+        if t &gt; day: break
+        r = math.exp(-(t - last) / s)          # what you still remember at the moment of the pass
+        s *= gain(r)
+        last = t
+    return s, last
+
+retrieve = lambda r: 1 + BASE + DIFF * (1 - r)  # effortful recall: gain grows as r falls
+reread = lambda r: REREAD_GAIN                  # recognition: same small gain every time
+
+print("PART 1  toy retention (R) after learning once, then four more passes")
+print(f"{'plan':34}{'day 7':&gt;8}{'day 30':&gt;8}{'day 90':&gt;8}")
+plans = {
+    "reread 4x on day 0 (massed)": ([0.01, 0.02, 0.03, 0.04], reread),
+    "retrieve 4x on day 0 (massed)": ([0.01, 0.02, 0.03, 0.04], retrieve),
+    "retrieve day 1,3,7,16 (spaced)": ([1, 3, 7, 16], retrieve),
+    "retrieve day 1,2,3,4 (too tight)": ([1, 2, 3, 4], retrieve),
+}
+for name, (times, gain) in plans.items():
+    row = ""
+    for d in (7, 30, 90):
+        s, last = stability_after(times, d, gain)
+        row += f"{math.exp(-(d - last) / s):8.0%}"
+    print(f"{name:34}{row}")
+
+# ---- Part 2: the daily review bill for the whole curriculum. ----
+CARDS, WEEKS = 3150, 12
+INTERVALS = [1, 3, 7, 16, 35, 80]   # days between reviews of one card, roughly 90% retention
+SECONDS_PER_REVIEW = 20
+CAP_MIN = 75                        # the project's daily card budget
+# ---- BREAK block: flip these one at a time ----
+SKIP_DAYS = set()                   # try {20, 21, 22}: three days with no Anki
+EXTRA_CARDS_PER_DAY = 0             # try 30: writing too many cards
+
+days = WEEKS * 7
+study_days = [d for d in range(days) if d % 7 != 6]            # Mon..Sat; Sunday is review only
+new_per_day = CARDS // len(study_days) + EXTRA_CARDS_PER_DAY
+minutes, reviews = [], []
+stage = {}                                                     # day -&gt; list of (stage, count) due that day
+for d in study_days:
+    stage.setdefault(d + INTERVALS[0], []).append((0, new_per_day))
+for d in range(days + 200):
+    todays = stage.pop(d, [])
+    if d in SKIP_DAYS:                                         # nothing done: everything slides one day
+        for s, n in todays: stage.setdefault(d + 1, []).append((s, n))
+        continue
+    n_today = sum(n for _, n in todays)
+    for s, n in todays:
+        if s + 1 &lt; len(INTERVALS):
+            stage.setdefault(d + INTERVALS[s + 1], []).append((s + 1, n))
+    if d &lt; days:
+        reviews.append(n_today); minutes.append(n_today * SECONDS_PER_REVIEW / 60)
+
+print(f"\nPART 2  {CARDS} cards over {WEEKS} weeks = {new_per_day} new cards per study day, {SECONDS_PER_REVIEW}s per review")
+print(f"{'week':&gt;4}{'avg reviews/day':&gt;17}{'peak min/day':&gt;14}")
+for w in range(WEEKS):
+    chunk_r, chunk_m = reviews[w*7:(w+1)*7], minutes[w*7:(w+1)*7]
+    print(f"{w+1:&gt;4}{sum(chunk_r)/7:&gt;17.0f}{max(chunk_m):&gt;14.0f}")
+over = sum(1 for m in minutes if m &gt; CAP_MIN)
+print(f"days over the {CAP_MIN} min cap: {over} of {days}; peak {max(minutes):.0f} min; total {sum(reviews)} reviews = {sum(minutes)/60:.1f} h")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">PART 1  toy retention (R) after learning once, then four more passes
+plan                                 day 7  day 30  day 90
+reread 4x on day 0 (massed)             4%      0%      0%
+retrieve 4x on day 0 (massed)          12%      0%      0%
+retrieve day 1,3,7,16 (spaced)        100%     74%     21%
+retrieve day 1,2,3,4 (too tight)       84%     22%      1%
+
+PART 2  3150 cards over 12 weeks = 43 new cards per study day, 20s per review
+week  avg reviews/day  peak min/day
+   1               55            29
+   2               92            43
+   3              111            43
+   4              117            57
+   5              147            57
+   6              147            57
+   7              147            57
+   8              147            57
+   9              154            72
+  10              184            72
+  11              184            72
+  12              184            72
+days over the 75 min cap: 0 of 84; peak 72 min; total 11696 reviews = 65.0 h</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Part 1 toy retention at day 30 after four extra passes</div>
+    <div data-bars='{"unit":"%","digits":0,"max":100,"rows":[{"label":"Spaced (1,3,7,16)","value":74,"tone":"good"},{"label":"Too tight (1,2,3,4)","value":22,"tone":"warn"},{"label":"Massed retrieve (day 0)","value":0,"tone":"bad"},{"label":"Massed reread (day 0)","value":0,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> Spacing four retrievals across days 1, 3, 7, and 16 holds 74% at day 30 in the toy model, while massing them on day 0 drops to 0%.</figcaption>
+  </figure>
+  <figure class="viz">
+    <div class="vt">Chart: Peak daily review minutes vs the 75-minute cap</div>
+    <div data-bars='{"unit":" min","digits":0,"rows":[{"label":"Baseline peak (wk 9-12)","value":72,"tone":"good"},{"label":"Daily budget cap","value":75,"tone":"muted"},{"label":"Skip 3 days peak","value":143,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Baseline reviews peak at 72 minutes under the 75-minute cap, but skipping three days doubles the peak to 143 minutes.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Rows 1 and 2 use the same four passes on day 0. Retrieval beats rereading (12% against 4% at day 7), but cramming caps both: by day 30 each is at 0%.</li>
+    <li>The spaced plan holds 74% at day 30 and 21% at day 90. Ignore its 100% at day 7: the last pass falls exactly on day 7. Read the day 30 and day 90 columns.</li>
+    <li>The too-tight plan (day 1, 2, 3, 4) has the same four retrievals and only 22% at day 30. More passes do not help if they come while R is still near 1.</li>
+    <li>New cards stay at 43 a day, yet reviews climb from 55 a day in week 1 to 184 in week 12. Reviews accumulate; this is the price of retention.</li>
+    <li>The 11,696 reviews total 65.0 hours, about an eighth of the 527 hours of topic packages. The model ignores lapses and the time to first learn a card, so the real bill is higher.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Skip three days.</strong> Set <code>SKIP_DAYS = {20, 21, 22}</code>. Predict first: do the reviews vanish, or pile up? Result: they pile up. 6 of 84 days go over the 75 minute cap and the peak reaches 143 minutes.</li>
+    <li><strong>Write too many cards.</strong> Set <code>EXTRA_CARDS_PER_DAY = 30</code>. Predict the number of days over the cap. Result: 36 of 84 days, and 110.3 hours in total. This is the case for the suspend rule.</li>
+    <li><strong>Remove the desirable difficulty.</strong> Set <code>DIFF = 0.0</code>, so a hard recall gains no more than an easy one. Predict which plan wins at day 30. Result: the spaced plan collapses to 1%. The whole spacing benefit in this toy came from that one assumption, which is a reminder that a model shows what you put in. The research results are real; the percentages here are not.</li>
+    <li><strong>Review too often.</strong> Set <code>INTERVALS = [1, 2, 3, 4, 5, 6]</code>. Result: 27 days over the cap and 92.5 hours.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a lapse rate to Part 2: each review fails 10% of the time and sends the card back to stage 0. Predict whether the week 12 average goes above or below the manual's rule of thumb of about 200 a day for 20 new cards.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <p class="sub">Here, production is you, over twelve weeks.</p>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>You can follow the page but fail a cold retest</td><td>You reread instead of retrieving; fluency illusion</td><td>Close the page, blank page first, check after. Grade honestly.</td></tr>
+    <tr><td>Reviews run past 75 minutes</td><td>Too many cards, definition cards, or a backlog</td><td>Suspend low-value cards, cut new cards, do not grind the full queue</td></tr>
+    <tr><td>Cards feel easy but spoken answers fall apart</td><td>Cards test recognition of facts, not structured output</td><td>Record the 90 second answer; grade on three levels</td></tr>
+    <tr><td>You miss a few days</td><td>Life and long study days</td><td>Do reviews in due order up to the cap, keep T1 in its week, let T3 slide to Sunday</td></tr>
+    <tr><td>Same question missed in two retests</td><td>The card or the model answer is vague</td><td>Rewrite the card as a why or how much question; add the mechanism</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> daily card minutes against the 75 minute cap, the tracker's Retests due count, the number of Shaky rows, Anki's true retention in its stats, and repeats in the question log.</p>
+  <details class="q"><summary>Scenario: it is Thursday of week 4, you have 240 reviews due and about 2 hours before your first topic. What do you do?</summary><div class="a"><ol><li>Do reviews in due order and stop at about 75 minutes. Accept the rest is carried over.</li><li>Look at the unreviewed pile: suspend definition cards and T3 cards first, because they pay least.</li><li>Do not add new cards today.</li><li>Check cause: if this repeats, you are writing more cards than the 43 a day plan or grading too leniently.</li><li>Log the day on the tracker; Sunday review absorbs what remains.</li></ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">The question: "How do you learn new technical material and make sure you keep it?" Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>I treat learning as an engineering problem with one failure mode, which is forgetting. The goal is to answer from a blank page months later, so I build every topic around retrieval, spaced retests and a small implementation, and I track what I miss.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Each topic gets one focused read. Then I run a small program of it and deliberately break it, so I see the mechanism. I close the page and answer from memory, and anything I miss goes into a question log with a model answer. Cards are one idea each, written as questions and scheduled by Anki's spaced repetition. Each topic is retested cold at 7 and 30 days. I also record a 90 second answer in three levels, outcome, mechanism and limits, because recognising an answer and saying it under pressure are different skills.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>The evidence is that self-testing gave 61% recall after a week against 40% for rereading. The cost is real: roughly 3,000 cards is dozens of hours of reviews, so I cap cards at 75 minutes a day and suspend low-value cards rather than grind. Spaced repetition keeps facts, not judgment, so I add timed mock interviews for that, and I judge the whole system by cold retest scores, not by how confident I feel.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"I read a lot, watch tutorials and take notes. I am a fast learner, so it sticks."</p><p class="strong">"I measure retention instead of trusting how it feels. I answer from a blank page, log what I miss, and retest at 7 and 30 days. In my own toy model, four spaced retrievals keep about 74% at day 30 where four massed ones keep close to zero."</p><p>The strong answer names a mechanism (retrieval and spacing), gives a number, and shows how you check yourself. The 74% is an illustrative output of a toy model, so say "toy model" and do not present it as a research result.</p></div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Rereading until it feels familiar is the most reliable way to learn something."</summary><div class="a">Familiarity is recognition, not recall. In Roediger and Karpicke 2006 the rereaders were more confident and recalled 40% after a week against 61% for self-testers. Dunlosky et al. rate rereading low utility.</div></details>
+  <details class="q"><summary>"Spaced repetition just means reviewing everything as often as possible."</summary><div class="a">Early reviews gain little and cost the same minutes. In the kata, passes on days 1, 2, 3, 4 keep 22% at day 30; days 1, 3, 7, 16 keep 74%. Gaps should widen as stability grows.</div></details>
+  <details class="q"><summary>"Interleaving is worse than blocked practice, because you get more wrong while practising."</summary><div class="a">Lower practice scores are the point. Mixing forces you to pick the method, and the later test rewards that: 72% against 38% two weeks later in Rohrer et al. 2014.</div></details>
+  <details class="q"><summary>"If I get the Anki card right, I can explain the topic in an interview."</summary><div class="a">A card tests a short fact. An interview needs a structured answer with a mechanism, a number, a failure mode and a tradeoff. That is why every T1 and T2 topic also gets a recorded 90 second answer.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Give the 90 second answer: how will you retain 630 topics?</summary><div class="a">Retrieval, spacing, small katas, spoken answers; retests at 7 and 30 days; cards capped at 75 min a day; question log for misses. Use the three levels above.<div class="f"><b>Follow-up</b>Reviews hit 120 minutes. What changes? Suspend low-value cards, stop adding new ones for a few days, check you are not writing definition cards. Do not grind the whole queue.</div></div></details>
+  <details class="q"><summary>Why does retrieval practice beat rereading, and what are the numbers?</summary><div class="a">Retrieval forces reconstruction from cues, strengthening that path and exposing gaps. Rereading gives familiarity. At one week, 61% against 40% in the 2006 study.<div class="f"><b>Follow-up</b>Why does rereading win at 5 minutes? The text is still active in short-term memory, so restudy looks good. The benefit of testing shows only after a delay.</div></div></details>
+  <details class="q"><summary>Derive when to review a fact to meet it at 90% retention.</summary><div class="a">With R = exp(-t/S), set R = 0.9: t = S ln(1/0.9), about 0.105 S. S = 10 days gives roughly 1 day.<div class="f"><b>Follow-up</b>What happens to S after a successful review? It grows, more when recall was harder. In Anki, the next interval is the old one times the card's ease, 250% by default.</div></div></details>
+  <details class="q"><summary>Same number of passes: why do spaced passes beat massed ones?</summary><div class="a">The gain from a pass depends on how far retention had dropped. Massed passes happen while R is near 1, so they add little stability. In the kata: 74% against 0% at day 30.</div></details>
+  <details class="q"><summary>What is interleaving, and where does it show up in this plan?</summary><div class="a">Mixing topics so you must choose the method each time. Sunday mixed cards, station 10 on every page, and the mocks. Evidence: 72% against 38%, two weeks later.<div class="f"><b>Follow-up</b>Why does it feel worse? Practice scores are lower because you do the extra work of identifying the problem. That difficulty is the thing being trained.</div></div></details>
+  <details class="q"><summary>Which Anki defaults do you change, and why?</summary><div class="a">New cards a day from 20 to about 45, because 3,150 cards over 72 study days is 43 a day. Max reviews raised to about 250 so the queue is not cut off silently. Scheduling stays default for the first weeks.<div class="f"><b>Follow-up</b>What load does the kata predict at week 12? Average 184 reviews a day, about 61 minutes, peak 72. Real load is higher, since the model ignores lapses.</div></div></details>
+  <details class="q"><summary>What makes a good card?</summary><div class="a">One idea, question form, answer under about 25 words, weighted toward why, when, what breaks and how much. At most one list card per topic.</div></details>
+  <details class="q"><summary>What goes in the question log, and why bother?</summary><div class="a">Date, question, topic, level reached, what was missing, model answer, retest due a week out. Misses are your highest-value cards and the retest date spaces them.</div></details>
+  <details class="q"><summary>You miss three days of Anki. What do you do, and what does the kata say about the damage?</summary><div class="a">Do reviews in due order up to the cap and suspend low-value cards; do not clear the whole backlog. The kata: 6 of 84 days over the cap, peak 143 minutes.<div class="f"><b>Follow-up</b>What never slips? T1 topics stay in their week; T3 slides first, then T2.</div></div></details>
+  <details class="q"><summary>Why record spoken answers when you already have cards?</summary><div class="a">Cards test recognition-sized facts. Interviews need structured speech under pressure. Recording trains the three-level format and exposes filler and missing numbers.</div></details>
+  <details class="q"><summary>How would you tell whether the system is working?</summary><div class="a">Cold retest scores at 7 and 30 days, Anki retention near your target, fewer repeated misses in the question log, and mock scores. Not how confident you feel.<div class="f"><b>Follow-up</b>Retention is much lower than target. What do you check first? Card quality and whether you are grading honestly, then whether intervals or new cards a day are too high.</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the four parts of the system in order of importance, the retest days, the formula for when to review at retention r, the three levels of an answer, the daily time blocks and the card cap, the 61 against 40 result, and the seven columns of the question log.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Retrieval, spacing, small implementations (katas), spoken answers. Interleaving runs across them.</li>
+    <li>Retests cold at 7 and 30 days.</li>
+    <li>t = S ln(1/r); about 0.105 S at 90%.</li>
+    <li>Three levels: outcome (20 s), mechanism (45 s), internals and limits (25 s).</li>
+    <li>Daily: topic packages about 7.3 h, cards up to 75 min, speaking and people 60 min, close 15 min.</li>
+    <li>Self-testing 61% against rereading 40% at one week.</li>
+    <li>Question log: Date, Question, Topic, Level reached, What was missing, Model answer, Retest due.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Nothing comes before U01, so these three come from this week's first topics. If you have not studied them yet, answer from what you know and mark them shaky.</p>
+  <details class="q"><summary>D01: At its core, what does an LLM compute, and how does it produce a paragraph?</summary><div class="a">It maps a token sequence to a probability distribution over the next token. Text is produced by sampling one token, appending it, and repeating.</div></details>
+  <details class="q"><summary>K01: What does an inference engineer optimise, and what do those goals trade against?</summary><div class="a">Latency, throughput and cost per token when serving a model, within memory limits. Improving one usually costs another, for example batching raises throughput and raises latency.</div></details>
+  <details class="q"><summary>V01: What four things does an engineer-voice answer contain?</summary><div class="a">A mechanism, a number, a failure mode and a tradeoff. Business framing comes after, in one sentence.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://psychology.ecu.edu/wp-content/pv-uploads/sites/216/2019/03/Roediger-Karpicke-2006.pdf">Roediger and Karpicke, Test-Enhanced Learning, Psychological Science 17(3), 2006</a><small>Supports the 61% against 40% result and the testing effect. The 5 minute figures (83%, 71%) come from a secondary summary. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://www.psychologicalscience.org/news/releases/which-study-strategies-make-the-grade.html">APS summary of Dunlosky et al., Improving Students' Learning With Effective Learning Techniques, 2013</a><small>Supports practice testing and distributed practice rated highest, rereading, highlighting and summarization rated low. Interleaving rated moderate is from memory, verify. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://link.springer.com/article/10.3758/s13423-014-0588-3">Rohrer, Dedrick and Burgess, Psychonomic Bulletin and Review 21(5), 2014</a><small>Supports 72% against 38% for interleaved against blocked practice. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://docs.ankiweb.net/deck-options.html">Anki Manual: Deck Options</a><small>Supports the defaults (20 new, 200 reviews, learning steps, graduating interval) and the 20 new a day gives about 200 reviews a day rule of thumb. Checked 16 Nov 2026.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::U Research and engineering craft", "tags": "U01 T1 W01", "cards": [{"q": "Why does rereading a page feel productive yet fail after a week?", "a": "It builds familiarity, which is recognition, not recall. In the 2006 study rereaders recalled 40% after a week, self-testers 61%, despite feeling more confident."}, {"q": "Name the four parts of the learning system in order of importance.", "a": "Retrieval, spacing, small implementations (katas), spoken answers. Interleaving runs across all four."}, {"q": "When is each topic retested cold, and why those gaps?", "a": "At 7 and 30 days. Each retest meets the fact as it fades, where effortful recall adds the most stability."}, {"q": "In R = exp(-t/S), at what t do you meet a fact at 90% retention?", "a": "t = S ln(1/0.9), about 0.105 S. With S = 10 days, review after about one day."}, {"q": "Why do four massed passes in one sitting add so little stability?", "a": "Each pass happens while retention is near 1, so recall effort is tiny. In the kata: 0% at day 30, against 74% for spaced passes."}, {"q": "Why will real Anki reviews run above the kata's 184 a day at week 12?", "a": "The kata ignores lapses and stops after six reviews per card. Anki's manual says 20 new cards a day gives about 200 reviews a day."}, {"q": "Why write cards as why, when, what breaks or how much questions, not 'What is X'?", "a": "Definition cards test recognition. Interviews ask for reasons, numbers and failure modes, which you must reconstruct."}, {"q": "Why does interleaving feel worse yet test better?", "a": "Mixed practice makes you choose the method each time, lowering practice scores. Grade 7 students scored 72% against 38% two weeks later."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

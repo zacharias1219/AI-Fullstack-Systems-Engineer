@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>W01 Tactical empathy</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="W01">
+<main>
+<header>
+  <div class="eyebrow"><b>W01</b><span>People skills</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Tactical empathy</h1>
+  <p class="lede">How do you get a tense or guarded person to tell you what is really going on, using labels, mirrors and calibrated questions? This page covers those three tools and nothing else. Summarizing back is W19, interests and BATNA are W02.</p>
+  <div class="chips"><span><em>Before</em>V01 Engineer voice vs business voice</span><span><em>After</em>W19 Active listening and summarizing back</span><span><em>After</em>W02 Principled negotiation</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Answer the three warm-up guesses</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5, answer each check</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Role-play 1, 2 and 3, recorded on your phone, scored in chat</span><small>25 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, record the 90-second answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, blank-page recall, then flashcards</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards into Anki, fill the tracker row</span><small>4 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A client says: "This price is impossible." You have three options: argue the price is fair, concede a discount, or repeat "impossible?" and say nothing else. Which one gets you the most information, and what do you expect to hear next?</summary><div class="a">The third. A mirror repeats the last word or two with a curious, upward tone and then waits. The client fills the silence with the real constraint, such as a budget cap, a boss's approval limit or a competing quote. Arguing or conceding both end the information flow.</div></details>
+  <details class="q"><summary>Which of these is not a calibrated question? (a) "Why did you pick the other vendor?" (b) "What matters most to you about this rollout?" (c) "How am I supposed to do that?"</summary><div class="a">(a). It starts with "why", which sounds like an accusation and invites a defence. (b) and (c) are open, start with what or how, and ask the other person to explain their constraints.</div></details>
+  <details class="q"><summary>True or false: naming a negative emotion out loud ("you sound frustrated") makes the person more upset.</summary><div class="a">Mostly false. Naming the emotion usually lowers its intensity and makes the person feel understood. If your label is wrong they correct it, and the correction is information. It backfires only when it sounds scripted, comes too early, or is followed by you talking.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Most people in a tense conversation are not short of arguments. They are short of the feeling that you understand their position. Until they feel that, they defend, repeat themselves, and hide the real reason. Tactical empathy is the deliberate work of figuring out what the other person feels and what is at stake for them, and then saying it back so they know you got it. The word "tactical" matters: you do this on purpose, to get information and lower defences. It is not agreement and it is not being nice.</p>
+  <p>You get there with three small tools, each one sentence long. A <strong>mirror</strong> repeats their last few words to make them elaborate. A <strong>label</strong> names the emotion or stake you hear. A <strong>calibrated question</strong> starts with "how" or "what" and hands the problem back to them. After each one you stop talking. The tools come from Chris Voss, a former FBI hostage negotiator, in <em>Never Split the Difference</em> (2016, with Tahl Raz).</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The M-L-C sequence in a tense conversation</div>
+    <svg viewBox="0 0 460 206" role="img" aria-label="Three tactical empathy tools in sequence: Mirror (1 to 3 critical words), pause about 4 seconds, Label (name emotion or stake), Calibrated question (how or what, 0 why), and where it breaks if you ask why or speak under 2 seconds before switching to engineer voice.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="1"/>
+          <rect x="12" y="12" width="136" height="10" rx="3" class="c-accent"/>
+          <text x="80" y="39" text-anchor="middle" font-weight="600">1. Mirror</text>
+          <text x="80" y="56" text-anchor="middle" class="m">last 1-3 words</text>
+          <text x="80" y="73" text-anchor="middle">dig for detail</text>
+        </g>
+        <g data-step="2">
+          <rect x="12" y="96" width="286" height="34" rx="6" class="c-soft" data-hi="2"/>
+          <rect x="12" y="96" width="10" height="34" rx="3" class="c-good"/>
+          <text x="158" y="117" text-anchor="middle" font-weight="600">Pause ~4 s silence: let them fill the gap</text>
+        </g>
+        <g data-step="3">
+          <rect x="162" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="3"/>
+          <rect x="162" y="12" width="136" height="10" rx="3" class="c-accent"/>
+          <text x="230" y="39" text-anchor="middle" font-weight="600">2. Label</text>
+          <text x="230" y="56" text-anchor="middle" class="m">It sounds/seems like</text>
+          <text x="230" y="73" text-anchor="middle">name emotion/stake</text>
+        </g>
+        <g data-step="4">
+          <rect x="312" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="4"/>
+          <rect x="312" y="12" width="136" height="10" rx="3" class="c-good"/>
+          <text x="380" y="39" text-anchor="middle" font-weight="600">3. Calibrated Q</text>
+          <text x="380" y="56" text-anchor="middle" class="m">How / What (0 Why)</text>
+          <text x="380" y="73" text-anchor="middle">hand over problem</text>
+        </g>
+        <g data-step="5">
+          <rect x="12" y="144" width="436" height="48" rx="6" class="c-soft" data-hi="5"/>
+          <rect x="12" y="144" width="10" height="48" rx="3" class="c-bad"/>
+          <text x="235" y="164" text-anchor="middle" font-weight="600">Breaks: &lt;2 s talk or "why" restarts defence</text>
+          <text x="235" y="182" text-anchor="middle" class="m">Only after M-L-C: switch to engineer voice + next step</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Mirror repeats their last 1 to 3 critical words in an upward tone, prompting detail without taking a position.</li>
+      <li>Hold about 4 seconds of silence after a mirror or label; it feels long to you and normal to them, so they reveal more.</li>
+      <li>Label names the emotion or stake in third person ("It sounds like..."), lowering defences without agreeing or diagnosing.</li>
+      <li>A calibrated question starts with "how" or "what" (0 "why") to hand the problem over and surface constraints.</li>
+      <li>Speaking within 2 seconds or asking "why" restarts defence; only after M-L-C do you switch to engineer voice.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Mirror, Label, and Calibrated Question each end in silence so the other person supplies the real constraints before you solve.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>M-L-C, the letters of ML plus a C. Mirror digs, Label names, Calibrate hands over the problem. Silence after every one. If you can say "dig, name, hand over, shut up" you can rebuild the whole page.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>What empathy means here, and what it does not</h3>
+  <p>Empathy in this sense is recognizing the other person's perspective and the emotion behind it, and showing that you recognize it. It does not require you to agree, to feel the same, or to give anything away. "It sounds like the deadline is a real risk for you" concedes nothing. It only shows you listened. The payoff is practical. A person who feels understood spends less energy defending a position, so more of their real reasons come out. Research on affect labeling (naming a feeling in words) found it lowers the intensity of that feeling. Lieberman and colleagues, 2007, from memory, verify.</p>
+
+  <h3>Mirrors: dig for detail</h3>
+  <p>A mirror repeats the last few words of what they said, or the one to three words that carried the weight, with a curious, slightly upward tone. "We were hoping for something faster." You: "Faster?" Then you stay quiet. The person hears their own words come back and reads it as "go on, I am listening", so they elaborate. It is cheap and low risk: you commit to no opinion and make no claim. It works best at the start, when you know little, and whenever an answer was vague.</p>
+
+  <h3>Labels: name the emotion or the stake</h3>
+  <p>A label is a short statement about what you hear. It usually starts with "It seems like", "It sounds like" or "It looks like". Use third-person framing, not "I think you are": "It sounds like you are worried this will happen again" feels like observation, while "I can tell you are angry" feels like a diagnosis. A label can end with a downward tone (statement) or an upward tone (question); that is the only difference. Aim at the emotion, or at the stake (credibility, money, face, time). Then stop. You do not need to be right: if you are wrong, they correct you, and you learn something real.</p>
+  <details class="q"><summary>Check: a customer says "this is the third time the call dropped." Write one mirror and one label.</summary><div class="a">Mirror: "The third time?" Label: "It sounds like you are tired of repeating yourself and starting to doubt the system can be trusted." Both are one sentence, neither defends the product, and both are followed by silence.</div></details>
+
+  <h3>Calibrated questions: hand over the problem</h3>
+  <p>A calibrated question is open, so it cannot be answered with yes or no. It starts with "how" or "what", never "why", and it asks the other person to solve a problem you would otherwise have to solve for them. "What is the biggest challenge you face with this?" "How am I supposed to do that?" "What would a good outcome look like for you?" The second one is useful when someone makes an unreasonable demand: it makes them think about your constraint without hearing a flat "no". Why not "why"? "Why did you do that?" carries blame, so people defend. "What led to that?" asks for the same facts without the accusation.</p>
+
+  <h3>Silence and tone</h3>
+  <p>The tools work only if you stop talking afterwards. A pause of about four seconds after a mirror or label feels long to you and normal to them; they fill it with detail or a correction. For tone, Voss describes the late-night FM DJ voice: slow, low, calm, falling at the end. Use it when things are tense. Use a warm, playful voice as your default. Use a direct voice only when you must. Specifics from the book on the pause length and voices: from memory, verify.</p>
+  <details class="q"><summary>Check: you label, they go silent, you feel uncomfortable. What do you do and why?</summary><div class="a">Stay silent. The silence is the tool: they either confirm the label, correct it or add detail, and all three are information. Speaking first hands the pressure back to you, and you tend to fill the gap with a pitch or a fix, which restarts the argument.</div></details>
+
+  <h3>Worked example</h3>
+  <p>A clinic operations lead on a call, after your voice agent double-booked three patients. Tools in brackets.</p>
+  <div class="box model"><b>Dialogue</b>
+    <p><strong>Ops lead:</strong> Your agent double-booked three patients on Monday. I am starting to think this was a mistake.</p>
+    <p><strong>You:</strong> A mistake? [mirror, then silence]</p>
+    <p><strong>Ops lead:</strong> My front desk spent the whole morning apologizing and fixing the calendar. They already did not trust software.</p>
+    <p><strong>You:</strong> It sounds like the real cost was your team's credibility with patients, and that the tool made their job harder, not easier. [label, then silence]</p>
+    <p><strong>Ops lead:</strong> Exactly. And I am the one who pushed for it.</p>
+    <p><strong>You:</strong> What would you need to see this week to feel safe keeping it on? [calibrated question]</p>
+  </div>
+  <p>Three sentences, and you learned the stakes (credibility), the sponsor's personal risk, and a success criterion. Only now do you switch to engineer voice: check Monday's logs for a slot-locking failure, and give a time for the root-cause report.</p>
+  <details class="q"><summary>Check: in the dialogue, what information did you gain from each of the three tools?</summary><div class="a">Mirror: the concrete damage (front desk apologizing, trust in software). Label: confirmation of the real stake, credibility, and a hint of their own exposure. Calibrated question: a measurable condition for keeping the product, which you can turn into a plan.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <p class="sub">This is a soft skill, so the numbers are small and mostly rules of thumb. The targets in the last two rows are my own practice design, not from the book.</p>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Book that defines the toolkit</td><td class="n">Voss and Raz, 2016</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Mirror length</td><td class="n">last 3 words; critical 1 to 3</td><td>Last three words checked 16 Nov 2026; the 1 to 3 range from memory, verify</td></tr>
+    <tr><td>Label openers</td><td class="n">It seems / sounds / looks like</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Label as statement vs question</td><td class="n">downward vs upward tone only</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Calibrated question openers</td><td class="n">how, what; never why</td><td>Checked 16 Nov 2026</td></tr>
+    <tr><td>Pause after a mirror or label</td><td class="n">about 4 s</td><td>From memory, verify</td></tr>
+    <tr><td>Three voices</td><td class="n">late-night FM DJ, playful, direct</td><td>From memory, verify</td></tr>
+    <tr><td>Practice target per 3-minute role-play</td><td class="n">3 labels, 2 mirrors, 3 calibrated questions, 0 why</td><td>Own design</td></tr>
+    <tr><td>Talk share target</td><td class="n">under about one third</td><td>Own design</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Tool</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Mirror</td><td>Detail with no commitment; works when you know little</td><td>Sounds robotic if repeated</td><td>More than one in a row, or a flat tone</td></tr>
+    <tr><td>Label</td><td>Lower defences; feedback on whether you understood</td><td>A wrong or early label can irritate</td><td>You keep talking after it; it sounds scripted</td></tr>
+    <tr><td>Calibrated question</td><td>They reveal constraints and propose solutions</td><td>Slower than telling; they may answer "I do not know"</td><td>Disguised "why" or a yes/no question</td></tr>
+    <tr><td>Silence</td><td>Fills with the information you wanted</td><td>Feels uncomfortable, risks looking disengaged</td><td>Silence on a phone or call needs a sound cue like "mm"</td></tr>
+    <tr><td>Skip all this and argue the facts</td><td>Fast when the other side is calm and rational</td><td>Escalation and hidden objections</td><td>Repeating the same point louder</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: three recorded role-plays</h2>
+  <p>No code runs here. The kata is three 3-minute role-plays with Claude as the counterpart. You record each one on your phone, then score yourself against the rubric. Nothing on this page is program output.</p>
+  <p class="cap">How to run it</p><div class="codewrap"><pre data-copy>In the W01 chat, say: role-play 1
+Claude plays the counterpart, stays in character, gives no hints for 3 minutes,
+then scores you with the rubric below. Say "role-play 2" and "role-play 3" the same way.
+For a spoken version: record on your phone, paste the transcript, say "grade this".</pre></div>
+
+  <h3>Role-play 1: the angry clinic lead</h3>
+  <p><strong>Situation.</strong> A clinic operations lead is angry after your voice agent double-booked patients. <strong>Counterpart opens with:</strong> "Your agent double-booked three patients on Monday. I am starting to think this was a mistake." <strong>Your goal.</strong> In 3 minutes, find out what they need to keep the product, without defending it or promising a fix.</p>
+
+  <h3>Role-play 2: the skeptical interviewer</h3>
+  <p><strong>Situation.</strong> This is the 13 Nov interview, replayed. <strong>Counterpart opens with:</strong> "Honestly, your answers sound like a businessman's. I wanted to hear how it actually works." <strong>Your goal.</strong> Stay calm, label what they want, and ask one calibrated question that gets them to say what depth they are looking for. Then answer one mechanism question in engineer voice.</p>
+
+  <h3>Role-play 3: the stalling prospect</h3>
+  <p><strong>Situation.</strong> A hospital compliance officer evaluating a data-erasure product. <strong>Counterpart opens with:</strong> "We already have a vendor for this. I do not see why we would switch." <strong>Your goal.</strong> Learn what the current vendor does not do well and what would make a pilot worth their time, without pitching.</p>
+
+  <h3>Rubric</h3>
+  <p class="sub">Score each criterion 0, 1 or 2. Total out of 12. Ten or more is a pass.</p>
+  <div class="scroll"><table><tr><th>Criterion</th><th>0</th><th>1</th><th>2</th></tr>
+    <tr><td>Names the emotion before solving</td><td>Jumps to a fix or defence</td><td>Labels late or once</td><td>Labels within the first minute</td></tr>
+    <tr><td>Labels (target 3)</td><td>None</td><td>1 to 2</td><td>3 or more, mostly accurate</td></tr>
+    <tr><td>Mirrors with silence (target 2)</td><td>None</td><td>Used, but no pause</td><td>2 or more, with a pause</td></tr>
+    <tr><td>Calibrated questions (target 3, no why)</td><td>Yes/no or why</td><td>1 to 2 how/what</td><td>3 or more, no why</td></tr>
+    <tr><td>Voice and pace</td><td>Fast, defensive</td><td>Calm but uneven</td><td>Slow, low, steady</td></tr>
+    <tr><td>Closes with a concrete next step in engineer voice</td><td>Vague promise</td><td>Next step without a number or time</td><td>Next step with a mechanism and a time</td></tr>
+  </table></div>
+  <figure class="viz">
+    <div class="vt">Chart: Practice targets for a 3-minute (180 s) role-play</div>
+    <div data-bars='{"unit":" count","digits":0,"rows":[{"label":"Labels","value":3,"tone":"good"},{"label":"Calibrated Qs (how/what)","value":3,"tone":"good"},{"label":"Mirrors","value":2,"tone":"good"},{"label":"Why questions","value":0,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Aim for 3 labels, 2 mirrors, 3 calibrated questions, 0 why questions, and under one third of the talk time (60 s of 180 s).</figcaption>
+  </figure>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: 3-minute role-play rubric and talk-share scorer</div>
+    <p class="ask">Predict first. If you hit 3 labels, 2 mirrors, 3 calibrated questions, and 55 s of talk time, does speaking within 2 s after a label or asking one "why" drop you below the 10 of 12 pass bar?</p>
+    <div class="ctl">
+      <label><span>Labels (target 3)</span><input type="range" name="labels" min="0" max="4" step="1" value="3"><output data-for="labels" data-unit=""></output></label>
+      <label><span>Mirrors (target 2)</span><input type="range" name="mirrors" min="0" max="4" step="1" value="2"><output data-for="mirrors" data-unit=""></output></label>
+      <label><span>How/What Qs (target 3)</span><input type="range" name="calq" min="0" max="4" step="1" value="3"><output data-for="calq" data-unit=""></output></label>
+      <label><span>Your talk time (of 180 s)</span><input type="range" name="talk" min="20" max="140" step="5" value="55"><output data-for="talk" data-unit=" s"></output></label>
+      <label><span>Habit check</span><select name="habit" data-num><option value="0">Clean: 4 s pause, 0 why, engineer close</option><option value="1">Spoke under 2 s after label/mirror</option><option value="2">Asked a "why" question</option><option value="3">Vague fix, no mechanism or time</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Hitting the tool counts is not enough: breaking silence early, asking "why", or skipping the engineer-voice close costs multiple rubric points.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var sEmo=v.labels>=1&&v.habit!==1?2:v.labels>=1?1:0;
+    var sLab=v.labels>=3?2:v.labels>=1?1:0;
+    var sMir=v.mirrors>=2&&v.habit!==1?2:v.mirrors>=1?1:0;
+    var sCal=v.habit===2?0:v.calq>=3?2:v.calq>=1?1:0;
+    var sPace=v.talk<=60&&v.habit!==1?2:v.talk<=90?1:0;
+    var sClose=v.habit===3?0:2;
+    var total=sEmo+sLab+sMir+sCal+sPace+sClose;
+    var share=100*v.talk/180;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" / 12",digits:0,max:12,rows:[
+      {label:"Pass bar",value:10,tone:"muted"},
+      {label:"Your rubric score",value:total,tone:total>=10?"good":total>=7?"warn":"bad"}
+    ]});
+    return {verdict:"Score: "+total+" / 12 ("+(total>=10?"PASS":"BELOW PASS")+"). Your talk share: "+tl.fmt(share,0)+"% (target <= 33%, or 60 s)."};
+  })});</script>
+
+  <h3>What to notice</h3>
+  <ol>
+    <li>Count your own labels and why-questions in the recording before you read the score. Most people find they asked at least one "why" without noticing.</li>
+    <li>Check where you spoke first after a label. If it was under about two seconds, the silence did not work.</li>
+    <li>Compare your talk share in role-play 1 with role-play 3. It usually drops once you trust the silence.</li>
+    <li>Note which counterpart line made you want to defend. That is the place to put a label next time.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Ask why.</strong> In role-play 1, ask "why did you choose us?" and "why is that a problem?" Predict the counterpart's tone, then run it and compare with the clean run.</li>
+    <li><strong>Mirror everything.</strong> For 90 seconds, mirror every sentence. Predict when it starts to sound mocking, then note the minute it did.</li>
+    <li><strong>Talk after the label.</strong> Label, then pitch your fix within 5 seconds. Predict whether the counterpart confirms the label or restates the complaint, then check.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Use one mirror and one label in a real, low-stakes conversation this week. Write down what the other person said next.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <p>Production here means a real call, meeting or interview, where you cannot pause the other person.</p>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>They say "you sound like a script"</td><td>Same label opener every time; flat tone; label too fast</td><td>Vary the opener, use their own words, slow down</td></tr>
+    <tr><td>They get angrier after a label</td><td>Wrong label, or you sounded like you were diagnosing them</td><td>Say "I may have that wrong. What am I missing?" and listen</td></tr>
+    <tr><td>"I do not know" to a calibrated question</td><td>The question was too broad, or they feel put on the spot</td><td>Narrow it: "What is the first thing that would need to change?"</td></tr>
+    <tr><td>They go quiet</td><td>You asked a yes/no question, or they feel judged</td><td>Label the silence: "It seems like this is a hard thing to say"</td></tr>
+    <tr><td>Written chat or email</td><td>No tone or pause, so labels read cold</td><td>Keep labels shorter, add a calibrated question at the end, or move to a call</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> your own recordings. Track labels, mirrors, why-questions and talk share per call. The trend over three weeks matters more than any single call.</p>
+  <details class="q"><summary>Scenario: a clinic ops lead says, "Your voice agent double-booked three patients on Monday and I had to apologize to them. I am not sure this is working." You have five minutes. Walk through your response.</summary><div class="a"><ol>
+    <li>Mirror the key phrase, "not sure this is working?", then stay silent about four seconds.</li>
+    <li>Label the stake they reveal, for example credibility with patients and with their own front desk.</li>
+    <li>Ask one calibrated question: "What would you need to see this week to feel safe keeping it on?"</li>
+    <li>Only then switch to engineer voice: "I will check Monday's logs for a slot-locking race, which is the usual cause of double bookings, and send you the root cause by noon tomorrow."</li>
+    <li>Close by restating their success condition as the thing you will measure.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Tactical empathy is deliberately working out what the other person feels and what is at stake for them, then saying it back so they feel understood. It is not agreement and it is not being nice. It matters because people who feel understood stop defending and start giving you information, and information is what every negotiation, discovery call and escalation runs on.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>I use three tools in order. First a mirror: I repeat their last few words with a curious tone and stay silent for about four seconds, and they fill the gap with detail. Second a label: I name the emotion or stake, starting with "it sounds like", then stop talking. If I am right they confirm, if I am wrong they correct me, and either way I learn something. Third a calibrated question that starts with how or what, never why, such as "how am I supposed to do that?" It makes them solve my problem inside their own constraints.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>It breaks in three ways. Scripted or rushed labels sound fake and make people angrier. Over-mirroring reads as mockery. And empathy without substance wins nothing: it opens the conversation, but you still need interests, options and a fallback, which is principled negotiation. I review my own recordings for labels, why-questions and talk share, and aim to talk under about a third of the time.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I would stay calm, apologize, and focus on delivering value and a great customer experience."</p>
+    <p class="strong">"First I would label what they feel: 'it sounds like you have lost confidence after the double-booking.' Then I would mirror their key phrase, wait about four seconds, and ask 'what would you need to see to trust it again?' Only then I would check the logs for the root cause, probably a slot-locking race, and give them a time for the report. The label costs ten seconds and tells me the real problem, which is often not the stated one."</p>
+    <p>The strong answer names a mechanism (label, mirror, pause, calibrated question), a number (four seconds, a time for the report), a failure mode (a slot-locking race) and a tradeoff (ten seconds spent before the fix). The quote is illustrative, not a result you achieved.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Tactical empathy means agreeing with the other person and being nice to them."</summary><div class="a">Wrong. It means recognizing and voicing their perspective and feelings. You can say "it sounds like this deadline is a real risk for you" and still refuse to move it. Agreement is a concession; recognition is not.</div></details>
+  <details class="q"><summary>"Ask why to understand their reasons. It shows you care about their thinking."</summary><div class="a">Wrong. "Why" sounds like an accusation and triggers defence. Ask "what" or "how" instead: "What led to that choice?" asks for the same facts without blame.</div></details>
+  <details class="q"><summary>"Do not label a negative emotion, because naming it will make it worse."</summary><div class="a">Wrong. Naming a negative emotion usually lowers its intensity and makes the person feel heard. A wrong label gets corrected, which is useful. It backfires when it sounds scripted or you keep talking after it.</div></details>
+  <details class="q"><summary>"Mirror every sentence they say so they keep talking."</summary><div class="a">Wrong. Mirror only the last one to three words that carry the weight, now and then, with a curious tone and a pause. Mirroring every sentence sounds mechanical and reads as mockery.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Define tactical empathy in one sentence and say what it is not.</summary><div class="a">Deliberately working out the other person's perspective and feeling, and saying it back so they feel understood. It is not agreement, sympathy or niceness.<div class="f"><b>Follow-up</b>Why call it "tactical"? Because you use it on purpose to get information and lower defences, and it can be practised like a skill.</div></div></details>
+  <details class="q"><summary>When do you use a mirror, a label and a calibrated question?</summary><div class="a">Mirror when you know little or the answer was vague, to draw out detail. Label when there is visible emotion or a stake to name. Calibrated question when you need them to reveal a constraint or propose a solution.<div class="f"><b>Follow-up</b>Which would you start with in a cold call? A mirror, because you commit to nothing and learn something.</div></div></details>
+  <details class="q"><summary>Why does "why" backfire, and how would you rewrite "Why did you choose the other vendor?"</summary><div class="a">It sounds like blame, so people defend. Rewrite: "What about the other vendor worked well for you?" It asks for the same facts and invites a real answer.</div></details>
+  <details class="q"><summary>A customer says "this is the third time the call dropped." Give a mirror, a label and a calibrated question.</summary><div class="a">Mirror: "The third time?" Label: "It sounds like you are tired of repeating yourself." Calibrated: "What would make this feel fixed to you?"<div class="f"><b>Follow-up</b>What do you do right after the label? Stay silent and let them confirm, correct or add detail.</div></div></details>
+  <details class="q"><summary>Why do labels work, and why is a wrong one still safe?</summary><div class="a">Naming an emotion lowers its intensity and shows you listened, so the person drops their guard. A wrong label gets corrected, and the correction is accurate information.</div></details>
+  <details class="q"><summary>Turn the demand "You must cut the price by 20 percent" into a calibrated question.</summary><div class="a">"How am I supposed to do that?" It makes them consider your constraints and propose what would make it possible, without a flat refusal.<div class="f"><b>Follow-up</b>What if they say "that is your problem"? Label it: "It sounds like the budget gives you no room either." Then ask what they could move.</div></div></details>
+  <details class="q"><summary>What is the late-night FM DJ voice and when do you use it?</summary><div class="a">A slow, low, calm voice that falls at the end of the sentence. Use it to de-escalate tense moments. Default to warm and playful otherwise, and direct only when needed. Detail from the book: from memory, verify.</div></details>
+  <details class="q"><summary>How is a calibrated question like requirements clarification in system design?</summary><div class="a">Both use open how/what questions to surface constraints before you commit. "What does success look like in 90 days?" and "What are the peak call volumes?" are the same move aimed at different people.<div class="f"><b>Follow-up</b>Where does it differ? In design you ask about numbers; with people you also ask about stakes and feelings.</div></div></details>
+  <details class="q"><summary>You label and they get angrier. What went wrong and what do you do?</summary><div class="a">Likely a wrong label, an early one, or a scripted tone. Say "I may have that wrong. What am I missing?", slow down, and let them correct you. Do not defend the label.</div></details>
+  <details class="q"><summary>Where does tactical empathy stop working?</summary><div class="a">When it is faked or scripted, when you overuse mirrors, when the other party acts in bad faith, and in written channels with no tone. Also when you have no substance: it opens the talk but does not replace interests, options and a fallback.<div class="f"><b>Follow-up</b>What covers the substance? Principled negotiation, W02.</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: what tactical empathy is and is not, the M-L-C sequence and what each step does, the openers for labels and calibrated questions, the rule on silence, two failure modes, and one example of each tool for a clinic customer.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Tactical empathy: recognize and voice their perspective; not agreement, not niceness.</li>
+    <li>Mirror: repeat the last few words, curious tone, then silence (about 4 s). Digs for detail.</li>
+    <li>Label: "It sounds / seems / looks like...", name the emotion or stake, then stop.</li>
+    <li>Calibrated question: how or what, never why, open, hands over the problem.</li>
+    <li>Silence after each tool; a wrong label is corrected, which is useful.</li>
+    <li>Failure modes: scripted tone, over-mirroring, empathy without substance.</li>
+    <li>Three examples for a clinic customer.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>V01: What four things does a strong engineer answer contain, and where does business framing go?</summary><div class="a">A mechanism, a number, a failure mode and a tradeoff. Business framing comes after, in one sentence, never instead of them.</div></details>
+  <details class="q"><summary>D01: In one sentence, what does an LLM produce at each step?</summary><div class="a">A probability distribution over the vocabulary for the next token, given all the tokens so far. One token is chosen from it, appended, and the step repeats.</div></details>
+  <details class="q"><summary>L01: Name three kinds of question you ask before designing a system.</summary><div class="a">What it must do and for whom, how much (users, requests per second, data size), and which limits matter (latency, availability, consistency, cost). These are calibrated questions for a system.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li>Chris Voss and Tahl Raz: Never Split the Difference (Harper Business, 2016)<small>Primary source for mirrors, labels, calibrated questions, tone and silence. I did not reread it this session. Items marked "from memory, verify" should be checked against the book.</small></li>
+    <li><a href="https://www.grahammann.net/book-notes/never-split-the-difference-chris-voss">Graham Mann: Never Split the Difference notes</a><small>Supports the label openers and the statement-versus-question inflection point. Secondary summary. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://pelayoarbues.github.io/literature-notes/Books/Never-split-the-difference">Pelayo Arbues: literature notes</a><small>Supports "repeat the last three words" for mirrors and the chapter titles "Be a Mirror" and "Don't feel their pain, label it". Secondary summary. Checked 16 Nov 2026.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::W People skills: negotiation, influence, speaking", "tags": "W01 T1 Wk01", "cards": [{"q": "Why does a mirror make the other person say more?", "a": "Hearing their own last words repeated, with a curious tone, signals you listened and invites them to elaborate without feeling questioned."}, {"q": "What do you do immediately after a label, and why?", "a": "Stay silent. They confirm, correct or add detail, and each response gives you information. Speaking first hands the pressure back to you."}, {"q": "Why is a wrong label still safe to use?", "a": "The other person corrects it, which gives you accurate information, and the attempt shows you are trying to understand."}, {"q": "Why start questions with how or what instead of why?", "a": "Why sounds like blame and triggers defence. How and what are open and ask them to explain constraints."}, {"q": "What does a calibrated question do that a normal question does not?", "a": "It is open, avoids yes or no, and hands the problem to them, for example: How am I supposed to do that?"}, {"q": "State the M-L-C sequence and what each step does.", "a": "Mirror digs for detail, Label names the emotion or stake, Calibrated question hands over the problem. Silence after each one."}, {"q": "Where does tactical empathy fail?", "a": "When it is scripted or over-mirrored, and when there is no substance. It opens the talk but does not replace interests, options and a fallback."}, {"q": "What targets do you hold in a 3-minute practice role-play?", "a": "At least 3 labels, 2 mirrors, 3 calibrated questions, no why-questions, and talking under about a third of the time. Own design."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

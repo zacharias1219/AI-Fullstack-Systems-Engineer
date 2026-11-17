@@ -1,0 +1,38 @@
+================================================================================
+1. MORNING PROMPT (Copy & paste into a fresh chat at the start of the day)
+================================================================================
+
+Use the @.agents/skills/topic-lab/SKILL.md skill to build today's interactive HTML study pages and update the frontend dashboard:
+
+1. Check today's date (or the date I specify: [TODAY]) against @.context/02-week-plan.md and @.context/AI Mastery tracker - Topics.csv. Also check if any earlier T1/T2 topics slipped and still need pages built.
+2. For each of today's scheduled topics that does not yet have an HTML page in its domain folder:
+   - Read its row in @.context/01-master-topic-index.md (ID, tier, week, kata idea, source).
+   - Write and run its kata first, capturing the real output.
+   - Build the complete Topic Lab v4 HTML page (`<Domain Folder>/<ID> <Short Name>.html`) with all required stations, the Station 2 concept stepper (`#viz-concept`), tier-appropriate `data-bars` charts and `TLQ` explorables, and the embedded Anki `#cards` JSON. Use parallel subagents to build the pages concurrently.
+   - Export/append today's Anki cards to `anki/<YYYY-MM-DD>-cards.txt` so I can import one file into Anki.
+3. Run `python scripts/validate_v4.py` to verify all HTML pages pass every Topic Lab v4 checksum, visual, stepper, and formatting rule.
+4. Run `python scripts/sync_dashboard.py` to update `main.html`, `index.html` (for GitHub Pages), and `README.md` with today's newly generated pages.
+
+
+================================================================================
+2. END-OF-DAY PROMPT (Copy & paste when you finish studying today's pages)
+================================================================================
+
+Use @.agents/skills/topic-lab/SKILL.md to close out today's study session:
+
+Today I completed: [LIST TOPIC IDs AND CONFIDENCE 1-5, e.g. K02:4 K03:4 D02:5 A06:4 L02:4 U01:5 W01:4]
+(Optional: Drill me first on [TOPIC IDs] before marking them learned.)
+
+1. Run `python scripts/sync_dashboard.py --mark [ID:CONF ...] --status Learned` to update @.context/AI Mastery tracker - Topics.csv (setting `Status`, `Conf`, `Learned on`, `Retest 7d`, and `Retest 30d`) and sync `main.html`, `index.html`, and `README.md`.
+2. Verify the updated status and retest dates are reflected in the dashboard so I can commit and push to GitHub Pages.
+
+
+================================================================================
+3. SUNDAY REVIEW / RETEST PROMPT (Copy & paste on Sundays or for 7d/30d retests)
+================================================================================
+
+Use @.agents/skills/topic-lab/SKILL.md in review / retest mode:
+
+1. Check @.context/AI Mastery tracker - Topics.csv for all topics whose `Retest 7d` or `Retest 30d` date is due on or before today and not yet marked `Done 7d` / `Done 30d`.
+2. Run my cold retest and weekly interleaved review (one question at a time, graded on Levels 1, 2, and 3 in engineer voice).
+3. After we finish, update `Done 7d` / `Done 30d` and `Status` (`Solid` or `Shaky`) in @.context/AI Mastery tracker - Topics.csv and run `python scripts/sync_dashboard.py`.

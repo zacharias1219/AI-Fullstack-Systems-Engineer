@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A06 Debugging method</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A06">
+<main>
+<header>
+  <div class="eyebrow"><b>A06</b><span>Foundations and applied math</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Debugging method</h1>
+  <p class="lede">How do you find a bug you have never seen before, fast, and know the fix is real? This page covers the loop (reproduce, isolate, hypothesize, instrument), the written hypothesis log, and how to say it in an interview.</p>
+  <div class="chips"><span><em>Before</em>A02 Async Python</span><span><em>After</em>A07 Profiling Python</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, keep a hypothesis log, fix all three bugs</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, say the 90 second answer aloud</span><small>7 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank-page recall</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards and record your answer</span><small>3 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. The numbers come from the kata in station 6.</p>
+  <details class="q"><summary>The check <code>check_cost_second_batch</code> prints <code>cost=0.0, want 0.5</code> in the full run, but passes when you run it alone. What does that tell you before you read any code?</summary><div class="a">Something carries state from one check to the next. Alone it returns 0.5, in the full run an earlier call has already changed shared state. Look for a mutable default argument, a global, a cache or a file. The isolation result is itself evidence, and it costs one command.</div></details>
+  <details class="q"><summary>Four checks fail at the start but only three bugs are planted. How can that be, and what do you chase first?</summary><div class="a">One bug can produce several symptoms. <code>check_chunk_count</code> and <code>check_chunk_cover</code> both come from <code>chunk()</code>. Group failures by the function they touch, then chase one group at a time, starting with the one whose symptom is most specific.</div></details>
+  <details class="q"><summary>You change three things at once and the failure disappears. What have you learned?</summary><div class="a">Almost nothing. You do not know which change mattered, or whether you only hid the failure. Change one thing per hypothesis, so each run can confirm or kill exactly one idea.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Debugging is the scientific method with a notebook. A bug is a gap between what you believe the program does and what it does. Your job is to shrink that gap with experiments, not to stare at code until the gap closes by luck.</p>
+  <p>Every step shrinks the search space. Reproducing makes the failure testable. Isolating cuts the space in half again and again. A hypothesis names one suspect and the observation it predicts. Instrumentation is the experiment that confirms or kills the suspect. Then you verify the fix with a test that failed before and passes now.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The five-step debugging loop</div>
+    <svg viewBox="0 0 460 190" role="img" aria-label="Five-step debugging loop: 1 Reproduce, 2 Isolate by halving, 3 Hypothesize in writing, 4 Instrument to test, with a loop back from Instrument to Hypothesize if wrong, and 5 Verify with a red-to-green test.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="8" y="20" width="84" height="48" rx="6" class="c-soft" data-hi="1"/>
+          <text x="50" y="42" text-anchor="middle">1 Reproduce</text>
+          <text x="50" y="58" text-anchor="middle" class="m">pin seed</text>
+        </g>
+        <g data-step="2">
+          <path d="M92 44 H104" class="ink" fill="none"/>
+          <rect x="104" y="20" width="76" height="48" rx="6" class="c-accent" data-hi="2"/>
+          <text x="142" y="42" text-anchor="middle">2 Isolate</text>
+          <text x="142" y="58" text-anchor="middle" class="m">log2(n)</text>
+        </g>
+        <g data-step="3">
+          <path d="M180 44 H192" class="ink" fill="none"/>
+          <rect x="192" y="20" width="88" height="48" rx="6" class="c-accent" data-hi="3"/>
+          <text x="236" y="42" text-anchor="middle">3 Hypothesize</text>
+          <text x="236" y="58" text-anchor="middle" class="m">written log</text>
+        </g>
+        <g data-step="4">
+          <path d="M280 44 H292" class="ink" fill="none"/>
+          <rect x="292" y="20" width="84" height="48" rx="6" class="c-warn" data-hi="4"/>
+          <text x="334" y="42" text-anchor="middle">4 Instrument</text>
+          <text x="334" y="58" text-anchor="middle" class="m">probe</text>
+          <path d="M334 68 V116 H236 V68" class="ln" fill="none"/>
+          <rect x="206" y="102" width="158" height="26" rx="5" class="c-bad"/>
+          <text x="285" y="119" text-anchor="middle">wrong? cross out &amp; retry</text>
+        </g>
+        <g data-step="5">
+          <path d="M376 44 H388" class="ink" fill="none"/>
+          <rect x="388" y="20" width="64" height="48" rx="6" class="c-good" data-hi="5"/>
+          <text x="420" y="42" text-anchor="middle">5 Verify</text>
+          <text x="420" y="58" text-anchor="middle" class="m">red->green</text>
+        </g>
+        <text x="230" y="166" text-anchor="middle" class="m">Each pass shrinks the search space; never test two changes at once.</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Reproduce on demand by pinning seed, input, and config (a 1-in-10 bug needs ~29 runs for 95% confidence).</li>
+      <li>Isolate by halving the space with git bisect or stage asserts, costing at most ceil(log2 n) tests (10 for 1,000 commits).</li>
+      <li>Write one falsifiable hypothesis and its predicted observation in the log before running any probe.</li>
+      <li>Instrument with the cheapest probe; if the prediction fails, cross out the suspect in the log and loop back.</li>
+      <li>Verify the fix with a regression test that flipped from red to green plus a causal explanation.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Shrink the search space with written hypotheses and halving tests instead of guessing across the whole codebase.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Detective's four verbs: <strong>Replay</strong> the crime so it happens on demand, <strong>Isolate</strong> the suspect by halving, <strong>Hypothesize</strong> one motive and write it down, <strong>Instrument</strong> the scene to test it. Then <strong>Verify</strong> with a test that flips from red to green, and keep the log.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Reproduce</h3>
+  <p>Make it fail on demand. Pin the random seed, freeze the input, record the environment (versions, flags, config). Then shrink the input until nothing can be removed without the failure vanishing. A bug you cannot reproduce is a bug whose fix you cannot verify. For LLM work, log the full prompt, model, temperature and seed with every call, so a bad answer can be replayed.</p>
+  <details class="q"><summary>Check: a failure happens in 1 of 10 runs. About how many runs do you need to see it at least once with 95% confidence?</summary><div class="a">n = ln(0.05) / ln(0.9) = 28.4, so about 29 runs. At 1 in 100 it is about 299 runs. Loop it in a script instead of retrying by hand, and count failures to get the rate.</div></details>
+  <h3>Isolate by halving</h3>
+  <p>Do not read everything. Cut the search space in half with each test. Across commits that is <code>git bisect</code>. Across a pipeline it is a print or assert at the stage boundary: if the data is right at the midpoint, the bug is downstream; if wrong, upstream. Across inputs it is deleting half and seeing if it still fails. Halving needs at most ceil(log2 n) tests: 20 commits cost 5, 1,000 cost 10. Running one check alone, as in the kata, is the same move on shared state.</p>
+  <h3>Hypothesize, in writing</h3>
+  <p>A good hypothesis is falsifiable and names its prediction: "the loop stops one window early, so the last tokens will be uncovered". Write it in the log before you test. Writing stops you from forgetting what you have ruled out, and from rationalizing a wrong idea after the fact. Change one thing per test. Mark each hypothesis confirmed, killed or unclear.</p>
+  <details class="q"><summary>Check: why log the prediction before running the test, not just the result?</summary><div class="a">A prediction made first can be wrong, so the test actually tests something. A prediction written after the result always fits. It also lets you read the log later and see which ideas are dead, so you never test the same suspect twice.</div></details>
+  <h3>Instrument</h3>
+  <p>Add the cheapest probe that answers the current hypothesis. A print or log at a stage boundary shows data in flight. <code>breakpoint()</code> in Python drops you into the debugger to inspect state at one moment. An assert turns an assumption into an alarm. Traces with a request id follow one request across services. For a voice AI pipeline (speech to text, LLM, speech to speech), log the input and output of each stage, then bisect the pipeline. Remove or demote the probes once the bug is fixed.</p>
+  <h3>Verify and prevent</h3>
+  <p>Before the fix, make a test that fails for the reason you believe. After the fix, it must pass, and every other check must still pass. Then ask whether you fixed the cause or the symptom: can you explain, step by step, why the old code failed? Keep the test as a regression test. If you cannot explain the failure, you have not fixed it, only moved it.</p>
+  <details class="q"><summary>Check: your fix makes the error stop. Name two reasons that is not enough to call the bug fixed.</summary><div class="a">The change may mask the symptom (a try/except, a retry, a different input path) while the cause remains. And you may not have a test that failed before, so you cannot show the fix caused the change. Require a red-to-green test and a causal explanation.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Tests needed by bisect over n commits, at most</td><td class="n">ceil(log2 n)</td><td>Derived</td></tr>
+    <tr><td>20 commits, 500 commits, 1,000 commits</td><td class="n">5, 9, 10 tests</td><td>Derived</td></tr>
+    <tr><td>Runs to see a failure of rate p at least once with 95% confidence</td><td class="n">ln(0.05) / ln(1 - p)</td><td>Derived</td></tr>
+    <tr><td>That, for p = 0.1 and p = 0.01</td><td class="n">about 29 and 299 runs</td><td>Derived</td></tr>
+    <tr><td>Nearest-rank p95 index for n = 20 samples, sorted</td><td class="n">ceil(0.95 n) - 1 = 18</td><td>Derived</td></tr>
+    <tr><td>Kata at the start: checks, planted bugs, failing</td><td class="n">6, 3, 4</td><td>Your own run, 2026-11-16</td></tr>
+    <tr><td>Mutable default list, three calls in a row return</td><td class="n">1, 2, 3</td><td>Your own run, Python 3.13</td></tr>
+  </table></div>
+  <figure class="viz">
+    <div class="vt">Chart: Worst-case bisect tests by commit history size (ceil(log2 n))</div>
+    <div data-bars='{"unit":" tests","digits":0,"rows":[{"label":"20 commits","value":5,"tone":"good"},{"label":"500 commits","value":9,"tone":"good"},{"label":"1,000 commits","value":10,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Halving doubles the search space for each extra test: 50x more commits (20 to 1,000) costs only 5 more tests.</figcaption>
+  </figure>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Probe</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Print or log line</td><td>Fast, works anywhere, shows data in flight</td><td>Noise, forgotten prints, changes timing</td><td>Printing too late in the pipeline, so you learn nothing new</td></tr>
+    <tr><td>Debugger (<code>breakpoint()</code>)</td><td>Inspect all state at one moment, step through</td><td>Needs a local or attached process, slow to repeat</td><td>Useless for timing bugs and for production</td></tr>
+    <tr><td>Assert or invariant</td><td>Fails at the first wrong value, near the cause</td><td>Must know what should be true; small runtime cost</td><td>Asserts stripped in optimized runs, <code>python -O</code></td></tr>
+    <tr><td><code>git bisect</code></td><td>Finds the breaking commit in log2 n tests</td><td>Needs a reliable pass or fail test per commit</td><td>Flaky test gives a wrong commit</td></tr>
+    <tr><td>Logs and traces with request id</td><td>Works in production, follows one request across services</td><td>Storage, setup, sensitive data in logs</td><td>Logging prompts or user data without redaction</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: three planted bugs and a hypothesis log</h2>
+  <p>A small pipeline for LLM work has a chunker, a cost ledger and a latency percentile. Six checks, three bugs. Your job is to find each bug with the method, not by reading every line, and to keep a written log. Do the run first, write your first hypothesis, then read the code.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py
+python kata.py check_cost_second_batch</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""A06 kata: three planted bugs, six checks. Run it, then keep a hypothesis log.
+python kata.py              run every check
+python kata.py NAME [NAME]  run only the named checks (isolation)
+"""
+import random
+import sys
+
+
+def chunk(tokens, size, overlap):
+    """Windows of `size` tokens; neighbours share `overlap` tokens."""
+    step = size - overlap
+    out = []
+    for i in range(0, len(tokens) - size, step):
+        out.append(tokens[i:i + size])
+    return out
+
+
+def add_cost(calls, price_per_1k, seen=[]):
+    """Cost of (call_id, tokens) pairs; a call id is billed only once."""
+    total = 0.0
+    for cid, n in calls:
+        if cid in seen:
+            continue
+        seen.append(cid)
+        total += n / 1000 * price_per_1k
+    return total
+
+
+def p95(samples):
+    """Nearest-rank 95th percentile."""
+    k = max(0, int(len(samples) * 0.95) - 1)
+    return samples[k]
+
+
+def check_chunk_count():
+    got = len(chunk(list(range(10)), 4, 1))
+    return got == 3, f"chunks={got}, want 3"
+
+
+def check_chunk_cover():
+    seen = {t for c in chunk(list(range(10)), 4, 1) for t in c}
+    missing = sorted(set(range(10)) - seen)
+    return not missing, f"uncovered tokens={missing}"
+
+
+def check_cost_basic():
+    got = add_cost([(1, 2000), (2, 1000)], 0.5)
+    return abs(got - 1.5) &lt; 1e-9, f"cost={got}, want 1.5"
+
+
+def check_cost_second_batch():
+    got = add_cost([(1, 1000)], 0.5)
+    return abs(got - 0.5) &lt; 1e-9, f"cost={got}, want 0.5"
+
+
+def check_p95_sorted():
+    got = p95(list(range(1, 21)))
+    return got == 19, f"p95={got}, want 19"
+
+
+def check_p95_unsorted():
+    data = random.Random(7).sample(range(100, 300), 20)
+    want, got = sorted(data)[18], p95(data)
+    return got == want, f"p95={got}, want {want}"
+
+
+CHECKS = [check_chunk_count, check_chunk_cover, check_cost_basic,
+          check_cost_second_batch, check_p95_sorted, check_p95_unsorted]
+
+if __name__ == "__main__":
+    names, failed = sys.argv[1:], 0
+    for fn in CHECKS:
+        if names and fn.__name__ not in names:
+            continue
+        ok, note = fn()
+        print(f"{'PASS' if ok else 'FAIL'}  {fn.__name__:&lt;24} {note}")
+        failed += not ok
+    print(f"{failed} failing")</pre></div>
+  <p class="cap">Output from a real run (python kata.py)</p><div class="codewrap"><pre class="out">FAIL  check_chunk_count        chunks=2, want 3
+FAIL  check_chunk_cover        uncovered tokens=[7, 8, 9]
+PASS  check_cost_basic         cost=1.5, want 1.5
+FAIL  check_cost_second_batch  cost=0.0, want 0.5
+PASS  check_p95_sorted         p95=19, want 19
+FAIL  check_p95_unsorted       p95=161, want 249
+4 failing</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Initial kata run breakdown (6 checks, 3 planted bugs)</div>
+    <div data-bars='{"unit":" checks","digits":0,"max":6,"rows":[{"label":"failing at start","value":4,"tone":"bad","text":"4 failing (from 3 bugs)"},{"label":"passing at start","value":2,"tone":"good","text":"2 passing"}]}'></div>
+    <figcaption><b>Takeaway.</b> Three planted bugs break 4 of 6 checks, including one shared-state bug that passes when run alone.</figcaption>
+  </figure>
+  <p class="cap">Hypothesis log template</p><div class="codewrap"><pre data-copy>| # | Observation | Hypothesis (and what it predicts) | One change or probe | Result |
+|---|-------------|-----------------------------------|---------------------|--------|
+| 1 | latency spike after deploy | new retry loop doubles calls; predicts 2x request count | count calls per request | confirmed |</pre></div>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Four checks fail but they point at three functions. <code>check_chunk_count</code> and <code>check_chunk_cover</code> both trace to <code>chunk()</code>, so you group before you hunt.</li>
+    <li><code>check_cost_basic</code> passes with <code>cost=1.5</code> and <code>check_cost_second_batch</code> fails with <code>cost=0.0</code> in the full run. Run alone, the second prints <code>cost=0.5</code> and passes. The difference between those two runs is the clue.</li>
+    <li>The sorted p95 check passes and the unsorted one fails, <code>p95=161, want 249</code>. The gap between the two inputs names the cause.</li>
+    <li>The coverage check gives the most specific symptom: <code>uncovered tokens=[7, 8, 9]</code>. A symptom that names the missing items beats a bare count.</li>
+  </ol>
+  <details class="q"><summary>Name the three planted bugs and the one-line fix for each. Open this only after you have fixed them, or after 25 minutes.</summary><div class="a"><ol>
+    <li><strong>chunk():</strong> <code>range(0, len(tokens) - size, step)</code> stops before the last full window. Fix: <code>len(tokens) - size + 1</code>. Gives 3 chunks and no uncovered tokens.</li>
+    <li><strong>add_cost():</strong> <code>seen=[]</code> is created once when the function is defined, so billed ids leak across calls. Fix: <code>seen=None</code>, then <code>seen = [] if seen is None else seen</code>.</li>
+    <li><strong>p95():</strong> it indexes the samples without sorting. Fix: <code>samples = sorted(samples)</code> first. Gives <code>p95=249</code>.</li>
+  </ol></div></details>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Put the shared state back.</strong> After fixing bug 2, restore <code>seen=[]</code>. Predict the output of <code>python kata.py check_cost_second_batch</code> and then of the full run, before you run either.</li>
+    <li><strong>Plant your own.</strong> In <code>chunk()</code>, change <code>step = size - overlap</code> to <code>size + overlap</code>. Predict how many chunks come back and which check names fail, then compare with the output. Then log it as if you had never seen the code.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Make the script exit with status 1 when any check fails, put it in a git repo with one commit per bug, and run <code>git bisect run python3 kata.py</code> to find the first bad commit automatically.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Works locally, fails in production</td><td>Different config, versions, data volume or permissions</td><td>Capture the production input and environment, replay it locally, diff the config</td></tr>
+    <tr><td>Fails one run in ten</td><td>Race, unseeded randomness, shared state, flaky dependency</td><td>Loop it about 29 times for a 10% rate, pin the seed, then bisect the nondeterminism</td></tr>
+    <tr><td>Passes alone, fails in the suite</td><td>Shared mutable state such as a default argument, global or cache</td><td>Run checks one at a time, find the carry-over, remove the sharing</td></tr>
+    <tr><td>Started failing after a release</td><td>A specific change in code, config, dependency or prompt</td><td><code>git bisect</code> over commits, then over config and dependency versions</td></tr>
+    <tr><td>Wrong output, no error anywhere</td><td>Missing check at a stage boundary; bad data passes silently</td><td>Add asserts and logged inputs and outputs per stage; add an eval for the case</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> error rate and latency split by release version, structured logs with a request id on every line, and traces across services. For agents and LLM calls, store the prompt, parameters and tool calls so a bad answer can be replayed.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Debugging is the scientific method with a notebook. I make the failure happen on demand, shrink the search space until I know where it lives, state one falsifiable guess, and test it. A fix only counts when a test that failed now passes, because that is what separates a repair from luck.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>First I reproduce it: pin the seed, the input and the environment, then shrink the input. Next I isolate by halving. Git bisect over commits, or a probe at each stage boundary of a pipeline, so 20 commits cost at most 5 tests. Then I write one hypothesis in my log with the observation it predicts, change one thing, and run. If it is wrong I cross it out, so I never retest a dead idea. I pick the cheapest probe: a log line at a boundary, an assert, or a breakpoint where the data crosses.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Flaky bugs need a loop: about 29 runs to see a 10% failure at 95% confidence, about 300 for 1%. Passes alone, fails in the suite means shared mutable state, like a default list argument. The failure mode of my own process is changing three things at once. The price is the minutes spent on the log, and it pays back the second time I am stuck.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"I would read the code, find where it breaks, add some prints and fix it."</p><p class="strong">"I make it fail on demand with a pinned seed and a minimal input, then halve the search space. Git bisect needs at most 5 runs for 20 commits. I write one hypothesis with its predicted result, change one thing and run. The fix counts when a test that failed now passes, and I keep that test."</p><p>The strong one has a mechanism (halving), a number (5 runs for 20 commits), a failure mode (changing many things, fixes that only mask) and a stated standard for done. The weak one is a list of activities.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If I cannot reproduce the bug, the best use of my time is to read the code until I spot it."</summary><div class="a">Reading finds plausible suspects but cannot confirm any, and you cannot verify a fix for a failure you cannot trigger. First measure how often it fails and loop it: for a 10% rate that is about 29 runs. If it will not reproduce, add logging that captures the state at the failure so the next occurrence is replayable.</div></details>
+  <details class="q"><summary>"The error stopped after my change, so the bug is fixed."</summary><div class="a">The error may have stopped because the change masked the symptom or changed the path. In the kata, <code>check_cost_second_batch</code> passes if you run it alone, even though the bug is still there. You need a test that failed for the right reason before and passes after, plus a step-by-step explanation of why the old code failed.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk me through how you debug a failure you have not seen before.</summary><div class="a">Reproduce (seed, input, environment, then shrink), isolate by halving (bisect commits or probe a stage boundary), write one hypothesis with a prediction, change one thing and test it, and verify with a red-to-green test. Keep a log of what is ruled out.<div class="f"><b>Follow-up</b>What do you do when you cannot reproduce it? Measure the failure rate by looping, about 29 runs for a 10% rate, and add logging that captures the state so the next failure is replayable.</div></div></details>
+  <details class="q"><summary>A test passes alone but fails when the whole suite runs. What are your first two hypotheses?</summary><div class="a">Shared mutable state carried between tests (default argument, global, cache, file, database), and test order dependence. Run the failing test alone, then with one earlier test at a time, to find which one pollutes it. In the kata the culprit is <code>seen=[]</code> in <code>add_cost()</code>.</div></details>
+  <details class="q"><summary>A regression appeared somewhere in the last 500 commits. How many steps to find it, and what must be true for that to work?</summary><div class="a">At most 9 tests, since ceil(log2 500) = 9. It needs a pass or fail test that is reliable at every commit. A flaky test points bisect at the wrong commit.<div class="f"><b>Follow-up</b>What if some commits do not build? Mark those as skipped in bisect, and the search continues around them. If the test is flaky, loop it per commit until the rate is clear.</div></div></details>
+  <details class="q"><summary>Why do you write the hypothesis down before testing it?</summary><div class="a">A prediction made first can be wrong, so the test is real. It stops you changing several things at once, and the log shows which suspects are dead so you do not retest them.</div></details>
+  <details class="q"><summary>When do you reach for a debugger, a print, an assert or a trace?</summary><div class="a">Print or log line for data flow across stages. Debugger for inspecting all state at one moment in a local, repeatable run. Assert for an assumption that should always hold, so it fails near the cause. Traces with a request id in production or across services.<div class="f"><b>Follow-up</b>Where does a debugger fail you? Timing and concurrency bugs, because stepping changes the timing, and production, where you cannot attach.</div></div></details>
+  <details class="q"><summary>Your LLM agent gives a wrong answer about one run in twenty. How do you debug it?</summary><div class="a">Replay first: log prompt, model, parameters, seed where supported, and tool calls per run. Loop the same input to confirm the rate. Then compare a good and a bad trace step by step to find the first divergence. Bisect the pipeline: retrieval, prompt, model, tool, parsing. Write an eval case for it once found.</div></details>
+  <details class="q"><summary>How do you know your fix addresses the root cause and not the symptom?</summary><div class="a">A test failed before for the reason I believed and passes now, and I can explain step by step why the old code failed. Other checks still pass. I also ask whether the same cause can produce the failure elsewhere, and add a regression test.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: what each step shrinks or proves, the bisect formula with two numbers, the formula for runs to catch a flaky failure with one worked number, the three kata bugs with one-line fixes, and the one signal that means shared mutable state.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Loop: reproduce, isolate, hypothesize, instrument, then verify, with a written log.</li>
+    <li>Reproduce: pin seed, input, environment, shrink the input. No repro, no verified fix.</li>
+    <li>Isolate by halving: at most ceil(log2 n) tests. 20 commits: 5. 500: 9. 1,000: 10.</li>
+    <li>Flaky: runs = ln(0.05) / ln(1 - p). p = 0.1: about 29 runs. p = 0.01: about 299.</li>
+    <li>Hypothesis: falsifiable, written before the test, one change per test.</li>
+    <li>Kata bugs: range stops one window early, default list <code>seen=[]</code> shared across calls, p95 without sorting.</li>
+    <li>Passes alone, fails in the suite: shared mutable state.</li>
+    <li>Done means a test that failed before and passes now, plus a causal explanation.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A02: You fire 50 fake LLM calls of 100 ms each. Estimate the total time sequentially, with <code>asyncio.gather</code>, and with a semaphore of 10.</summary><div class="a">Sequential: 50 x 100 ms = 5 s. Gather: about 100 ms, since the waits overlap. Semaphore of 10: 5 waves x 100 ms = about 0.5 s. This is concurrency on one thread for I/O waits. CPU-bound work still needs processes, because the GIL lets one thread run Python bytecode at a time in standard CPython builds.</div></details>
+  <details class="q"><summary>A01: Why load config into a pydantic model instead of passing a raw dict around?</summary><div class="a">The model validates and converts types once at load and fails fast with a field-level error. A raw dict fails later and deeper, as a <code>KeyError</code> or <code>TypeError</code> far from the cause, which is exactly the kind of bug this page teaches you to hunt.</div></details>
+  <details class="q"><summary>A03: A process is eating memory. Which signal do you send first, and why not <code>kill -9</code> straight away?</summary><div class="a">SIGTERM (15) first: the process can catch it, flush state and exit cleanly. SIGKILL (9) cannot be caught, so there is no cleanup, and it can leave locks, temp files or half-written data. Use -9 only if SIGTERM is ignored. Find the hog with <code>ps aux --sort=-%mem | head</code> on GNU ps.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <p>No external source was used for this page. I tried to open the git-bisect page and the Python tutorial on default arguments, but this session could not reach them, so nothing here is checked against them. The numbers are either derived (bisect and flaky-failure formulas) or from the kata run on 2026-11-16 with Python 3.13. The method itself is standard engineering practice. If you want a primary source, read the <code>git bisect</code> manual and the Python tutorial section on default argument values, and check my statements against them.</p>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A06 T2 W01", "cards": [{"q": "What are the steps of the debugging loop, in order, and what ends it?", "a": "Reproduce, isolate, hypothesize, instrument. It ends with verify: a test that failed before and passes now, plus a causal explanation."}, {"q": "Why write a hypothesis, with its predicted result, before running the test?", "a": "A prediction made first can be wrong, so the test really tests it. It also stops multi-change guessing and records which suspects are dead."}, {"q": "A bug is somewhere in 500 commits. How many git bisect tests at most, and what must hold?", "a": "Nine, since ceil(log2 500) = 9. You need a reliable pass or fail test at every commit; a flaky test points to the wrong commit."}, {"q": "A test passes alone but fails in the full suite. What is the likeliest cause and the first move?", "a": "Shared mutable state, such as a default list argument, global or cache. Run it alone, then after one earlier test at a time, to find the polluter."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

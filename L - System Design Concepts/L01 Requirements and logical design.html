@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L01 Requirements and logical design</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L01">
+<main>
+<header>
+  <div class="eyebrow"><b>L01</b><span>System design concepts</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Requirements and logical design</h1>
+  <p class="lede">What do you do in the first five minutes of a design round, before any box is drawn? You run a seven-question spine that turns a vague prompt into numbers, then into nouns and verbs. The worked problem is a reminder-call service for clinics.</p>
+  <div class="chips"><span><em>Before</em>none: this is the entry point</span><span><em>After</em>L02 Non-functional requirements</span><span><em>After</em>L03 Capacity planning</span><span><em>After</em>L08 API design contracts</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5, answer the check questions</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production table, interview answer, traps, question bank</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page and recall the spine on a blank page</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Record the 90-second answer, import the cards</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. The problem: 200 clinics, 60 appointments each per day, one reminder call per appointment, 50% of patients answer, up to 3 attempts per patient.</p>
+  <details class="q"><summary>How many calls does the system place per day?</summary><div class="a">About 21,000, not 12,000. Each appointment gets 1.75 calls on average: 1 + 0.5 + 0.25, because a patient who does not answer is retried. 12,000 appointments x 1.75 = 21,000. Retries are a requirement you only find by asking what happens when nobody answers.</div></details>
+  <details class="q"><summary>Calls start at about 4 per second at peak and last 90 seconds. How many calls are live at once at peak?</summary><div class="a">About 394. Concurrency = arrival rate x duration (Little's law): 4.38 per second x 90 seconds. People guess 4 or 5 because they stop at the request rate. At average load it is 131, so peak is 3x average.</div></details>
+  <details class="q"><summary>Is this system read-heavy or write-heavy?</summary><div class="a">Neither: about 1.1 reads per write (60,000 reads against 54,000 writes per day). Most candidates announce "read-heavy, add a cache" without estimating. Here every call attempt writes twice (start, outcome) and staff only look at a status page.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A design prompt is a request with most of its facts missing. If you start drawing boxes, every box is a guess, and a wrong guess about scale or consistency costs more than any technology choice you make later. So you spend the first minutes asking a fixed set of questions, in a fixed order, and you write the answers down as a short contract.</p>
+  <p>The order matters because each answer constrains the next. Who and what bound the scope. How many and how well turn the scope into numbers. Nouns and verbs turn the numbers into a logical design: the entities, the operations on them, and the rules that must always hold. Limits catch what the earlier answers missed. Only after that do you choose stores, caches and queues, which is physical design.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The seven-question spine before any box</div>
+    <svg viewBox="0 0 480 225" role="img" aria-label="The seven-question spine: Who, What, How many, How well form requirements; Nouns and Verbs form logical design; Limits check edges like the 300-channel cap before physical design">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="14" width="106" height="44" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="65" y="34" text-anchor="middle">1 Who</text>
+          <text x="65" y="50" text-anchor="middle" class="m">actors</text>
+        </g>
+        <g data-step="2">
+          <rect x="128" y="14" width="106" height="44" rx="6" class="c-soft ln" data-hi="2"/>
+          <text x="181" y="34" text-anchor="middle">2 What</text>
+          <text x="181" y="50" text-anchor="middle" class="m">v1 + non-goals</text>
+        </g>
+        <g data-step="3">
+          <rect x="244" y="14" width="106" height="44" rx="6" class="c-paper ln" data-hi="3"/>
+          <rect x="244" y="14" width="106" height="6" rx="2" class="c-accent"/>
+          <text x="297" y="36" text-anchor="middle">3 How many</text>
+          <text x="297" y="51" text-anchor="middle" class="m">21k/d, 394 peak</text>
+        </g>
+        <g data-step="4">
+          <rect x="360" y="14" width="108" height="44" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="414" y="34" text-anchor="middle">4 How well</text>
+          <text x="414" y="50" text-anchor="middle" class="m">p99 300ms, 99.9%</text>
+        </g>
+        <g data-step="5">
+          <rect x="12" y="82" width="142" height="46" rx="6" class="c-soft ln" data-hi="5"/>
+          <text x="83" y="103" text-anchor="middle">5 Nouns</text>
+          <text x="83" y="119" text-anchor="middle" class="m">entities, no DB yet</text>
+        </g>
+        <g data-step="6">
+          <path d="M154 105 H172" class="ink"/>
+          <rect x="172" y="82" width="142" height="46" rx="6" class="c-soft ln" data-hi="6"/>
+          <text x="243" y="103" text-anchor="middle">6 Verbs</text>
+          <text x="243" y="119" text-anchor="middle" class="m">ops + invariants</text>
+        </g>
+        <g data-step="7">
+          <path d="M314 105 H332" class="ink"/>
+          <rect x="332" y="82" width="136" height="46" rx="6" class="c-paper ln" data-hi="7"/>
+          <rect x="332" y="82" width="8" height="46" rx="2" class="c-bad"/>
+          <text x="403" y="103" text-anchor="middle" data-hi="7">7 Limits</text>
+          <text x="403" y="119" text-anchor="middle" class="m">394 &gt; 300 cap</text>
+        </g>
+        <rect x="12" y="150" width="456" height="54" rx="6" class="c-paper ln"/>
+        <text x="240" y="173" text-anchor="middle">1-4 Requirements | 5-6 Logical design | 7 Edges</text>
+        <text x="240" y="191" text-anchor="middle" class="m">Only then: physical design (stores, caches, queues)</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>1 Who: name every actor (patients receiving calls and clinic staff) so no caller or operator is forgotten.</li>
+      <li>2 What: list v1 actions and explicit non-goals (rescheduling and billing out) to bound the design.</li>
+      <li>3 How many: turn scope into numbers; 12,000 appointments x 1.75 attempts = 21,000 calls/day, 394 peak concurrent.</li>
+      <li>4 How well: replace "fast" with targets like p99 under 300 ms, 99.9% availability (43.2 min/month), and never double-call.</li>
+      <li>5 Nouns: define entities and state (Clinic, Patient, Appointment, Attempt) with zero storage engines named yet.</li>
+      <li>6 Verbs: list operations with question 3 frequencies (get_status 60,000/day, start_attempt 21,000/day) and invariants.</li>
+      <li>7 Limits: check compliance and caps; here, 394 peak calls exceeds the 300-channel provider cap and blocks launch.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Running the seven questions in order turns a vague prompt into numbers and invariants that flip physical design choices.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>A restaurant. Who is sitting at the table? What do they order, and what is not on the menu? How many tables are full at the rush? How fast must a plate arrive? The nouns are the ingredients, the verbs are the kitchen steps, and the limits are the health code. Who, What, How many, How well, Nouns, Verbs, Limits.</p></div>
+  <p class="sub">The index names a "seven-question spine" but does not list the seven. This page defines them as above; compare with your own lesson notes (S01.01, S01.02) and keep whichever wording you can say fluently.</p>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Why clarify before you draw</h3>
+  <p>The same prompt, "design a reminder system", can mean 20 calls a day or 2 million. A candidate who draws boxes first has silently picked one. Interviewers score how you reduce ambiguity, not how fast you reach a diagram. A requirement you did not ask about becomes an assumption, and an unstated assumption is the one that fails in production.</p>
+  <h3>Questions 1 and 2: who and what</h3>
+  <p>Who: name the actors, including operators and other systems. In the reminder problem they are the patient who receives the call and the clinic staff who upload schedules and read status. What: list three to five core actions for version one, each a verb, then say out loud what is out of scope. Here, rescheduling by voice and billing are out. The out-of-scope list is half the value: it bounds the design and the time.</p>
+  <details class="q"><summary>Check: why say what is out of scope, instead of just listing what is in?</summary><div class="a">It fixes the v1 boundary so you design fewer verbs, shows you can prioritize, and gives the interviewer a chance to add one back. If they do, you add that verb and rerun questions 3 and 6 for it.</div></details>
+  <h3>Question 3: how many</h3>
+  <p>Get users, actions per user, average and peak requests per second, concurrency, data per record and growth, and the read to write ratio. Use round numbers and say them aloud. Divide per-day volume by 86,400 for an average per second, then multiply by a peak factor (2 to 5 is typical, an assumption, not a law). Concurrency comes from Little's law: concurrent = arrival rate x duration. This is only enough estimation to drive decisions; the drills are in L03.</p>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Little's law concurrency vs the 300-channel provider cap</div>
+    <p class="ask">Predict first. At 200 clinics and a 4-hour window, peak concurrency is 394 (over the 300 cap). Does widening the window to 6 hours bring it under 300?</p>
+    <div class="ctl">
+      <label><span>Clinics (60 appts/d)</span><input type="range" name="c" min="50" max="500" step="50" value="200"><output data-for="c"></output></label>
+      <label><span>Window hours</span><input type="range" name="w" min="2" max="8" step="1" value="4"><output data-for="w" data-unit=" h"></output></label>
+      <label><span>Call duration</span><input type="range" name="d" min="30" max="180" step="15" value="90"><output data-for="d" data-unit=" s"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Concurrency equals arrival rate times duration (Little's law, 1.75 attempts/appt, 3x peak factor), so widening the window cuts peak channels without changing daily volume.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var attempts=v.c*60*1.75,win=v.w*3600,peakRate=attempts/win*3,concPeak=peakRate*v.d,peakWrites=attempts*2/win*3,cap=300;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" calls",digits:0,rows:[
+      {label:"Peak concurrent calls",value:concPeak,tone:concPeak>cap?"bad":"good"},
+      {label:"Provider channel cap",value:cap,tone:"muted"}
+    ]});
+    return {verdict:(concPeak>cap?"BLOCKER: ":"OK: ")+tl.fmt(attempts,0)+" attempts/day, "+tl.fmt(peakRate,2)+" starts/s peak, "+tl.fmt(concPeak,0)+" live calls (peak writes "+tl.fmt(peakWrites,1)+"/s)."};
+  })});</script>
+  <h3>Question 4: how well</h3>
+  <p>Turn "fast, reliable, secure" into numbers: a latency percentile at a stated load, availability as a percentage with its downtime budget, durability as what may never be lost, consistency as a rule you can test, and cost per unit. "It should be fast" is not a requirement. "p99 of the status read under 300 ms at peak" is. Pick the two or three that dominate rather than listing all of them. The full treatment is L02.</p>
+  <details class="q"><summary>Check: availability is 99.9%. How much downtime does that allow in a 30-day month, and why does this belong in the requirements?</summary><div class="a">0.1% of 43,200 minutes is 43.2 minutes. It belongs in the requirements because it decides whether you need redundancy and automatic failover, which cost money. 99.99% allows only 4.32 minutes.</div></details>
+  <h3>Questions 5 and 6: nouns and verbs, the logical design</h3>
+  <p>Logical design says what exists and what can happen, with no storage engine named. Nouns are entities with ids, ownership, relationships and states: Clinic, Patient, Appointment, Attempt. Verbs are the operations on them, each with inputs, outputs, errors and a frequency taken from question 3: upload_schedule, start_attempt, record_outcome, get_status. Add the invariants, the rules that must always hold. "Never call one patient twice for one attempt" is an invariant, and it is what later forces a unique key on (appointment_id, attempt_no). The contract details are L08.</p>
+  <h3>Question 7: limits</h3>
+  <p>Constraints and edges: compliance and data residency, existing stack, third-party caps, deadline and team size, and what happens when parts fail or users abuse the system. Phone numbers are personal data, so they must be findable and deletable in every store; that is the same erasure problem ForgetMeNot solves. The provider cap on concurrent calls is also a limit, and in the kata it is what breaks the design. If the domain is regulated, ask the compliance part early because it can veto stores and regions.</p>
+  <details class="q"><summary>Check: logical vs physical design. Give one invariant from the reminder problem and say which side each part lives on.</summary><div class="a">The invariant "never call one patient twice for one attempt" is logical: it is a rule about Appointment and Attempt. Enforcing it with a unique key on (appointment_id, attempt_no) and claiming the attempt before dialing is the physical choice.</div></details>
+  <h3>Close the loop</h3>
+  <p>End by restating the contract in three or four lines and asking the interviewer to correct it. Then each number should flip a decision: 8.8 writes per second needs one relational database, 394 concurrent calls against a 300-channel cap is a blocker. If an answer changes no decision, stop asking about it. If the interviewer says "just design it", state your assumptions with numbers, mark the two that would flip the design, and go.</p>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Seconds in a day</td><td class="n">86,400</td><td>Derived</td></tr>
+    <tr><td>1 million requests per day, as an average rate</td><td class="n">about 12 per second</td><td>Derived</td></tr>
+    <tr><td>Downtime allowed per 30 days at 99.9% | 99.99%</td><td class="n">43.2 min | 4.32 min</td><td>Derived</td></tr>
+    <tr><td>Little's law: items in the system</td><td class="n">L = arrival rate x time in system</td><td>Little, 1961. Checked 15 Nov 2026</td></tr>
+    <tr><td>Expected attempts per appointment, answer rate 0.5, max 3 attempts</td><td class="n">1.75</td><td>Your own run</td></tr>
+    <tr><td>Kata: attempts per day | peak starts per second</td><td class="n">21,000 | 4.38</td><td>Your own run</td></tr>
+    <tr><td>Kata: concurrent calls, average | peak</td><td class="n">131 | 394</td><td>Your own run</td></tr>
+    <tr><td>Kata: writes vs reads per day, ratio</td><td class="n">54,000 vs 60,000, 1.1:1</td><td>Your own run</td></tr>
+    <tr><td>Kata: peak writes per second</td><td class="n">8.8</td><td>Your own run</td></tr>
+    <tr><td>Typical peak factor over average</td><td class="n">2x to 5x</td><td>From memory, verify; it is an assumption you state</td></tr>
+    <tr><td>One well-provisioned relational node, simple indexed writes</td><td class="n">hundreds to low thousands per second</td><td>From memory, verify (measure in L17 and L21)</td></tr>
+    <tr><td>Spine time split for a 20-minute run</td><td class="n">4, 3, 3, 5, 2, 3 min</td><td>A plan: who and what 4, how many 3, how well 3, nouns and verbs 5, limits 2, restate 3</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Ask many clarifying questions</td><td>Fewer wrong assumptions</td><td>Time; looks like stalling</td><td>The interviewer says "you decide": switch to stated assumptions</td></tr>
+    <tr><td>State assumptions and proceed</td><td>Pace; shows judgment</td><td>A wrong assumption may sink the design</td><td>Mark the two assumptions that would flip the design and invite correction</td></tr>
+    <tr><td>Round numbers (10 million, 5 per day)</td><td>Fast mental math; easy to say aloud</td><td>Error of up to 2x</td><td>Multiply by a peak factor; do not trust the average</td></tr>
+    <tr><td>Logical design first</td><td>Right entities and invariants before lock-in to a store</td><td>Feels abstract; delays the diagram</td><td>The interviewer wants technology sooner: give a one-line pick with its reason</td></tr>
+    <tr><td>Strict v1 scope</td><td>A design you can finish and defend</td><td>Leaves requested features undesigned</td><td>An added verb: rerun questions 3 and 6 for it</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: run the spine on a reminder-call service</h2>
+  <p>The script holds the seven answers as data, derives the numbers from question 3, lints the answers for vague words, and prints the decisions the numbers force. It is the spine made executable. Then do the spoken version: set a 20-minute timer, pick a different small problem (a pastebin, a waitlist app), run the seven questions aloud using the time split in station 4, and record it.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""spine.py: run the seven-question spine on one small problem and see what each answer forces.
+Run: python kata.py            (override any number: python kata.py window_hours=6 clinics=5000)"""
+import re, sys
+
+SPEC = {
+    "problem": "Clinic appointment reminder calls",
+    "who":  ["patient (receives the call)", "clinic staff (upload schedule, read status)"],
+    "what": ["upload schedule", "call patient 24h before", "record confirm or cancel", "show status"],
+    "out":  ["reschedule by voice", "billing"],
+    "scale": dict(clinics=200, appts_per_clinic_day=60, answer_rate=0.5, max_attempts=3,
+                  call_seconds=90, window_hours=4, peak_factor=3,
+                  staff_reads_per_clinic_hour=30, staff_hours=10, bytes_per_attempt=1000),
+    "nfr": dict(status_read_p99="300 ms", availability=0.999,
+                durability="never lose a confirmation",
+                consistency="never call one patient twice for one attempt",
+                cost="under 5 cents per call"),
+    "nouns": ["Clinic", "Patient", "Appointment", "Attempt"],
+    "limits": dict(channel_cap=300, notes=["phone numbers are personal data"]),
+}
+for arg in sys.argv[1:]:                       # key=value overrides, numbers parsed
+    k, v = arg.split("=")
+    v = float(v) if re.fullmatch(r"[\d.]+", v) else v
+    for part in (SPEC["scale"], SPEC["nfr"], SPEC["limits"]):
+        if k in part: part[k] = int(v) if isinstance(v, float) and v == int(v) else v
+
+s, n = SPEC["scale"], SPEC["nfr"]
+# --- HOW MANY: derive the numbers ---
+appts = s["clinics"] * s["appts_per_clinic_day"]
+per_appt = sum((1 - s["answer_rate"]) ** k for k in range(s["max_attempts"]))   # expected calls per appointment
+attempts = appts * per_appt
+window = s["window_hours"] * 3600
+avg_rate, peak_rate = attempts / window, attempts / window * s["peak_factor"]
+conc_avg, conc_peak = avg_rate * s["call_seconds"], peak_rate * s["call_seconds"]   # Little's law: L = lambda * W
+writes = attempts * 2 + appts                  # start + outcome per attempt, plus the uploaded rows
+reads = s["clinics"] * s["staff_reads_per_clinic_hour"] * s["staff_hours"]
+peak_writes = attempts * 2 / window * s["peak_factor"]
+verbs = {"upload_schedule": s["clinics"], "start_attempt": attempts, "record_outcome": attempts, "get_status": reads}
+
+print(f"== {SPEC['problem']} ==")
+print(f"appointments/day            {appts:&gt;10,.0f}")
+print(f"expected calls per appt     {per_appt:&gt;10.2f}")
+print(f"call attempts/day           {attempts:&gt;10,.0f}")
+print(f"call starts/s  avg | peak   {avg_rate:&gt;6.2f} | {peak_rate:.2f}")
+print(f"concurrent calls avg | peak {conc_avg:&gt;6.0f} | {conc_peak:.0f}")
+print(f"writes/day vs reads/day     {writes:&gt;10,.0f} vs {reads:,.0f}  (read:write {reads / writes:.1f}:1)")
+print(f"peak writes/s               {peak_writes:&gt;10.1f}")
+print(f"metadata per year (GB)      {attempts * s['bytes_per_attempt'] * 365 / 1e9:&gt;10.1f}")
+print(f"downtime budget / 30 days   {(1 - n['availability']) * 30 * 24 * 60:&gt;10.1f} min")
+print("verbs by volume/day         " + ", ".join(f"{k} {v:,.0f}" for k, v in sorted(verbs.items(), key=lambda x: -x[1])))
+
+# --- lint: every one of the seven answers present, every NFR testable ---
+print("\n== lint ==")
+VAGUE = re.compile(r"\b(fast|scalable|real-?time|robust|secure|reliable|highly available)\b", re.I)
+for key in ("who", "what", "out", "scale", "nfr", "nouns", "limits"):
+    if not SPEC[key]: print(f"FAIL  {key}: empty")
+for k, v in n.items():
+    if VAGUE.search(str(v)) and not re.search(r"\d", str(v)): print(f"FAIL  nfr.{k} = '{v}': vague word, no number")
+print("lint done")
+
+# --- what the numbers force ---
+print("\n== decisions forced ==")
+cap = SPEC["limits"]["channel_cap"]
+if conc_peak &gt; cap: print(f"BLOCKER  peak needs {conc_peak:.0f} concurrent calls, provider cap is {cap}: widen the window, queue, or raise the cap")
+else: print(f"ok       peak {conc_peak:.0f} concurrent calls fits under the cap of {cap}")
+print("storage  one relational database is enough" if peak_writes &lt; 1000 else "storage  peak writes need a closer look (partitioning or a queue)")
+print("cache    reads are not dominant: skip a read cache" if reads / writes &lt; 3 else "cache    read-heavy: a status cache pays off")
+if "never" in str(n["consistency"]): print("invariant unique key on (appointment_id, attempt_no); claim the attempt before dialing")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">== Clinic appointment reminder calls ==
+appointments/day                12,000
+expected calls per appt           1.75
+call attempts/day               21,000
+call starts/s  avg | peak     1.46 | 4.38
+concurrent calls avg | peak    131 | 394
+writes/day vs reads/day         54,000 vs 60,000  (read:write 1.1:1)
+peak writes/s                      8.8
+metadata per year (GB)             7.7
+downtime budget / 30 days         43.2 min
+verbs by volume/day         get_status 60,000, start_attempt 21,000, record_outcome 21,000, upload_schedule 200
+
+== lint ==
+lint done
+
+== decisions forced ==
+BLOCKER  peak needs 394 concurrent calls, provider cap is 300: widen the window, queue, or raise the cap
+storage  one relational database is enough
+cache    reads are not dominant: skip a read cache
+invariant unique key on (appointment_id, attempt_no); claim the attempt before dialing</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata verb volumes per day (200 clinics)</div>
+    <div data-bars='{"unit":"/day","digits":0,"rows":[{"label":"get_status (reads)","value":60000},{"label":"start_attempt (writes)","value":21000,"tone":"warn"},{"label":"record_outcome (writes)","value":21000,"tone":"warn"},{"label":"upload_schedule (writes)","value":200,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> With 60,000 status reads vs 54,000 total writes/day (1.1:1), reads do not dominate enough to justify a read cache.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Retries turn 12,000 appointments into 21,000 calls. The 1.75 comes from a requirement ("retry up to 3 times") and an assumption (50% answer).</li>
+    <li>The call start rate is only 4.38 per second at peak, yet concurrency is 394. Duration, 90 seconds, is what makes it large.</li>
+    <li>Writes per second peak at 8.8, so one relational database is plenty. The bottleneck is the telephony cap of 300, which no database choice fixes.</li>
+    <li>Read:write is 1.1:1, so the read cache the "read-heavy" reflex suggests buys little.</li>
+    <li>The invariant line appears only because the consistency answer contains "never". Remove the requirement and the design loses its unique key.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Vague NFR.</strong> Run <code>python kata.py status_read_p99=fast</code>. Predict which section reports it before you run.</li>
+    <li><strong>Widen the window.</strong> Run <code>python kata.py window_hours=6</code>. Predict the new peak concurrency and whether the blocker survives.</li>
+    <li><strong>Scale 25x.</strong> Run <code>python kata.py clinics=5000</code>. Predict whether the database or the telephony cap breaks first.</li>
+  </ol></div>
+  <details class="q"><summary>What did the three break-it runs show?</summary><div class="a"><ol><li>Lint prints FAIL for nfr.status_read_p99: vague word, no number.</li><li>Peak concurrency falls to 262 (21,000 / 21,600 s x 3 x 90 s) and the blocker becomes "ok". Spreading the same calls over more hours cut peak load by a third.</li><li>Attempts become 525,000 per day, peak concurrency 9,844 against a cap of 300, and peak writes only 218.8 per second. The telephony cap breaks first; the single database is still fine.</li></ol></div></details>
+  <p><strong>Stretch.</strong> Add a fifth verb, <code>reschedule_by_voice</code>, that you had put out of scope. Estimate its frequency and rerun: decide whether the new volume changes any decision.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <p class="sub">Where skipped questions come back as incidents.</p>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Launch-morning outage at several times expected load</td><td>Sized for average; peak factor and concurrency never asked (question 3)</td><td>Size for peak, compute concurrency, load test at the peak figure</td></tr>
+    <tr><td>Patients called twice after a retry</td><td>Consistency never stated as a rule (question 4, 5)</td><td>Idempotency key and a unique constraint on the attempt (see L12)</td></tr>
+    <tr><td>Argument after an incident about whether it was "slow"</td><td>NFR written as "fast"</td><td>Write a percentile, a load and a number into the SLO</td></tr>
+    <tr><td>Feature work nobody asked for, missed deadline</td><td>No out-of-scope list (question 2)</td><td>Non-goals section in the design doc</td></tr>
+    <tr><td>Security review blocks launch</td><td>Compliance and data residency skipped (question 7)</td><td>Data inventory per noun: where each personal field lives and how it is deleted</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> actual against assumed for every number from questions 3 and 4 (peak rate, concurrency, read:write, data growth). Review the design when any one drifts by a set factor, for example 2x.</p>
+  <details class="q"><summary>Scenario: a clinic customer goes live and its 9 am burst makes half the reminder calls fail. The demo was fine. Walk through what the spine would have caught, the immediate fix, and the prevention.</summary><div class="a"><ol><li>Diagnose: concurrency exceeded the provider channel cap. Question 3 (peak and Little's law) and question 7 (the cap) were skipped.</li><li>Immediate: stagger dialing across a wider window, put a queue in front of the dialer with a rate limit equal to the cap, and ask the provider about a higher cap.</li><li>Prevent: write the cap and the peak concurrency into the contract, alert at a fraction of the cap, and add admission control and backpressure (L13).</li><li>Tell the customer which calls were retried and which were dropped, using the attempt records.</li></ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Question: "Before you design anything, what do you do?" Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>I turn a vague prompt into a short written contract before I draw anything: who uses it, what version one does and does not do, how big it is, and how well it must behave. That contract decides the design, so a wrong guess here costs more than any later technology choice.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>I run seven questions in order. Who: the actors. What: three to five core actions plus an explicit out-of-scope list. How many: users, average and peak requests per second, data growth, read to write ratio, in round numbers. How well: a latency percentile, availability, durability, consistency and cost, each with a number. Then the logical design: nouns, meaning entities, ids and relationships, and verbs, meaning operations with the frequency from question three. Last, limits: compliance, integrations, and failure behavior. Then I restate it and ask to be corrected.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Numbers earn their place by flipping decisions. Peak, not average, sets capacity, and Little's law turns a rate and a duration into concurrency. In a reminder-call example, 4.4 call starts a second at 90 seconds each means about 394 live calls, over a 300-channel provider cap, so the bottleneck is the provider, not the database. The failure mode is over-asking: past a point I state assumptions and move on.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I would make sure it is scalable and reliable and customer friendly. I would start with an MVP, ship quickly, and iterate on feedback."</p>
+    <p class="strong">"First I pin the numbers. Say 200 clinics at 60 appointments is 12,000 a day, about 21,000 calls once retries are counted. That is 4 or 5 call starts a second at peak but around 400 concurrent calls at 90 seconds each, so the telephony channel cap is the first constraint, not the database. And I would write 'never call twice for one attempt' as a requirement, which forces a unique key on appointment and attempt."</p>
+    <p>The weak answer names qualities and no mechanism. The strong one has a number, a mechanism (Little's law), a failure mode and a design consequence. The figures are illustrative, from the kata, not results from a real deployment, so do not quote them as your own.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Ask as many clarifying questions as you can. More requirements means a better design."</summary><div class="a">Unbounded questioning burns the time box and shows no judgment. Ask what would change the design, state assumptions for the rest, and stop when no remaining unknown would flip a decision.</div></details>
+  <details class="q"><summary>"Design for the average load and add a buffer later."</summary><div class="a">Capacity is set by the busiest moment. In the kata the average is 131 concurrent calls and the peak is 394, a 3x gap from the peak factor; a buffer added "later" is an outage first.</div></details>
+  <details class="q"><summary>"Start with the technology, because the interviewer wants to see Kafka and Redis."</summary><div class="a">The stack follows the numbers. The kata peaks at 8.8 writes per second, which one relational database handles. Infrastructure added without a number behind it is cost and failure surface (L07).</div></details>
+  <details class="q"><summary>"Most systems are read-heavy, so propose a cache up front."</summary><div class="a">The read to write ratio is an estimate, not a default. The kata is 1.1:1, so a read cache buys little. Estimate it, then decide, and check how stale a cached read may be.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Name the seven questions of the spine in order, and say which two candidates skip most.</summary><div class="a">Who, What (with out of scope), How many, How well, Nouns, Verbs, Limits. Most often skipped: how many (no numbers, so no decisions) and out of scope (no boundary).<div class="f"><b>Follow-up</b>Why is the order fixed? Because each answer feeds the next: scope bounds the numbers, numbers set the NFR targets, and verbs need the frequencies from question three.</div></div></details>
+  <details class="q"><summary>What is the difference between logical and physical design?</summary><div class="a">Logical: entities, relationships, operations and invariants, independent of any store. Physical: engines, indexes, partitioning, caches and queues, chosen to meet the numbers.<div class="f"><b>Follow-up</b>Give an invariant that forces a physical choice. "Never call a patient twice for one attempt" forces a unique key on (appointment_id, attempt_no) and claiming the attempt before dialing.</div></div></details>
+  <details class="q"><summary>The interviewer says "design a system for 10 million users." Turn that into numbers you can design with.</summary><div class="a">Assume 20% daily active, so 2 million. Say 5 actions each: 10 million a day. Divide by 86,400: about 116 per second average. Peak factor 3: about 350 per second. Then size a record and multiply for growth.<div class="f"><b>Follow-up</b>Which of those would you let the interviewer correct? The active fraction, the actions per user and the peak factor; they are assumptions, so say so.</div></div></details>
+  <details class="q"><summary>Why is average load a trap for capacity planning?</summary><div class="a">Systems fail at the peak, and concurrency scales with rate x duration. In the kata the average is 131 live calls and the peak is 394.<div class="f"><b>Follow-up</b>How does Little's law apply to LLM serving? In-flight requests = arrival rate x latency. At 20 requests per second and 8 seconds each, about 160 requests are in flight, which sets how much batch and KV-cache memory you need.</div></div></details>
+  <details class="q"><summary>Rewrite "the API should be fast and scalable" as a requirement.</summary><div class="a">Attach a percentile, a load and a number: "p99 of the status read under 300 ms at peak load of N requests per second."<div class="f"><b>Follow-up</b>Why a percentile, not an average? A few very slow requests vanish in a mean; p99 says one request in a hundred is slower than the number, which is what users feel.</div></div></details>
+  <details class="q"><summary>How do you decide whether a read cache is worth proposing?</summary><div class="a">Estimate the read:write ratio, the expected hit rate and how stale a read may be. If reads do not dominate, or staleness is not allowed, skip it. The kata is 1.1:1, so skip.</div></details>
+  <details class="q"><summary>What goes under Limits, and why is it last?</summary><div class="a">Compliance and residency, integrations and provider caps, existing stack, deadline, and failure and abuse behavior. It is last because it is the check that can overturn earlier choices; in a regulated domain, ask the compliance part early.<div class="f"><b>Follow-up</b>Tie it to data erasure. Every store that holds a personal field must be enumerable and deletable, so the logical design needs a data inventory per noun.</div></div></details>
+  <details class="q"><summary>When do you stop clarifying and start designing?</summary><div class="a">When the remaining unknowns would not change the design. Time-box the spine to about 20 minutes in practice, 5 in a live 45-minute round, write the assumptions down, and move on.</div></details>
+  <details class="q"><summary>The interviewer says "don't ask questions, just design it." What now?</summary><div class="a">State assumptions out loud with numbers, mark the two that would flip the design, and proceed. This keeps the contract and respects their instruction.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the seven questions in order with the restaurant hook; one example answer for each; the formula for concurrency; the three kata numbers (attempts per day, peak concurrent calls, read:write); and the four traps.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Who, What (and out of scope), How many, How well, Nouns, Verbs, Limits</li>
+    <li>Hook: restaurant (table, order, rush, plate time, ingredients, kitchen steps, health code)</li>
+    <li>Concurrency = arrival rate x duration (Little's law)</li>
+    <li>21,000 attempts per day; 4.38 starts per second at peak; 394 concurrent calls at peak, 131 at average; read:write 1.1:1</li>
+    <li>Peak 8.8 writes per second means one relational database; the 300-channel cap is the blocker</li>
+    <li>Logical design is entities, operations, invariants; physical design is stores, indexes, caches, queues</li>
+    <li>Traps: ask everything, design for average, technology first, assume read-heavy</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from topics that come earlier on Monday's list. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: What does an LLM compute at each step, and why can it not produce all output tokens in parallel?</summary><div class="a">Given all tokens so far, it outputs a probability distribution over the next token. The chosen token is appended and fed back, so step t depends on step t-1. That is autoregression.</div></details>
+  <details class="q"><summary>A02: You fire 50 LLM calls. Why does asyncio help, and when would it not?</summary><div class="a">The calls are network waits, so the event loop interleaves them and total time is about the slowest call, not the sum. CPU-bound work blocks the loop (and the GIL stops threads helping), so it needs processes.</div></details>
+  <details class="q"><summary>K01: Where does the time go in one LLM request, end to end?</summary><div class="a">Network in, queueing, prefill (time to first token), decode (per-token time x output tokens), any tool calls or post-processing, network out.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://doi.org/10.1287/opre.9.3.383">J. D. C. Little: A Proof for the Queuing Formula, L = lambda W (Operations Research 9(3), 1961)</a><small>Supports Little's law used for concurrency. Checked 15 Nov 2026.</small></li>
+    <li><a href="https://sre.google/sre-book/service-level-objectives/">Google SRE Book, chapter 4: Service Level Objectives</a><small>Supports defining indicators and objectives as measurable targets, and the case for percentile targets over averages. Checked 15 Nov 2026 via search results; the chapter text was not read in full.</small></li>
+  </ul>
+  <p class="sub">The seven-question spine itself is reconstructed for this page, not taken from the index lessons (S01.01, S01.02), which were not available. The peak factor range and the single-node write rate are from memory and labeled in the numbers table.</p>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L01 T1 W01", "cards": [{"q": "Name the seven-question spine in order.", "a": "Who, What (with out of scope), How many, How well, Nouns, Verbs, Limits."}, {"q": "Why must requirements carry numbers before you pick a database or cache?", "a": "Numbers flip decisions: 8.8 writes per second needs one database, a provider cap of 300 calls can be a blocker. Without numbers, any stack is a guess."}, {"q": "How do you turn a call start rate and call length into concurrent load?", "a": "Little's law: concurrent = arrival rate x duration. 4.38 starts per second x 90 seconds is about 394 live calls."}, {"q": "Why size for peak rather than average?", "a": "Systems fail at the busiest moment. Kata: 131 concurrent calls on average, 394 at peak, a 3x gap from the peak factor."}, {"q": "What does an out-of-scope list buy you in a 45-minute design?", "a": "A bounded v1: fewer verbs to design, no scope creep, and visible prioritization. If the interviewer adds one back, rerun the numbers for it."}, {"q": "What separates logical design from physical design?", "a": "Logical: entities, relationships, operations, invariants. Physical: engines, indexes, partitions, caches and queues chosen later to meet the numbers."}, {"q": "How do you rewrite 'it should be fast and scalable' as a requirement?", "a": "Give a percentile, a load and a number: p99 of the status read under 300 ms at peak load of N requests per second."}, {"q": "Why estimate the read to write ratio instead of assuming read-heavy?", "a": "It decides whether a cache helps. The kata reminder system is about 1.1:1, so a read cache buys little."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

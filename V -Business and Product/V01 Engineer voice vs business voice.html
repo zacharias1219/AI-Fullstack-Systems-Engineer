@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V01 Engineer voice vs business voice</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="V01">
+<main>
+<header>
+  <div class="eyebrow"><b>V01</b><span>Business and product</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Engineer voice vs business voice</h1>
+  <p class="lede">How do you say what you built so a technical interviewer hears mechanism, numbers, failure modes and tradeoffs, and not a pitch? This page teaches the pattern and drills it on five rewrites.</p>
+  <div class="chips"><span><em>Before</em>None, this is the first rep</span><span><em>After</em>X01 Three-level answers</span><span><em>After</em>G01 Token optimization playbook</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 once, answer the check questions</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Stations 7 and 8: the room, the 90-second answer, the traps</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall, then the flashcards</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Record your 90-second answer, import the cards, update the tracker</span><small>4 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>The kata scores five weak answers and five strong ones on four markers: a number, a mechanism, a failure mode, a tradeoff. How many of the four markers do the five weak answers hit, in total, out of 20?</summary><div class="a">Zero. Every weak answer scored 0 on all four markers, and every strong answer scored 4 of 4. Weak answers read fine aloud, which is the danger: nothing in them is wrong, and nothing in them can be checked.</div></details>
+  <details class="q"><summary>The strong answers in the kata run 40 to 54 words, the weak ones 12 to 18. At a speaking pace of about 150 words per minute, how long does a strong first answer take to say?</summary><div class="a">About 16 to 22 seconds. The strong answer is roughly three times longer than the weak one, and still short. Engineer voice is dense, not long.</div></details>
+  <details class="q"><summary>"We cut inference cost by 40%." It has a number. Why does an interviewer still hear business voice?</summary><div class="a">The number has no baseline, no unit of work and no mechanism. The interviewer cannot tell 40% of what, measured how, or caused by what. A number only helps when the listener can step into it with the next question and you have the next sentence ready.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Business voice reports what happened: costs fell, quality rose, the system scales. It is true and unusable, because nothing in it can be checked. Engineer voice explains why it happened, so the listener can size it, reproduce it or break it. This is the gap from your 13 Nov interview. Your answers named the outcome, and the interviewer wanted the machinery behind it.</p>
+  <p>Every claim about a system can carry four parts. The <strong>mechanism</strong> is what the system does, per request or per token, that makes the claim true. The <strong>number</strong> is a measured quantity with a unit and a baseline. The <strong>failure mode</strong> is the condition under which the claim stops being true. The <strong>tradeoff</strong> is what you paid, on some axis: latency, memory, accuracy, money, complexity. Then, in one sentence, you say why the business cares.</p>
+  <p>Mental model: treat every claim you make as a function call that the interviewer can step into with a debugger. If the call has a body (mechanism), arguments you can print (numbers), a known exception path (failure) and a cost (tradeoff), they can step in all day. If it is a stub that returns "efficient", they step in once and find nothing.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From business-voice stub to a full engineer-voice claim</div>
+    <svg viewBox="0 0 460 190" role="img" aria-label="Six steps of an engineer-voice claim: Claim (stub if alone), Mechanism (how it works), Number (unit, baseline, tail), Failure (how it breaks), Tradeoff (named axis), and So what (one business sentence last).">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="1"/>
+          <rect x="12" y="12" width="136" height="10" rx="3" class="c-muted"/>
+          <text x="80" y="39" text-anchor="middle" font-weight="600">1. Claim</text>
+          <text x="80" y="56" text-anchor="middle" class="m">what you did</text>
+          <text x="80" y="73" text-anchor="middle">0/4 stub alone</text>
+        </g>
+        <g data-step="2">
+          <rect x="162" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="2"/>
+          <rect x="162" y="12" width="136" height="10" rx="3" class="c-accent"/>
+          <text x="230" y="39" text-anchor="middle" font-weight="600">2. Mechanism</text>
+          <text x="230" y="56" text-anchor="middle" class="m">how it works</text>
+          <text x="230" y="73" text-anchor="middle">"because" per req</text>
+        </g>
+        <g data-step="3">
+          <rect x="312" y="12" width="136" height="72" rx="6" class="c-soft" data-hi="3"/>
+          <rect x="312" y="12" width="136" height="10" rx="3" class="c-good"/>
+          <text x="380" y="39" text-anchor="middle" font-weight="600">3. Number</text>
+          <text x="380" y="56" text-anchor="middle" class="m">how much</text>
+          <text x="380" y="73" text-anchor="middle">unit, base, p95</text>
+        </g>
+        <g data-step="4">
+          <rect x="12" y="102" width="136" height="72" rx="6" class="c-soft" data-hi="4"/>
+          <rect x="12" y="102" width="136" height="10" rx="3" class="c-bad"/>
+          <text x="80" y="129" text-anchor="middle" font-weight="600">4. Failure</text>
+          <text x="80" y="146" text-anchor="middle" class="m">how it breaks</text>
+          <text x="80" y="163" text-anchor="middle">miss, stale, drift</text>
+        </g>
+        <g data-step="5">
+          <rect x="162" y="102" width="136" height="72" rx="6" class="c-soft" data-hi="5"/>
+          <rect x="162" y="102" width="136" height="10" rx="3" class="c-warn"/>
+          <text x="230" y="129" text-anchor="middle" font-weight="600">5. Tradeoff</text>
+          <text x="230" y="146" text-anchor="middle" class="m">what it costs</text>
+          <text x="230" y="163" text-anchor="middle">named axis</text>
+        </g>
+        <g data-step="6">
+          <rect x="312" y="102" width="136" height="72" rx="6" class="c-soft" data-hi="6"/>
+          <rect x="312" y="102" width="136" height="10" rx="3" class="c-good"/>
+          <text x="380" y="129" text-anchor="middle" font-weight="600">6. So what</text>
+          <text x="380" y="146" text-anchor="middle" class="m">one sentence last</text>
+          <text x="380" y="163" text-anchor="middle">40-54 w (~20 s)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>A bare claim ("costs fell") is an empty stub with 0 of 4 engineer-voice markers and 2 to 4 fluff words.</li>
+      <li>Mechanism adds the "because": what the system stores or changes per request or token, such as prefix caching.</li>
+      <li>Number adds a unit, a baseline, and a tail (such as 3,000 of 4,200 tokens or p95) so the claim can be checked.</li>
+      <li>Failure mode names the input that breaks the claim, such as dynamic tokens before a prefix causing a cache miss.</li>
+      <li>Tradeoff names the exact axis paid (latency, memory, accuracy, or money), adding about 12 to 18 seconds spoken.</li>
+      <li>One business sentence closes the 40 to 54 word answer (about 16 to 22 s at 150 wpm) with why it matters.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Four checkable parts (mechanism, number, failure, tradeoff) turn a 15-word slogan into a 20-second engineer-voice answer, with one business sentence last.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Five questions, in order: how does it work, how much, how does it break, what does it cost, so what. A claim that cannot answer the first four is a slogan. The fifth is the only part a businessman needs, and it goes last.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>The mechanism: the "because"</h3>
+  <p>The mechanism is the sentence that follows "because". "Prefix caching saves money" is a claim. "The provider stores the computed key and value state for a prompt prefix, and bills cached tokens at a lower rate, but only when the next request starts with the identical tokens" is a mechanism. Notice it names what the system stores, what it reuses and the condition for reuse. Aim for one mechanism you can explain in two sentences over five tools you can only name.</p>
+  <h3>The number: unit, baseline, tail</h3>
+  <p>A useful number has three things. A <strong>unit of work</strong> (per request, per token, per call), a <strong>baseline</strong> (compared with what) and, for anything about time, a <strong>tail</strong>. Averages hide the slow requests. If the mean is 400 ms and 1 request in 20 takes 3 seconds, the caller who hits it hangs up. Quote p95, and p99 when timeouts matter. A share also works as a number: "3,000 of 4,200 input tokens were the system prompt" tells the listener where the lever is.</p>
+  <details class="q"><summary>Check: "latency dropped from 2 s to 1 s". Name two things missing before an engineer would trust it.</summary><div class="a">The statistic (mean, p50, p95) and the conditions: load, prompt length, hardware, model. A halving of the mean can coexist with an unchanged p95. Also missing is the cause, the mechanism, which is what lets the listener judge whether it will hold in production.</div></details>
+  <h3>The failure mode: when it stops being true</h3>
+  <p>Every technique has a condition under which it stops working. Naming it is the strongest signal of experience, because only someone who ran the thing has seen it break. Common shapes: a <em>miss</em> (a cache or retrieval that does not hit), <em>staleness</em> (data older than the truth), <em>overflow</em> (a context or memory limit), <em>drift</em> (inputs change and quality slides silently), and <em>bursts</em> (load spikes past capacity). For each claim, ask "what input makes this false?" and say it.</p>
+  <h3>The tradeoff: the price, on a named axis</h3>
+  <p>Nothing is free; the question is which axis pays. Streaming tokens into speech cuts the time until the caller hears something, and costs you clipped sentences. A second model call that verifies answers cuts hallucinations, and adds a call of latency and money. Always name the axis: "it costs latency", not "there are tradeoffs". "There are tradeoffs" is itself business voice.</p>
+  <details class="q"><summary>Check: "We use RAG because it is flexible and cost-effective." Name the tradeoff axis that is missing and the failure mode that is missing.</summary><div class="a">Axis: RAG adds a retrieval hop to every request, so it costs latency (50 to 150 ms in the kata example, illustrative) and another system to run. Failure: it fails when the right chunk is not in the top k results retrieved. Both are what a technical listener waits to hear.</div></details>
+  <h3>The rewrite procedure</h3>
+  <ol>
+    <li><strong>Circle the fluff verbs.</strong> Optimized, streamlined, leveraged, robust, seamless, scalable. Each one hides a change you must name.</li>
+    <li><strong>Ask what happens per request.</strong> Walk one request or one token through the system. The step you changed is the mechanism.</li>
+    <li><strong>Find the measured quantity.</strong> Unit, baseline, tail. If you have none, say it is an estimate, or say how you would measure it.</li>
+    <li><strong>Ask when it breaks.</strong> Pick the input that makes the claim false. That is the failure mode.</li>
+    <li><strong>Name the price.</strong> Latency, memory, accuracy, money or complexity. Pick one axis and say it.</li>
+  </ol>
+  <p>Then add the business sentence last: "That cut input spend on the long prompts, which is where most of the bill sat." One sentence, never a replacement for the four parts. You want to be credible as both CTO and CEO, so the business sentence is a skill too, in its place at the end.</p>
+  <details class="q"><summary>Check: rewrite "We made our voice agent more responsive" using the five steps. Say what you would need to know before you could.</summary><div class="a">You need the per-hop timing: speech to text, model, text to speech. Then: "I timed each hop. The model's first token was the largest slice, so I stream tokens into speech instead of waiting for the full reply. That cuts time to first audio. The cost is clipped sentences, so I flush at sentence ends. I track p95." Numbers here come from your own measurement, so you cannot fill them in without it.</div></details>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: How much speaking time the four engineer-voice parts cost</div>
+    <p class="ask">Predict first. Upgrading a 14-word weak answer to a 46-word strong answer with all four parts (mechanism, number, failure, tradeoff) adds how many seconds at 150 words per minute?</p>
+    <div class="ctl">
+      <label><span>Kata scenario</span><select name="topic" data-num><option value="0">Optimize tokens (17w -> 54w)</option><option value="1">Voice agent speed (14w -> 46w)</option><option value="2">Hallucinations (18w -> 44w)</option><option value="3">RAG vs fine-tune (14w -> 42w)</option><option value="4">10x traffic (12w -> 40w)</option></select></label>
+      <label><span>Engineer parts</span><input type="range" name="parts" min="0" max="4" step="1" value="4"><output data-for="parts" data-unit=" / 4"></output></label>
+      <label><span>Speaking pace</span><input type="range" name="wpm" min="120" max="180" step="10" value="150"><output data-for="wpm" data-unit=" wpm"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Adding all four checkable parts grows a 12 to 18 word slogan to 40 to 54 words, costing under 20 extra seconds at 150 words per minute.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var weak=[17,14,18,14,12][v.topic], strong=[54,46,44,42,40][v.topic];
+    var words=Math.round(weak+(strong-weak)*(v.parts/4));
+    var wps=v.wpm/60, secW=weak/wps, secC=words/wps;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" s",digits:1,max:30,rows:[
+      {label:"Weak (0/4 markers)",value:secW,tone:"bad"},
+      {label:"Current ("+v.parts+"/4 markers)",value:secC,tone:v.parts===4?"good":v.parts>=2?"warn":"bad"}
+    ]});
+    return {verdict:v.parts+"/4 markers: "+words+" words, "+tl.fmt(secC,1)+" s spoken (+"+tl.fmt(secC-secW,1)+" s over weak at "+v.wpm+" wpm)."};
+  })});</script>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Parts of an engineer-voice claim</td><td class="n">4 (mechanism, number, failure, tradeoff) + 1 business sentence</td><td>Derived from the interview feedback</td></tr>
+    <tr><td>Kata: weak answers, words and markers hit</td><td class="n">12 to 18 words, 0 of 4</td><td>Your own run</td></tr>
+    <tr><td>Kata: strong answers, words and markers hit</td><td class="n">40 to 54 words, 4 of 4</td><td>Your own run</td></tr>
+    <tr><td>Spoken pace, first answer</td><td class="n">about 150 words per minute, so 90 s is about 225 words</td><td>Rule of thumb, from memory</td></tr>
+    <tr><td>KV cache bytes per token</td><td class="n">2 x layers x KV heads x head dim x bytes per value</td><td>Derived</td></tr>
+    <tr><td>8B model: 32 layers, 8 KV heads, head dim 128, fp16</td><td class="n">131,072 B = 128 KiB per token</td><td>Arithmetic derived; model config from memory, verify</td></tr>
+    <tr><td>100 chats of 4,096 tokens on that model</td><td class="n">50 GiB of KV cache</td><td>Derived from the line above</td></tr>
+    <tr><td>Same model with 32 KV heads (no grouped KV)</td><td class="n">512 KiB per token, 200 GiB for the same 100 chats</td><td>Derived</td></tr>
+  </table></div>
+  <p class="sub">The KV cache rows are here as a worked example of a number with a unit, a baseline and a lever. Topic K06 owns the cache in depth.</p>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Business voice only</td><td>Short, easy for non-technical listeners</td><td>Nothing can be checked; reads as shallow to engineers</td><td>"So what did you actually do?"</td></tr>
+    <tr><td>Engineer voice only</td><td>Credible depth, easy follow-ups</td><td>Drops the why-it-matters for founders and managers</td><td>A listener who asks "and the impact?"</td></tr>
+    <tr><td>Engineer first, one business sentence last</td><td>Depth plus relevance in about 25 seconds</td><td>Needs discipline to keep the last part to one sentence</td><td>Drifting back into outcomes</td></tr>
+    <tr><td>Stacking every metric and tool name</td><td>Looks thorough</td><td>No single mechanism explained; listener loses the thread</td><td>Lists of nouns with no verbs</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: a smoke detector for engineer voice</h2>
+  <p>This is the "rewrite five answers" kata, made runnable. It holds five weak answers (business voice) and five strong rewrites, and scores each on the four markers by keyword. It is a smoke alarm, not a grader: it shows you what the markers look like in text, and the break-it steps show exactly where it lies. All numbers inside the answers are illustrative, not your results.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python3 kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""V01 kata: a smoke detector for engineer voice. Crude on purpose."""
+import re
+
+MARKS = {  # the four things a strong answer contains
+    "number":    r"\d",
+    "mechanism": r"\b(because|so i|so that|which means|instead of|first|then|per token|prefix|stream(?:s|ed|ing)?|batch\w*|cite|checks?|queue|index\w*)\b",
+    "failure":   r"\b(breaks?|fails?|misses?|miss|stale|drift|overflow|glitch\w*|clipped|unsupported|bottleneck|burst\w*)\b",
+    "tradeoff":  r"\b(the cost is|the price|but|instead|trade\w*|adds?|higher|extra|not for)\b",
+}
+FLUFF = r"\b(streamlined?|optimi[sz]ed?|robust|seamless|leverage|efficient|significantly|reliable|trustworthy|scales?|cost-effective|flexible|guardrails)\b"
+
+PAIRS = [
+ ("Optimize tokens",
+  "We streamlined our prompts and used caching to make the system more efficient and cut costs significantly.",
+  "I log tokens per call by part. The system prompt was 3,000 of 4,200 input tokens, so I put it first and turned on prefix caching, which bills cached tokens at a fraction of the price. The cost is a miss whenever anything dynamic sits before the prefix, so I watch cache hit rate."),
+ ("Voice agent speed",
+  "We optimized the pipeline end to end so callers get a seamless, real-time experience.",
+  "I timed each hop. The model's first token was 600 ms of a 1.4 s turn, so I stream tokens into speech instead of waiting for the full reply. The cost is clipped sentences, so I flush at sentence ends. I track p95, not the average."),
+ ("Hallucinations",
+  "We put robust guardrails in place and keep a human in the loop to ensure reliable, trustworthy output.",
+  "Every claim must cite a retrieved passage, and a second check rejects claims with no supporting text. On 200 labeled questions, unsupported claims fell from 12% to 3%. It fails when retrieval misses the right passage, and the check adds one extra model call."),
+ ("RAG vs fine-tune",
+  "RAG is more flexible and cost-effective, and it scales better for our use case.",
+  "The facts change weekly. Retrieval just re-indexes, while fine-tuning needs a new run each time. RAG adds a 50 to 150 ms hop and fails when the right chunk is outside the top 5. I would fine-tune for format, not for facts."),
+ ("10x traffic",
+  "We would scale horizontally and leverage the cloud to ensure high availability.",
+  "Find the bottleneck first. For an 8B model the KV cache costs 128 KiB per token, so 100 chats at 4,096 tokens need 50 GiB. I would cap context, batch requests and queue bursts. The price is higher p99 latency."),
+]
+
+def score(text):
+    hits = {k: bool(re.search(p, text, re.I)) for k, p in MARKS.items()}
+    fluff = len(re.findall(FLUFF, text, re.I))
+    return hits, fluff, len(text.split())
+
+if __name__ == "__main__":
+    print(f"{'topic':&lt;18}{'kind':&lt;8}{'num':&gt;4}{'mech':&gt;6}{'fail':&gt;6}{'trade':&gt;6}{'fluff':&gt;7}{'words':&gt;7}")
+    for name, weak, strong in PAIRS:
+        for kind, text in (("weak", weak), ("strong", strong)):
+            h, f, w = score(text)
+            print(f"{name:&lt;18}{kind:&lt;8}{int(h['number']):&gt;4}{int(h['mechanism']):&gt;6}{int(h['failure']):&gt;6}{int(h['tradeoff']):&gt;6}{f:&gt;7}{w:&gt;7}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">topic             kind     num  mech  fail trade  fluff  words
+Optimize tokens   weak       0     0     0     0      3     17
+Optimize tokens   strong     1     1     1     1      0     54
+Voice agent speed weak       0     0     0     0      2     14
+Voice agent speed strong     1     1     1     1      0     46
+Hallucinations    weak       0     0     0     0      4     18
+Hallucinations    strong     1     1     1     1      0     44
+RAG vs fine-tune  weak       0     0     0     0      3     14
+RAG vs fine-tune  strong     1     1     1     1      0     42
+10x traffic       weak       0     0     0     0      2     12
+10x traffic       strong     1     1     1     1      0     40</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata word counts, weak (0/4 markers) vs strong (4/4 markers)</div>
+    <div data-bars='{"unit":" words","digits":0,"rows":[{"label":"Weak avg (0/4)","value":15,"tone":"bad"},{"label":"10x traffic (4/4)","value":40,"tone":"good"},{"label":"RAG vs fine-tune (4/4)","value":42,"tone":"good"},{"label":"Hallucinations (4/4)","value":44,"tone":"good"},{"label":"Voice agent (4/4)","value":46,"tone":"good"},{"label":"Optimize tokens (4/4)","value":54,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Strong 4/4 answers run 40 to 54 words against 12 to 18 for weak 0/4 answers, fitting inside about 16 to 22 seconds spoken.</figcaption>
+  </figure>
+  <figure class="viz">
+    <div class="vt">Chart: Worked example, 8B model KV cache for 100 chats at 4,096 tokens (fp16)</div>
+    <div data-bars='{"unit":" GiB","digits":0,"rows":[{"label":"8 KV heads (128 KiB/tok)","value":50,"tone":"good"},{"label":"32 KV heads (512 KiB/tok)","value":200,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Grouped KV heads cut memory for 100 chats from 200 GiB to 50 GiB, turning "scale horizontally" into a checkable number.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>All five weak answers score 0 on number, mechanism, failure and tradeoff. All five strong answers score 4 of 4.</li>
+    <li>The weak answers carry 2 to 4 fluff words each (streamlined, optimized, robust, leverage) and the strong ones carry none. The fluff is where the missing content should be.</li>
+    <li>The strong answers are 40 to 54 words against 12 to 18, about 16 to 22 seconds spoken. Depth cost you under 20 extra seconds.</li>
+    <li>The strong "10x traffic" answer uses the KV cache arithmetic from station 4: 128 KiB per token times 100 chats times 4,096 tokens is 50 GiB. A real number replaced "scale horizontally".</li>
+    <li>Read the weak answers aloud. They sound fine. That is why this habit takes deliberate practice.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Stuff it.</strong> Run <code>python3 -c "import kata; print(kata.score('Because 7 queue breaks but the price is extra, then cache misses.'))"</code>. Predict: does nonsense score high? It scores 4 of 4. The detector sees keywords, not meaning. Lesson: a human, or you on a recording, must check that the parts connect.</li>
+    <li><strong>Starve it.</strong> Run <code>python3 -c "import re,kata; print(kata.score(re.sub(r'\d','#',kata.PAIRS[4][2])))"</code>, which blanks every digit in the 10x traffic answer. Predict which marker flips. Only number goes to 0, and the answer drops to 3 of 4 while still sounding technical. Lesson: a number is the part people skip, and the one that makes it checkable.</li>
+    <li><strong>Surprise it.</strong> Run <code>python3 -c "import kata; print(kata.score(kata.PAIRS[3][2].replace('fails','degrades')))"</code>, which swaps one word in the RAG answer. Predict the column. Failure drops to 0, though the engineer idea is unchanged. Lesson: the detector knows about 20 words; you know the idea.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Write a sixth pair from something you built (voice AI for a clinic, data erasure, an SSM on edge hardware). Put your own measured numbers in it, or label them as estimates. Add it to <code>PAIRS</code>, run it, then read it aloud and time it against 20 seconds.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In the room</h2>
+  <p class="sub">Production for this topic is the interview itself. Same format: symptom, cause, fix.</p>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>"But what did you actually do?"</td><td>You answered at outcome level only</td><td>Drop one level: walk one request through the system and say which step you changed.</td></tr>
+    <tr><td>You freeze at "how much?"</td><td>You never measured, or forgot the figure</td><td>Say what you measured or how you would measure it. Give an order of magnitude labeled as an estimate.</td></tr>
+    <tr><td>Your answer becomes a list of tool names</td><td>Jargon standing in for a mechanism</td><td>Pick one tool and say what it does to the request.</td></tr>
+    <tr><td>"That sounds like marketing"</td><td>Fluff verbs: optimized, leveraged, streamlined</td><td>Replace each with what changed and by how much.</td></tr>
+    <tr><td>You state a figure and it is wrong</td><td>Stale or half-remembered number</td><td>Label it unverified, correct it calmly, and log it in the question log.</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> your recorded 90-second answers. For each one count the numbers, failure modes and tradeoffs you said. Any answer with fewer than one of each goes in the question log as Level 1.</p>
+  <details class="q"><summary>Scenario: the interviewer says "How do you optimize tokens?" You have 90 seconds. Build the answer.</summary><div class="a"><ol>
+    <li><strong>Clarify the goal in one clause:</strong> cost, latency or fitting a context window. Each has a different lever.</li>
+    <li><strong>Measure first:</strong> log tokens per call by part: system prompt, retrieved context, history, output. Most of the bill sits in one or two parts.</li>
+    <li><strong>Pick the biggest lever and explain it:</strong> a long fixed system prompt means prefix caching (stable content first, dynamic content last). Long history means summarizing or truncating. Large retrieved context means a smaller top k or reranking. Long outputs mean an output cap or a tighter format.</li>
+    <li><strong>Name the failure mode:</strong> caching breaks when anything dynamic sits before the prefix; truncation drops facts the model needed; a smaller top k lowers recall.</li>
+    <li><strong>Name the price and the number:</strong> quality against cost, shown by an eval before and after. Quote the share of tokens saved and the quality delta.</li>
+    <li><strong>Close with one business sentence.</strong> The full playbook is topic G01; this page only shows how to say it.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds. Question: what is engineer voice and how do you answer in it?</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Engineer voice means every claim about a system carries four things: the mechanism that makes it true, a number that sizes it, the way it fails and the tradeoff it costs. Business voice reports outcomes. Engineer voice explains why the outcome happened, so the listener can check it, reproduce it or break it. It is what separates an explanation from a pitch.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>The pattern is claim, mechanism, number, failure, tradeoff. Say what you did in one clause. Say why it works, in terms of what the system does per request or per token. Give one measured number with its unit and what it was compared against. Say where it stops working, and what you paid: latency, memory, accuracy, money or complexity. If I say I cut cost with prefix caching, I add that cached tokens are billed lower, that the system prompt was most of the input, and that the saving disappears when the prefix changes.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Numbers must be mine, or labeled as estimates, never invented. Failure modes come from running the thing, so I only claim ones I have seen or can reproduce. Averages hide tails, so I quote p95. One mechanism explained beats five tools named. And the business framing comes last, in one sentence, never instead of the mechanism.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We streamlined our prompts and used caching to make the system more efficient and cut costs significantly."</p>
+    <p class="strong">"I log tokens per call by part. The system prompt was 3,000 of 4,200 input tokens, so I put it first and turned on prefix caching, which bills cached tokens at a fraction of the price. The cost is a miss whenever anything dynamic sits before the prefix, so I watch cache hit rate."</p>
+    <p>The strong one names what it measured, why the lever works, how it breaks and what to monitor. The numbers are illustrative, so do not quote them as your own results.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Engineer voice means using more technical jargon."</summary><div class="a">Jargon names things; a mechanism explains them. Five tool names with no explanation is still business voice in a technical costume. The strong answers in the kata use few terms and explain each one.</div></details>
+  <details class="q"><summary>"Any number makes an answer technical."</summary><div class="a">The break-it sentence "Because 7 queue breaks but the price is extra, then cache misses" scores 4 of 4 and means nothing. A number without a unit, baseline and mechanism cannot be checked. "40% faster" invites "than what, measured how?"</div></details>
+  <details class="q"><summary>"Business framing is bad, so leave it out completely."</summary><div class="a">You aim to be credible as both CTO and CEO. The business sentence belongs, last and short, after the mechanism. What fails is business framing used instead of the mechanism.</div></details>
+  <details class="q"><summary>"If I don't remember the exact figure, I should give a confident estimate."</summary><div class="a">Say it is an estimate, or say how you would measure it. A confident invented number collapses at the first follow-up and costs you the credibility of everything else you said.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>What are the four parts of an engineer-voice claim, and what does each answer?</summary><div class="a">Mechanism: how does it work, per request or per token. Number: how much, with unit and baseline. Failure mode: how does it break. Tradeoff: what does it cost, on a named axis. A business sentence follows.<div class="f"><b>Follow-up</b>Which part do you think founders skip most? Judgement, not fact: usually the failure mode, because a pitch avoids saying where the thing breaks. Say it in your own words and give an example.</div></div></details>
+  <details class="q"><summary>Rewrite: "We made our agent more reliable."</summary><div class="a">Ask what failed first. Example: "Tool calls failed on malformed arguments, so I validate arguments against the tool's schema and retry once with the error text. On a 100-case set, failed runs went from 14 to 4 (illustrative). It costs one extra model call on failures and cannot fix a wrong tool choice."<div class="f"><b>Follow-up</b>How do you know 100 cases is enough? It is small. Say what the interval is and what you would add: more cases from real traces.</div></div></details>
+  <details class="q"><summary>Why quote p95 and not the average for latency?</summary><div class="a">The mean hides the tail. If 1 request in 20 takes 3 s while the rest take 300 ms, the mean looks fine and 5% of users wait ten times longer. p95 shows the experience of the slow ones.<div class="f"><b>Follow-up</b>When do you quote p99? When timeouts, retries or SLAs are set near the tail, or when each user session makes many calls, so that most users hit a p99 request.</div></div></details>
+  <details class="q"><summary>A candidate says "we cut cost by 40%". Name three follow-up questions the interviewer will ask.</summary><div class="a">From what baseline, and over what workload? Measured how: per request, per token, per month? What changed to cause it, and what did quality do? Variants: what did you give up, and what happens when it breaks.</div></details>
+  <details class="q"><summary>What do you do when you did not measure a number?</summary><div class="a">Say it is an estimate and show the arithmetic, or say what you would measure and how. Never invent. In an interview you can also say "I don't have that figure; here is how I'd get it", which reads as engineer behavior.</div></details>
+  <details class="q"><summary>An 8B model uses 128 KiB of KV cache per token. How much memory do 100 chats of 4,096 tokens need, and what changes if the model had 32 KV heads instead of 8?</summary><div class="a">100 x 4,096 x 128 KiB = 51,200 MiB = 50 GiB. With 32 KV heads the per-token cost is 4 times higher: 512 KiB, so 200 GiB. The config is from memory, so verify before quoting.<div class="f"><b>Follow-up</b>What do you do about it? Cap context, quantize the cache, batch carefully, or use a model with fewer KV heads. Each costs quality, speed or capacity.</div></div></details>
+  <details class="q"><summary>Rewrite: "We used RAG for accuracy."</summary><div class="a">"The facts change weekly. Retrieval re-indexes in minutes, where fine-tuning needs a new run. RAG adds a 50 to 150 ms hop (illustrative) and fails when the right chunk is outside the top 5, so I track recall at 5. I would fine-tune for format, not facts."</div></details>
+  <details class="q"><summary>How long should a first answer run, and what do you do after it?</summary><div class="a">About 20 seconds for the outcome and the headline mechanism, then pause. Let the interviewer pull. Offer depth in layers: mechanism next, then internals and limits. A full 90 seconds is the ceiling, not the target.</div></details>
+  <details class="q"><summary>The interviewer says "that sounds like marketing." What do you do?</summary><div class="a">Take it as a request for mechanism. Drop a level at once: "Fair. Concretely, here is what happens per request." Then give the step you changed, the number, and where it breaks. Do not defend the claim.</div></details>
+  <details class="q"><summary>Pick one decision from your own work and give it in five parts: claim, mechanism, number, failure, tradeoff. Time yourself.</summary><div class="a">Self-graded. Pass means: a claim in one clause, a mechanism a stranger could follow, a number that is yours or labeled as an estimate, one real failure case, and a named axis for the price. Under 25 seconds.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the four parts of an engineer-voice claim and what question each answers, the five rewrite steps in order, one worked rewrite with all four parts, and the four traps.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Four parts: mechanism (how), number (how much, with unit and baseline), failure mode (how it breaks), tradeoff (what it costs). Then one business sentence.</li>
+    <li>Five steps: circle fluff verbs, ask what happens per request, find the measured quantity, ask when it breaks, name the price.</li>
+    <li>A worked rewrite with all four parts and a labeled, honest number.</li>
+    <li>Traps: more jargon is not more depth; a number alone is not enough; business framing stays but goes last and short; never invent a figure.</li>
+    <li>Spoken limits: about 20 s for the first answer; quote p95; label estimates.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from topics scheduled earlier or alongside this one in week 1. Nobody tells you the topic in an interview. Answers are from memory, so check them against those pages.</p>
+  <details class="q"><summary>D01: What does an LLM do at each step of generating text?</summary><div class="a">It reads all tokens so far, produces a probability for each possible next token, one token is chosen from that distribution, and it is appended. Then it repeats until a stop token or a length limit.</div></details>
+  <details class="q"><summary>K01: Why is inference a separate engineering problem from training?</summary><div class="a">Training is a large, planned job tuned for throughput. Inference runs on every user request, so the targets are latency, cost per token and memory under many concurrent users, with load you do not control.</div></details>
+  <details class="q"><summary>L01: Why ask clarifying questions before drawing a design?</summary><div class="a">Requirements set the design: users, request rate, latency target, read and write mix, consistency, failure tolerance and cost. Without them the design cannot be judged, and you may build for the wrong scale.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li>Project brief: interview feedback of 13 Nov 2026<small>Supports the framing: answers leaned toward a businessman's, and "How do you optimize tokens?" was the stumper. Your own account, not an external source.</small></li>
+    <li>kata.py and its output above<small>Supports all word counts and marker scores. Run on 15 Nov 2026. The answer text and its numbers are illustrative.</small></li>
+    <li>No external sources used<small>The KV cache arithmetic is derived. The 8B model configuration (32 layers, 8 KV heads, head dim 128) and the 150 words per minute pace are from memory, so verify before quoting them in an interview.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::V Business and product", "tags": "V01 T1 W01", "cards": [{"q": "What four parts does an engineer-voice claim carry?", "a": "A mechanism (why it works), a number (with unit and baseline), a failure mode (when it stops working) and a tradeoff (what you paid)."}, {"q": "Why does \"we cut cost by 40%\" fail as an engineer answer?", "a": "No baseline, no mechanism, no unit. The listener cannot check it, so the next question is \"from what, and how?\""}, {"q": "Why quote p95 latency instead of the average?", "a": "The mean hides the slow tail. Timeouts and unhappy users live at p95 and p99, even when the average looks fine."}, {"q": "Why is a number alone not enough to sound like an engineer?", "a": "A number with no mechanism or baseline cannot be checked or reproduced. It still sounds like a pitch."}, {"q": "What are the five steps to rewrite a business answer as an engineer answer?", "a": "Circle the fluff verbs, ask what happens per request, find the measured quantity, ask when it breaks, name the price."}, {"q": "How do you compute KV cache bytes per token, and what is it for an 8B model?", "a": "2 x layers x KV heads x head dim x bytes. For 32 layers, 8 KV heads, 128 dim, fp16: 131,072 B, 128 KiB per token."}, {"q": "What do you say when you did not measure a number?", "a": "Say it is an estimate or say how you would measure it. An invented number collapses at the first follow-up."}, {"q": "Where does business framing belong in an engineer answer?", "a": "After the mechanism, in one sentence on why it matters. It follows the mechanism and never replaces it."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

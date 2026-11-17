@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L02 Non-functional requirements</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L02">
+<main>
+<header>
+  <div class="eyebrow"><b>L02</b><span>System design concepts</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Non-functional requirements and tradeoffs</h1>
+  <p class="lede">How do you turn "make it reliable and fast" into numbers you can design against, and say what each number costs? This page covers the five NFRs interviewers push on for an LLM chat API: availability, durability, consistency, latency and cost. SLO alerting is L76, CAP and consistency models are L35, capacity math is L03.</p>
+  <div class="chips"><span><em>Before</em>L01 Requirements clarification</span><span><em>After</em>L03 Back-of-the-envelope capacity</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5, answer the checks</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it four ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production table, scenario, interview answer aloud</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page and write the blank-page recall</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards into Anki, update the tracker</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>Your chat API sits behind four dependencies in series: load balancer 99.99%, app tier 99.95%, database 99.95%, LLM provider 99.9%. What is the combined availability, how many minutes a month is that, and does it meet a 99.9% SLO? Would a second LLM provider fix it?</summary><div class="a">Combined: 99.79%, about 91 minutes of downtime a month. A 99.9% SLO allows 43.2. It misses. With a second, independent provider the chain reaches 99.89%, about 48 minutes, which still misses, because the app tier and the database now set the ceiling.</div></details>
+  <details class="q"><summary>You keep each chat log on three replicas with a 2% annual failure rate each and a one-day rebuild. A teammate says loss risk is about 1.8e-10 a year. When is that number badly wrong?</summary><div class="a">The model assumes independent failures. Put all three replicas in one zone with a 0.1% yearly zone-loss chance and the risk is about 1e-3 a year, millions of times worse. A seven-day rebuild instead of one also makes the independent figure about 50 times worse (8.8e-9).</div></details>
+  <details class="q"><summary>A user posts a message and reloads 200 ms later. Reads go to an async replica with a mean lag of 50 ms. What fraction of reloads show stale data? What if lag spikes to 500 ms?</summary><div class="a">1.8% at 50 ms mean lag, 66.9% at 500 ms. If lag is exponential, the stale fraction after d ms is e^(-d / mean lag).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A non-functional requirement (NFR) says how well the system does its job, not what the job is. A usable one has five parts: a metric, a number, a percentile or window, a scope, and a price. "Fast" is not an NFR. "p95 time to first token under 800 ms for prompts up to 2,000 tokens, measured at the gateway over 30 days" is one. If you cannot test it, it is a wish.</p>
+  <p>For an LLM chat API there are five dials: availability, durability, consistency, latency and cost. They are coupled. More nines cost spare capacity and a fallback. More durability costs copies and slower writes. Stronger consistency costs latency and sometimes availability. Lower latency costs GPUs. Interviewers are checking that you set each dial per data class, because a streamed answer, a stored transcript and a billing counter need different settings.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Five NFR dials for an LLM chat API, end to end</div>
+    <svg viewBox="0 0 460 226" role="img" aria-label="Five NFR dials for an LLM chat API: availability 99.79% (91 min/month), durability 1.2e-9/yr across 3 zones, consistency 1.8% stale at 200 ms, latency 8,100 ms total, cost $0.0129 per good request at 30% failure, all set per data class.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="10" width="136" height="66" rx="6" class="c-soft" data-hi="1"/>
+          <rect x="12" y="10" width="136" height="10" rx="3" class="c-accent"/>
+          <text x="80" y="36" text-anchor="middle" font-weight="600">Availability</text>
+          <text x="80" y="53" text-anchor="middle" class="m">% good requests</text>
+          <text x="80" y="69" text-anchor="middle">99.79% (91 min)</text>
+        </g>
+        <g data-step="2">
+          <rect x="162" y="10" width="136" height="66" rx="6" class="c-soft" data-hi="2"/>
+          <rect x="162" y="10" width="136" height="10" rx="3" class="c-good"/>
+          <text x="230" y="36" text-anchor="middle" font-weight="600">Durability</text>
+          <text x="230" y="53" text-anchor="middle" class="m">loss chance / yr</text>
+          <text x="230" y="69" text-anchor="middle">1.2e-9 (3 AZs)</text>
+        </g>
+        <g data-step="3">
+          <rect x="312" y="10" width="136" height="66" rx="6" class="c-soft" data-hi="3"/>
+          <rect x="312" y="10" width="136" height="10" rx="3" class="c-warn"/>
+          <text x="380" y="36" text-anchor="middle" font-weight="600">Consistency</text>
+          <text x="380" y="53" text-anchor="middle" class="m">staleness window</text>
+          <text x="380" y="69" text-anchor="middle">1.8% @ 200 ms</text>
+        </g>
+        <g data-step="4">
+          <rect x="12" y="90" width="210" height="66" rx="6" class="c-soft" data-hi="4"/>
+          <rect x="12" y="90" width="210" height="10" rx="3" class="c-accent"/>
+          <text x="117" y="116" text-anchor="middle" font-weight="600">Latency (streaming)</text>
+          <text x="117" y="133" text-anchor="middle" class="m">TTFT + tokens x TPOT</text>
+          <text x="117" y="149" text-anchor="middle">600 + 7,500 = 8,100 ms</text>
+        </g>
+        <g data-step="5">
+          <rect x="238" y="90" width="210" height="66" rx="6" class="c-soft" data-hi="5"/>
+          <rect x="238" y="90" width="210" height="10" rx="3" class="c-bad"/>
+          <text x="343" y="116" text-anchor="middle" font-weight="600">Cost per good req</text>
+          <text x="343" y="133" text-anchor="middle" class="m">retries amplify failure</text>
+          <text x="343" y="149" text-anchor="middle">$0.0092 -> $0.0129 (x1.39)</text>
+        </g>
+        <g data-step="6">
+          <rect x="12" y="170" width="436" height="44" rx="6" class="c-paper ln" data-hi="6"/>
+          <text x="230" y="190" text-anchor="middle" font-weight="600">Set each dial per data class</text>
+          <text x="230" y="206" text-anchor="middle" class="m">Stream: TTFT+Avail | Transcript: 3-AZ Dur | Billing: Strong</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Availability multiplies across series links: 4 dependencies (99.99, 99.95, 99.95, 99.9%) yield 99.79%, or 91 minutes of monthly downtime.</li>
+      <li>Durability tracks yearly survival: 3 replicas across 3 zones give 1.2e-9 loss risk, whereas 3 in 1 zone fail at 1.0e-3.</li>
+      <li>Async replication trades freshness for fast writes: at 50 ms mean lag, a read 200 ms after a write is stale 1.8% of the time.</li>
+      <li>Streaming latency splits into TTFT plus tokens times TPOT: 600 ms plus 300 times 25 ms equals 8,100 ms, paid in GPUs.</li>
+      <li>Retries break cost under failure: at 30% attempt failure and 2 retries, provider load rises x1.39 and cost per success hits $0.0129.</li>
+      <li>Maxing all five dials everywhere wastes money and latency, so set each dial per data class: stream, transcript, and billing counter.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Five coupled NFR dials govern an LLM chat API, and each must be tuned per data class rather than maxed globally.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>"A Dull Cat Chews Lemons": Availability, Durability, Consistency, Cost, Latency. Each has one unit and one price. Nines (price: spares). Copies (price: storage and write time). Staleness in milliseconds (price: latency). Dollars per good request. Percentile milliseconds (price: GPUs).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Availability is a product, not a target</h3>
+  <p>Availability is the fraction of valid requests that are good. Downtime per 30-day month is (1 minus availability) times 43,200 minutes. That gives 432 minutes at 99%, 43.2 at 99.9%, 4.3 at 99.99%. Each extra nine shrinks the error budget (1 minus the SLO) tenfold. Dependencies in series multiply: 0.9999 x 0.9995 x 0.9995 x 0.999 = 0.9979. Dependencies in parallel fail only when all fail: two independent 99.9% providers give 1 minus 0.001 x 0.001 = 99.9999%. The word independent is doing the work. Two providers behind the same DNS, region or your own gateway are not independent.</p>
+  <h3>For an LLM API, "good" needs a latency and a completion clause</h3>
+  <p>A request that returns 200 after 40 seconds, or a stream that stalls after ten tokens, counts as up on a status-code dashboard and as broken to the user. Define the availability SLI as good events over valid events, where good means the first token arrived inside the TTFT target and the stream finished with a normal stop reason. This is also why the LLM provider sits in your series chain: you inherit its timeouts and its brownouts, not only its outages.</p>
+  <details class="q"><summary>Check: your only LLM provider is 99.9% and you promise 99.9%. Why can you not hit it?</summary><div class="a">Availabilities multiply, so the product of the chain is below the weakest link. Add a fallback provider or a degraded mode (smaller model, cached answer, queued reply) so a provider outage no longer counts as downtime.</div></details>
+  <h3>Durability is about not losing, availability about being reachable</h3>
+  <p>Durability is the probability a stored object survives a year. A database can be down for an hour and lose nothing. With n replicas, each failing at annual rate r and rebuilt in d days, the window in which another replica can die is w = r x d / 365. Loss needs the first failure, then every other replica dying inside the window: roughly n x r x w^(n-1). For r = 2%, d = 1, n = 3 that is about 1.8e-10 a year. The model breaks on correlated failure: a lost zone, a bad migration, an operator delete, a software bug that corrupts every copy. Spread replicas across zones, keep versioned backups, and rehearse restores (RPO and RTO are L79). AWS documents S3 Standard as designed for 99.999999999% durability, a design claim built on checksums, repair and multi-zone storage, not on a replica count.</p>
+  <h3>Durability differs by data class</h3>
+  <p>A cached completion can be regenerated, so it needs none. A chat transcript is the product, so it needs cross-zone copies and backups. A billing ledger needs the highest level plus an audit trail. Durability also collides with privacy: backups that keep data forever fight an erasure request under GDPR or DPDPA, the tension ForgetMeNot exists to resolve.</p>
+  <h3>Consistency is a promise about what a read may see</h3>
+  <p>With async replication a replica trails the primary by a lag. If lag is exponential with mean L, a read d ms after a write is stale with probability e^(-d / L). At L = 50 ms and d = 200 ms that is 1.8%; at L = 500 ms it is 66.9%. Specify consistency per data class. Own messages: read-your-writes, so a user always sees what they just wrote (route that user to the primary or pass a session token for a short window). Quota and billing counters: strong, because a stale read means overspend. Dashboards and analytics: eventual. Strong everywhere buys safety you do not need and pays latency you do. Formal models and CAP are L35.</p>
+  <details class="q"><summary>Check: where would you pay for strong consistency in a chat product, and where not?</summary><div class="a">Pay for it on quota, billing and idempotency state, where a stale read causes real loss. Use read-your-writes for a user's own messages. Use eventual consistency for search, analytics and admin dashboards.</div></details>
+  <h3>Latency for a streaming LLM is two numbers</h3>
+  <p>Users feel the time to first token (TTFT), then the reading speed set by time per output token (TPOT). End to end is TTFT + tokens x TPOT. With TTFT 600 ms, TPOT 25 ms and a 300-token answer, that is 600 + 7,500 = 8,100 ms. A single "under 2 seconds end to end" target is wrong for long streamed answers and meaningless for short ones. Write p95 TTFT and p95 TPOT, and use percentiles because the tail, driven by queueing, is what users remember. Metrics detail is K08 and G15.</p>
+  <h3>Cost is an NFR with its own formula</h3>
+  <p>Per-attempt cost is (input tokens x input price + output tokens x output price). Cost per successful request is per-attempt cost x expected attempts / success probability. With f the attempt failure rate and up to R retries, expected attempts = 1 + f + ... + f^R and success = 1 minus f^(R+1). Retries quietly raise both your bill and the load on a provider that is already struggling. Architecture-level cost thinking is L07; token levers are G01.</p>
+  <h3>How to pick the numbers</h3>
+  <p>Start from user harm, not from a nines table. Ask who is hurt, for how long, and what it costs the business, then derive the number and state its price. Keep the internal SLO tighter than any published SLA so you have a margin. Offer tiers: when a product owner says "five nines", show that it is 26 seconds a month, then price the multi-region design it implies and ask which flows really need it.</p>
+  <details class="q"><summary>Check: a stakeholder asks for 99.999%. What do you do?</summary><div class="a">Convert it: 0.001% of 43,200 minutes is about 26 seconds a month. Ask which user flows truly need that, price the redundancy it implies (multi-region, independent fallbacks, no single dependency), and propose tiers such as 99.99% for the call path and 99.9% for the dashboard.</div></details>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Availability chain, fallback provider, and retry cost under failure</div>
+    <p class="ask">Predict first. With 4 series links (99.99%, 99.95%, 99.95%, 99.9%) and a 30% provider failure rate with 2 retries, does adding a second independent 99.9% provider bring downtime under your 99.9% SLO (43.2 min), and what does retry load hit?</p>
+    <div class="ctl">
+      <label><span>Series chain</span><select name="extra" data-num><option value="0">4 links (LB, app, DB, LLM)</option><option value="3">7 links (+vector DB, auth, rate limit)</option></select></label>
+      <label><span>LLM provider</span><select name="fallback" data-num><option value="1">1 provider (99.9%)</option><option value="2">2 independent providers (99.9% each)</option></select></label>
+      <label><span>Attempt failure rate</span><input type="range" name="fail" min="0" max="40" step="2" value="2"><output data-for="fail" data-unit="%"></output></label>
+      <label><span>Max retries</span><input type="range" name="retries" min="0" max="4" step="1" value="2"><output data-for="retries" data-unit=" retries"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Series links multiply downtime, a second provider only helps up to the app and DB ceiling, and retries multiply load and cost during brownouts.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var llm=v.fallback===2?1-0.001*0.001:0.999;
+    var avail=0.9999*0.9995*0.9995*llm*(v.extra===3?Math.pow(0.999,3):1);
+    var down=(1-avail)*43200;
+    var f=v.fail/100, att=0;
+    for(var k=0;k<=v.retries;k++){att+=Math.pow(f,k)}
+    var ok=1-Math.pow(f,v.retries+1);
+    var costPerOk=0.0090*att/ok;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" min/mo",digits:1,rows:[
+      {label:"99.9% SLO budget",value:43.2,tone:"good"},
+      {label:"Chain downtime",value:down,tone:down<=43.2?"good":down<=100?"warn":"bad"}
+    ]});
+    return {verdict:"Chain: "+(avail*100).toFixed(3)+"% ("+tl.fmt(down,1)+" min/mo). Retries: x"+tl.fmt(att,2)+" provider load, "+tl.fmt(ok*100,2)+"% success, $"+tl.fmt(costPerOk,4)+"/good req ($"+tl.fmt(costPerOk*1e6,0)+"/1M)."};
+  })});</script>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Minutes in a 30-day month</td><td class="n">43,200</td><td>Derived</td></tr>
+    <tr><td>Downtime per month at 99% and 99.9%</td><td class="n">432 min and 43.2 min</td><td>Derived; matches the error-budget definition (budget = 1 minus SLO), checked 16 Nov 2026</td></tr>
+    <tr><td>Downtime per month at 99.95% and 99.99%</td><td class="n">21.6 min and 4.3 min</td><td>Derived</td></tr>
+    <tr><td>Effect of one extra nine</td><td class="n">budget / 10</td><td>Derived</td></tr>
+    <tr><td>99.999% in seconds a month</td><td class="n">about 26 s</td><td>Derived</td></tr>
+    <tr><td>Series chain 99.99, 99.95, 99.95, 99.9</td><td class="n">99.79%, 91 min</td><td>Your own run</td></tr>
+    <tr><td>Same chain with a second independent provider</td><td class="n">99.89%, 48 min</td><td>Your own run</td></tr>
+    <tr><td>3 replicas, 2% annual failure, 1-day rebuild</td><td class="n">1.8e-10 per year</td><td>Your own run, simplified model</td></tr>
+    <tr><td>Same with a 7-day rebuild</td><td class="n">8.8e-9 per year</td><td>Your own run</td></tr>
+    <tr><td>3 replicas in one zone, 0.1% yearly zone loss (assumed)</td><td class="n">about 1e-3 per year</td><td>Your own run, assumed rate</td></tr>
+    <tr><td>Stale read 200 ms after a write, mean lag 50 ms and 500 ms</td><td class="n">1.8% and 66.9%</td><td>Your own run</td></tr>
+    <tr><td>S3 Standard design target</td><td class="n">11 nines durability, 99.99% availability</td><td>Checked 16 Nov 2026 against AWS documentation</td></tr>
+    <tr><td>Example request: 1,500 in, 300 out, illustrative prices</td><td class="n">$0.0090, 8,100 ms full answer</td><td>Your own run, illustrative prices</td></tr>
+    <tr><td>30% attempt failure, 2 retries</td><td class="n">x1.39 provider load, $0.0129 per success</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Second LLM provider or fallback model</td><td>Removes a provider outage from your downtime</td><td>Integration, prompt drift between models, double eval</td><td>Shared dependencies that make the two not independent</td></tr>
+    <tr><td>Replicas across three zones</td><td>Loss risk near 1e-9 in the kata model</td><td>3x storage, cross-zone write latency, egress</td><td>Correlated bugs and deletes that hit every copy</td></tr>
+    <tr><td>Sync replication</td><td>No stale reads, no lost acknowledged writes</td><td>Write latency and lower availability if a replica is down</td><td>Tail latency of the slowest replica</td></tr>
+    <tr><td>Async replication</td><td>Fast writes, higher availability</td><td>Stale reads, lost writes on failover</td><td>Replica lag in ms, spikes under load</td></tr>
+    <tr><td>Read-your-writes via primary routing</td><td>Users never see their own data vanish</td><td>Extra primary load for a window after each write</td><td>Primary saturation during write bursts</td></tr>
+    <tr><td>Retries</td><td>Hides transient failures</td><td>More cost and more load on a failing dependency</td><td>Retry ratio; storms when the failure rate is high</td></tr>
+    <tr><td>Streaming responses</td><td>Low perceived latency (TTFT)</td><td>Mid-stream failures, harder retries and moderation</td><td>Stalled streams that return 200</td></tr>
+    <tr><td>Smaller or cascaded model (G17)</td><td>Lower cost and TPOT</td><td>Quality risk on hard prompts</td><td>Quality regression, escalation rate</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: NFR calculator for an LLM chat API</h2>
+  <p>One stdlib script that prints the numbers for all five dials, with four flags that each break one assumption on purpose. It runs in under a second.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""L02 kata: NFRs with numbers for an LLM chat API. Stdlib only.
+Run:  python kata.py            (baseline)
+      python kata.py chain      (add more dependencies in series)
+      python kata.py repair     (slow replica rebuild, 7 days)
+      python kata.py lag        (replication lag spike, mean 500 ms)
+      python kata.py incident   (provider failure rate 30%)
+"""
+import random, sys
+MODE = sys.argv[1] if len(sys.argv) &gt; 1 else ""
+random.seed(7)
+MONTH_MIN = 30 * 24 * 60
+down = lambda a: (1 - a) * MONTH_MIN          # minutes of downtime per 30-day month
+
+print("1. Nines to downtime (30-day month)")
+for a in (0.99, 0.999, 0.9995, 0.9999):
+    print(f"   {a*100:.2f}%  -&gt; {down(a):7.1f} min/month")
+
+print("\n2. Availability of a chain: series multiplies, parallel fails only if all fail")
+chain = {"load balancer": .9999, "app tier": .9995, "database": .9995, "LLM provider": .999}
+if MODE == "chain":
+    chain.update({"vector db": .999, "auth service": .999, "rate limiter": .999})
+total = 1.0
+for a in chain.values():
+    total *= a
+print(f"   {len(chain)} dependencies in series: {total*100:.3f}%  -&gt; {down(total):.0f} min/month")
+two_providers = 1 - (1 - .999) * (1 - .999)   # assumes independent failures
+with_fallback = total / chain["LLM provider"] * two_providers
+print(f"   with a 2nd LLM provider:    {with_fallback*100:.3f}%  -&gt; {down(with_fallback):.0f} min/month")
+
+print("\n3. Durability: chance of losing a chat log in a year (simplified model)")
+AFR = 0.02                                     # annual failure rate per replica (assumed)
+REPAIR_DAYS = 7.0 if MODE == "repair" else 1.0
+w = AFR * REPAIR_DAYS / 365                    # chance another replica dies inside the repair window
+for n in (1, 2, 3):
+    p = n * AFR * w ** (n - 1)                 # first failure, then the other n-1 die before repair
+    print(f"   {n} replica(s), independent failures: {p:.1e} per year")
+AZ_LOSS = 0.001                                # chance per year a whole zone is lost (assumed)
+print(f"   3 replicas in ONE zone:  {AZ_LOSS + 3*AFR*w**2:.1e} per year (zone loss takes all three)")
+print(f"   3 replicas in 3 zones:   {3*AFR*w**2 + AZ_LOSS**3:.1e} per year")
+
+print("\n4. Consistency: stale reads from an async replica")
+MEAN_LAG = 500 if MODE == "lag" else 50        # ms, replication lag, exponential (assumed)
+print(f"   mean replica lag {MEAN_LAG} ms")
+for d in (0, 50, 200, 1000):                   # read happens d ms after the write
+    n = 100_000
+    s = sum(random.expovariate(1 / MEAN_LAG) &gt; d for _ in range(n)) / n
+    print(f"   read {d:4d} ms after write: {s*100:5.1f}% stale")
+print("   read-your-writes (user's reads go to primary for 1 s): ~0% stale for that user,")
+print("   cost: every user who just wrote adds primary load for a second")
+
+print("\n5. Cost and latency per chat request (illustrative prices, not a quote)")
+IN_TOK, OUT_TOK = 1500, 300
+PRICE_IN, PRICE_OUT = 3.0, 15.0                # USD per million tokens (illustrative)
+TTFT_MS, TPOT_MS = 600, 25
+f = 0.30 if MODE == "incident" else 0.02       # chance an attempt fails (timeout, 5xx)
+RETRIES = 2
+cost = (IN_TOK * PRICE_IN + OUT_TOK * PRICE_OUT) / 1e6
+attempts = sum(f ** k for k in range(RETRIES + 1))   # expected attempts per request
+ok = 1 - f ** (RETRIES + 1)                          # chance a request eventually succeeds
+print(f"   one attempt: ${cost:.4f}   TTFT {TTFT_MS} ms   full answer {TTFT_MS + OUT_TOK*TPOT_MS} ms")
+print(f"   failure rate {f:.0%}, up to {RETRIES} retries: {attempts:.2f} attempts per request,"
+      f" success {ok*100:.2f}%")
+print(f"   cost per successful request: ${cost*attempts/ok:.4f}   load on provider: x{attempts:.2f}")
+print(f"   cost per 1M requests: ${cost*attempts/ok*1e6:,.0f}")</pre></div>
+  <p class="cap">Output from a real run (python kata.py)</p><div class="codewrap"><pre class="out">1. Nines to downtime (30-day month)
+   99.00%  -&gt;   432.0 min/month
+   99.90%  -&gt;    43.2 min/month
+   99.95%  -&gt;    21.6 min/month
+   99.99%  -&gt;     4.3 min/month
+
+2. Availability of a chain: series multiplies, parallel fails only if all fail
+   4 dependencies in series: 99.790%  -&gt; 91 min/month
+   with a 2nd LLM provider:    99.890%  -&gt; 48 min/month
+
+3. Durability: chance of losing a chat log in a year (simplified model)
+   1 replica(s), independent failures: 2.0e-02 per year
+   2 replica(s), independent failures: 2.2e-06 per year
+   3 replica(s), independent failures: 1.8e-10 per year
+   3 replicas in ONE zone:  1.0e-03 per year (zone loss takes all three)
+   3 replicas in 3 zones:   1.2e-09 per year
+
+4. Consistency: stale reads from an async replica
+   mean replica lag 50 ms
+   read    0 ms after write: 100.0% stale
+   read   50 ms after write:  36.8% stale
+   read  200 ms after write:   1.8% stale
+   read 1000 ms after write:   0.0% stale
+   read-your-writes (user's reads go to primary for 1 s): ~0% stale for that user,
+   cost: every user who just wrote adds primary load for a second
+
+5. Cost and latency per chat request (illustrative prices, not a quote)
+   one attempt: $0.0090   TTFT 600 ms   full answer 8100 ms
+   failure rate 2%, up to 2 retries: 1.02 attempts per request, success 100.00%
+   cost per successful request: $0.0092   load on provider: x1.02
+   cost per 1M requests: $9,184</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Monthly downtime from the kata chain (43,200 min/month)</div>
+    <div data-bars='{"unit":" min","digits":1,"rows":[{"label":"99.9% SLO budget","value":43.2,"tone":"good"},{"label":"2nd LLM provider","value":48,"tone":"warn"},{"label":"4 links in series","value":91,"tone":"bad"},{"label":"7 links (chain flag)","value":220,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Four links in series burn 91 minutes a month, and adding a second provider only drops downtime to 48 minutes because the app tier and database remain in series.</figcaption>
+  </figure>
+  <figure class="viz">
+    <div class="vt">Chart: Stale read rate 200 ms after a write</div>
+    <div data-bars='{"unit":"%","digits":1,"max":100,"rows":[{"label":"50 ms mean lag","value":1.8,"tone":"good"},{"label":"500 ms mean lag (lag flag)","value":66.9,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> When async replica lag spikes from 50 ms to 500 ms, stale reads at 200 ms jump from 1.8% to 66.9%.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Four dependencies at 99.99, 99.95, 99.95 and 99.9 give 99.790%, which is 91 minutes a month. Your 99.9% promise allows 43.2.</li>
+    <li>A second provider lifts the chain only to 99.890% (48 minutes). Once the provider is parallel, the app tier and database are the ceiling.</li>
+    <li>Replicas buy durability fast: one copy is 2.0e-02 a year, two is 2.2e-06, three is 1.8e-10. Three replicas in one zone is 1.0e-03, almost six orders of magnitude worse than three zones (1.2e-09) in the same model.</li>
+    <li>Stale reads fall off exponentially: 100% at 0 ms, 36.8% at 50 ms, 1.8% at 200 ms, 0.0% at 1,000 ms.</li>
+    <li>The full answer takes 8,100 ms while TTFT is only 600 ms. The streaming NFR must be about TTFT and TPOT, not the total.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>chain.</strong> Run <code>python kata.py chain</code>. It adds a vector database, an auth service and a rate limiter at 99.9% each. Predict the new chain availability before running. Result: 99.491%, 220 minutes a month.</li>
+    <li><strong>repair.</strong> Run <code>python kata.py repair</code>. Rebuild takes 7 days instead of 1. Predict the factor for three replicas. Result: 8.8e-09 versus 1.8e-10, about 50x worse.</li>
+    <li><strong>lag.</strong> Run <code>python kata.py lag</code>. Mean lag becomes 500 ms. Predict the stale rate at 200 ms. Result: 66.9%, and still 13.5% a full second after the write.</li>
+    <li><strong>incident.</strong> Run <code>python kata.py incident</code>. The provider fails 30% of attempts. Predict the load multiplier on the provider. Result: x1.39, with cost per success rising from $0.0092 to $0.0129.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Replace the fixed TTFT with 10,000 samples from a lognormal distribution and print p50, p95 and p99 plus the share of requests over 800 ms. Notice how far the p99 sits from the p50.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Dashboard is green, users say it is broken</td><td>SLI counts HTTP 200 only; slow or stalled streams count as good</td><td>Redefine good as first token in time plus normal completion; measure at the edge</td></tr>
+    <tr><td>Error budget burns during a provider incident</td><td>Provider is a single dependency in series</td><td>Fallback provider or model, circuit breaker (L40), degraded mode</td></tr>
+    <tr><td>User's new message disappears on reload</td><td>Read served by a lagging replica</td><td>Read-your-writes: primary for a short window or a session token</td></tr>
+    <tr><td>Provider overloads further during its own incident</td><td>Retries multiply load (x1.39 at 30% failure in the kata)</td><td>Backoff with jitter, retry budget, load shedding (L13, G21)</td></tr>
+    <tr><td>Cost per request creeps up</td><td>Longer prompts, retries, no caching</td><td>Token ledger (G01), caching (G07), model routing (G17)</td></tr>
+    <tr><td>Data lost despite three replicas</td><td>Correlated failure: bad migration, delete, one zone</td><td>Cross-zone copies, versioned backups, tested restores (L79)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> good-event availability and error-budget burn rate, p95 TTFT and TPOT, replica lag in ms, retry ratio, cost per successful request.</p>
+  <details class="q"><summary>Scenario: your 99.9% monthly SLO is in force. The only LLM provider has a 40-minute full outage on day 9. What does that do to the budget, and what do you do?</summary><div class="a"><ol>
+    <li>Math: 40 / 43.2 is about 93% of the monthly budget gone in one incident. Under a typical error budget policy, risky releases freeze for the rest of the window.</li>
+    <li>During the incident: trip the circuit breaker, route to a fallback provider or a smaller model, return a clear degraded message, stop retries from piling on.</li>
+    <li>After: add an independent fallback. In the kata that lifts the chain from 99.790% to 99.890%, which still misses 99.9%, so also look at the app tier and database.</li>
+    <li>Revisit the target: is 99.9% right for every flow, or should the call path and the dashboard have different SLOs?</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Non-functional requirements turn "reliable and fast" into numbers I can design against and test. For an LLM chat API I set five: availability, durability, consistency, latency and cost. Each one is set per data class, with a number and a named price.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Availability is the product of the chain. Four dependencies at 99.99, 99.95, 99.95 and 99.9 percent give 99.79, about 91 minutes a month, which misses a 99.9 target of 43 minutes until I add a second provider. Durability is replicas times independence: three replicas with a one-day rebuild give about 1e-10 a year. Consistency is read-your-writes for a user's own messages and eventual elsewhere. Latency is two numbers, p95 time to first token and per-token time, because streaming makes total time misleading. Cost is measured per successful request, including retries.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>The numbers break on correlated failure: three replicas in one zone put loss risk near 1e-3 a year. A seven-day rebuild makes the independent figure 50 times worse. A lag spike from 50 to 500 milliseconds turns 1.8 percent stale reads into 67. At 30 percent provider failure, two retries add 39 percent load. Every extra nine cuts the budget tenfold and costs real redundancy, so I price each number before I promise it.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I would make the chat API highly available with replicas and load balancers and monitor it, so users have a great experience and we protect revenue."</p>
+    <p class="strong">"I would set it per data class. Streaming: 99.9% good requests a month, where good means first token inside 800 ms. Transcripts: three replicas across three zones, because in my simple model one zone is about 1e-3 a year and three zones about 1e-9. A user's own messages are read-your-writes, because 200 ms after a write an async replica is stale 1.8% of the time. Each number gets a price: a second provider, three times the storage, extra primary load."</p>
+    <p>The strong answer has a number per dial, a failure mode and a price. The figures come from the kata's simplified model, so present them as illustrative, not as your measured results.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"We keep three replicas, so our durability is eleven nines."</summary><div class="a">Replica math multiplies only if failures are independent. Three replicas in one zone sit near 1e-3 a year in the kata, and deletes, bad migrations and software bugs hit every copy. Eleven nines is a design claim for a system built on checksums, repair and multi-zone storage, not the output of "3 copies".</div></details>
+  <details class="q"><summary>"Our provider is 99.9% and our SLO is 99.9%, so we are covered."</summary><div class="a">Series availabilities multiply, so the chain is below its weakest link. Four dependencies gave 99.79% (91 minutes a month) against a 43.2 minute budget. You need a fallback or a degraded mode, and even then the other dependencies cap the total.</div></details>
+  <details class="q"><summary>"Strong consistency everywhere is the safe default."</summary><div class="a">It is safe and expensive: it adds write latency and can lower availability when a replica is down. Pay for it on billing and quota state. Use read-your-writes for a user's own messages and eventual consistency for analytics, where the cost of staleness is small.</div></details>
+  <details class="q"><summary>"Our latency NFR is end to end under 2 seconds."</summary><div class="a">With TTFT 600 ms and TPOT 25 ms, a 300-token answer takes 8,100 ms end to end. A single end-to-end target is unmeetable for long streamed answers and says nothing about the part users feel first. Set p95 TTFT and p95 TPOT, and tie output length to a separate limit.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>What is a non-functional requirement, and what does a well-formed one for an LLM chat API look like?</summary><div class="a">An NFR says how well the system works, not what it does. Well-formed means metric, number, percentile or window, scope and price: "p95 TTFT under 800 ms for prompts up to 2,000 tokens, measured at the gateway over 30 days". It can be tested and monitored.<div class="f"><b>Follow-up</b>Why p95 and not the average? The average hides the queueing tail. A few slow requests barely move the mean, but they are what a share of users experience every day.</div></div></details>
+  <details class="q"><summary>Your SLO is 99.9% and your only LLM provider offers 99.9%. Can you meet it?</summary><div class="a">No. Availabilities multiply, so any chain with that provider in series sits below 99.9%. Add a fallback provider or a degraded mode so a provider outage is not user-visible downtime. In the kata, four dependencies came to 99.79%.<div class="f"><b>Follow-up</b>Is the second provider's 99.9% independent of the first? Often not: shared region, DNS, your own gateway, or the same upstream cloud. Independence is an assumption to test, not a given.</div></div></details>
+  <details class="q"><summary>What is the difference between availability and durability?</summary><div class="a">Availability is whether requests succeed right now. Durability is whether stored data survives over time. A database can be down for an hour with zero data lost, and a database can be up while having silently lost rows. They use different metrics and different mechanisms: redundancy and failover for one, copies, checksums and backups for the other.</div></details>
+  <details class="q"><summary>How many replicas do you need for the durability of a chat transcript, and how do you reason about it?</summary><div class="a">Loss needs the first failure and then the other n-1 replicas failing before rebuild finishes: roughly n x r x w^(n-1) with w = r x days / 365. Three replicas at 2% and a one-day rebuild is about 1.8e-10 a year. Three is the usual starting point, spread across zones, plus backups.<div class="f"><b>Follow-up</b>What breaks that number? Correlated failures (one zone, bad deploy, delete, corruption) and slow rebuilds. A seven-day rebuild made it about 50 times worse in the kata.</div></div></details>
+  <details class="q"><summary>What consistency does a chat product need for message history?</summary><div class="a">Read-your-writes for the author: they must see what they just sent. Eventual consistency is fine for other readers, search and analytics. Strong consistency is reserved for quota and billing state. That limits the latency and availability cost to where it buys something.<div class="f"><b>Follow-up</b>How do you implement read-your-writes? Route that user's reads to the primary for a short window after a write, or carry a session token (last write position) and only read from replicas that have caught up.</div></div></details>
+  <details class="q"><summary>What latency NFRs would you write for a streaming LLM API?</summary><div class="a">p95 TTFT and p95 TPOT, each with a prompt-size scope, plus a maximum output length. End to end is TTFT + tokens x TPOT, so total time follows from output length. Example: 600 ms TTFT, 25 ms TPOT, 300 tokens is 8.1 seconds, which is acceptable while it streams.<div class="f"><b>Follow-up</b>What drives the tail? Queueing and batching delay at the inference server, long prompts in prefill, and provider brownouts. Details in K08 and K10.</div></div></details>
+  <details class="q"><summary>How do you put cost into an NFR, and what do retries do to it?</summary><div class="a">State cost per successful request at a given prompt and output size. Compute it as per-attempt cost x expected attempts / success probability. At 30% failure with two retries the kata showed x1.39 provider load and $0.0129 per success against $0.0090 per attempt.</div></details>
+  <details class="q"><summary>A 40-minute outage happens under a 99.9% monthly SLO. What is the impact?</summary><div class="a">The budget is 43.2 minutes, so 40 minutes spends about 93% of it in one incident. The error budget policy then typically freezes risky releases, and the postmortem should target a fallback and a degraded mode.</div></details>
+  <details class="q"><summary>The product owner asks for five nines. What do you say?</summary><div class="a">Convert it: about 26 seconds of downtime a month. Ask which flows need it, price what it implies (multi-region, independent fallbacks, no shared single dependency) and offer tiers by flow. Do not agree to a number you cannot test or afford.<div class="f"><b>Follow-up</b>What is the difference between an SLO and an SLA? The SLO is your internal target. The SLA is the contractual promise, usually looser, with credits attached. The gap is your safety margin. Depth in L76.</div></div></details>
+  <details class="q"><summary>Write the NFRs for a voice assistant that answers calls for a clinic.</summary><div class="a">Latency: the dial that dominates. Time to first audio decides whether it feels like a conversation, so TTFT is budgeted across speech recognition, the model and speech synthesis. Availability: a missed call is a lost patient, so define a fallback to voicemail or a human when the provider is down. Durability and privacy: call records need retention, but erasure requests under GDPR or DPDPA mean backups must be deletable, which pulls against durability. Cost: per minute of call, including retries.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the five dials with the unit and price of each; the downtime per month at 99.9% and what each extra nine does; the series and parallel availability formulas; the durability approximation and the two things that break it; the stale-read formula; the end-to-end latency formula; and the cost per successful request formula.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Dials: availability (% good requests, price spares), durability (loss chance per year, price copies), consistency (staleness window, price latency), latency (p95 TTFT and TPOT, price GPUs), cost ($ per good request).</li>
+    <li>43,200 minutes a month; 99.9% allows 43.2 minutes; each extra nine is a tenfold smaller budget.</li>
+    <li>Series multiplies; parallel is 1 minus the product of failure probabilities, if independent.</li>
+    <li>Durability is about n x r x w^(n-1) with w = r x days / 365; breaks on correlated failure and slow rebuilds.</li>
+    <li>Stale probability is e^(-d / mean lag).</li>
+    <li>End to end = TTFT + tokens x TPOT.</li>
+    <li>Cost per success = per-attempt cost x expected attempts / success probability.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L01: In requirements clarification, how do functional requirements differ from non-functional ones, and why ask about NFRs before drawing boxes?</summary><div class="a">Functional requirements say what the system does. Non-functional ones say how well, with numbers. They come early because they decide the architecture: a 99.99% target or a strict latency budget changes what you can draw.</div></details>
+  <details class="q"><summary>A02: You fire 50 LLM calls sequentially, with gather, and with a semaphore. Which is fastest, and why would you still use the semaphore?</summary><div class="a">Gather is fastest because the calls overlap. A semaphore caps concurrency, so you stay under provider rate limits and avoid a burst of 429 errors. Sequential takes about 50 times one call's latency.</div></details>
+  <details class="q"><summary>V01: Rewrite "we made the chatbot faster and cheaper" as an engineer answer.</summary><div class="a">Name the mechanism, a number, a failure mode and a tradeoff. For example: "We cut p95 time to first token by moving the static system prompt to the front so the prefix cache hits, and cut input cost by sending fewer retrieved chunks. The tradeoff is lower recall on long-tail questions, which we watch in the eval suite." Business framing follows in one sentence.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://sre.google/workbook/error-budget-policy/">Google SRE Workbook: Example Error Budget Policy</a><small>Supports: error budget equals 1 minus the SLO. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://sre.google/workbook/alerting-on-slos/">Google SRE Workbook: Alerting on SLOs</a><small>Supports: burn rate and time to budget exhaustion for a 99.9% SLO (depth in L76). Checked 16 Nov 2026.</small></li>
+    <li><a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/DataDurability.html">AWS: Data protection in Amazon S3</a><small>Supports: S3 Standard design target of 99.999999999% durability and 99.99% availability. Checked 16 Nov 2026.</small></li>
+  </ul>
+  <p class="sub">The failure rates, rebuild times, zone-loss rate, lag distribution and prices in the kata are assumptions I chose for illustration. They are not measured or sourced.</p>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L02 T1 W01", "cards": [{"q": "Why can a service not hit 99.9% with one 99.9% dependency in series?", "a": "Availabilities multiply, so the chain falls below 99.9%. Example: 99.99, 99.95, 99.95, 99.9 gives 99.79%, about 91 minutes a month."}, {"q": "How much downtime per 30-day month does 99.9% allow, and what does each extra nine do?", "a": "43.2 minutes. Each extra nine cuts the budget tenfold: 99.99% allows 4.3 minutes."}, {"q": "Why do three replicas not guarantee eleven-nines durability?", "a": "The replica math assumes independent failures. Three replicas in one zone sit near 1e-3 a year, and deletes or bugs hit every copy."}, {"q": "How does rebuild time change durability with n replicas?", "a": "Loss needs the other replicas to die inside the rebuild window. A 7-day rebuild instead of 1 made three replicas about 50 times worse."}, {"q": "With exponential replica lag of mean L, what fraction of reads d ms after a write is stale?", "a": "About e^(-d/L). With L 50 ms and d 200 ms it is 1.8%; with L 500 ms it is 67%."}, {"q": "Why write TTFT and TPOT NFRs instead of one end-to-end latency for a streaming LLM API?", "a": "Users feel the first token, then reading speed. End to end is TTFT + tokens x TPOT: 600 + 300 x 25 = 8,100 ms."}, {"q": "How do you compute cost per successful request when retries exist?", "a": "Per-attempt cost x expected attempts / success probability. At 30% failure with 2 retries: x1.39 provider load, $0.0129 versus $0.0090."}, {"q": "Which consistency level fits each data class in a chat product?", "a": "Own messages: read-your-writes. Quota and billing counters: strong. Analytics and dashboards: eventual. Pay latency only where staleness causes real harm."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

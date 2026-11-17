@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K02 Inference setup</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K02">
+<main>
+<header>
+  <div class="eyebrow"><b>K02</b><span>Inference engineering and hardware</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Inference setup</h1>
+  <p class="lede">How do you prove that a fresh GPU machine can serve a model, and which layer do you blame when it cannot? This page covers the GPU, driver, CUDA runtime and PyTorch chain, plus the model hub. Loading and serving a model is K03.</p>
+  <div class="chips"><span><em>Before</em>K01 What inference engineering is</span><span><em>After</em>K03 Run your first LLM</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Answer the three warm-up questions before reading</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5, answer the check questions</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata, then break it (on a GPU box if you can)</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Station 7 and 8: say the 90-second answer aloud</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank-page recall, flip the cards</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import K02-cards.txt into Anki, set the tracker row</span><small>2 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>nvidia-smi shows "CUDA Version: 12.8" and <code>nvcc</code> is not installed. Can a pip-installed PyTorch built for CUDA 12.8 use this GPU?</summary><div class="a">Yes, if the driver is new enough. The nvidia-smi number is the highest CUDA version the driver supports. The PyTorch wheel carries its own CUDA runtime libraries, so the toolkit and <code>nvcc</code> are not needed. <code>nvcc</code> matters only when you compile CUDA code yourself.</div></details>
+  <details class="q"><summary>A box has driver 550. You install a PyTorch build made for CUDA 13.0. Does it work?</summary><div class="a">No. CUDA 13.x builds need a driver of 580 or higher, and minor version compatibility does not cross a major family. The kata prints this as <code>driver 550 + cu130 FAIL</code>. The same driver 550 is fine for any CUDA 12.x build.</div></details>
+  <details class="q"><summary><code>nvidia-smi</code> shows your GPU, but <code>torch.cuda.is_available()</code> prints <code>False</code>. Name three causes.</summary><div class="a">A CPU-only wheel is installed. The driver is below the minimum for the wheel's CUDA family. The container was started without GPU access. <code>CUDA_VISIBLE_DEVICES</code> is set to an empty value and hides the device.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A GPU inference box is a stack of five layers, and each pair of neighbours has a version contract. If one contract breaks, nothing above it works, and the error message usually names the wrong layer. Setup is the habit of testing the layers bottom up so the first red layer is the bug.</p>
+  <p>You rarely control the bottom two. On Colab or a rented VM the GPU and driver are fixed by the provider. What you choose is the PyTorch build, which carries its own CUDA runtime. So the practical question is always: is this driver new enough for the build I want, and does the build contain kernels for this GPU?</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Five layers and their contracts, bottom up</div>
+    <svg viewBox="0 0 460 280" role="img" aria-label="Five stacked layers from bottom to top: GPU hardware (sm_XY), NVIDIA driver (minimum 450, 525, or 580), CUDA runtime in the wheel, PyTorch wheel (is_available and sm_XY kernels), and Your script.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="226" width="210" height="38" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="22" y="249">1 GPU (compute cap sm_XY)</text>
+          <text x="234" y="249" class="m">T4 7.5, A100 8.0, H100 9.0</text>
+        </g>
+        <g data-step="2">
+          <path d="M117 226 V214" class="ink"/>
+          <rect x="12" y="176" width="210" height="38" rx="6" class="c-soft ln" data-hi="2"/>
+          <text x="22" y="199">2 NVIDIA driver (libcuda)</text>
+          <rect x="234" y="182" width="214" height="26" rx="5" class="c-warn"/>
+          <text x="341" y="199" text-anchor="middle" class="c-paper">driver &gt;= 450 / 525 / 580</text>
+        </g>
+        <g data-step="3">
+          <path d="M117 176 V164" class="ink"/>
+          <rect x="12" y="126" width="210" height="38" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="22" y="149">3 CUDA runtime (in wheel)</text>
+          <text x="234" y="149" class="m">torch.version.cuda runs</text>
+        </g>
+        <g data-step="4">
+          <path d="M117 126 V114" class="ink"/>
+          <rect x="12" y="76" width="210" height="38" rx="6" class="c-soft ln" data-hi="4"/>
+          <text x="22" y="99">4 PyTorch wheel</text>
+          <rect x="234" y="82" width="214" height="26" rx="5" class="c-bad"/>
+          <text x="341" y="99" text-anchor="middle" class="c-paper">needs sm_XY kernels</text>
+        </g>
+        <g data-step="5">
+          <path d="M117 76 V64" class="ink"/>
+          <rect x="12" y="26" width="210" height="38" rx="6" class="c-good" data-hi="5"/>
+          <text x="22" y="49" class="c-paper">5 Your script (vLLM, HF)</text>
+          <text x="234" y="49" class="m">cuda.is_available() is True</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>GPU hardware sets the compute capability sm_XY (such as 7.5 on T4 or 9.0 on H100) that kernels must target.</li>
+      <li>Host NVIDIA driver exposes libcuda and must meet the family minimum: 450 for CUDA 11, 525 for 12, 580 for 13.</li>
+      <li>Pip wheels bundle their own CUDA runtime (torch.version.cuda), while nvidia-smi only shows the driver ceiling.</li>
+      <li>PyTorch wheel must ship SASS for the same major arch with equal or lower minor, or it fails with no kernel image.</li>
+      <li>Your script sits on top and checks cuda.is_available(); if a lower contract broke, the error often names the wrong layer.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Test the five-layer stack bottom up so the first red layer is the real bug.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>Good Drivers Run PyTorch Scripts.</strong> GPU, Driver, Runtime, PyTorch, Script: install and test in that order. Then three numbers that look alike: <strong>smi is the ceiling</strong> (max CUDA the driver supports), <strong>nvcc is the compiler</strong> (toolkit you installed, if any), <strong>torch.version.cuda is what runs</strong>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Three version numbers that get confused</h3>
+  <p><code>nvidia-smi</code> prints a driver version (for example 535.104.05) and a "CUDA Version". That second number is the newest CUDA the driver can serve, not something installed. <code>nvcc --version</code> reports the toolkit compiler, which may be absent. <code>torch.version.cuda</code> reports the runtime the wheel was built against, and that is the one your code uses. They often differ, and that is normal.</p>
+  <details class="q"><summary>Check: smi says 12.8, torch.version.cuda says 12.1, nvcc is missing. Is anything wrong?</summary><div class="a">No. The driver supports up to 12.8, the wheel uses its own 12.1 runtime, and no compiler is needed to run a prebuilt wheel. This only breaks if the driver is below the 525 minimum for the 12.x family.</div></details>
+  <h3>The driver contract</h3>
+  <p>Since CUDA 11, a build runs on any driver at or above the minimum for its major family: 450 for 11.x, 525 for 12.x, 580 for 13.x. This is minor version compatibility. Caveats from NVIDIA: some features that span driver and toolkit can fail on an older driver, and code that depends on PTX needs a newer driver. Across a major family you need a newer driver, or the separate forward-compatibility package, which NVIDIA limits to supported platforms and GPUs.</p>
+  <div class="codewrap"><pre>ok = driver_major &gt;= MIN_DRIVER[build_cuda_major]
+MIN_DRIVER = {11: 450, 12: 525, 13: 580}</pre></div>
+  <figure class="viz" id="viz-diagnose">
+    <div class="vt">Explore: Does this driver, CUDA build, and GPU pass the contracts?</div>
+    <p class="ask">Predict first. For a wheel built with sm_80 and sm_90 kernels, will driver 550 pass CUDA 13.0 on an H100, and will driver 535 pass CUDA 12.1 on a T4?</p>
+    <div class="ctl">
+      <label><span>Host driver</span><select name="drv" data-num><option value="470">470.57.02</option><option value="525">525.60.13</option><option value="535" selected>535.104.05</option><option value="550">550.54.15</option><option value="580">580.65.06</option></select></label>
+      <label><span>Wheel CUDA</span><select name="cu" data-num><option value="11">11.8</option><option value="12" selected>12.1</option><option value="13">13.0</option></select></label>
+      <label><span>GPU (arch)</span><select name="cc"><option value="7.5">T4 (sm_75)</option><option value="8.0">A100 (sm_80)</option><option value="8.9" selected>L4 (sm_89)</option><option value="9.0">H100 (sm_90)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Driver compatibility is checked per CUDA major family (450, 525, 580), and wheel kernels (sm_80, sm_90 here) must cover your GPU's sm_XY.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-diagnose",function(v,fig){
+    var min={11:450,12:525,13:580}[v.cu];
+    var p=v.cc.split("."), maj=+p[0], minr=+p[1];
+    var archOk=(maj===8&&minr>=0)||(maj===9&&minr>=0);
+    var drvOk=v.drv>=min;
+    tl.bars(fig.querySelector("[data-chart]"),{max:620,digits:0,rows:[
+      {label:"Minimum driver for CUDA "+v.cu+".x",value:min,tone:"muted"},
+      {label:"Your host driver",value:v.drv,tone:drvOk?"good":"bad"}
+    ]});
+    if(!drvOk)return {verdict:"FAIL: driver "+v.drv+" < "+min+" needed by CUDA "+v.cu+".x"};
+    if(!archOk)return {verdict:"FAIL: wheel (sm_80, sm_90) has no kernels for sm_"+maj+minr};
+    return {verdict:"PASS: driver "+v.drv+" >= "+min+" and sm_"+maj+minr+" is covered"};
+  })});</script>
+  <h3>The architecture contract</h3>
+  <p>Every GPU has a compute capability such as 7.5 (T4), 8.0 (A100), 8.9 (L4) or 9.0 (H100). A wheel ships precompiled kernels for a list of architectures. A kernel built for sm_80 also runs on sm_86 and sm_89, because binary code runs on the same major with an equal or higher minor. A wheel with no suitable kernel and no PTX fails at the first GPU operation with "no kernel image is available". An old GPU and a brand-new wheel is the usual cause.</p>
+  <details class="q"><summary>Check: a wheel lists only sm_80 and sm_90. Does it run on an sm_89 GPU? On an sm_75 GPU?</summary><div class="a">sm_89: yes, through the sm_80 kernels, same major and higher minor. sm_75: no, there is no 7.x kernel in the list. The kata prints both cases.</div></details>
+  <h3>The box and the hub</h3>
+  <p>Work over SSH inside tmux so a dropped connection does not kill the job, and use a virtual environment so the PyTorch build is pinned. Model weights come from a hub such as Hugging Face. They download into a cache directory, by default under the home folder, which is often the small disk. Point <code>HF_HOME</code> at the large disk before the first download. Gated models need you to accept the license on the hub and pass an access token (<code>HF_TOKEN</code>). A 7B model in 16-bit is about 14 GB of weights, so a full cache disk is a real failure, and K07 shows where that number comes from.</p>
+  <details class="q"><summary>Check: a download dies at 90 percent on a rented VM that has a 500 GB data disk. What do you suspect first?</summary><div class="a">The cache is writing to the small root disk. Set <code>HF_HOME</code> to the data disk and retry. Confirm with <code>df -h</code> while it downloads.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Minimum driver for CUDA 11.x / 12.x / 13.x builds</td><td class="n">450 / 525 / 580</td><td>Checked 16 Nov 2026, NVIDIA CUDA Compatibility</td></tr>
+    <tr><td>Minor version compatibility starts at</td><td class="n">CUDA 11</td><td>Checked 16 Nov 2026, NVIDIA CUDA Compatibility</td></tr>
+    <tr><td>nvidia-smi "CUDA Version" means</td><td>max CUDA the driver supports</td><td>Checked 16 Nov 2026, NVIDIA driver and toolkit matrix</td></tr>
+    <tr><td>pip wheels bundle the CUDA runtime; only a driver is needed</td><td>true</td><td>Checked 16 Nov 2026 in a third-party guide; confirm on pytorch.org</td></tr>
+    <tr><td>Compute capability: T4, A100, L4, H100</td><td class="n">7.5, 8.0, 8.9, 9.0</td><td>From memory, verify</td></tr>
+    <tr><td>T4 memory and bandwidth</td><td class="n">16 GB, about 320 GB/s</td><td>From memory, verify (a secondary source agrees)</td></tr>
+    <tr><td>Colab free tier: GPU typically a T4, not guaranteed, about 12 h session cap</td><td>varies</td><td>Checked 16 Nov 2026 in secondary summaries of the Colab FAQ; read the FAQ yourself</td></tr>
+    <tr><td>7B model weights in 16-bit</td><td class="n">about 14 GB</td><td>Derived: 7e9 params x 2 bytes</td></tr>
+    <tr><td>stack_check.py when no driver exists</td><td class="n">exit code 1 at step 1</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Install route</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>pip wheel with bundled CUDA runtime</td><td>Fastest. Needs only a driver. Easy to pin.</td><td>Large download. Build must match driver family.</td><td>Wrong index URL gives a CPU-only wheel</td></tr>
+    <tr><td>System CUDA toolkit</td><td>Gives you <code>nvcc</code> to compile extensions</td><td>Another version to keep in sync. Admin rights.</td><td>PATH and LD_LIBRARY_PATH pointing at the wrong toolkit</td></tr>
+    <tr><td>GPU container image</td><td>Repeatable. Same stack on every host.</td><td>Driver still comes from the host, so images are not fully portable.</td><td>Host driver below the image's CUDA family</td></tr>
+  </table></div>
+  <div class="scroll"><table><tr><th>Where the GPU lives</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Free notebook (Colab)</td><td>No cost, no setup, a T4 usually</td><td>No guarantee of a GPU, session caps, no root control of the driver</td><td>Runtime reset wipes your installs and cache</td></tr>
+    <tr><td>Rented GPU VM</td><td>Choice of GPU, root access, persistent disk</td><td>Hourly billing even when idle</td><td>Forgotten instances</td></tr>
+    <tr><td>Your own GPU</td><td>No meter, full control</td><td>Hardware cost, VRAM limit</td><td>Driver updates that break pinned builds</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: stack_check.py</h2>
+  <p>One script tests the layers bottom up and stops at the first red one, then a pure function names the cause from numbers. A real run on a GPU box also times a 4096 by 4096 fp16 matmul. The script is 66 lines and needs no packages until torch is imported.</p>
+  <div class="box"><b>Honesty note</b><p>This page was built on a machine with no GPU and no torch (installing torch was blocked there). The output below is a real run, but it shows only the no-driver failure and the simulated table. Steps 2 to 6 of the probe have not been run by me. Run them on Colab or your GPU box and compare.</p></div>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python stack_check.py
+python stack_check.py --simulate</pre></div>
+  <p class="cap">stack_check.py</p><div class="codewrap"><pre data-copy>"""K02 kata: verify the whole inference stack, layer by layer, and say which layer broke.
+Run on the GPU box:  python stack_check.py
+Run anywhere:        python stack_check.py --simulate
+"""
+import shutil, subprocess, sys, time
+
+# Minimum Linux driver branch per CUDA toolkit family (NVIDIA CUDA Compatibility doc, minor version compatibility)
+MIN_DRIVER = {11: 450, 12: 525, 13: 580}
+
+def diagnose(driver, build_cuda, cc, arch_list):
+    """Pure logic. driver='535.104.05', build_cuda='12.1', cc=(8,9), arch_list=['sm_80','sm_90']."""
+    need = MIN_DRIVER.get(int(build_cuda.split(".")[0]))
+    if need is None:
+        return "FAIL", "unknown CUDA family " + build_cuda
+    if int(driver.split(".")[0]) &lt; need:
+        return "FAIL", "driver %s &lt; %d needed by CUDA %s build: upgrade the driver or pick an older torch build" % (driver, need, build_cuda)
+    # SASS runs on the same major arch with an equal or higher minor; PTX can be JIT-compiled forward
+    ok = any(a.startswith("compute_") or (a.startswith("sm_") and int(a[3]) == cc[0] and int(a[4:]) &lt;= cc[1]) for a in arch_list)
+    if arch_list and not ok:
+        return "FAIL", "no kernels runnable on sm_%d%d in this build: pick a build that includes it" % cc
+    return "PASS", "driver %s runs CUDA %s build on sm_%d%d" % (driver, build_cuda, *cc)
+
+def step(n, name, status, detail):
+    print("%d %-22s %-5s %s" % (n, name, status, detail)); return status != "FAIL"
+
+def probe():
+    if not shutil.which("nvidia-smi"):
+        return step(1, "driver (nvidia-smi)", "FAIL", "nvidia-smi not found: no NVIDIA driver on this machine")
+    q = "driver_version,name,memory.total,compute_cap"
+    out = subprocess.run(["nvidia-smi", "--query-gpu=" + q, "--format=csv,noheader,nounits"], capture_output=True, text=True)
+    if out.returncode:
+        return step(1, "driver (nvidia-smi)", "FAIL", out.stderr.strip()[:80])
+    drv, gpu, mib, cc = [x.strip() for x in out.stdout.splitlines()[0].split(",")]
+    step(1, "driver (nvidia-smi)", "PASS", "driver %s" % drv)
+    step(2, "gpu", "PASS", "%s, %.1f GiB, compute capability %s" % (gpu, int(mib) / 1024, cc))
+    try:
+        import torch
+    except ImportError:
+        return step(3, "torch import", "FAIL", "torch not installed: pip install from the index matching your driver")
+    step(3, "torch import", "PASS", "torch %s, built for CUDA %s" % (torch.__version__, torch.version.cuda))
+    if not step(4, "cuda.is_available", "PASS" if torch.cuda.is_available() else "FAIL", str(torch.cuda.is_available())):
+        return False
+    major, minor = (int(x) for x in cc.split("."))
+    verdict, why = diagnose(drv, torch.version.cuda, (major, minor), torch.cuda.get_arch_list())
+    if not step(5, "driver/build/arch", verdict, why):
+        return False
+    x = torch.randn(4096, 4096, device="cuda", dtype=torch.float16)
+    torch.cuda.synchronize(); t = time.perf_counter()
+    for _ in range(20): y = x @ x
+    torch.cuda.synchronize(); dt = (time.perf_counter() - t) / 20
+    tflops = 2 * 4096 ** 3 / dt / 1e12
+    return step(6, "fp16 matmul 4096^2", "PASS", "%.1f TFLOPS, %.0f MiB allocated" % (tflops, torch.cuda.memory_allocated() / 2**20))
+
+def simulate():
+    print("%-44s %-5s %s" % ("scenario (driver, build, sm)", "", "diagnosis"))
+    cases = [("535.104.05", "12.1", (8, 9), ["sm_80", "sm_90"], "driver 535 + cu121 on sm_89 (illustrative)"),
+             ("470.57.02", "12.4", (8, 6), ["sm_80", "sm_86"], "driver 470 + cu124"),
+             ("550.54.15", "13.0", (9, 0), ["sm_90"], "driver 550 + cu130"),
+             ("580.65.06", "13.0", (9, 0), ["sm_90"], "driver 580 + cu130"),
+             ("535.104.05", "12.1", (7, 5), ["sm_80", "sm_90"], "build lacks sm_75 (T4), illustrative")]
+    for drv, cu, cc, arch, label in cases:
+        v, why = diagnose(drv, cu, cc, arch); print("%-44s %-5s %s" % (label, v, why))
+
+if __name__ == "__main__":
+    if "--simulate" in sys.argv: simulate()
+    else: sys.exit(0 if probe() else 1)</pre></div>
+  <p class="cap">Output from a real run (no GPU machine)</p><div class="codewrap"><pre class="out">$ python stack_check.py   # on this machine: no GPU, no driver
+1 driver (nvidia-smi)    FAIL  nvidia-smi not found: no NVIDIA driver on this machine
+exit code 1
+
+$ python stack_check.py --simulate
+scenario (driver, build, sm)                       diagnosis
+driver 535 + cu121 on sm_89 (illustrative)   PASS  driver 535.104.05 runs CUDA 12.1 build on sm_89
+driver 470 + cu124                           FAIL  driver 470.57.02 &lt; 525 needed by CUDA 12.4 build: upgrade the driver or pick an older torch build
+driver 550 + cu130                           FAIL  driver 550.54.15 &lt; 580 needed by CUDA 13.0 build: upgrade the driver or pick an older torch build
+driver 580 + cu130                           PASS  driver 580.65.06 runs CUDA 13.0 build on sm_90
+build lacks sm_75 (T4), illustrative         FAIL  no kernels runnable on sm_75 in this build: pick a build that includes it</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Minimum Linux driver branch per CUDA family</div>
+    <div data-bars='{"digits":0,"max":620,"rows":[{"label":"CUDA 11.x minimum","value":450,"tone":"good"},{"label":"CUDA 12.x minimum","value":525},{"label":"CUDA 13.x minimum","value":580,"tone":"warn"}]}'></div>
+    <figcaption><b>Takeaway.</b> Minor version compatibility holds within each family once the host driver meets 450, 525, or 580.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Step 1 fails and the script stops with exit code 1. The first red layer is the bug, so nothing above it is tested.</li>
+    <li>Row 2: driver 470 fails a CUDA 12.4 build because 470 is below 525. The same driver would pass a CUDA 11 build, which needs only 450.</li>
+    <li>Rows 1 and 3: driver 535 passes cu121 but driver 550 fails cu130. A newer driver number does not help across a family; the threshold is 580.</li>
+    <li>Row 5: the build lists sm_80 and sm_90 and still fails on sm_75, while sm_89 passed in row 1 through the sm_80 kernels.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Boundary.</strong> In <code>simulate()</code>, change the driver of case 2 from <code>470.57.02</code> to <code>525.60.13</code>. Predict the verdict, then run. It should flip to PASS at exactly 525.</li>
+    <li><strong>Hidden GPU (needs a GPU box).</strong> Run <code>CUDA_VISIBLE_DEVICES= python stack_check.py</code>. Predict which step fails. Steps 1 to 3 should pass and step 4 should fail, which is the "nvidia-smi works but torch cannot see it" symptom.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Parse the "CUDA Version" from the nvidia-smi header and add a check that it is at least <code>torch.version.cuda</code>. Then explain why that check is weaker than the driver-minimum check.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td><code>is_available()</code> False, nvidia-smi fine</td><td>CPU-only wheel, driver below family minimum, container without GPU access, hidden device</td><td>Print <code>torch.version.cuda</code>. Reinstall from the right index. Start the container with GPU access. Unset <code>CUDA_VISIBLE_DEVICES</code>.</td></tr>
+    <tr><td>nvidia-smi cannot talk to the driver, or reports a driver and library version mismatch</td><td>Kernel module and user-space libraries differ, often after an update without a reboot</td><td>Reboot, or reload the module. Pin driver packages.</td></tr>
+    <tr><td>"no kernel image is available for execution on the device"</td><td>The build has no kernels for this GPU's architecture</td><td>Use a build that lists your sm_XY, or an older GPU-compatible build.</td></tr>
+    <tr><td>Weights download fails with 401 or 403</td><td>Gated model, license not accepted, or no token</td><td>Accept the license on the hub and set <code>HF_TOKEN</code>.</td></tr>
+    <tr><td>Download stops mid-way, disk full</td><td>Cache on the small root disk</td><td>Set <code>HF_HOME</code> to the data disk.</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> driver version and GPU name at startup (log them), memory used and GPU utilization from nvidia-smi, temperature and power draw, and free disk under the cache path.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Question: "You are handed a fresh GPU machine. How do you make sure it can serve a model?" Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Before I load any model I verify the stack from the bottom up, because most setup failures are a broken version contract, not a model problem. One script checks the GPU, the driver and the PyTorch build, then runs a real matmul. If it passes, any later failure is about the model or the engine.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>There are four layers to check. The GPU has a compute capability. The driver is installed on the host. The CUDA runtime ships inside the PyTorch wheel, so I do not need a system toolkit, only a driver new enough for the wheel's CUDA family: 450 for 11, 525 for 12, 580 for 13. The CUDA version in nvidia-smi is the ceiling the driver supports, not what is installed. So I run nvidia-smi, import torch, print its CUDA build, check that CUDA is available, and time an fp16 matmul to prove kernels actually run.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>The failures are a CPU-only wheel, a driver below the family minimum, a build with no kernels for the GPU's architecture, or a container started without GPU access. Minor version compatibility does not cross a major family, so a CUDA 13 build on driver 550 fails. I pin the driver, wheel and Python in an image so the box is repeatable.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I would spin up a cloud GPU, install CUDA and PyTorch, and download the model. The cloud makes it easy to scale."</p>
+    <p class="strong">"I verify bottom up: nvidia-smi for driver and GPU, then the PyTorch wheel's CUDA build against the driver minimum for that family, which is 525 for CUDA 12, then a timed fp16 matmul to prove the kernels run. After that I pin driver, wheel and Python in an image."</p>
+    <p>The weak answer names tools and a business benefit. The strong one names the layers, a number, and the check that proves each one, and it implies how it fails. The numbers 525 and the matmul check come from this page; you have not measured them yourself.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"nvidia-smi says CUDA 12.8, so CUDA 12.8 is installed and my PyTorch will use it."</summary><div class="a">That number is the highest CUDA version the driver supports. PyTorch uses the runtime bundled in its own wheel, shown by <code>torch.version.cuda</code>, and <code>nvcc</code> may not exist at all.</div></details>
+  <details class="q"><summary>"I need to install the full CUDA toolkit on every inference box, or PyTorch cannot use the GPU."</summary><div class="a">A pip wheel bundles the runtime libraries, so only the driver must be right. The toolkit, with <code>nvcc</code>, is needed only to compile CUDA code, for example some extensions built from source.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk me through verifying a fresh GPU box, in order.</summary><div class="a">GPU and driver with nvidia-smi, then import torch and print the version and <code>torch.version.cuda</code>, then <code>is_available()</code>, then check driver against the family minimum and the GPU architecture against the build, then a timed fp16 matmul.<div class="f"><b>Follow-up</b>Which step fails if CUDA_VISIBLE_DEVICES is empty? Steps 1 to 3 pass and the availability check fails, because the device is hidden from the process.</div></div></details>
+  <details class="q"><summary>What is the difference between the CUDA version in nvidia-smi, in nvcc, and in torch.version.cuda?</summary><div class="a">smi: the maximum the driver supports. nvcc: the toolkit compiler installed, if any. torch.version.cuda: the runtime the wheel was built with and actually uses.</div></details>
+  <details class="q"><summary>The same container image works on one host and fails on another. What changed?</summary><div class="a">The host driver. The image carries the runtime, but the driver comes from the host. The second host's driver is probably below the minimum for the image's CUDA family.<div class="f"><b>Follow-up</b>What does the NVIDIA container runtime do? It exposes the GPU device and the host driver libraries inside the container. From memory, verify.</div></div></details>
+  <details class="q"><summary>What is the minimum driver for a CUDA 12 build, and what happens to a CUDA 13 build on a driver that satisfies it?</summary><div class="a">525 for CUDA 12.x. A CUDA 13 build needs 580, so on 525 to 579 it fails to initialize and <code>is_available()</code> is False, unless the forward-compatibility package applies.</div></details>
+  <details class="q"><summary>What is compute capability, and why does a wheel care?</summary><div class="a">It is the GPU's architecture version, such as 8.0 or 9.0. A wheel carries precompiled kernels for a list of them. With no runnable kernel and no PTX, the first GPU operation fails with "no kernel image".<div class="f"><b>Follow-up</b>Why does an sm_80 kernel run on sm_89? Binary code runs on the same major with an equal or higher minor.</div></div></details>
+  <details class="q"><summary>Why time a matmul instead of trusting is_available()?</summary><div class="a">is_available() only shows the driver initialized. A matmul proves the kernels load and run, uses real memory, and gives a TFLOPS baseline to compare against the spec sheet and to catch throttled clocks.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the five layers in order, the three CUDA numbers and what each means, the minimum driver per CUDA family, the order of the checks in a verify script, and four reasons <code>is_available()</code> is False.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Layers: GPU, driver, CUDA runtime (in the wheel), PyTorch, script.</li>
+    <li>smi is the ceiling the driver supports. nvcc is the installed compiler. torch.version.cuda is what runs.</li>
+    <li>Minimum driver: 450 for CUDA 11, 525 for 12, 580 for 13.</li>
+    <li>Checks: nvidia-smi, import torch, torch.version.cuda, is_available, driver and architecture contracts, timed matmul.</li>
+    <li>False causes: CPU-only wheel, driver below minimum, container without GPU access, hidden by CUDA_VISIBLE_DEVICES.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K01: Name the layers a request passes through from the client to the GPU, and say where a driver mismatch would show up.</summary><div class="a">Client, gateway or API, inference server and engine, framework such as PyTorch, CUDA runtime, driver, GPU. A mismatch shows at the runtime to driver boundary, as a failed GPU initialization.</div></details>
+  <details class="q"><summary>A03: How do you keep a long job alive on a remote box when your SSH session drops?</summary><div class="a">Run it inside tmux or screen, or start it with nohup and write logs to a file. Reattach later with <code>tmux attach</code>.</div></details>
+  <details class="q"><summary>D01: What does an LLM produce at each generation step?</summary><div class="a">A score for every token in the vocabulary (logits). One token is chosen from that distribution, appended to the input, and the step repeats.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://docs.nvidia.com/deploy/cuda-compatibility/latest/minor-version-compatibility.html">NVIDIA: CUDA Compatibility, minor version compatibility</a><small>Minimum driver per CUDA family (450, 525, 580) and the three caveats. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://docs.nvidia.com/deploy/cuda-compatibility/latest/forward-compatibility.html">NVIDIA: CUDA Compatibility, forward compatibility</a><small>The forward-compatibility package for newer toolkits on older drivers, limited by platform and GPU. Checked 16 Nov 2026.</small></li>
+    <li><a href="https://docs.nvidia.com/datacenter/tesla/drivers/cuda-toolkit-driver-and-architecture-matrix.html">NVIDIA: CUDA Toolkit, Driver, and Architecture Matrix</a><small>nvidia-smi reports the maximum CUDA version the driver supports. Seen through a search excerpt 16 Nov 2026.</small></li>
+    <li><a href="https://pytorch.org/get-started/locally/">PyTorch: Get Started</a><small>Pick the OS, package and compute platform to get the right install command. I did not read the current list of CUDA builds; check the selector on the day.</small></li>
+  </ul>
+  <p class="sub">Colab limits come from secondary summaries that quote the Colab FAQ. Compute capabilities and T4 specs are from memory.</p>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K02 T2 W01", "cards": [{"q": "Why can a pip-installed PyTorch use the GPU on a box with no CUDA toolkit installed?", "a": "The wheel bundles its own CUDA runtime libraries. Only the NVIDIA driver must be installed and new enough for the wheel's CUDA family."}, {"q": "What are the minimum driver versions for CUDA 11.x, 12.x and 13.x builds?", "a": "450 for 11.x, 525 for 12.x, 580 for 13.x (NVIDIA CUDA Compatibility, checked 16 Nov 2026)."}, {"q": "What does the CUDA Version in the nvidia-smi header tell you?", "a": "The highest CUDA version the driver supports. It is not the installed toolkit, and not the runtime PyTorch uses."}, {"q": "nvidia-smi works but torch.cuda.is_available() is False. What are the likely causes?", "a": "CPU-only wheel, driver below the build's CUDA minimum, container started without GPU access, or CUDA_VISIBLE_DEVICES hiding the device."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A01 Python for AI engineering</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A01">
+<main>
+<header>
+  <div class="eyebrow"><b>A01</b><span>Foundations and applied math</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Python for AI engineering</h1>
+  <p class="lede">How do you keep bad input out of an AI system at the boundary, and make the project reproducible on someone else's machine? This page covers type hints, dataclasses, pydantic validation and uv packaging.</p>
+  <div class="chips"><span><em>Before</em>none, first topic</span><span><em>After</em>A02 Async Python</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production and interview, say the 90 seconds</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, blank-page recall</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the 4 cards, update the tracker</span><small>2 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You annotate <code>max_tokens: int</code> in a dataclass and pass <code>"512"</code>. What does Python do at runtime?</summary><div class="a">Nothing. The dataclass stores the string as is. Type hints are not enforced by the interpreter. The kata's plain dataclass accepted <code>max_tokens='512'</code> and <code>temperature='hot'</code>.</div></details>
+  <details class="q"><summary>A teammate writes <code>max_token: 512</code> (missing the s) in a config file. With a default pydantic model, is that an error?</summary><div class="a">No. Pydantic ignores extra keys by default, so the typo is dropped and <code>max_tokens</code> silently falls back to its default (1024 in the kata). You need <code>extra="forbid"</code> to catch it.</div></details>
+  <details class="q"><summary>Pydantic gets <code>"512"</code> for an int field. Accept, reject, or depends?</summary><div class="a">Depends on the mode. Lax mode (the default) coerces <code>"512"</code> to <code>512</code>. Strict mode rejects it. The kata runs strict and rejects it; <code>BREAK=2</code> runs lax and accepts it.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Python is dynamic, and AI systems feed it messy data from every side: env vars (always strings), JSON from users, JSON from a model, YAML configs. A type hint says what you meant. Nothing checks it unless you add a checker. So you split the world in two: a messy outside and a typed inside, with one validation gate between them.</p>
+  <p>The gate is a pydantic model. Raw input goes in. Either a fully valid, typed, frozen object comes out, or you get every error at once with the field path and the bad value. Past the gate, the rest of your code can trust the types. The same gate also checks structured output from an LLM, which is why this tool shows up all over AI code.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The validation gate, end to end</div>
+    <svg viewBox="0 0 420 190" role="img" aria-label="Messy input from env vars, JSON and LLM output enters the pydantic gate, which checks types, bounds and extra keys, outputting either all ValidationError paths at once or a typed frozen LLMConfig object.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="45" width="110" height="72" rx="8" class="c-muted" data-hi="1"/>
+          <text x="65" y="72" text-anchor="middle">env, JSON, YAML</text>
+          <text x="65" y="90" text-anchor="middle">LLM output</text>
+          <text x="65" y="106" text-anchor="middle" class="m">(messy strings)</text>
+        </g>
+        <g data-step="2">
+          <path d="M120 81 H148" class="ink" fill="none"/>
+          <rect x="148" y="25" width="124" height="112" rx="8" class="c-accent" data-hi="2"/>
+          <text x="210" y="50" text-anchor="middle">pydantic gate</text>
+          <text x="210" y="70" text-anchor="middle">parse &amp; check</text>
+          <text x="210" y="88" text-anchor="middle">strict=True</text>
+        </g>
+        <g data-step="3">
+          <text x="210" y="108" text-anchor="middle" data-hi="3">extra="forbid"</text>
+          <text x="210" y="126" text-anchor="middle">frozen=True</text>
+        </g>
+        <g data-step="4">
+          <path d="M272 104 L298 118" class="ln" fill="none"/>
+          <rect x="298" y="96" width="112" height="52" rx="8" class="c-bad" data-hi="4"/>
+          <text x="354" y="118" text-anchor="middle">ValidationError</text>
+          <text x="354" y="136" text-anchor="middle">all 3 errors</text>
+        </g>
+        <g data-step="5">
+          <path d="M272 58 L298 46" class="ink" fill="none"/>
+          <rect x="298" y="22" width="112" height="52" rx="8" class="c-good" data-hi="5"/>
+          <text x="354" y="44" text-anchor="middle">LLMConfig</text>
+          <text x="354" y="62" text-anchor="middle">typed, frozen</text>
+        </g>
+        <text x="210" y="176" text-anchor="middle" class="m">Trusted code lives to the right of the gate.</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Untyped input arrives from env vars, JSON, YAML, or an LLM, where numbers like "512" are strings.</li>
+      <li>The pydantic gate runs in Rust at the boundary, parsing and checking types and Field bounds instead of trusting hints.</li>
+      <li>Setting extra="forbid" rejects unknown keys like max_token so config typos cannot vanish silently.</li>
+      <li>Bad input fails fast and reports all 3 errors at once with field paths, rather than crashing one bug at a time.</li>
+      <li>Valid input exits as a frozen=True object, so later code cannot mutate config mid-run (frozen_instance).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> One strict, frozen validation gate at the boundary keeps messy external data out of your core logic.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Gate, not guard. Four verbs at the gate: <strong>parse</strong> (coerce or not), <strong>check</strong> (ranges and lengths), <strong>forbid</strong> (unknown keys), <strong>freeze</strong> (no later mutation). Then <strong>lock</strong> the environment with uv so the gate runs the same everywhere.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Type hints are metadata</h3>
+  <p>The interpreter stores annotations and ignores them. Tools read them: mypy or pyright statically, pydantic and dataclass-style libraries at runtime. A static checker catches a wrong call in your own code. It cannot see a string that arrives from a file at runtime. That is the gap validation fills.</p>
+  <details class="q"><summary>Check: your code passes mypy. Why can <code>max_tokens</code> still be a string at runtime?</summary><div class="a">mypy checks code you wrote against annotations. Data loaded from env vars or JSON arrives at runtime and bypasses it. Only runtime validation (pydantic) checks that data.</div></details>
+  <h3>Dataclasses: structure without checks</h3>
+  <p><code>@dataclass</code> generates <code>__init__</code>, <code>__repr__</code> and <code>__eq__</code> from the annotated fields. Use it for internal records you build yourself. <code>frozen=True</code> makes instances immutable. It does no validation, so it suits data that is already trusted.</p>
+  <h3>Pydantic: parse, check, report</h3>
+  <p>A <code>BaseModel</code> validates on construction. <code>Field(ge=0, le=2)</code> adds bounds. All errors are collected and reported together, each with a location, a message and the bad input. Key settings: <code>extra="forbid"</code> rejects unknown keys, <code>strict=True</code> disables coercion, <code>frozen=True</code> blocks mutation. Pydantic v2 runs its core in Rust, which is why validation is fast enough to sit on hot paths.</p>
+  <details class="q"><summary>Check: when do you pick a plain dataclass over a pydantic model?</summary><div class="a">Dataclass for internal data you construct yourself and already trust. Pydantic at the boundary, where input is untrusted: config files, API requests, LLM output.</div></details>
+  <h3>uv: one tool for the environment</h3>
+  <p><code>uv init</code> creates a project with <code>pyproject.toml</code>. <code>uv add pydantic</code> records the dependency and writes <code>uv.lock</code>, which pins exact versions of everything, including transitive dependencies. <code>uv sync</code> rebuilds the environment from the lock. <code>uv run python kata.py</code> runs inside that environment. Commit the lock file; a teammate or a CI job then gets the same versions you tested.</p>
+  <details class="q"><summary>Check: why commit <code>uv.lock</code> as well as <code>pyproject.toml</code>?</summary><div class="a">pyproject.toml lists version ranges. The lock pins exact resolved versions, so every machine gets the same environment. Without it, a new release of a dependency can change behavior between two installs.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Pydantic version in the kata run</td><td class="n">2.13.5</td><td>Your own run, 15 Nov 2026</td></tr>
+    <tr><td>uv version in the kata run</td><td class="n">0.11.32</td><td>Your own run, 15 Nov 2026</td></tr>
+    <tr><td>Errors reported for 3 bad fields</td><td class="n">3 at once</td><td>Your own run</td></tr>
+    <tr><td>Pydantic default for unknown keys</td><td class="n">ignored</td><td>Your own run (BREAK=1)</td></tr>
+    <tr><td>Pydantic default coercion of "512" to int</td><td class="n">lax: accepted</td><td>Your own run (BREAK=2)</td></tr>
+    <tr><td>Pydantic core implementation language</td><td class="n">Rust</td><td>From memory, verify</td></tr>
+    <tr><td>uv relative speed vs pip</td><td class="n">often 10x or more</td><td>From memory, verify; benchmark yourself</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Plain dict</td><td>Zero setup</td><td>No checks, typos pass</td><td>KeyError deep in the call stack</td></tr>
+    <tr><td>Dataclass</td><td>Light, standard library, clear shape</td><td>No validation</td><td>Strings in int fields at runtime</td></tr>
+    <tr><td>Pydantic lax</td><td>Forgiving, handles env strings</td><td>Silent coercion hides sloppy producers</td><td>"true" or "1" turning into True unexpectedly</td></tr>
+    <tr><td>Pydantic strict + forbid</td><td>Catches types, typos and range errors</td><td>More friction, env vars need explicit parsing</td><td>Rejecting valid-looking input like "512" from env</td></tr>
+    <tr><td>uv with lock</td><td>Reproducible, fast installs</td><td>One more file to commit and review</td><td>Stale lock after editing pyproject without re-locking</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: typed config loader</h2>
+  <p>Load an LLM config from a dict. A plain dataclass accepts garbage. A pydantic model rejects it and lists every problem with the field path and the bad value.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>uv add pydantic   # or: pip install pydantic
+python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""A01 kata: a typed config loader that rejects bad input with clear errors.
+Run: python kata.py            (try BREAK=1 python kata.py, then BREAK=2 python kata.py)
+"""
+import os
+from dataclasses import dataclass
+from typing import Annotated
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+BREAK = os.environ.get("BREAK", "")
+
+# --- 1. Plain dataclass: type hints are documentation only. Nothing is checked. ---
+@dataclass
+class PlainConfig:
+    model: str
+    temperature: float
+    max_tokens: int
+
+# --- 2. Pydantic model: the same shape, but checked at the boundary. ---
+class LLMConfig(BaseModel):
+    # BREAK=1 drops extra="forbid", so typos in keys vanish silently.
+    # BREAK=2 turns on lax coercion for everything (strict False is the default).
+    model_config = ConfigDict(
+        extra=None if BREAK == "1" else "forbid",
+        strict=False if BREAK == "2" else True,
+        frozen=True,
+    )
+    model: Annotated[str, Field(min_length=1)]
+    temperature: Annotated[float, Field(ge=0.0, le=2.0)] = 0.7
+    max_tokens: Annotated[int, Field(gt=0, le=200_000)] = 1024
+    retries: Annotated[int, Field(ge=0, le=5)] = 2
+
+def load(raw: dict) -&gt; LLMConfig | None:
+    try:
+        return LLMConfig(**raw)
+    except ValidationError as e:
+        print(f"  REJECTED with {e.error_count()} error(s):")
+        for err in e.errors():
+            loc = ".".join(str(p) for p in err["loc"])
+            print(f"    - {loc}: {err['msg']} (got {err['input']!r})")
+        return None
+
+CASES = {
+    "good":        {"model": "llama-3.1-8b", "temperature": 0.2, "max_tokens": 512},
+    "bad values":  {"model": "", "temperature": 7.5, "max_tokens": -5},
+    "wrong types": {"model": "llama-3.1-8b", "temperature": "hot", "max_tokens": "512"},
+    "typo in key": {"model": "llama-3.1-8b", "max_token": 512},
+}
+
+print("== plain dataclass (no checks) ==")
+for name, raw in CASES.items():
+    try:
+        c = PlainConfig(**{k: v for k, v in raw.items() if k in PlainConfig.__annotations__})
+        print(f"{name:12s} accepted: {c}")
+    except TypeError as e:
+        print(f"{name:12s} crashed: {e}")
+
+print(f"\n== pydantic LLMConfig (BREAK={BREAK or 'off'}) ==")
+for name, raw in CASES.items():
+    print(f"{name:12s}")
+    c = load(raw)
+    if c:
+        print(f"  accepted: {c.model_dump()}")
+
+print("\n== frozen: mutation is blocked ==")
+good = load(CASES["good"])
+try:
+    good.temperature = 9.9
+except ValidationError as e:
+    print("  blocked:", e.errors()[0]["type"])</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">== plain dataclass (no checks) ==
+good         accepted: PlainConfig(model='llama-3.1-8b', temperature=0.2, max_tokens=512)
+bad values   accepted: PlainConfig(model='', temperature=7.5, max_tokens=-5)
+wrong types  accepted: PlainConfig(model='llama-3.1-8b', temperature='hot', max_tokens='512')
+typo in key  crashed: PlainConfig.__init__() missing 2 required positional arguments: 'temperature' and 'max_tokens'
+
+== pydantic LLMConfig (BREAK=off) ==
+good        
+  accepted: {'model': 'llama-3.1-8b', 'temperature': 0.2, 'max_tokens': 512, 'retries': 2}
+bad values  
+  REJECTED with 3 error(s):
+    - model: String should have at least 1 character (got '')
+    - temperature: Input should be less than or equal to 2 (got 7.5)
+    - max_tokens: Input should be greater than 0 (got -5)
+wrong types 
+  REJECTED with 2 error(s):
+    - temperature: Input should be a valid number (got 'hot')
+    - max_tokens: Input should be a valid integer (got '512')
+typo in key 
+  REJECTED with 1 error(s):
+    - max_token: Extra inputs are not permitted (got 512)
+
+== frozen: mutation is blocked ==
+  blocked: frozen_instance</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Errors caught per kata case by Pydantic (BREAK=off) vs PlainConfig</div>
+    <div data-bars='{"unit":" errors","digits":0,"max":3,"rows":[{"label":"bad values","value":3,"tone":"good","text":"3 caught (PlainConfig: 0)"},{"label":"wrong types","value":2,"tone":"good","text":"2 caught (PlainConfig: 0)"},{"label":"typo in key","value":1,"tone":"good","text":"1 caught (PlainConfig: crashed)"},{"label":"good","value":0,"tone":"muted","text":"0 errors, frozen"}]}'></div>
+    <figcaption><b>Takeaway.</b> Pydantic catches all 3 bad fields in one report while PlainConfig silently accepts bad values and wrong types.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>The dataclass accepted <code>temperature=7.5</code>, <code>max_tokens=-5</code> and an empty model name. It stored <code>'hot'</code> and <code>'512'</code> as strings.</li>
+    <li>"bad values" produced 3 errors in one report, not 1. You fix everything in one pass.</li>
+    <li>The typo <code>max_token</code> is rejected because of <code>extra="forbid"</code>.</li>
+    <li>"512" is rejected for an int field because the model is strict. In production, env vars are always strings, so you must parse them deliberately.</li>
+    <li>Assigning to a frozen model raises <code>frozen_instance</code>, so config cannot drift mid-run.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Drop forbid.</strong> Run <code>BREAK=1 python kata.py</code>. Predict first: what happens to the "typo in key" case, and what value does <code>max_tokens</code> end up with? (Accepted, with <code>max_tokens</code> at its default 1024. The typo is silent.)</li>
+    <li><strong>Go lax.</strong> Run <code>BREAK=2 python kata.py</code>. Predict first: which of the "wrong types" errors disappear? (<code>"512"</code> is coerced to 512; only <code>'hot'</code> still fails.)</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a field validator that checks <code>model</code> against an allowed list, and load the values from environment variables with <code>pydantic-settings</code>.</p>
+  <p class="sub">Caveat: the dataclass "typo in key" crash in the output comes from the kata's own filter, which drops unknown keys before building. It is a contrived case; the point is the first three rows.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Setting has no effect, default is used</td><td>Typo in key, unknown keys ignored</td><td><code>extra="forbid"</code></td></tr>
+    <tr><td>Works on your laptop, fails in CI</td><td>Unpinned dependency versions drifted</td><td>Commit <code>uv.lock</code>, install with <code>uv sync --frozen</code></td></tr>
+    <tr><td>LLM returns JSON that crashes downstream code</td><td>Output used without validation</td><td>Validate with a pydantic model, retry or repair on <code>ValidationError</code></td></tr>
+    <tr><td>Env var "false" treated as true</td><td>Raw string truthiness, or lax coercion surprises</td><td>Parse booleans explicitly or use settings with typed fields</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> count and log validation failures by field, and alert when LLM-output validation failures rise. That rate is an early signal of a model or prompt regression.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>In AI systems, most failures start with bad data crossing a boundary: a mistyped config key, a string where a number belongs, a model returning malformed JSON. I put a typed validation gate at every boundary so the rest of the code can trust its inputs, and I pin the environment with a lock file so it behaves the same on every machine.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Type hints are only metadata; Python ignores them at runtime. So I use pydantic models at the edges. Construction parses and checks the input, applies bounds like temperature between 0 and 2, and collects all errors with field paths in one ValidationError. I set extra to forbid so typos fail loudly, strict so a string never silently becomes an int, and frozen so config cannot change mid-run. Internal records that I build myself are plain dataclasses. For packaging I use uv: pyproject lists ranges, uv.lock pins exact versions, uv sync rebuilds the environment.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Pydantic defaults are lax and ignore unknown keys, so the safe settings are opt-in. Strict mode makes env vars awkward since they are always strings, so parse them on purpose. Validation checks shape and ranges, not truth: a model can return valid JSON with wrong content. Track validation failure rate as a signal.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"We use Python with pydantic so our code is clean, safe and production ready, and uv keeps things fast."</p><p class="strong">"Config goes through a strict pydantic model with extra forbidden, so a typo like max_token fails at startup instead of silently using the default. LLM output goes through the same gate, and I log validation failure rate per field. uv.lock pins versions so CI matches my laptop."</p><p>The strong answer names the mechanism, one concrete failure it prevents, a setting, and a signal to monitor. The weak one has adjectives only.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"We annotate everything with type hints, so wrong types raise errors at runtime."</summary><div class="a">Wrong. The interpreter ignores annotations. A dataclass with <code>max_tokens: int</code> happily stored <code>'512'</code> in the kata. Only a checker (mypy statically) or a validating library (pydantic at runtime) acts on hints.</div></details>
+  <details class="q"><summary>"Pydantic always rejects bad input, so a typo in a config key will be caught."</summary><div class="a">Wrong. By default pydantic ignores extra keys. With the typo <code>max_token</code> the kata (BREAK=1) accepted the config and used the default 1024. You need <code>extra="forbid"</code>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain in 90 seconds how you keep bad input out of an AI service and make the project reproducible.</summary><div class="a">Use the three-level answer above: boundary validation with strict, forbid and frozen pydantic models, dataclasses for trusted internals, uv.lock for reproducible installs, and a failure-rate metric.</div></details>
+  <details class="q"><summary>Dataclass or pydantic model for a record that came from a user request?</summary><div class="a">Pydantic. The data is untrusted, so it must be parsed and checked. Dataclasses do no validation.<div class="f"><b>Follow-up</b>Where do you use a dataclass then? For internal records you construct from already-validated values.</div></div></details>
+  <details class="q"><summary>What is the difference between lax and strict validation, and which do you want for env vars?</summary><div class="a">Lax coerces compatible types (<code>"512"</code> becomes 512). Strict rejects them. Env vars are always strings, so either parse them explicitly or use a settings class that is meant to coerce, and keep strict for API payloads.</div></details>
+  <details class="q"><summary>A model returns JSON that sometimes breaks your parser. What do you do?</summary><div class="a">Validate with a pydantic model, catch <code>ValidationError</code>, and retry with the error message fed back or fall back. Log failure rate by field.<div class="f"><b>Follow-up</b>What does validation not catch? Wrong content that is well-formed, like a plausible but incorrect number. That needs evals.</div></div></details>
+  <details class="q"><summary>Why does a project need both pyproject.toml and uv.lock?</summary><div class="a">pyproject.toml declares what you want (ranges). The lock records what was resolved (exact versions, transitive included). Commit both for reproducible installs.</div></details>
+  <details class="q"><summary>What does <code>frozen=True</code> buy you on a config object?</summary><div class="a">Immutability. Code cannot change a setting mid-run, which removes a class of bugs where one component mutates shared config. It also makes the object hashable.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the four verbs, the three pydantic settings and what each prevents, dataclass vs pydantic, and the uv files and commands.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Hints are metadata; mypy checks code, pydantic checks runtime data.</li>
+    <li>Gate: messy input in, typed frozen object or all errors out.</li>
+    <li>Four verbs: parse, check, forbid, freeze (then lock).</li>
+    <li>extra=forbid catches typos; strict stops silent coercion; frozen stops mutation.</li>
+    <li>Dataclass for trusted internals, pydantic at boundaries and for LLM output.</li>
+    <li>uv: pyproject ranges, uv.lock exact pins, uv sync, uv run.</li>
+    <li>Monitor validation failure rate; validation does not prove content is correct.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">A01 is the first topic, so there is no earlier topic to draw from. These three use the Python you already know.</p>
+  <details class="q"><summary>Prereq: what is the difference between a list and a tuple, and why does it matter for a config object?</summary><div class="a">Lists are mutable, tuples are immutable. Immutable values are hashable and safe to share, which matches the goal of a frozen config.</div></details>
+  <details class="q"><summary>Prereq: what does a virtual environment isolate?</summary><div class="a">The installed packages for one project, so two projects can use different versions of the same library without conflict.</div></details>
+  <details class="q"><summary>Prereq: why is a mutable default argument like <code>def f(x=[])</code> a bug?</summary><div class="a">The default is created once at function definition, so every call shares the same list and mutations persist across calls.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <p class="sub">The docs below were not fetched in this session (the fetch tool was blocked). Behavior claims on this page come from the kata run. Treat uv details and the Rust and speed claims as "from memory, verify" against these.</p>
+  <ul class="srcs">
+    <li><a href="https://docs.pydantic.dev/latest/concepts/strict_mode/">Pydantic docs: Strict mode</a><small>Lax vs strict coercion. Not fetched this session; behavior confirmed by your own kata run.</small></li>
+    <li><a href="https://docs.pydantic.dev/latest/concepts/models/">Pydantic docs: Models</a><small>extra, frozen and Field constraints. Not fetched this session.</small></li>
+    <li><a href="https://docs.astral.sh/uv/">uv documentation</a><small>Projects, lock file, sync, run. Not fetched this session.</small></li>
+    <li><a href="https://docs.python.org/3/library/dataclasses.html">Python docs: dataclasses</a><small>Generated methods and frozen. Not fetched this session.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A01 T2 W01", "cards": [{"q": "Why does a dataclass with max_tokens: int still accept the string '512' at runtime?", "a": "Type hints are metadata the interpreter ignores. Dataclasses generate methods but do no validation. Only mypy (static) or pydantic (runtime) act on them."}, {"q": "What does pydantic do with an unknown key like max_token by default, and how do you stop it?", "a": "It silently ignores it, so the real field falls back to its default. Set extra='forbid' on the model config."}, {"q": "Lax vs strict pydantic: what happens to '512' for an int field in each?", "a": "Lax coerces it to 512. Strict rejects it with a type error. Env vars are always strings, so parse them deliberately."}, {"q": "Why commit both pyproject.toml and uv.lock?", "a": "pyproject.toml holds version ranges; uv.lock pins exact resolved versions including transitive ones, so every machine and CI installs the same environment."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

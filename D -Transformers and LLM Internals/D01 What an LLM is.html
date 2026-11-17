@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D01 What an LLM is</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D01">
+<main>
+<header>
+  <div class="eyebrow"><b>D01</b><span>Transformers and LLM internals</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>What an LLM is</h1>
+  <p class="lede">What is a language model actually computing, how is it trained, and why does generating text work one token at a time? This page covers the function, the loss and the loop. Tokenization, attention and sampling details have their own IDs.</p>
+  <div class="chips"><span><em>Before</em>None, this is the first topic</span><span><em>After</em>D02 Tokenization</span><span><em>After</em>D10 Decoding and sampling</span><span><em>After</em>K05 Prefill vs decode</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the kata and break it three ways</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production table and interview traps</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank-page recall</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Record the 90-second answer, import the cards</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>The kata model has a vocabulary of 13 tokens. A model that guesses uniformly at every step scores what perplexity? What did the trained bigram score on its own training text?</summary><div class="a">Uniform guessing over 13 tokens scores perplexity 13. The trained bigram scored 2.33 on its training text, so it behaves as if it were choosing between about two equally likely tokens at each step. Perplexity is the effective number of choices per token.</div></details>
+  <details class="q"><summary>Training an LLM and generating from one both "go token by token". True or false, and why?</summary><div class="a">False for training. A training sequence of n tokens gives n-1 next-token predictions scored in one parallel forward pass, because the true tokens are known and a causal mask hides the future. Only generation is sequential, because each new token must be sampled before the next step can start.</div></details>
+  <details class="q"><summary>In the kata, the same trained model gave held-out perplexity of infinity on three ordinary sentences. What single event causes that, and what is the price of the fix?</summary><div class="a">One bigram never seen in training, such as "doctor books", gets probability 0, and log of 0 is minus infinity. Add-0.1 smoothing fixes it: held-out perplexity becomes 4.62. The price is that training perplexity rises from 2.33 to 2.69, because probability is moved from seen pairs to unseen ones.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>An LLM is one function. It takes a sequence of tokens, the context, and returns a probability for every token in its vocabulary being the next one. It does not return a word. It returns a distribution, and a separate step picks a token from it. Everything you have seen an LLM do, answering, coding, calling tools, is that function applied again and again.</p>
+  <p>Generation is a loop around that function: run the context through, get the distribution, sample a token, append it to the context, run again, stop on an end token or a length cap. Training is the same function scored against real text: for every position in a huge corpus, how much probability did the model give the token that actually came next? Push that probability up, across trillions of positions, and the function slowly becomes good at continuing text.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: One function, one loss, one loop</div>
+    <svg viewBox="0 0 460 210" role="img" aria-label="Context tokens enter the model, one forward pass produces logits over V tokens, softmax outputs next-token probabilities, sampling appends one token, and the loop repeats sequentially">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="24" width="96" height="52" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="60" y="47" text-anchor="middle">context</text>
+          <text x="60" y="64" text-anchor="middle" class="m">t1..tn (V=13)</text>
+        </g>
+        <g data-step="2">
+          <path d="M108 50 H134" class="ink"/>
+          <rect x="134" y="24" width="96" height="52" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="182" y="47" text-anchor="middle">model</text>
+          <text x="182" y="64" text-anchor="middle" class="m">~2N FLOPs</text>
+        </g>
+        <g data-step="3">
+          <path d="M230 50 H256" class="ink"/>
+          <rect x="256" y="24" width="102" height="52" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="307" y="47" text-anchor="middle">P(next)</text>
+          <text x="307" y="64" text-anchor="middle" class="m">nine .71 ten .29</text>
+        </g>
+        <g data-step="4">
+          <path d="M358 50 H384" class="ink"/>
+          <rect x="384" y="24" width="64" height="52" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="416" y="54" text-anchor="middle">sample</text>
+          <path d="M416 76 V126 H60 V78" class="ink" data-hi="4"/>
+          <text x="238" y="118" text-anchor="middle">append token, repeat</text>
+        </g>
+        <g data-step="5">
+          <rect x="36" y="144" width="388" height="44" rx="6" class="c-paper ln" data-hi="5"/>
+          <rect x="36" y="144" width="8" height="44" rx="2" class="c-warn"/>
+          <text x="54" y="164" data-hi="5">Cost: k tokens = k sequential passes</text>
+          <text x="54" y="180" class="m">Early errors stay in context and compound</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Context tokens (t1..tn) enter the model as a sequence; in the kata, V = 13 tokens form the vocabulary.</li>
+      <li>The model runs one forward pass (about 2N FLOPs per token for N weights) and outputs logits over all V tokens.</li>
+      <li>Softmax turns logits into P(next token): after "at" in the kata, "nine" gets 0.71 and "ten" gets 0.29.</li>
+      <li>A sampling rule picks one token from that distribution and appends it to the context, then the loop runs again.</li>
+      <li>Cost and failure: each new token waits on the previous step, so latency scales with output length and early errors compound.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Everything an LLM does is one next-token distribution function run in a sequential sample-and-append loop.</figcaption>
+  </figure>
+  <p>The mental model: a very good autocomplete whose only skill is estimating "what comes next, given everything so far", used as a loop. Facts, style and reasoning show up because predicting text well requires them. There is no database being queried and no plan written down before the first word.</p>
+  <div class="box hook"><b>Memory hook</b><p>One function, one loss, one loop. Function: context in, next-token distribution out. Loss: cross-entropy against the real next token at every position, all in parallel. Loop: sample, append, repeat, strictly one token at a time.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>The chain rule is exact</h3>
+  <p>The probability of any token sequence factorizes exactly: P(x1..xn) = P(x1) * P(x2 | x1) * P(x3 | x1,x2) * ... * P(xn | x1..x(n-1)). There is no approximation in that identity. The only approximation is in how the model estimates each factor. A bigram model keeps only the previous token: P(xt | x(t-1)). A transformer conditions on the whole window. Every language model, old or new, is a different way to estimate the same factors.</p>
+  <h3>Training: score every position, minimize cross-entropy</h3>
+  <p>Take a text, split it into tokens, and shift it by one: inputs are tokens 1 to n-1, targets are tokens 2 to n. The model outputs a distribution at each input position. The loss is the average of minus log of the probability it gave the true next token. A confident right answer costs near 0. A confident wrong answer costs a lot. This is cross-entropy against a one-hot target. Feeding the true previous tokens during training is called teacher forcing.</p>
+  <p>Because a causal mask stops position t from seeing later tokens (D04), one forward pass yields all n-1 predictions at once. That is why training parallelizes across positions and GPUs. Perplexity is exp(loss), the effective number of equally likely choices the model is torn between.</p>
+  <details class="q"><summary>Check: a sequence has 2,000 tokens. How many training predictions come from one forward pass, and what stops the model from cheating by reading the answer?</summary><div class="a">1,999 predictions in one pass. The causal mask means position t only attends to positions up to t, so the target at t+1 is never visible to the prediction made at t.</div></details>
+  <h3>Inference: weights frozen, one token per step</h3>
+  <p>At serving time nothing is learned. The weights are fixed. You feed the prompt, read the logits at the last position, turn them into probabilities with softmax, choose a token (greedy, or sampled with temperature, top-k, top-p: D10), append it and go again. Step k+1 needs the token from step k, so the loop cannot be parallelized across output tokens. Latency is roughly the number of output tokens times the time per step (G15, K05).</p>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: How temperature reshapes P(next | "at") in the kata</div>
+    <p class="ask">Predict first. At T = 0.3, P(nine | "at") is 0.95. If you raise T to 2.0, does "nine" drop below 0.50 or stay above it?</p>
+    <div class="ctl">
+      <label><span>Temperature T</span><input type="range" name="t" min="0.2" max="2.5" step="0.1" value="1.0"><output data-for="t"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Lowering temperature concentrates probability on the top token ("nine"), while raising it flattens the distribution toward uniform (perplexity = exp(entropy)).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var a=Math.pow(5/7,1/v.t),b=Math.pow(2/7,1/v.t),z=a+b,p9=a/z,p10=b/z;
+    var h=-(p9*Math.log(p9)+p10*Math.log(p10)),ppl=Math.exp(h);
+    tl.bars(fig.querySelector("[data-chart]"),{max:1,digits:2,rows:[
+      {label:"nine (base 0.71)",value:p9,tone:"good"},
+      {label:"ten (base 0.29)",value:p10,tone:"muted"}
+    ]});
+    return {verdict:"At T = "+tl.fmt(v.t,1)+": P(nine) = "+tl.fmt(p9,2)+", P(ten) = "+tl.fmt(p10,2)+", effective choices (perplexity) = "+tl.fmt(ppl,2)};
+  })});</script>
+  <h3>Training and inference disagree</h3>
+  <p>During training the model always sees real text as context. During generation it sees its own earlier outputs. One odd choice early on shifts every later distribution, and the errors can compound. This is called exposure bias. In the kata you can watch a model with a one-token memory wander for 12 steps without ever deciding to stop.</p>
+  <figure class="viz stepper" id="viz-train-vs-infer">
+    <div class="vt">Stepper: Training in parallel vs inference one token at a time</div>
+    <svg viewBox="0 0 460 190" role="img" aria-label="Training scores n-1 true positions in one parallel pass with a causal mask, while inference generates k tokens sequentially on its own outputs">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="16" y="20" width="200" height="58" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="116" y="44" text-anchor="middle">Train: n true tokens</text>
+          <text x="116" y="62" text-anchor="middle" class="m">2,000 -> 1,999 targets</text>
+        </g>
+        <g data-step="2">
+          <rect x="244" y="20" width="200" height="58" rx="6" class="c-paper ln" data-hi="2"/>
+          <rect x="244" y="20" width="8" height="58" rx="2" class="c-good"/>
+          <text x="348" y="44" text-anchor="middle">Causal mask</text>
+          <text x="348" y="62" text-anchor="middle" class="m">1 parallel forward pass</text>
+        </g>
+        <g data-step="3">
+          <rect x="16" y="106" width="200" height="58" rx="6" class="c-paper ln" data-hi="3"/>
+          <text x="116" y="130" text-anchor="middle">Infer: weights frozen</text>
+          <text x="116" y="148" text-anchor="middle" class="m">step k+1 waits on step k</text>
+        </g>
+        <g data-step="4">
+          <rect x="244" y="106" width="200" height="58" rx="6" class="c-paper ln" data-hi="4"/>
+          <rect x="244" y="106" width="8" height="58" rx="2" class="c-bad"/>
+          <text x="348" y="130" text-anchor="middle" data-hi="4">Exposure bias</text>
+          <text x="348" y="148" text-anchor="middle" class="m">own output shifts context</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Training feeds all n true tokens at once; in a 2,000-token sequence, 1,999 next-token targets are scored together.</li>
+      <li>A causal mask blocks position t from seeing t+1, so all n-1 cross-entropy losses compute in one parallel pass.</li>
+      <li>Inference freezes weights and feeds only the prompt; step k+1 cannot start until step k samples a token.</li>
+      <li>Exposure bias: inference conditions on its own earlier outputs, so one odd token shifts every later distribution.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Training parallelizes across sequence positions with true context, while inference is strictly sequential on its own outputs.</figcaption>
+  </figure>
+  <details class="q"><summary>Check: why does a tiny error early in generation get worse, not better, as the answer gets longer?</summary><div class="a">Each new token is conditioned on the model's own earlier tokens, which training never showed it. A wrong early token becomes part of the context, so later distributions are computed from a context that is already off-distribution.</div></details>
+  <h3>What the model is not</h3>
+  <p>It is not a lookup. Training compresses text statistics into the weights, and nothing at inference retrieves a document. That is why knowledge has a cutoff date, why it can state a false fact fluently (the training objective rewards plausible continuations, not true ones), and why it does not learn from your chat: the weights do not change. What looks like learning is conditioning on tokens in the context window, and it ends when those tokens leave the window.</p>
+  <h3>Base model, chat model, same loop</h3>
+  <p>A base model is trained only on next-token prediction. A chat model starts from that and is post-trained (E01 to E10) so its continuations look like helpful replies inside a chat template (D25). The serving loop is identical.</p>
+  <h3>Where this meets your work</h3>
+  <p>In a voice agent for a clinic, the reply is produced token by token, so the per-token step time sets how soon the patient hears the first word and how long the sentence takes. And because the model only conditions on its context, it knows a patient's appointment only if retrieval put it in the prompt.</p>
+  <details class="q"><summary>Check: a clinic assistant gives a patient the wrong opening hours. Name the mechanism, not the blame.</summary><div class="a">The model produced the most plausible continuation given its context. If the real hours were not in the context, it filled the gap from training statistics. Nothing was looked up. The fix is putting the hours in the context (retrieval) and letting it abstain when they are absent.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Perplexity from loss</td><td class="n">exp(loss in nats)</td><td>Derived</td></tr>
+    <tr><td>Loss of 2.3 nats is about this many equal choices</td><td class="n">10</td><td>Derived: exp(2.3) = 9.97</td></tr>
+    <tr><td>Perplexity of a uniform guess over V tokens</td><td class="n">V</td><td>Derived. Kata: V = 13</td></tr>
+    <tr><td>Training predictions from one n-token sequence</td><td class="n">n - 1, in parallel</td><td>Derived</td></tr>
+    <tr><td>Sequential forward steps to generate k tokens</td><td class="n">k (after the prompt pass)</td><td>Derived</td></tr>
+    <tr><td>Compute per generated token, dense model with N parameters</td><td class="n">about 2N FLOPs</td><td>Derived: one multiply and one add per weight. Ignores attention over long context</td></tr>
+    <tr><td>Kata bigram, training perplexity</td><td class="n">2.33</td><td>Your own run</td></tr>
+    <tr><td>Kata bigram, held-out perplexity, no smoothing</td><td class="n">infinity</td><td>Your own run</td></tr>
+    <tr><td>Kata bigram with add-0.1 smoothing, train and held-out</td><td class="n">2.69 and 4.62</td><td>Your own run</td></tr>
+    <tr><td>P(nine | at) at temperature 0.3, 1.0, 2.0</td><td class="n">0.95, 0.71, 0.61</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <p class="sub">Four ways to estimate the same next-token factors.</p>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Bigram counts</td><td>Training is one counting pass. Exact, inspectable</td><td>One-token memory. A table of V x V entries</td><td>Zero probability on unseen pairs. Loops and drift</td></tr>
+    <tr><td>Longer n-gram</td><td>More context, still just counts</td><td>Table size grows as V to the power n. Most contexts never seen</td><td>Sparsity. Smoothing choices change results</td></tr>
+    <tr><td>Transformer</td><td>Whole window as context. Generalizes through embeddings</td><td>Attention cost grows with context. KV cache grows with every token</td><td>Memory and latency at long context (K06, K07)</td></tr>
+    <tr><td>State space model (Mamba-style)</td><td>Fixed-size state, constant memory per token</td><td>The past is compressed, so exact recall of a distant token is harder</td><td>Retrieval-style tasks. Your IIIT Hyderabad work sits here (D17)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: bigram language model</h2>
+  <p>A word-level bigram model trained on a 12-sentence clinic corpus. It shows the whole story in miniature: training as counting, generation as a loop, and perplexity as the score. No API key, no GPU.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy># D01 kata: a bigram language model. Run: python kata.py [smooth] [temperature]
+import math, random, sys
+from collections import Counter, defaultdict
+SMOOTH = float(sys.argv[1]) if len(sys.argv) &gt; 1 else 0.0   # break-it 1: add-k smoothing
+TEMP = float(sys.argv[2]) if len(sys.argv) &gt; 2 else 1.0     # break-it 2: sampling temperature
+
+TRAIN = """the clinic opens at nine . the nurse calls the patient . the patient calls the clinic .
+the doctor sees the patient at nine . the nurse books the patient at ten . the clinic books the doctor .
+the doctor calls the nurse . the nurse sees the doctor at ten . the patient sees the nurse at nine .
+the nurse sees the patient at nine . the nurse sees the patient at nine . the patient calls the clinic .""".split(" . ")
+HELD = ["the doctor books the clinic", "the patient opens the doctor", "the nurse sees the patient at ten"]
+
+def toks(s): return ["&lt;s&gt;"] + s.replace(" .", "").split() + ["&lt;/s&gt;"]
+train = [toks(s.strip(" .\n")) for s in TRAIN if s.strip()]
+held = [toks(s) for s in HELD]
+
+# TRAINING: one pass of counting. No gradients, no loop over epochs.
+big = defaultdict(Counter)
+for s in train:
+    for a, b in zip(s, s[1:]): big[a][b] += 1
+VOCAB = sorted({w for s in train for w in s[1:]})  # targets only, sorted: set order changes per run
+V = len(VOCAB)
+n_train = sum(len(s) - 1 for s in train)
+print(f"vocab={V} bigram_types={sum(len(c) for c in big.values())} training_predictions={n_train}")
+
+def probs(prev, temp=1.0):
+    c = big[prev]; tot = sum(c.values())
+    p = {w: (c[w] + SMOOTH) / (tot + SMOOTH * V) for w in VOCAB}
+    if temp != 1.0:
+        z = sum(v ** (1 / temp) for v in p.values() if v &gt; 0)
+        p = {w: (v ** (1 / temp) / z if v &gt; 0 else 0.0) for w, v in p.items()}
+    return p
+
+print("\nP(next | 'at'), top 3 at three temperatures:")
+for t in (0.3, 1.0, 2.0):
+    top = sorted(probs("at", t).items(), key=lambda x: -x[1])[:3]
+    print(f"  T={t}: " + "  ".join(f"{w} {p:.2f}" for w, p in top))
+
+# INFERENCE: a sequential loop. Each token needs the previous one, so it cannot be parallel.
+def sample(rng, temp=TEMP):
+    out, steps = ["&lt;s&gt;"], 0
+    while out[-1] != "&lt;/s&gt;" and steps &lt; 12:
+        p = probs(out[-1], temp)
+        out.append(rng.choices(list(p), weights=list(p.values()))[0]); steps += 1
+    return out[1:], steps
+rng = random.Random(0)
+print(f"\nsamples (temperature={TEMP}, smooth={SMOOTH}):")
+for _ in range(4):
+    s, steps = sample(rng); print(f"  {steps:2d} forward steps -&gt; {' '.join(s)}")
+
+def ppl(data):
+    nll, n = 0.0, 0
+    for s in data:
+        for a, b in zip(s, s[1:]):
+            p = probs(a).get(b, 0.0)
+            if p == 0: return float("inf")
+            nll -= math.log(p); n += 1
+    return math.exp(nll / n)
+print(f"\nperplexity train={ppl(train):.2f}  heldout={ppl(held):.2f}")</pre></div>
+  <p class="cap">Output from a real run (identical on every run: the random seed is fixed and the vocabulary is sorted)</p><div class="codewrap"><pre class="out">vocab=13 bigram_types=31 training_predictions=81
+
+P(next | 'at'), top 3 at three temperatures:
+  T=0.3: nine 0.95  ten 0.05  &lt;/s&gt; 0.00
+  T=1.0: nine 0.71  ten 0.29  &lt;/s&gt; 0.00
+  T=2.0: nine 0.61  ten 0.39  &lt;/s&gt; 0.00
+
+samples (temperature=1.0, smooth=0.0):
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   5 forward steps -&gt; the nurse at ten &lt;/s&gt;
+   8 forward steps -&gt; the patient sees the patient at ten &lt;/s&gt;
+
+perplexity train=2.33  heldout=inf</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata perplexity across baseline, unsmoothed, and add-0.1 smoothing</div>
+    <div data-bars='{"digits":2,"rows":[{"label":"Uniform baseline (V=13)","value":13,"tone":"muted"},{"label":"Held-out, add-0.1 smooth","value":4.62,"tone":"warn"},{"label":"Train, add-0.1 smooth","value":2.69,"tone":"muted"},{"label":"Train, unsmoothed","value":2.33,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Unsmoothed training perplexity (2.33) beats the uniform baseline (13), but held-out is infinity until add-0.1 smoothing trades 2.69 train for 4.62 held-out.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Training is a counting pass over 81 predictions. There are no epochs and no gradients. For a bigram, counting is the exact optimum of the cross-entropy loss. A neural network reaches the same place slowly by gradient descent.</li>
+    <li>The model outputs a distribution, not a word. After "at" it gives nine 0.71 and ten 0.29 at temperature 1.0. Two runs of the same prompt can differ without anything being broken.</li>
+    <li>Every sample is a loop of forward steps, one per token. The sample that needed 8 steps cannot be computed in fewer than 8 sequential calls.</li>
+    <li>Training perplexity 2.33 against a uniform baseline of 13 means the model learned a lot about this corpus. The held-out score is infinity, because one unseen pair gets probability 0. Low training perplexity says nothing about unseen text.</li>
+    <li>Temperature reshapes the same distribution. At T=0.3 nine rises to 0.95, at T=2.0 it drops to 0.61.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Smoothing.</strong> Run <code>python kata.py 0.1</code>. Predict first: do training and held-out perplexity go up or down? Then compare, and read how the samples degrade.</li>
+    <li><strong>Temperature.</strong> Run <code>python kata.py 0 0.3</code>. Predict how many of the four samples will be identical. Then explain why very low temperature is a problem for a voice agent that must not repeat itself.</li>
+    <li><strong>One-token memory.</strong> In the smoothing run, one sample hit the 12-step cap without ever ending. Predict why a model whose only state is the previous token cannot know a sentence has gone on too long.</li>
+  </ol></div>
+  <p class="cap">Break 1 and 2 outputs, from real runs</p>
+  <div class="codewrap"><pre class="out">samples (temperature=1.0, smooth=0.1):
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+  12 forward steps -&gt; the nurse books the nurse at ten the patient sees the patient
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+
+perplexity train=2.69  heldout=4.62</pre></div>
+  <div class="codewrap"><pre class="out">samples (temperature=0.3, smooth=0.0):
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   5 forward steps -&gt; the patient at nine &lt;/s&gt;
+   8 forward steps -&gt; the patient calls the patient at nine &lt;/s&gt;
+
+perplexity train=2.33  heldout=inf</pre></div>
+  <p><strong>Stretch.</strong> Replace the counting with a one-layer softmax model trained by gradient descent on the same 81 pairs, and confirm its probabilities converge to the counts. That is the bridge to A12 and C01.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Reply cuts off mid-sentence</td><td>Hit the max token cap; stop reason says length</td><td>Log the stop reason. Raise the cap or ask for shorter output</td></tr>
+    <tr><td>Model repeats a phrase until timeout</td><td>Low temperature plus a context that already contains the phrase</td><td>Per-turn token cap, stop sequences, loop detector (I05), moderate temperature</td></tr>
+    <tr><td>Fluent but false statement</td><td>Training rewards plausible continuations, and the needed fact was not in context</td><td>Ground with retrieval, allow abstention (D19)</td></tr>
+    <tr><td>Latency grows with answer length</td><td>Decode is sequential, one forward pass per output token</td><td>Cap output, stream, smaller model, see K05</td></tr>
+    <tr><td>Same prompt gives different answers</td><td>Sampling. Even temperature 0 can differ slightly from batching and floating-point order</td><td>Do not rely on bit-exact output. Test with evals, not single runs</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> stop-reason distribution, output tokens per request, time to first token and time per output token, and repetition rate on a sample of responses.</p>
+  <details class="q"><summary>Scenario: your clinic voice agent sometimes repeats the same sentence until the call times out. What do you check, in order?</summary><div class="a"><ol>
+    <li>Pull the traces and look at the stop reason and output token count on the bad turns. Length stops mean it never emitted an end token.</li>
+    <li>Check the sampling settings. Very low temperature on a context that already contains the phrase makes repetition the most likely continuation.</li>
+    <li>Read the prompt on a failing turn. Is the repeated sentence already in the conversation history, so the model is continuing a pattern it was given?</li>
+    <li>Reproduce with fixed settings and look at the logprobs on the repeated tokens to see how confident it is.</li>
+    <li>Fix in layers: a hard per-turn output cap, stop sequences, a repetition detector that cuts the turn, a moderate temperature, and a trimmed history.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>An LLM is a function that takes a sequence of tokens and returns a probability distribution over the next token. Everything it does, answering, coding, calling tools, is that one operation in a loop. That is why its output is probabilistic, why it can be wrong fluently, and why cost and latency scale with tokens.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>In training, text is split into tokens and the model predicts the next token at every position. The loss is cross-entropy against the real token, averaged over positions. A causal mask lets one forward pass score every position in parallel, and gradient descent updates the weights. At inference the weights are frozen. I run the prompt through, take the logits at the last position, apply softmax, sample a token, append it and repeat until an end token or a token cap. Each step needs the previous token, so generation is sequential.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Perplexity is exp of the loss, so a loss of 2.3 nats means about ten equally likely choices per token. Training sees true text but inference sees its own output, so errors compound. Compute is about 2N FLOPs per generated token for N parameters, and latency is output tokens times step time. The objective rewards plausibility, not truth, so facts need grounding.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"An LLM is an AI trained on a huge amount of data that understands language and can generate answers, which helps businesses automate their work."</p>
+    <p class="strong">"It is a next-token predictor. Given the tokens so far it outputs a distribution over the vocabulary, trained with cross-entropy on text shifted by one. At serving time it samples one token at a time, so latency is roughly output tokens times per-step time, and it can be fluently wrong because it is trained for plausibility. In a clinic voice agent that means I cap output, stream, and put the facts in the context through retrieval."</p>
+    <p>The weak answer has no mechanism, no number and no failure mode, and "understands" claims more than the objective supports. The strong one names the loss, the loop, a latency relation, a failure mode and a design consequence.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"When you ask an LLM a question, it looks up the answer in its training data."</summary><div class="a">There is no lookup at inference. Training compressed text statistics into weights, and generation computes a distribution from the context and those weights. It can reproduce memorized text, but nothing is retrieved, which is why it can be stale or invent a citation.</div></details>
+  <details class="q"><summary>"Training and generation both work one token at a time."</summary><div class="a">Only generation does. Training scores all n-1 positions of a sequence in one parallel pass, using the true tokens and a causal mask. Generation is sequential because each token must exist before the next step.</div></details>
+  <details class="q"><summary>"Set temperature to 0 and the answer is deterministic and therefore correct."</summary><div class="a">Greedy decoding picks the most likely token, which can still be wrong. And determinism is not guaranteed anyway: batching and floating-point order can change outputs slightly. Determinism is not accuracy.</div></details>
+  <details class="q"><summary>"The model learns from your conversation as you chat with it."</summary><div class="a">The weights are frozen at inference. The model conditions on the tokens in its context window, which looks like learning but vanishes when those tokens leave the window. Persistent memory is a separate system that writes text back into the context (G11, G12).</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain what an LLM is in 90 seconds.</summary><div class="a">Use the three levels above: function from context to next-token distribution, trained by cross-entropy in parallel and run as a sequential sample-append loop, with perplexity, exposure bias, 2N FLOPs per token and the plausibility limit as the internals.<div class="f"><b>Follow-up</b>Which number in your answer would a skeptical interviewer check first? Be ready to derive perplexity from loss, or 2N from the weight count.</div></div></details>
+  <details class="q"><summary>Write the chain-rule factorization of a sequence probability. What is approximated?</summary><div class="a">P(x1..xn) = product over t of P(xt | x1..x(t-1)). The identity is exact. The model approximates each conditional factor.<div class="f"><b>Follow-up</b>What does a bigram model change? It truncates the condition to the previous token only, which is why it cannot track anything longer than one step back.</div></div></details>
+  <details class="q"><summary>What is the training loss and how does it relate to perplexity?</summary><div class="a">Average negative log probability the model gave the true next token, which is cross-entropy against a one-hot target. Perplexity is exp of that loss in nats, the effective number of equally likely choices per token.<div class="f"><b>Follow-up</b>What perplexity does a uniform guess score? V, the vocabulary size. In the kata that is 13, against 2.33 trained.</div></div></details>
+  <details class="q"><summary>Why is training parallel across positions but generation sequential?</summary><div class="a">In training the true tokens are known, so every position can be scored at once, and the causal mask prevents peeking ahead. In generation the next input is the token you are about to sample, so step k+1 waits on step k.<div class="f"><b>Follow-up</b>Where does that sequential cost show up in a product? In time per output token: latency is roughly output tokens times step time, and prefill versus decode behaviour is K05.</div></div></details>
+  <details class="q"><summary>Walk through one decoding step.</summary><div class="a">Run the context through the model, take the logits at the last position, softmax to probabilities, apply the sampling rule, append the chosen token, check for an end token or the length cap.<div class="f"><b>Follow-up</b>What fraction of that is the model versus sampling? Almost all the time is the forward pass. Sampling is a cheap operation on one vector of size V.</div></div></details>
+  <details class="q"><summary>What is exposure bias?</summary><div class="a">Training conditions on true previous tokens, but inference conditions on the model's own outputs. A mistake early in generation puts off-distribution tokens into the context and later steps can drift further.</div></details>
+  <details class="q"><summary>Your bigram gets infinite held-out perplexity. Why, and what does the fix cost?</summary><div class="a">An unseen pair has probability 0 and log 0 is minus infinity. Add-k smoothing assigns small mass to unseen pairs, giving held-out 4.62, but it raises training perplexity from 2.33 to 2.69.<div class="f"><b>Follow-up</b>Does a large neural model have this problem? Not in the same way: softmax never outputs an exact 0, and embeddings let it generalize to unseen combinations.</div></div></details>
+  <details class="q"><summary>How does a base model differ from a chat model at the mechanism level?</summary><div class="a">Both are next-token predictors run in the same loop. The chat model is further post-trained (supervised and preference tuning) so its continuations look like helpful replies, and it is prompted through a chat template.</div></details>
+  <details class="q"><summary>Does the model learn from your chat? Why or why not?</summary><div class="a">No. Weights are frozen at inference. It conditions on the tokens in the context window, so it can use what you wrote while it is in the window. Persistent memory is an external system that adds text back into the context.</div></details>
+  <details class="q"><summary>Roughly how much compute does one generated token cost for a dense model with N parameters?</summary><div class="a">About 2N FLOPs, one multiply and one add per weight, ignoring the attention term that grows with context length. Training costs more per token because of the backward pass.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: the three-part spine (function, loss, loop), the chain rule, the training versus inference differences (parallel or sequential, weights updating or frozen, true context or own output), perplexity from loss, and the kata numbers (V, trained perplexity, held-out result, smoothing result).</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Function: context to a distribution over the next token, one probability per vocabulary token.</li>
+    <li>Loss: average negative log probability of the true next token, over all positions, in parallel.</li>
+    <li>Loop: softmax, sample, append, repeat to an end token or cap, strictly sequential.</li>
+    <li>Chain rule: P(x1..xn) is the product of P(xt | earlier tokens), exact.</li>
+    <li>Training: true context, causal mask, weights updated. Inference: own outputs, weights frozen. Exposure bias.</li>
+    <li>Perplexity is exp(loss). Uniform guess scores V. Kata: V = 13, trained 2.33, held-out infinity, smoothed 2.69 and 4.62.</li>
+    <li>About 2N FLOPs per generated token.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Day 1 of week 1 has no earlier topic to review, so these three come from foundations you already know and will meet properly later this week (A13, A16).</p>
+  <details class="q"><summary>A13: State the chain rule of probability for two events, and say what conditional probability means.</summary><div class="a">P(A and B) = P(A) * P(B | A). P(B | A) is the probability of B once you know A happened, which is exactly what a language model estimates for the next token given the context.</div></details>
+  <details class="q"><summary>A16: Write cross-entropy between a true distribution p and a model q. What does it reduce to when p puts all mass on one token?</summary><div class="a">H(p, q) = minus the sum over tokens of p(x) * log q(x). With a one-hot p it reduces to minus log q(correct token), the per-position loss in the kata.</div></details>
+  <details class="q"><summary>A16: What is the entropy of a fair coin, and of a uniform choice among 8 outcomes, in bits?</summary><div class="a">1 bit for the coin and 3 bits for 8 outcomes, since entropy of a uniform choice among k outcomes is log2(k). Perplexity is the same idea expressed as k itself.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <p class="sub">None of these was opened while building this page. The shell here could not reach most external sites. Read the bigram chapter first; every other claim on this page is derived or comes from the kata run.</p>
+  <ul class="srcs">
+    <li>Jurafsky and Martin, Speech and Language Processing, chapter on N-gram language models (free online draft)<small>Supports: bigram models, smoothing, perplexity definition. Recalled, not opened. Verify the current chapter number and URL.</small></li>
+    <li>Vaswani et al., "Attention Is All You Need", 2017 (arXiv 1706.03762)<small>Supports: the transformer that replaced the bigram as the estimator of each factor. Recalled, not opened.</small></li>
+    <li>Bengio et al., "A Neural Probabilistic Language Model", JMLR 2003<small>Supports: neural estimation of next-word probabilities with learned embeddings. Recalled, not opened.</small></li>
+    <li>Andrej Karpathy, makemore repository and "Let's build GPT" lecture<small>Supports: bigram model first, then scaling up to a transformer, in code. Recalled, not opened.</small></li>
+  </ul>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D01 T1 W01", "cards": [{"q": "What does an LLM output at each step, exactly?", "a": "A probability distribution over the whole vocabulary for the next token. A separate sampling step picks one token from it."}, {"q": "Name the three parts that define an LLM, in order.", "a": "Function: context to next-token distribution. Loss: cross-entropy on shifted text. Loop: sample, append, repeat until a stop."}, {"q": "Why can training score every position of a sequence in one pass, but generation cannot?", "a": "Training knows the true next tokens and a causal mask hides the future. Generation needs each sampled token before the next step."}, {"q": "How do you compute perplexity from the training loss?", "a": "exp of the cross-entropy loss in nats. A loss of 2.3 means about ten equally likely choices per token."}, {"q": "What perplexity does a uniform guess over V tokens score, and why does it matter?", "a": "V. It is the baseline a model must beat to have learned anything. In the kata V is 13 against a trained 2.33."}, {"q": "Why did the unsmoothed bigram get infinite held-out perplexity, and what does the fix cost?", "a": "An unseen pair has probability 0, so log is infinite. Add-k smoothing fixes it but raises training perplexity from 2.33 to 2.69."}, {"q": "What is exposure bias in text generation?", "a": "Training conditions on true previous tokens, inference on the model's own outputs, so an early mistake pushes later steps off-distribution."}, {"q": "Why does generation latency grow with answer length?", "a": "Each output token needs a full forward pass after the previous token. Latency is roughly output tokens times time per step."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
