@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X01 Three-level answers</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="X01">
+<main>
+<header>
+  <div class="eyebrow"><b>X01</b><span>X Interview craft</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Three-level answers</h1>
+  <p class="lede">How do you structure a 90-second technical interview answer so you never sound like a businessman, never ramble through a 65-second preamble, and always hit the outcome, the step-by-step mechanism, and the exact internals and failure limits?</p>
+  <div class="chips"><span><em>Before</em>V01 Engineer voice vs business voice</span><span><em>Before</em>U01 How to learn this curriculum</span><span><em>After</em>X02 The question log</span><span><em>After</em>X03 Thinking aloud, clarifying questions, and handling "I don't know"</span><span><em>After</em>X05 ML and LLM deep-dive rounds</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: guess the 3 predictions before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read Stations 2-5: the 20s/45s/25s hierarchy and four-element checklist</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the rubric grader kata in Station 6</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Practice Station 7-8: production symptoms, 90s spoken timer, traps, and 10-question bank</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and flashcards in Station 9</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Mixed review and import Anki cards</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>At a standard technical speaking pace of 150 words per minute (2.5 words/sec), if you spend 165 words on Level 1 project context and history before naming a mechanism, how many seconds remain in a 90-second interview turn for Level 2 (45s needed) and Level 3 (25s needed)?</summary><div class="a">Only <strong>24 seconds</strong> remain. A 165-word preamble consumes <code>(165 / 150) * 60 = 66 seconds</code>, leaving 24 seconds for work that requires 70 seconds (45s Mechanism + 25s Internals and limits). The interviewer cuts you off before you ever prove technical depth.</div></details>
+  <details class="q"><summary>In the Station 6 rubric kata, the weak answer for G01 Token Optimization uses 42 words (17 seconds) and contains 4 buzzwords ("ROI", "streamlining", "leveraging", "cost-effective"). How many concrete numbers, mechanism markers, and failure modes does it contain, and what level does it score?</summary><div class="a">It contains <strong>0 numbers, 0 mechanism markers, and 0 failure modes</strong>, scoring <strong>L1</strong>. By contrast, the strong G01 answer uses 165 words (66 seconds), 0 buzzwords, 15 numbers, 2 mechanism markers, and 3 failure markers to score <strong>L3</strong>.</div></details>
+  <details class="q"><summary>Why does the strong answer for I05 Agent Loop Guards (122 words, 49s, 6 numbers, 0 buzzwords, 2 failure markers) only score L2 instead of L3 in the automated rubric grader?</summary><div class="a">Because the rubric requires at least <strong>2 distinct mechanism keywords</strong> from its tracked vocabulary (<code>mech &gt;= 2</code>) in addition to <code>nums &gt;= 3</code> and <code>fail &gt;= 1</code> to award L3. The I05 answer hits only 1 tracked keyword (<code>hash</code>), illustrating why naming explicit systems primitives (such as state hash rings, circuit breakers, or timeouts) determines whether an interviewer hears a complete Level 3 explanation.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Senior engineering interviews do not grade whether you agree that a technology is useful; they grade the fidelity of your mental model under a 90-second clock. Candidates fail in two opposite ways: giving a 15-second executive summary packed with buzzwords ("we leveraged caching to drive ROI") that stops at Level 1, or wandering through a 66-second chronological preamble about team history that runs out the clock before reaching how the system works.</p>
+  <p>A three-level answer fixes both failures by enforcing a strict time and depth hierarchy at 150 words per minute (225 words total for 90 seconds). You open with <strong>Level 1: Outcome</strong> (20 seconds, ~50 words) stating what the system achieves and the headline metric delta. You spend the core of your turn in <strong>Level 2: Mechanism</strong> (45 seconds, ~110 words) tracing the causal step-by-step data flow, algorithms, and storage layouts. You close with <strong>Level 3: Internals and limits</strong> (25 seconds, ~65 words) naming concrete hardware or protocol numbers, where the mechanism breaks in production, and the explicit tradeoff you paid.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The three-level 90-second answer architecture</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Three-level answer flow from interview prompt through Level 1 Outcome (20s), Level 2 Mechanism (45s), Level 3 Internals and limits (25s), and the explicit stop-and-check handoff at 90 seconds.">
+      <g font-size="12">
+        <rect x="10" y="15" width="480" height="32" rx="6" class="c-soft ln"/>
+        <text x="250" y="36" text-anchor="middle">Interview Prompt: "How do you optimize X in production?" (90s / 225w budget)</text>
+        <g data-step="1">
+          <rect x="10" y="62" width="105" height="90" rx="6" class="c-accent" data-hi="1"/>
+          <text x="62" y="84" text-anchor="middle" font-weight="600">L1: Outcome</text>
+          <text x="62" y="102" text-anchor="middle">20s (~50w)</text>
+          <text x="62" y="122" text-anchor="middle">What it does +</text>
+          <text x="62" y="138" text-anchor="middle">metric delta</text>
+        </g>
+        <g data-step="2">
+          <path d="M115 107 H135" class="ink"/>
+          <rect x="135" y="62" width="185" height="90" rx="6" class="c-good" data-hi="2"/>
+          <text x="227" y="84" text-anchor="middle" font-weight="600">L2: Mechanism</text>
+          <text x="227" y="102" text-anchor="middle">45s (~110w)</text>
+          <text x="227" y="122" text-anchor="middle">Step-by-step causal flow:</text>
+          <text x="227" y="138" text-anchor="middle">data, algorithms, state</text>
+        </g>
+        <g data-step="3">
+          <path d="M320 107 H340" class="ink"/>
+          <rect x="340" y="62" width="150" height="90" rx="6" class="c-warn" data-hi="3"/>
+          <text x="415" y="84" text-anchor="middle" font-weight="600">L3: Internals &amp; limits</text>
+          <text x="415" y="102" text-anchor="middle">25s (~65w)</text>
+          <text x="415" y="122" text-anchor="middle">Numbers, failure modes,</text>
+          <text x="415" y="138" text-anchor="middle">explicit tradeoffs</text>
+        </g>
+        <g data-step="4">
+          <rect x="10" y="168" width="310" height="42" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="165" y="186" text-anchor="middle" font-weight="600">Four-Element Engineer Checklist</text>
+          <text x="165" y="202" text-anchor="middle">1. Mechanism  2. Number/Unit  3. Failure Mode  4. Tradeoff</text>
+        </g>
+        <g data-step="5">
+          <path d="M320 189 H340" class="ink"/>
+          <rect x="340" y="168" width="150" height="42" rx="6" class="c-good" data-hi="5"/>
+          <text x="415" y="186" text-anchor="middle" font-weight="600">Stop at 90s</text>
+          <text x="415" y="202" text-anchor="middle">Offer L3 fork to interviewer</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Level 1 Outcome (0-20s, ~50 words) states the headline engineering result and metric delta in one or two direct sentences.</li>
+      <li>Level 2 Mechanism (20-65s, ~110 words) walks through the exact causal chain of data structures, wire calls, or math operations step by step.</li>
+      <li>Level 3 Internals and limits (65-90s, ~65 words) names the hard physical or protocol boundaries, the production failure mode, and the cost paid.</li>
+      <li>Across levels 2 and 3, the four-element checklist verifies you included an explicit mechanism, a number with units, a failure mode, and a tradeoff.</li>
+      <li>At 90 seconds, you stop speaking and hand control back by offering two concrete deep-dive branches instead of rambling.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Front-loading the outcome in 20 seconds protects 70 seconds of runway to prove how the system works and where it breaks.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>O-M-I 20-45-25 + M-N-F-T:</strong> <em>Outcome</em> (20s / 50w), <em>Mechanism</em> (45s / 110w), <em>Internals &amp; limits</em> (25s / 65w), packed with <strong>M</strong>echanism, <strong>N</strong>umber, <strong>F</strong>ailure mode, and <strong>T</strong>radeoff.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>The three-level hierarchy (Outcome, Mechanism, Internals and limits)</h3>
+  <p>An interviewer listening to your answer is mentally checking off a depth ladder. <strong>Level 1 (Outcome)</strong> answers what the technique accomplishes and why an engineer cares, quantified with a realistic range (for example, "Cutting token volume and cost per token drops the LLM bill by 70 to 90 percent while lowering TTFT and TPOT"). It gives the interviewer an immediate anchor so they never have to guess where your explanation is heading.</p>
+  <p><strong>Level 2 (Mechanism)</strong> is the physical or logical machinery. You replace passive business verbs ("streamlined", "leveraged", "optimized") with causal engineering steps ("place static instructions at the exact prefix so the engine reuses KV blocks", "execute an atomic <code>INSERT ... ON CONFLICT DO NOTHING</code>"). <strong>Level 3 (Internals and limits)</strong> proves you have operated the system under stress: you state the exact boundary condition where the mechanism breaks (such as a dynamic timestamp at token 10 dropping prefix cache hit rate to 0 percent) and the recovery or mitigation required.</p>
+
+  <h3>Spoken pacing and the 90-second time box (20s / 45s / 25s)</h3>
+  <p>Clear technical speech runs at roughly <strong>150 words per minute (WPM)</strong>, or <strong>2.5 words per second</strong>. A 90-second turn therefore holds a total budget of <strong>225 words</strong>. The golden allocation is <code>20s + 45s + 25s = 90s</code>, corresponding to <code>50 + 112 + 63 = 225 words</code>. Half of your entire budget belongs to Level 2 Mechanism because mechanism is where engineering competence is judged.</p>
+  <div class="codewrap"><pre>Words_budget(level) = Seconds(level) * (WPM / 60)
+At 150 WPM (2.5 words/s):
+  L1 Outcome (20s)            =  50 words (22%)
+  L2 Mechanism (45s)          = 112 words (50%)
+  L3 Internals &amp; limits (25s) =  63 words (28%)
+  Total (90s)                 = 225 words (100%)</pre></div>
+
+  <figure class="viz stepper" id="viz-pacing">
+    <div class="vt">Stepper: The 66-second preamble trap vs the 20s / 45s / 25s allocation</div>
+    <svg viewBox="0 0 500 205" role="img" aria-label="Comparison timeline contrasting a 66-second Level 1 preamble trap that leaves 24 seconds against the balanced 20s Outcome, 45s Mechanism, and 25s Internals and limits budget.">
+      <g font-size="12">
+        <text x="10" y="25" font-weight="600">90-Second Spoken Timeline at 150 WPM (225 words max)</text>
+        <line x1="10" y1="40" x2="460" y2="40" class="ink"/>
+        <text x="10" y="54">0s</text>
+        <text x="110" y="54" text-anchor="middle">20s</text>
+        <text x="335" y="54" text-anchor="middle">65s</text>
+        <text x="460" y="54" text-anchor="end">90s cutoff</text>
+        <g data-step="1">
+          <rect x="10" y="68" width="330" height="44" rx="5" class="c-bad" data-hi="1"/>
+          <text x="175" y="88" text-anchor="middle" font-weight="600">Trap: 165-word L1 Preamble (66s)</text>
+          <text x="175" y="104" text-anchor="middle">History, org context, buzzwords - 0 mechanism</text>
+        </g>
+        <g data-step="2">
+          <rect x="340" y="68" width="120" height="44" rx="5" class="c-warn" data-hi="2"/>
+          <text x="400" y="88" text-anchor="middle" font-weight="600">Only 24s left!</text>
+          <text x="400" y="104" text-anchor="middle">Needs 70s (L2+L3)</text>
+        </g>
+        <g data-step="3">
+          <rect x="10" y="132" width="100" height="48" rx="5" class="c-accent" data-hi="3"/>
+          <text x="60" y="153" text-anchor="middle" font-weight="600">L1: 20s</text>
+          <text x="60" y="170" text-anchor="middle">~50w Outcome</text>
+          <rect x="110" y="132" width="225" height="48" rx="5" class="c-good" data-hi="3"/>
+          <text x="222" y="153" text-anchor="middle" font-weight="600">L2: 45s (~110w)</text>
+          <text x="222" y="170" text-anchor="middle">Step-by-step causal mechanism</text>
+        </g>
+        <g data-step="4">
+          <rect x="335" y="132" width="125" height="48" rx="5" class="c-good" data-hi="4"/>
+          <text x="397" y="153" text-anchor="middle" font-weight="600">L3: 25s (~65w)</text>
+          <text x="397" y="170" text-anchor="middle">Numbers &amp; limits</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>When a candidate spends 165 words explaining company background and high-level goals, 66 seconds vanish at 150 WPM without a single technical mechanism.</li>
+      <li>Only 24 seconds remain before the 90-second mark, forcing the candidate to rush or get interrupted before reaching the 45s Mechanism and 25s Limits.</li>
+      <li>Capping Level 1 Outcome at 20 seconds (~50 words) opens a full 45-second (~110-word) block for the step-by-step causal mechanism at seconds 20 to 65.</li>
+      <li>Seconds 65 to 90 (25 seconds, ~65 words) are preserved for Level 3 hardware numbers, failure modes, and tradeoffs, landing cleanly on the 90-second clock.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every extra 25 words in Level 1 steals 10 seconds directly from Level 3 Internals and limits.</figcaption>
+  </figure>
+
+  <details class="q"><summary>Check: If you speak slightly faster at 180 WPM (3 words per second), how many words fit in the 20s / 45s / 25s allocation, and why should you still aim for 200 to 230 words in practice?</summary><div class="a">At 180 WPM, 20s/45s/25s holds <code>60 / 135 / 75 = 270 words</code>. You should still aim for <strong>200 to 230 words</strong> because technical explanations require brief pauses around equations, numbers, and transition markers ("First...", "Second...", "Level 3 limit..."), bringing effective delivery back to ~150 WPM.</div></details>
+
+  <h3>The four-element engineer-voice checklist</h3>
+  <p>To prevent business voice (see V01) from creeping into your 90-second answer, verify that your spoken text hits four mandatory elements before you finish:</p>
+  <ol>
+    <li><strong>Mechanism:</strong> The causal operator or data structure (for example, GEMM vs GEMV, <code>INSERT ... ON CONFLICT DO NOTHING</code>, RRF formula <code>sum(1 / (60 + rank_i))</code>).</li>
+    <li><strong>Number with units:</strong> Scale, latency floor, memory footprint, or discount percentage (for example, 16 GB of FP16 weights, 5.3 ms/token floor at 3 TB/s HBM bandwidth, 1,500-token history cap).</li>
+    <li><strong>Failure mode:</strong> The exact condition where the mechanism breaks or degrades (for example, worker crash between Stripe charge and Postgres <code>COMPLETED</code> commit; dynamic timestamp at token 10 breaking prefix cache).</li>
+    <li><strong>Tradeoff:</strong> What you pay to get the outcome (for example, running two indexes in hybrid search doubles tail memory and latency unless bounded by a parallel 40 ms timeout).</li>
+  </ol>
+
+  <h3>Translating business voice into three-level answers</h3>
+  <p>Business voice describes <em>intent and benefit</em> ("we added guardrails so agents don't waste money"). Engineer voice describes <em>state transitions and boundaries</em>. When translating any experience from your resume into a three-level answer, strip out adjectives ("significant", "cost-effective", "seamless", "world-class") and replace each claim with a four-part chain: <code>Input trigger -&gt; Data structure / Operation -&gt; Numerical threshold -&gt; Failure boundary</code>.</p>
+  <p>In the kata below, notice how every weak answer is 29 to 42 words (12 to 17 seconds) of pure Level 1 intent, whereas every strong answer expands into 122 to 165 words (49 to 66 seconds) of dense causal steps and failure modes, leaving a 24 to 40 second buffer for natural pauses or a fourth project-specific sentence.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Spoken pacing and three-level depth simulator</div>
+    <p class="ask">Predict first. If you set Level 1 to 165 words, Level 2 to 30 words, and Level 3 to 10 words at 150 WPM, what happens to your total time and which level dominates?</p>
+    <div class="ctl">
+      <label><span>Level 1 Outcome words</span><input type="range" name="w1" min="15" max="180" step="5" value="45"><output data-for="w1" data-unit=" words"></output></label>
+      <label><span>Level 2 Mechanism words</span><input type="range" name="w2" min="0" max="180" step="5" value="110"><output data-for="w2" data-unit=" words"></output></label>
+      <label><span>Level 3 Internals &amp; limits words</span><input type="range" name="w3" min="0" max="140" step="5" value="65"><output data-for="w3" data-unit=" words"></output></label>
+      <label><span>Speaking speed (WPM)</span><input type="range" name="wpm" min="110" max="190" step="10" value="150"><output data-for="wpm" data-unit=" wpm"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Keeping Level 1 near 45-50 words and Level 2 near 110 words lands total spoken time right inside the 75-90s window at 150 WPM.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var s1=(v.w1/v.wpm)*60, s2=(v.w2/v.wpm)*60, s3=(v.w3/v.wpm)*60, tot=s1+s2+s3, wtot=v.w1+v.w2+v.w3;
+    var t1=s1>28?"bad":(s1>=12?"good":"warn");
+    var t2=s2>=35&&s2<=55?"good":(s2<25?"bad":"warn");
+    var t3=s3>=18&&s3<=35?"good":(s3<12?"bad":"warn");
+    var ttot=tot>=60&&tot<=95?"good":(tot>105?"bad":"warn");
+    var status = s1>40 ? "Preamble trap! Level 1 consumes "+tl.fmt(s1,0)+"s, starving technical depth." : (s3<12 ? "Stops at Level 2: add Level 3 numbers, failure modes, and tradeoffs." : (tot>95 ? "Over the 90s budget ("+tl.fmt(tot,0)+"s): trim Level 1 or tighten Level 2." : "Balanced Level 3 answer: "+wtot+" words in "+tl.fmt(tot,0)+"s."));
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" s",digits:0,max:120,rows:[
+      {label:"L1 Outcome (target 20s)",value:s1,tone:t1},
+      {label:"L2 Mechanism (target 45s)",value:s2,tone:t2},
+      {label:"L3 Internals & limits (target 25s)",value:s3,tone:t3},
+      {label:"Total Spoken Time (budget 90s)",value:tot,tone:ttot}
+    ]});
+    return {verdict:wtot+" total words at "+v.wpm+" WPM = "+tl.fmt(tot,1)+"s ("+tl.fmt(s1,0)+"s / "+tl.fmt(s2,0)+"s / "+tl.fmt(s3,0)+"s). "+status};
+  })});</script>
+
+  <h3>Stopping at 90 seconds and reading interviewer pull-signals</h3>
+  <p>Even a technically dense answer fails if you monologue for four minutes. An interview is a high-bandwidth protocol between two peers: after 90 seconds (200 to 230 words), you must explicitly yield the floor. Close Level 3 with a forked handoff that names two concrete directions you can expand next: <em>"Happy to dive into the Postgres recovery reaper for stale locks or how we shard the idempotency table."</em></p>
+  <p>Watch the interviewer's pull-signals while you speak. If they nod rapidly during Level 1, move straight to Level 2 without adding a second outcome example. If they interrupt during Level 2 with <em>"What happens when a node dies mid-flight?"</em>, do not finish your rehearsed Level 2 paragraph; jump directly to Level 3 Internals and limits for that failure mode.</p>
+
+  <details class="q"><summary>Check: What are the four mandatory elements of the engineer-voice checklist, and how do you hand the floor back at the 90-second mark?</summary><div class="a">The four elements are: <strong>(1) Mechanism, (2) Number with units, (3) Failure mode, and (4) Tradeoff</strong>. At the 90-second mark, you stop speaking and offer a <strong>two-branch Level 3 fork</strong> (for example, "I can dive deeper into X or walk through how we handle failure mode Y") so the interviewer chooses the next probe.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Standard technical speaking speed</td><td class="n">150 WPM (2.5 words/s)</td><td>Derived</td></tr>
+    <tr><td>Total 90-second spoken answer budget</td><td class="n">200 to 230 words (~225w at 150 WPM)</td><td>Derived</td></tr>
+    <tr><td>Level 1 Outcome time and word target</td><td class="n">20 s (~50 words, 22% of turn)</td><td>Derived</td></tr>
+    <tr><td>Level 2 Mechanism time and word target</td><td class="n">45 s (~110 words, 50% of turn)</td><td>Derived</td></tr>
+    <tr><td>Level 3 Internals and limits time and word target</td><td class="n">25 s (~65 words, 28% of turn)</td><td>Derived</td></tr>
+    <tr><td>Weak business-voiced answers in kata (G01-I05)</td><td class="n">29 to 42 words (12s to 17s), 0 nums, 0 mech, 0 fail -> L1</td><td>Your own run</td></tr>
+    <tr><td>Strong three-level answers in kata (G01-H06)</td><td class="n">130 to 165 words (52s to 66s), 5-15 nums, 2-4 mech, 1-3 fail -> L3</td><td>Your own run</td></tr>
+    <tr><td>165-word Level 1 preamble trap cost at 150 WPM</td><td class="n">Consumes 66s -> leaves only 24s for L2 (45s) + L3 (25s)</td><td>Your own run</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Business-voiced summary (L1 only, 12-17s)</td><td>Fast delivery; sounds polished to non-technical stakeholders</td><td>Zero proof of engineering depth; fails technical bar immediately</td><td>Buzzwords ("ROI", "leveraging", "streamlining") replacing mechanisms and numbers</td></tr>
+    <tr><td>Chronological story / 66s preamble (165w L1)</td><td>Rich organizational context and project history</td><td>Consumes 66s of a 90s budget; leaves only 24s for 70s of L2 + L3 content</td><td>Saying "Back in Q2 our team noticed..." before stating the outcome and mechanism</td></tr>
+    <tr><td>Unbounded L3 monologue (3+ minutes, 450+ words)</td><td>Covers every edge case without waiting for prompts</td><td>Exhausts interviewer, hides signal in noise, steals time from remaining questions</td><td>Speaking past 90 seconds without pausing or offering a two-branch check-in</td></tr>
+    <tr><td>Structured three-level answer (20s / 45s / 25s, 200-230w)</td><td>Hits outcome, causal mechanism, numbers, and failure limits inside 90s</td><td>Requires upfront memorization of concrete system numbers and discipline to cut fluff</td><td>Sounding robotic if you recite labels ("Level 1...") instead of natural signposts in real interviews</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Three-level rubric grader and preamble timer</h2>
+  <p>This script scores five pairs of weak (business-voiced) and strong (three-level engineer-voiced) answers across topics G01, K05, L12, H06, and I05 by measuring word count, spoken time at 150 WPM, concrete numbers, buzzwords, mechanism markers, and failure markers, then computes the 165-word preamble trap.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python X01_kata.py</pre></div>
+  <p class="cap">X01_kata.py</p><div class="codewrap"><pre data-copy>"""
+X01 Kata: Three-level answers (Outcome, Mechanism, Internals and limits)
+Evaluates 5 pairs of interview answers (business-voiced vs three-level engineer-voiced)
+against the X01 rubric: spoken pacing (150 wpm, 90s target), mechanism verbs, concrete
+numbers/units, failure modes, and explicit tradeoffs.
+"""
+import re
+
+WPM = 150.0  # standard technical speaking rate
+
+RUBRIC_ITEMS = [
+    {
+        "topic": "G01 Token Optimization",
+        "weak": (
+            "We optimized our token usage to drive significant cost savings and better ROI across our AI platform. "
+            "By streamlining prompts, leveraging caching, and routing queries to cost-effective models, we reduced "
+            "overall inference spend while maintaining a high-quality user experience for enterprise customers."
+        ),
+        "strong": (
+            "Level 1 Outcome: Cutting token volume and cost per token drops LLM bill by 70 to 90 percent while lowering TTFT and TPOT. "
+            "Level 2 Mechanism: We attack the bill in four ordered stages. First, we place static system instructions, schemas, and few-shot examples "
+            "at the exact prompt prefix so the engine reuses precomputed KV blocks at a 50 to 90 percent discount. Second, we replace full 20-turn "
+            "chat history with a rolling summary plus the last 4 raw turns, capping input growth at 1,500 tokens. Third, we enforce max_tokens and concise "
+            "JSON keys because output tokens cost 3x to 5x more than input tokens and serialize at 20 ms per token. Fourth, a classifier routes 70 percent "
+            "of simple intents to an 8B model. "
+            "Level 3 Internals and limits: Prefix caching breaks on the first dynamic byte, so injecting a timestamp at token 10 drops cache hit rate to 0 percent. "
+            "Aggressive history compaction loses entity IDs unless backed by a structured key-value scratchpad."
+        ),
+    },
+    {
+        "topic": "K05 Prefill vs Decode",
+        "weak": (
+            "Prefill processes the user's prompt first and then decode generates the response one word at a time. "
+            "Prefill is fast because GPUs are parallel, whereas decode is slower and affects the user's perceived streaming speed."
+        ),
+        "strong": (
+            "Level 1 Outcome: LLM inference splits into a compute-bound prefill phase that governs TTFT and a memory-bandwidth-bound decode phase that governs TPOT. "
+            "Level 2 Mechanism: During prefill, all S prompt tokens are known upfront, so weight projections run as matrix-matrix multiplications (GEMMs) that read model "
+            "weights once from HBM and reuse them across S tokens, reaching over 200 FLOPs per byte. During decode, autoregression emits 1 token per forward pass, turning "
+            "projections into matrix-vector multiplications (GEMVs) that stream all 16 GB of FP16 weights for an 8B model to produce a single token, dropping arithmetic "
+            "intensity to ~2 FLOPs per byte at batch size 1. "
+            "Level 3 Internals and limits: On an H100 with 3 TB/s bandwidth, weight reads set a 5.3 ms floor per token, while long-prompt prefills stall concurrent decode "
+            "batches unless chunked prefill or prefill-decode disaggregation is enabled."
+        ),
+    },
+    {
+        "topic": "L12 Idempotent Retries",
+        "weak": (
+            "To make sure payments are reliable, we add retries when network errors happen and store transaction records "
+            "in the database so customers never get charged twice even under heavy traffic."
+        ),
+        "strong": (
+            "Level 1 Outcome: Idempotency keys with atomic state transitions guarantee at-most-once side effects when clients retry across network timeouts. "
+            "Level 2 Mechanism: The client generates a UUIDv4 Idempotency-Key per logical operation and sends it in the HTTP header. The server executes an atomic "
+            "INSERT INTO idempotency_keys ON CONFLICT DO NOTHING inside Postgres before calling Stripe. If the key is new, the row locks in status STARTED; if a concurrent "
+            "retry arrives while in flight, the server returns 409 Conflict with Retry-After; if status is COMPLETED, it replays the cached response body without re-running the charge. "
+            "Level 3 Internals and limits: If the worker crashes after charging the gateway but before committing COMPLETED, naive recovery deadlocks; we store a recovery point "
+            "and reconcile stale STARTED rows older than the 30-second upstream timeout via a background reaper."
+        ),
+    },
+    {
+        "topic": "H06 Hybrid Search &amp; RRF",
+        "weak": (
+            "We combine keyword search and vector embeddings to get the best of both worlds, improving search accuracy "
+            "for users who type either specific product codes or natural language questions."
+        ),
+        "strong": (
+            "Level 1 Outcome: Hybrid search fuses lexical BM25 and dense bi-encoder retrieval via Reciprocal Rank Fusion to lift Recall@5 by 8 to 15 points on mixed queries. "
+            "Level 2 Mechanism: Dense embeddings compress passages into 1024-dim unit vectors and match semantics, but blur exact tokens like SKU-9481 or error codes. "
+            "BM25 scores exact term frequency with inverse document frequency and length normalization (k1=1.5, b=0.75) over an inverted index. Because cosine similarities "
+            "and unbounded BM25 scores have incompatible distributions, RRF combines rankings without score calibration using sum(1 / (60 + rank_i)). "
+            "Level 3 Internals and limits: Running two indexes doubles tail retrieval latency and memory unless executed in parallel with a 40 ms timeout; RRF also ignores "
+            "confidence gaps, so we pass the top 50 fused candidates to a cross-encoder reranker."
+        ),
+    },
+    {
+        "topic": "I05 Agent Loop Guards",
+        "weak": (
+            "When agents get stuck in loops, we put guardrails and limits in place so they don't waste money or run forever, "
+            "and we alert the user if the task cannot be completed."
+        ),
+        "strong": (
+            "Level 1 Outcome: Hard step budgets, token caps, and duplicate-call circuit breakers bound worst-case agent cost and latency when tool calls fail. "
+            "Level 2 Mechanism: In a ReAct loop, an LLM that receives an opaque tool error often retries the identical arguments indefinitely. We wrap the runner in three "
+            "deterministic guards: a max_steps counter (capped at 10 iterations), a cumulative dollar/token budget ledger checked before every LLM call, and a state hash ring "
+            "that hashes (tool_name, canonical_json_args); if the same hash appears twice consecutively, the runner blocks execution and injects a forced corrective prompt. "
+            "Level 3 Internals and limits: Hard kills at step 10 discard partial work unless the runner reserves step 9 to synthesize a best-effort fallback answer from the scratchpad."
+        ),
+    },
+]
+
+BUZZWORDS = {"roi", "synergy", "streamlining", "leveraging", "cost-effective", "significant", "world-class", "empower"}
+MECH_MARKERS = {"prefix", "kv", "gemm", "gemv", "hbm", "insert", "conflict", "bm25", "rrf", "hash", "cosine", "flopls", "bandwidth", "timeout"}
+FAIL_MARKERS = {"breaks", "stall", "deadlocks", "crash", "loses", "ignores", "opaque", "discard", "0 percent", "409"}
+
+def score_answer(text):
+    words = text.split()
+    n_words = len(words)
+    sec = (n_words / WPM) * 60.0
+    low = text.lower()
+    nums = re.findall(r"\b\d+(?:\.\d+)?\b", text)
+    buzz = sum(1 for w in re.findall(r"[a-z]+", low) if w in BUZZWORDS)
+    mech = sum(1 for m in MECH_MARKERS if m in low)
+    fail = sum(1 for f in FAIL_MARKERS if f in low)
+    has_l3 = len(nums) &gt;= 3 and mech &gt;= 2 and fail &gt;= 1
+    has_l2 = mech &gt;= 1 and len(nums) &gt;= 1
+    level = 3 if has_l3 else (2 if has_l2 else 1)
+    return n_words, sec, len(nums), buzz, mech, fail, level
+
+print("=== X01 KATA: THREE-LEVEL ANSWER RUBRIC GRADER (Target: 150-230 words, 60-92s, Level 3) ===")
+print(f"{'Topic':&lt;24} | {'Voice':&lt;6} | {'Words':&gt;5} | {'Time':&gt;5} | {'Nums':&gt;4} | {'Buzz':&gt;4} | {'Mech':&gt;4} | {'Fail':&gt;4} | {'Level'}")
+print("-" * 82)
+for item in RUBRIC_ITEMS:
+    for label, ans in [("Weak", item["weak"]), ("Strong", item["strong"])]:
+        w, s, n, b, m, f, lvl = score_answer(ans)
+        print(f"{item['topic']:&lt;24} | {label:&lt;6} | {w:&gt;5} | {s:&gt;4.0f}s | {n:&gt;4} | {b:&gt;4} | {m:&gt;4} | {f:&gt;4} | L{lvl}")
+
+print("\n1. BREAK IT #1: THE 90-SECOND PREAMBLE TRAP (Spending 65s on Level 1 history/context)")
+preamble_words = 165  # 66 seconds of background before any mechanism
+remaining_sec = 90.0 - (preamble_words / WPM) * 60.0
+print(f"  165-word preamble consumes {90 - remaining_sec:.0f}s -&gt; only {remaining_sec:.0f}s left for Mechanism (45s needed) &amp; Limits (25s needed)!")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== X01 KATA: THREE-LEVEL ANSWER RUBRIC GRADER (Target: 150-230 words, 60-92s, Level 3) ===
+Topic                    | Voice  | Words |  Time | Nums | Buzz | Mech | Fail | Level
+----------------------------------------------------------------------------------
+G01 Token Optimization   | Weak   |    42 |   17s |    0 |    4 |    0 |    0 | L1
+G01 Token Optimization   | Strong |   165 |   66s |   15 |    0 |    2 |    3 | L3
+K05 Prefill vs Decode    | Weak   |    35 |   14s |    0 |    0 |    0 |    0 | L1
+K05 Prefill vs Decode    | Strong |   141 |   56s |   10 |    0 |    4 |    1 | L3
+L12 Idempotent Retries   | Weak   |    30 |   12s |    0 |    0 |    0 |    0 | L1
+L12 Idempotent Retries   | Strong |   135 |   54s |    5 |    0 |    3 |    3 | L3
+H06 Hybrid Search &amp; RRF  | Weak   |    29 |   12s |    0 |    0 |    0 |    0 | L1
+H06 Hybrid Search &amp; RRF  | Strong |   130 |   52s |   14 |    0 |    4 |    1 | L3
+I05 Agent Loop Guards    | Weak   |    32 |   13s |    0 |    0 |    0 |    0 | L1
+I05 Agent Loop Guards    | Strong |   122 |   49s |    6 |    0 |    1 |    2 | L2
+
+1. BREAK IT #1: THE 90-SECOND PREAMBLE TRAP (Spending 65s on Level 1 history/context)
+  165-word preamble consumes 66s -&gt; only 24s left for Mechanism (45s needed) &amp; Limits (25s needed)!</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Spoken duration (seconds at 150 WPM) and rubric level across kata answer pairs</div>
+    <div data-bars='{"unit":" s","digits":0,"max":90,"rows":[{"label":"G01 Weak (42w, 4 buzz, 0 nums -> L1)","value":17,"tone":"bad"},{"label":"G01 Strong (165w, 15 nums, 2 mech, 3 fail -> L3)","value":66,"tone":"good"},{"label":"K05 Weak (35w, 0 nums -> L1)","value":14,"tone":"bad"},{"label":"K05 Strong (141w, 10 nums, 4 mech, 1 fail -> L3)","value":56,"tone":"good"},{"label":"L12 Weak (30w, 0 nums -> L1)","value":12,"tone":"bad"},{"label":"L12 Strong (135w, 5 nums, 3 mech, 3 fail -> L3)","value":54,"tone":"good"},{"label":"H06 Weak (29w, 0 nums -> L1)","value":12,"tone":"bad"},{"label":"H06 Strong (130w, 14 nums, 4 mech, 1 fail -> L3)","value":52,"tone":"good"},{"label":"I05 Weak (32w, 0 nums -> L1)","value":13,"tone":"bad"},{"label":"I05 Strong (122w, 6 nums, 1 mech, 2 fail -> L2)","value":49,"tone":"warn"},{"label":"165w Preamble Trap (66s L1 -> 24s left)","value":66,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Weak answers stall at 12-17 seconds (L1) with zero numbers or failure modes, while dense three-level answers deliver 5 to 15 numbers and explicit failure boundaries in 52-66 seconds (L3).</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Every weak answer stops in 12 to 17 seconds (29 to 42 words) at Level 1:</strong> None of the five weak answers contains a single number (<code>Nums = 0</code>), mechanism marker (<code>Mech = 0</code>), or failure mode (<code>Fail = 0</code>), and G01 Weak packs 4 buzzwords into 42 words.</li>
+    <li><strong>Strong answers reach Level 3 in 52 to 66 seconds (130 to 165 words) of core text:</strong> G01 Strong hits 15 numbers, 2 mechanism markers, and 3 failure markers in 66s; K05 Strong hits 10 numbers, 4 mechanism markers, and 1 failure marker in 56s; H06 Strong hits 14 numbers, 4 mechanism markers, and 1 failure marker in 52s. Adding one project-specific example brings each right to the 80-90s mark.</li>
+    <li><strong>Why I05 Strong scored L2 (49s, 122 words, 6 nums, 1 mech, 2 fail):</strong> Even with 6 numbers and 2 failure markers, hitting only 1 tracked mechanism token (<code>hash</code>) kept it at L2 under <code>has_l3 = len(nums) &gt;= 3 and mech &gt;= 2 and fail &gt;= 1</code>. Naming explicit mechanism primitives (such as timeout budgets or token ledgers) is what pushes an answer across the L2-&gt;L3 threshold.</li>
+    <li><strong>The 165-word preamble trap equals the entire G01 Strong answer length:</strong> Spending 165 words on Level 1 history consumes 66 seconds, the exact same time G01 Strong used to deliver all three levels including 15 numbers and 3 failure modes.</li>
+  </ol>
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>The 66-second preamble trap.</strong> Replace <code>RUBRIC_ITEMS[0]["strong"]</code> with a 165-word project history preamble that contains no mechanism markers or failure modes. Predict the time consumed and the rubric level before running (it burns 66s, leaves 24s, and scores L1).</li>
+      <li><strong>Strip Level 3 failure markers.</strong> Delete the <code>Level 3 Internals and limits:</code> sentence from K05 Strong and H06 Strong. Predict how their scores change when <code>fail</code> drops from 1 to 0 (both drop from L3 to L2 despite keeping 8+ numbers and 4 mechanism markers).</li>
+      <li><strong>Fix I05 Strong from L2 to L3.</strong> Add an explicit timeout mechanism (for example, "a 15-second per-tool timeout") to <code>I05 Agent Loop Guards</code> so <code>mech</code> rises from 1 to 2. Verify that its score upgrades from L2 to L3.</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Add an automated level-proportion check to <code>score_answer()</code> that splits each strong answer on <code>Level 1 Outcome:</code>, <code>Level 2 Mechanism:</code>, and <code>Level 3 Internals and limits:</code> and flags any answer where Level 1 exceeds 25% of total words or Level 3 falls below 20%.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Interviewer interrupts at 45s with "Okay, but how does it actually work under the hood?"</td><td>You fell into the Level 1 preamble trap: spending 45-66s on context, team history, or business goals before naming a mechanism</td><td>Cap Level 1 at 20 seconds (~50 words); make your third sentence the first causal step of Level 2 Mechanism</td></tr>
+    <tr><td>Interviewer says "That sounds high-level / like a PM answer"</td><td>Business voice: using verbs like "streamlined", "leveraged", "optimized" with 0 numbers, 0 data structures, and 0 failure modes</td><td>Apply the 4-element checklist (M-N-F-T): name the exact data structure/algorithm, 2+ numbers with units, 1 failure mode, and 1 tradeoff</td></tr>
+    <tr><td>Interviewer asks "And when does that break?" after every single answer</td><td>You consistently stop at Level 2 Mechanism and wait to be prompted for edge cases and bottlenecks</td><td>Automatically transition at second 65 into Level 3 Internals and limits without waiting for a follow-up question</td></tr>
+    <tr><td>You run out of time after covering only 2 questions in a 45-minute deep-dive round</td><td>Unbounded Level 3 monologues (3 to 4 minutes per turn) instead of stopping at the 90-second mark</td><td>Use the 90-second internal clock (200-230 words) and end with a two-branch check-in so the interviewer controls depth</td></tr></table></div>
+  <p><strong>Monitor:</strong> Record your mock answers and track four metrics in your Question Log (X02): <strong>time-to-mechanism</strong> (must be &lt;= 20s), <strong>total turn duration</strong> (60-90s), <strong>concrete numbers count</strong> (&gt;= 3 per answer), and <strong>unprompted failure mode coverage</strong> (&gt;= 1 per answer).</p>
+  <details class="q"><summary>Scenario: Ten minutes into an AI Systems deep-dive round, the interviewer asks "How did you prevent duplicate actions in your clinic voice-agent booking pipeline?" You catch yourself 25 seconds into explaining why clinics dislike double-booked appointments. How do you recover in real time?</summary><div class="a"><ol>
+    <li><strong>Cut the preamble immediately with an explicit pivot phrase:</strong> Say, <em>"Let me jump straight to the mechanism."</em> Do not finish the background story.</li>
+    <li><strong>Deliver Level 2 Mechanism in 40 seconds (~100 words):</strong> State the deterministic state flow: the voice agent hashes <code>(clinic_id, patient_phone, slot_utc_minute)</code> into a deterministic idempotency key and executes an atomic Postgres <code>INSERT INTO booking_locks ON CONFLICT DO NOTHING</code> with status <code>STARTED</code> before calling the EHR scheduling API; duplicate webhook retries within flight receive <code>409 Conflict</code>, and completed bookings replay the cached confirmation ID.</li>
+    <li><strong>Land Level 3 Internals and limits in 25 seconds (~60 words):</strong> State the failure boundary and number: if the worker crashes after the EHR API succeeds but before committing <code>COMPLETED</code>, the lock stays orphaned; a background reaper reconciles <code>STARTED</code> rows older than the 15-second EHR timeout by querying the EHR by external reference ID.</li>
+    <li><strong>Stop and offer a fork:</strong> <em>"Happy to detail the reaper reconciliation query or how we handle voice barge-in cancellations during that 15-second window."</em></li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A three-level interview answer structures any technical explanation into a ninety-second, two-hundred-and-twenty-five-word spoken turn at one hundred and fifty words per minute. It moves from outcome to causal mechanism to internals and limits, proving senior engineering depth before the interviewer ever needs to probe for edge cases.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>You divide the ninety-second clock into twenty seconds, forty-five seconds, and twenty-five seconds. In Level 1 Outcome, taking twenty seconds or fifty words, you state what the system achieves and the primary metric delta, such as cutting LLM inference spend by seventy percent or bounding tail latency. In Level 2 Mechanism, taking forty-five seconds or one hundred and ten words, you trace the causal data flow step by step using concrete engineering primitives: how requests enter, what data structure or matrix operation transforms them, and how state commits. You strip all business buzzwords like leveraging or streamlining and verify four mandatory elements: mechanism, number with units, failure mode, and tradeoff.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In Level 3 Internals and limits, taking twenty-five seconds or sixty-five words, you name the physical boundary and failure mode, such as a dynamic timestamp at token ten dropping prefix cache hits to zero percent. If Level 1 runs for one hundred and sixty-five words, it burns sixty-six seconds and leaves only twenty-four seconds, starving Level 3. Stop at ninety seconds and offer two deep-dive branches.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"In technical interviews, I make sure to communicate clearly by giving a structured overview first and then diving into technical details if the interviewer asks. This shows both business alignment and technical ability without overwhelming them with too much low-level detail upfront."</p>
+    <p class="strong">"At 150 words per minute, a 90-second turn gives me 225 words. I spend 20 seconds (~50 words) on Level 1 Outcome with the headline metric delta, 45 seconds (~110 words) on Level 2 Mechanism tracing the exact data structures and wire calls, and 25 seconds (~65 words) on Level 3 Internals and limits naming hardware floors, production failure modes, and tradeoffs, then stop at 90 seconds with a two-branch check-in."</p>
+    <p>The weak answer describes communication intent at Level 1 and waits to be prompted for depth. The strong answer specifies the exact WPM math (150 WPM, 225 words), the 20s/45s/25s budget, the required four elements, the failure mode of waiting to be asked, and the 90-second handoff protocol.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Start with a high-level Level 1 and Level 2 answer, and wait for the interviewer to ask follow-up questions before sharing Level 3 numbers and failure modes."</summary><div class="a">Wrong. Waiting to be pulled into Level 3 forces the interviewer to spend their limited 45-minute budget extracting basic depth from you, which scores you as mid-level. Voluntarily delivering 25 seconds (~65 words) of unprompted numbers, failure modes, and tradeoffs at the end of your 90-second turn is what signals senior ownership.</div></details>
+  <details class="q"><summary>"Before explaining a mechanism from your past project, spend the first minute giving thorough business context and project history so the interviewer understands why the problem mattered."</summary><div class="a">Wrong. As the kata proves, 165 words of Level 1 history consumes <strong>66 seconds</strong> at 150 WPM, leaving only <strong>24 seconds</strong> in a 90-second turn for work that requires 70 seconds (45s Mechanism + 25s Internals and limits). State the outcome and metric delta in 20 seconds (~50 words) and start the mechanism by sentence three.</div></details>
+  <details class="q"><summary>"As long as you name the right architectural pattern (like 'we used hybrid search with RRF' or 'we used prefix caching'), you have delivered a Level 3 engineer-voiced answer."</summary><div class="a">Wrong. Naming a pattern without its causal operation, concrete numbers, and failure boundary is still Level 1 or shallow Level 2. A Level 3 answer must explain <em>how</em> RRF combines incompatible score distributions via <code>sum(1 / (60 + rank_i))</code>, <em>what</em> it costs (doubled tail latency and memory without a 40 ms parallel timeout), and <em>where</em> it fails (ignoring confidence gaps without a cross-encoder reranker).</div></details>
+  <details class="q"><summary>"In an interview, you should literally say the words 'Level 1 Outcome', 'Level 2 Mechanism', and 'Level 3 Internals and limits' before each section so the interviewer grades your structure."</summary><div class="a">Wrong. Literal rubric labels are training scaffolding for your kata and drills. In a live interview, replace them with natural engineering signposts: open directly with the outcome sentence, pivot with <em>"Under the hood, that runs in three stages..."</em>, and transition to Level 3 with <em>"The main production bottleneck / failure boundary is..."</em>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through the exact time and word budgets for a 90-second three-level answer at 150 words per minute.</summary><div class="a">At 150 WPM (2.5 words/s), 90 seconds equals <strong>225 words</strong> total: <strong>Level 1 Outcome</strong> gets <strong>20 seconds (~50 words, 22%)</strong>; <strong>Level 2 Mechanism</strong> gets <strong>45 seconds (~110-112 words, 50%)</strong>; <strong>Level 3 Internals and limits</strong> gets <strong>25 seconds (~63-65 words, 28%)</strong>.<div class="f"><b>Follow-up</b>What happens to your time budget if your Level 1 preamble expands to 165 words? It consumes 66 seconds, leaving only 24 seconds for the 70 seconds required by Level 2 (45s) and Level 3 (25s).</div></div></details>
+  <details class="q"><summary>What are the four mandatory elements of the engineer-voice checklist, and where do they sit inside the three levels?</summary><div class="a">The four elements are <strong>(1) Mechanism</strong>, <strong>(2) Number with units</strong>, <strong>(3) Failure mode</strong>, and <strong>(4) Tradeoff</strong> (M-N-F-T). The headline metric number opens Level 1 Outcome; the causal mechanism and system parameters sit in Level 2 Mechanism; the hardware/protocol limit numbers, production failure mode, and explicit tradeoff sit in Level 3 Internals and limits.</div></details>
+  <details class="q"><summary>Deliver a 90-second three-level answer for "Why do we split LLM inference into prefill and decode?" (K05).</summary><div class="a"><strong>L1 Outcome (20s):</strong> LLM inference splits into a compute-bound prefill phase that governs TTFT and a memory-bandwidth-bound decode phase that governs TPOT. <strong>L2 Mechanism (45s):</strong> During prefill, all S prompt tokens are known upfront, so weight projections run as matrix-matrix multiplications (GEMMs) that read model weights once from HBM and reuse them across S tokens, exceeding 200 FLOPs/byte. During decode, autoregression emits 1 token per forward pass, turning projections into matrix-vector multiplications (GEMVs) that stream all 16 GB of FP16 weights for an 8B model to emit a single token, dropping arithmetic intensity to ~2 FLOPs/byte at batch size 1. <strong>L3 Internals and limits (25s):</strong> On an H100 with 3 TB/s HBM bandwidth, weight reads set a 5.3 ms floor per token, while long prefills stall concurrent decode batches unless chunked prefill or prefill-decode disaggregation is enabled.<div class="f"><b>Follow-up</b>How many numbers, mechanism markers, and failure markers did that K05 answer score in the kata? 10 numbers, 4 mechanism markers, and 1 failure marker in 141 words (56s), scoring L3.</div></div></details>
+  <details class="q"><summary>Deliver a 90-second three-level answer for "How do you guarantee a payment retry never double-charges a customer?" (L12).</summary><div class="a"><strong>L1 Outcome (20s):</strong> Idempotency keys with atomic database state transitions guarantee at-most-once side effects when clients retry across network timeouts. <strong>L2 Mechanism (45s):</strong> The client generates a UUIDv4 <code>Idempotency-Key</code> per logical operation and sends it in the HTTP header. Before calling Stripe, the server runs an atomic <code>INSERT INTO idempotency_keys ON CONFLICT DO NOTHING</code> in Postgres. A new key locks the row in status <code>STARTED</code>; a concurrent duplicate arriving in flight receives <code>409 Conflict</code> with <code>Retry-After</code>; a key in status <code>COMPLETED</code> replays the cached response payload without re-running the charge. <strong>L3 Internals and limits (25s):</strong> If the worker crashes after charging Stripe but before committing <code>COMPLETED</code>, naive recovery deadlocks; we persist recovery checkpoints and run a background reaper that reconciles stale <code>STARTED</code> rows older than the 30-second upstream timeout.</div></details>
+  <details class="q"><summary>Convert this business-voiced claim into a Level 3 answer: "We combined keyword search and vector embeddings to improve search accuracy for product codes and natural language queries."</summary><div class="a"><strong>L1 Outcome:</strong> Hybrid search fuses lexical BM25 and dense bi-encoder retrieval via Reciprocal Rank Fusion (RRF) to lift Recall@5 by 8 to 15 points on mixed queries. <strong>L2 Mechanism:</strong> Dense 1024-dim unit vectors capture semantic similarity but blur exact tokens like <code>SKU-9481</code>. BM25 scores exact term frequency with inverse document frequency and length normalization (<code>k1=1.5, b=0.75</code>) over an inverted index. Because cosine similarity and unbounded BM25 scores have incompatible distributions, RRF merges rankings without score calibration via <code>sum(1 / (60 + rank_i))</code>. <strong>L3 Internals and limits:</strong> Querying two indexes doubles tail memory and retrieval latency unless run in parallel with a 40 ms timeout; RRF also ignores score confidence gaps, so we rerank the top 50 fused candidates with a cross-encoder.<div class="f"><b>Follow-up</b>Why does RRF use the constant 60 in <code>1 / (60 + rank_i)</code>? It dampens the outsized weight of top-1 ranks from a single noisy retriever so documents ranked consistently near the top across both BM25 and dense search win over a single-list outlier.</div></div></details>
+  <details class="q"><summary>Why did the strong answer for I05 Agent Loop Guards (122 words, 49s) only reach Level 2 in the kata rubric grader, and what lesson does that carry for live interviews?</summary><div class="a">The kata requires <code>nums &gt;= 3</code>, <code>mech &gt;= 2</code>, and <code>fail &gt;= 1</code> for Level 3. I05 Strong had 6 numbers and 2 failure markers but only 1 tracked mechanism keyword (<code>hash</code>). In a live interview, interviewers listen for multiple interacting mechanism primitives (for example, naming the state hash ring <em>plus</em> per-tool timeout enforcement and token budget ledgers) to distinguish a complete architecture from a single heuristic.</div></details>
+  <details class="q"><summary>How do you close a 90-second three-level answer without either cutting off abruptly or rambling into a 3-minute monologue?</summary><div class="a">At the end of Level 3 (around second 85-90), offer a <strong>two-branch Level 3 fork</strong> that names two concrete technical sub-problems and hands control back: <em>"I can dive deeper into [Mechanism Internals A] or walk through how we recover from [Failure Mode B] - which is more useful?"</em><div class="f"><b>Follow-up</b>What if the interviewer interrupts you at second 35 during Level 2 with a question about a failure mode? Drop the remainder of your planned Level 2 script and jump immediately to Level 3 Internals and limits for that specific failure mode.</div></div></details>
+  <details class="q"><summary>What are the natural spoken signposts you should use in a live interview instead of saying "Level 1", "Level 2", and "Level 3" aloud?</summary><div class="a"><ul>
+    <li><strong>For Level 1 Outcome (0-20s):</strong> Open directly with the causal headline and metric delta: <em>"We cut [metric] by [X-Y%] while keeping [constraint] under [Z ms] by doing [technique]."</em></li>
+    <li><strong>For Level 2 Mechanism (20-65s):</strong> Pivot with <em>"Under the hood, the request path runs in three ordered steps: first..."</em></li>
+    <li><strong>For Level 3 Internals and limits (65-90s):</strong> Pivot with <em>"The hard boundary / failure mode in production is..."</em> followed by the exact threshold and tradeoff.</li>
+  </ul></div></details>
+  <details class="q"><summary>How do you adapt the 20s / 45s / 25s three-level structure when answering a behavioral or past-project question ("Tell me about a hard production bug you fixed")?</summary><div class="a"><ul>
+    <li><strong>Level 1 Outcome (20s):</strong> State the production symptom, the root cause in one clause, and the measurable fix delta (for example, "Eliminated a 1.8% duplicate booking rate under retry storms and cut p99 lock contention from 420 ms to 18 ms").</li>
+    <li><strong>Level 2 Mechanism (45s):</strong> Walk through how you diagnosed the fault and the exact code, schema, or protocol change you shipped.</li>
+    <li><strong>Level 3 Internals and limits (25s):</strong> Name the edge case your fix still had to guard against (such as orphaned locks on worker OOM), the monitoring alert you added, and what you traded off.</li>
+  </ul><div class="f"><b>Follow-up</b>How does this differ from a traditional STAR answer? Traditional STAR spends 60-70% of the turn on Situation and Task (Level 1 preamble trap); three-level behavioral answers compress Situation + Result into the 20-second Level 1 Outcome so 70 seconds go to engineering mechanism and limits.</div></div></details>
+  <details class="q"><summary>When you practice a topic and cannot state a concrete number or a failure mode during the last 25 seconds of your turn, what does that diagnose about your study loop?</summary><div class="a">It diagnoses that you only read the concept at Level 1 or Level 2 recognition and skipped Station 4 (Numbers to know cold) and Station 6/7 (Break-it and Production failures). You must log that question in your Question Log (X02) as Level 1 or Level 2 reached and retest it in 7 days.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the exact time and word allocations at 150 WPM for Level 1, Level 2, and Level 3 in a 90-second turn, (2) the four mandatory elements of the engineer-voice checklist (M-N-F-T), (3) the arithmetic of the 165-word Level 1 preamble trap, and (4) a full 3-level answer for either G01 Token Optimization or K05 Prefill vs Decode.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 5-step architecture: Prompt -&gt; L1 Outcome (20s, ~50w) -&gt; L2 Mechanism (45s, ~110w) -&gt; L3 Internals &amp; limits (25s, ~65w) -&gt; Four-Element Checklist + Stop at 90s with L3 fork.</li>
+    <li>Speaking rate math: <code>150 WPM = 2.5 words/s</code>; 90-second budget = <strong>225 words</strong> (aim for 200 to 230 words).</li>
+    <li>Split: <strong>20s / 45s / 25s</strong> = <strong>~50w (22%) / ~110w (50%) / ~65w (28%)</strong>.</li>
+    <li>Four-element checklist (<strong>M-N-F-T</strong>): <strong>M</strong>echanism (causal steps/data structure), <strong>N</strong>umber with units, <strong>F</strong>ailure mode (where it breaks), <strong>T</strong>radeoff (what you pay).</li>
+    <li>Preamble trap math: 165 words of Level 1 context at 150 WPM burns <strong>66 seconds</strong>, leaving only <strong>24 seconds</strong> for the 70 seconds needed by L2 (45s) + L3 (25s).</li>
+    <li>Kata contrast: Weak business answers ran 29-42 words (12-17s) with 0 numbers, 0 mechanisms, and 0 failure modes (L1); strong answers ran 130-165 words (52-66s) with 5-15 numbers, 2-4 mechanisms, and 1-3 failure modes (L3).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>V01: What are the four elements that separate engineer voice from business voice in any technical explanation?</summary><div class="a">An explicit <strong>mechanism</strong> (causal data flow or algorithm), a concrete <strong>number with units</strong>, a specific <strong>failure mode</strong>, and an explicit <strong>tradeoff</strong> (what you pay for what you gain). Business voice talks only about intent, outcomes, and ROI.</div></details>
+  <details class="q"><summary>U01: Why does re-reading a technical explanation create an illusion of competence, and what replaces it in this study loop?</summary><div class="a">Re-reading tests <strong>recognition</strong> while the text is visible in working memory, whereas interviews test cold <strong>retrieval</strong> under a 90-second clock. Blank-page recall, self-graded question banks, and 7-day / 30-day retest mode replace passive reading.</div></details>
+  <details class="q"><summary>G01: Why does injecting a dynamic timestamp at token 10 of a system prompt drop prefix KV cache hit rate to 0 percent?</summary><div class="a">Because causal self-attention makes every token's Key and Value tensors depend on all preceding tokens; the inference engine hashes fixed-size prefix token blocks sequentially, so any byte mutation at token 10 invalidates every subsequent KV block hash.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="file:///c:/Users/Richa/OneDrive/Documents/Projects/AI-Fullstack-Systems-Engineer/00-core-brief.md">AI Mastery Curriculum: 00-core-brief.md (Section 2: What your answers must sound like)</a><small>Defines the 90-second three-level answer spec (20s Outcome, 45s Mechanism, 25s Internals and limits) and the four-element engineer voice requirement. Checked 2026-11-18.</small></li>
+    <li><a href="file:///c:/Users/Richa/OneDrive/Documents/Projects/AI-Fullstack-Systems-Engineer/01-master-topic-index.md">AI Mastery Curriculum: 01-master-topic-index.md (Domain X: Interview craft, Row X01)</a><small>Specifies X01 Tier 1 scope, Week 1 placement, and the 5-answer weak-vs-strong transformation kata across G01, K05, L12, H06, and I05. Checked 2026-11-18.</small></li>
+    <li><a href="https://dl.acm.org/doi/10.1145/1571941.1572114">Cormack, Clarke, and Buettcher (SIGIR 2009): Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods</a><small>Primary source for the RRF formula sum(1 / (60 + rank_i)) cited in the H06 kata benchmark pair. Checked 2026-11-18.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Three-level hierarchy (O-M-I):</strong> Level 1 Outcome states what it does and the metric delta; Level 2 Mechanism traces the causal step-by-step data flow and algorithms; Level 3 Internals and limits gives hard numbers, failure modes, and tradeoffs.</li>
+    <li><strong>Spoken pacing and 90-second time box:</strong> At 150 WPM (2.5 words/s), a 90-second turn holds 225 words split into <strong>20s (~50w, 22%)</strong> Outcome, <strong>45s (~110w, 50%)</strong> Mechanism, and <strong>25s (~65w, 28%)</strong> Internals and limits.</li>
+    <li><strong>Four-element engineer-voice checklist (M-N-F-T):</strong> Every answer must contain a causal <strong>M</strong>echanism, a concrete <strong>N</strong>umber with units, a production <strong>F</strong>ailure mode, and an explicit <strong>T</strong>radeoff.</li>
+    <li><strong>Translating business voice to Level 3:</strong> Replace vague verbs ("leveraged", "streamlined", "ROI") with deterministic state transitions; in the kata, weak answers ran 29-42 words (12-17s, 0 numbers, L1) while strong answers ran 130-165 words (52-66s, 5-15 numbers, L3).</li>
+    <li><strong>90-second cutoff and pull-signals:</strong> Stop at 90 seconds and offer a two-branch Level 3 fork so the interviewer steers depth; if interrupted with an edge-case question during Level 2, jump straight to Level 3 for that failure mode.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Pacing formula:</strong> <code>Words = Seconds * (150 / 60) = Seconds * 2.5</code> -&gt; <code>20s = 50w</code>, <code>45s = 112w</code>, <code>25s = 63w</code>, <code>90s = 225w</code> (aim for 200 to 230 words).</li>
+      <li><strong>The 66-second preamble trap:</strong> Spending 165 words on Level 1 project context burns 66 seconds and leaves only 24 seconds for the 70 seconds needed by Level 2 (45s) and Level 3 (25s).</li>
+      <li><strong>Never wait to be asked for Level 3:</strong> Voluntarily delivering 25 seconds of unprompted numbers, failure modes, and tradeoffs at the end of your 90-second answer is the primary signal of senior engineering ownership.</li>
+      <li><strong>Use natural signposts, not literal labels:</strong> Say <em>"Under the hood, that runs in three stages..."</em> and <em>"The hard boundary in production is..."</em> rather than saying "Level 1", "Level 2", "Level 3" aloud in an interview.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::X Interview craft", "tags": "X01 T1 W01", "cards": [{"q": "What are the three levels of a 90-second interview answer and their exact time allocations?", "a": "Level 1 Outcome (20s), Level 2 Mechanism (45s), and Level 3 Internals and limits (25s), totaling 90 seconds."}, {"q": "At 150 words per minute (2.5 words/sec), how many words belong in Level 1, Level 2, and Level 3 of a 90-second answer?", "a": "About 50 words for Level 1 (20s), 110 words for Level 2 (45s), and 65 words for Level 3 (25s), totaling ~225 words."}, {"q": "Why does a 165-word Level 1 project-history preamble cause an interview answer to fail a 90-second time box?", "a": "At 150 WPM, 165 words burn 66 seconds, leaving only 24 seconds for the 70 seconds needed by Mechanism (45s) and Limits (25s)."}, {"q": "What four mandatory elements (M-N-F-T) must appear in an engineer-voiced three-level answer?", "a": "A causal Mechanism, a concrete Number with units, a specific production Failure mode, and an explicit Tradeoff."}, {"q": "Why does waiting for the interviewer to ask follow-up questions before giving Level 3 failure modes and numbers lower your interview grade?", "a": "Stopping at Level 2 forces the interviewer to spend time extracting depth; volunteering 25 seconds of unprompted limits and numbers signals senior ownership."}, {"q": "How should you end a 90-second three-level answer instead of rambling past the time box?", "a": "Stop at 90 seconds and offer a two-branch Level 3 fork naming two concrete internals or failure modes the interviewer can pick next."}, {"q": "How do you adapt the 20s / 45s / 25s three-level structure to a behavioral debugging question instead of a long STAR story?", "a": "Compress symptom, root cause, and metric delta into 20s Outcome, spend 45s on diagnosis and code fix Mechanism, and 25s on edge-case Limits."}, {"q": "What should you do when an interviewer interrupts your Level 2 Mechanism at second 35 to ask what happens when a node crashes?", "a": "Drop the remaining rehearsed Level 2 script and jump immediately to Level 3 Internals and limits for that specific crash failure mode."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

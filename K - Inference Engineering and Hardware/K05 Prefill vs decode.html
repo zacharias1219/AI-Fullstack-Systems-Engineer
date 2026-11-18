@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K05 Prefill vs decode</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K05">
+<main>
+<header>
+  <div class="eyebrow"><b>K05</b><span>K Inference engineering and hardware</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Prefill vs decode</h1>
+  <p class="lede">Why does an LLM process your 256-token prompt at nearly 6,000 tokens per second, then slow down 23x when generating the 32-token reply one word at a time?</p>
+  <div class="chips"><span><em>Before</em>K04 One token end to end</span><span><em>Before</em>D10 Decoding and sampling</span><span><em>After</em>K06 KV cache</span><span><em>After</em>K07 Memory math</span><span><em>After</em>K17 Chunked prefill and long-prompt interference</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict the prefill-to-decode throughput and arithmetic intensity gap</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read the core idea and walk through the 5-step phase lifecycle stepper</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Study how it works: GEMM vs GEMV, Roofline model, and the interactive explorer</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Run and break the miniature GQA transformer kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Practice production debugging and the 90-second spoken interview answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Complete blank-page recall, flashcards, and mixed review</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our kata (3.82M parameters, 7.63 MB in FP16), prefill on a 256-token prompt reads 7.90 MB of weights and KV state. How many megabytes must the hardware read to generate just 1 new decode token right after?</summary><div class="a">It reads <strong>7.91 MB</strong> for that single decode token. Even though decode computes only 1 token instead of 256 (8.75 M FLOPs vs 1,688.21 M FLOPs), every linear layer still has to stream the entire 7.63 MB weight matrices from memory plus the saved KV cache (0.28 MB).</div></details>
+  <details class="q"><summary>In that same run (batch size B=1, prompt S=256), prefill achieves 5,930.2 tok/s in 43.17 ms. Does per-token decode run at roughly the same token throughput, half as fast, or more than 20x slower?</summary><div class="a">More than 20x slower: decode runs at <strong>257.1 tok/s</strong> (3.89 ms per token), making prefill <strong>23.06x faster</strong> in tokens per second. In prefill, one weight read is amortized across all 256 prompt tokens (213.8 FLOP/Byte); in single-stream decode, that weight read serves only 1 token (1.11 FLOP/Byte, a <strong>193.4x</strong> drop in arithmetic intensity).</div></details>
+  <details class="q"><summary>Suppose you generate N=32 new tokens after a 256-token prompt without saving intermediate key-value projections, re-running the full prefix at each step. How many total token positions do you process compared to caching?</summary><div class="a">You process <strong>8,688 token positions</strong> instead of <strong>287 positions</strong>, which is <strong>30.3x redundant work</strong>. Without saved prefix state, step <code>t</code> must recompute all <code>256 + t</code> tokens from scratch because causal attention needs every past token's key and value vectors.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Autoregressive generation is sequential by definition: you cannot sample token <code>t + 1</code> until you have computed the logits for token <code>t</code>, sampled a token ID, and fed it back as the next input. However, when a user sends a prompt of <code>S</code> tokens, all <code>S</code> input tokens are already known upfront. Inference engines therefore split every request into two distinct phases: <strong>prefill</strong> (processing all <code>S</code> prompt tokens in one parallel forward pass to emit the first generated token and save each layer's key-value projections) and <strong>decode</strong> (running one forward pass per generated token, feeding only the newly sampled token of shape <code>[B, 1, d_model]</code> while reading the saved prefix state).</p>
+  <p>Although prefill and decode execute the exact same model weights, they behave like two completely different workloads on hardware. Prefill multiplies a thick activation matrix <code>[B*S, d_model]</code> against each weight matrix (General Matrix-Matrix Multiplication, or <strong>GEMM</strong>), reusing every weight byte fetched from High-Bandwidth Memory (HBM) across <code>B*S</code> tokens and saturating the GPU's compute units. Decode at batch size <code>B=1</code> multiplies a single row vector <code>[1, d_model]</code> against each weight matrix (General Matrix-Vector Multiplication, or <strong>GEMV</strong>), streaming gigabytes of weights out of HBM just to do two floating-point operations per weight parameter and leaving the GPU's tensor cores starving for data.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From parallel prompt prefill to serial per-token decode</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Five-step diagram comparing parallel GEMM prefill over S=256 tokens with serial GEMV decode over 1 token reading weights and KV state.">
+      <g font-size="12">
+        <rect x="8" y="8" width="484" height="209" rx="8" class="c-paper ln"/>
+        <g data-step="1">
+          <rect x="20" y="22" width="135" height="58" rx="6" class="c-accent" data-hi="1"/>
+          <text x="87" y="45" text-anchor="middle" font-weight="600">1. Prompt Prefill</text>
+          <text x="87" y="64" text-anchor="middle">X: [B, S=256, d]</text>
+        </g>
+        <g data-step="2">
+          <path d="M155 51 H185" class="ink"/>
+          <rect x="185" y="22" width="145" height="58" rx="6" class="c-good" data-hi="2"/>
+          <text x="257" y="45" text-anchor="middle" font-weight="600">2. GEMM Compute</text>
+          <text x="257" y="64" text-anchor="middle">213.8 FLOP/B (5930 tok/s)</text>
+        </g>
+        <g data-step="3">
+          <path d="M330 51 H355" class="ink"/>
+          <rect x="355" y="22" width="125" height="58" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="417" y="45" text-anchor="middle" font-weight="600">3. First Token + KV</text>
+          <text x="417" y="64" text-anchor="middle">TTFT: 43.17 ms</text>
+        </g>
+        <g data-step="4">
+          <path d="M417 80 V125 H155" class="ink"/>
+          <rect x="20" y="102" width="135" height="58" rx="6" class="c-warn" data-hi="4"/>
+          <text x="87" y="125" text-anchor="middle" font-weight="600">4. Decode Loop</text>
+          <text x="87" y="144" text-anchor="middle">x_t: [B, 1, d] per step</text>
+        </g>
+        <g data-step="5">
+          <path d="M155 131 H185" class="ink"/>
+          <rect x="185" y="102" width="295" height="58" rx="6" class="c-bad" data-hi="5"/>
+          <text x="332" y="125" text-anchor="middle" font-weight="600">5. Memory-Bound GEMV (HBM Bottleneck)</text>
+          <text x="332" y="144" text-anchor="middle">7.91 MB read for 1 tok = 1.11 FLOP/B (257 tok/s)</text>
+          <text x="250" y="192" text-anchor="middle" class="m">Same 7.63 MB weights streamed in both phases: 23.06x lower tok/s in decode</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>All S=256 prompt tokens arrive together as a matrix [B, 256, d_model], so every layer processes the full sequence in one parallel pass.</li>
+      <li>Weight matrices (7.63 MB) are loaded once and multiplied across all 256 tokens (GEMM), reaching 213.8 FLOP/Byte and 5,930.2 tok/s.</li>
+      <li>Prefill finishes in 43.17 ms (Time to First Token, TTFT), emits token 1, and stores each layer's K and V projections (0.26 MB).</li>
+      <li>Autoregressive decode begins: only the single newly sampled token [B, 1, d_model] enters the network on each step, repeating N=32 times.</li>
+      <li>Each decode step still streams all 7.63 MB of weights plus 0.28 MB of KV state for just 8.75 M FLOPs (1.11 FLOP/Byte), dropping throughput 23.06x to 257.1 tok/s (3.89 ms TPOT).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Prefill amortizes weight reads across all S prompt tokens (compute-bound GEMM), whereas decode streams every weight byte for a single token at a time (memory-bandwidth-bound GEMV).</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>P-D-R-B</strong> to reconstruct the spine of prefill vs decode from scratch: <strong>P</strong>refill runs parallel <strong>GEMM</strong> over <code>S</code> tokens (sets <strong>TTFT</strong>, compute-bound); <strong>D</strong>ecode runs serial <strong>GEMV</strong> over <code>1</code> token (sets <strong>TPOT</strong>, HBM-bandwidth-bound); <strong>R</strong>oofline ridge point is <code>Peak FLOP/s / HBM BW</code> (~295 FLOP/B on H100, ~156 FLOP/B on A100); <strong>B</strong>atching <code>B</code> requests raises decode arithmetic intensity from <code>~1</code> to <code>~B</code> FLOP/Byte by reusing each weight read across <code>B</code> tokens.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Why naive autoregression recomputes work</h3>
+  <p>In a causal transformer, the self-attention output at position <code>t</code> depends on the query vector <code>q_t</code> and on the key and value vectors <code>k_1..t, v_1..t</code> of every token at or before <code>t</code>. Because the causal mask blocks position <code>i</code> from attending to any future position <code>j &gt; i</code>, the hidden representations and <code>(k_i, v_i)</code> projections of prefix tokens <code>1..t</code> never change when token <code>t + 1</code> is appended. If you ignore this invariance and feed the growing sequence of lengths <code>S, S+1, ..., S+N-1</code> into a stateless forward pass at every step, you recompute the entire prefix <code>N</code> times:</p>
+  <div class="codewrap"><pre>Uncached positions processed = sum_{t=0..N-1} (S + t) = N * S + N * (N - 1) / 2
+Cached positions processed   = S (in prefill) + (N - 1) (in decode) = S + N - 1
+
+For S = 256, N = 32 (our kata):
+  Uncached = 32 * 256 + (32 * 31) / 2 = 8,192 + 496 = 8,688 positions
+  Cached   = 256 + 31 = 287 positions  (30.3x redundant work eliminated)</pre></div>
+
+  <h3>2. Linear GEMM in prefill vs GEMV in decode</h3>
+  <p>Caching eliminates redundant FLOPs during decode, yet decode tokens still take far longer per token than prefill tokens. To see why, look at a single linear projection with weight matrix <code>W</code> of shape <code>[d_in, d_out]</code> containing <code>P = d_in * d_out</code> parameters (<code>2P</code> bytes in FP16). Multiplying an input activation matrix of <code>T</code> tokens (where <code>T = B * S</code> in prefill and <code>T = B * 1</code> in decode) by <code>W</code> requires <code>2 * T * P</code> FLOPs (one multiply and one add per weight per token). Across a full model with <code>P_total</code> linear parameters, <code>L</code> layers, <code>H</code> query heads, and head dimension <code>d_head</code>, the per-step FLOPs and FP16 bytes read are:</p>
+  <div class="codewrap"><pre>Prefill step (all S tokens in parallel):
+  Linear FLOPs = 2 * B * S * P_layer_total + 2 * B * d_model * V
+  Attn FLOPs   = 4 * B * L * H * (S^2) * d_head
+  Bytes moved  = 2 * P_total + 4 * B * S * L * KVH * d_head  (weights read + KV written)
+
+Decode step (1 token per sequence at context length S):
+  Linear FLOPs = 2 * B * 1 * P_total
+  Attn FLOPs   = 4 * B * L * H * S * d_head
+  Bytes moved  = 2 * P_total + 4 * B * S * L * KVH * d_head  (weights read + KV read)</pre></div>
+  <details class="q"><summary>Check: Why does linear projection FLOP count drop by roughly S (from 2*B*S*P to 2*B*P) between prefill and one decode step, while bytes read stays almost identical at B=1?</summary><div class="a">Because only 1 new token vector enters the linear layers during a decode step (reducing multiply-adds by <code>S</code>), but computing the dot product of that 1 token vector with every column of <code>W</code> still requires reading every single weight parameter in <code>W</code> from HBM.</div></details>
+
+  <h3>3. Arithmetic intensity and the Roofline model</h3>
+  <p>The <strong>Roofline model</strong> bounds the achievable compute performance (FLOP/s) of any kernel using two hardware ceilings: peak compute <code>F_peak</code> (FLOP/s) and peak memory bandwidth <code>BW</code> (Bytes/s). The ratio of work done to memory traffic is the kernel's <strong>arithmetic intensity</strong>, <code>I = FLOPs / Bytes</code>. A kernel's throughput is capped by <code>min(F_peak, I * BW)</code>. The crossover where memory bandwidth can finally feed the compute units at full speed is the hardware's <strong>ridge point</strong>:</p>
+  <div class="codewrap"><pre>I_ridge = F_peak / BW
+
+Hardware examples (dense FP16/BF16 Tensor Cores):
+  NVIDIA A100-80GB SXM: 312 TFLOP/s / 2.00 TB/s = 156.0 FLOP/Byte
+  NVIDIA H100-80GB SXM: 989 TFLOP/s / 3.35 TB/s = 295.2 FLOP/Byte
+
+Linear layer arithmetic intensity (when weight bytes 2*P dominate KV bytes):
+  I_prefill ≈ (2 * B * S * P) / (2 * P) = B * S  FLOP/Byte
+  I_decode  ≈ (2 * B * 1 * P) / (2 * P) = B      FLOP/Byte</pre></div>
+  <p>Notice how cleanly the <code>2 * P</code> parameter count cancels out! For moderate context lengths where model weights are much larger than the KV cache, arithmetic intensity in FP16 is approximately <code>B * S</code> FLOP/Byte in prefill and <code>B</code> FLOP/Byte in decode. At <code>B = 1</code> and <code>S = 256</code>, our kata measures <code>I_prefill = 213.8 FLOP/Byte</code> (compute-bound on A100, approaching the ridge on H100) and <code>I_decode = 1.11 FLOP/Byte</code> (deep in the memory-bound slope, utilizing less than <code>1.11 / 295.2 = 0.38%</code> of an H100's tensor cores).</p>
+  <figure class="viz stepper" id="viz-roofline">
+    <div class="vt">Stepper: Prefill vs decode on the GPU Roofline (log-log scale)</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Roofline log-log plot showing the bandwidth slope, the compute ceiling, single-stream decode at 1.1 FLOP/Byte, batched decode moving up the slope, and prefill at 213.8 FLOP/Byte on the compute ceiling.">
+      <g font-size="12">
+        <rect x="8" y="8" width="484" height="209" rx="8" class="c-paper ln"/>
+        <path d="M55 180 H465 M55 180 V25" class="ink"/>
+        <text x="260" y="206" text-anchor="middle" class="m">Arithmetic Intensity I (FLOP / Byte, log scale)</text>
+        <text x="22" y="105" text-anchor="middle" transform="rotate(-90 22 105)" class="m">Throughput (TFLOP/s)</text>
+        <g data-step="1">
+          <path d="M65 170 L285 48 H455" class="ink" stroke-width="2" fill="none" data-hi="1"/>
+          <path d="M285 48 V180" class="ln" stroke-dasharray="4 3"/>
+          <text x="150" y="92" class="m">Slope = HBM BW</text>
+          <text x="370" y="40" text-anchor="middle" font-weight="600">Peak Compute F_peak</text>
+          <text x="285" y="193" text-anchor="middle" font-weight="600">Ridge (~156-295)</text>
+        </g>
+        <g data-step="2">
+          <rect x="62" y="136" width="128" height="36" rx="5" class="c-bad" data-hi="2"/>
+          <text x="126" y="152" text-anchor="middle" font-weight="600">Decode B=1 (GEMV)</text>
+          <text x="126" y="166" text-anchor="middle">I = 1.11 FLOP/B (&lt;1% peak)</text>
+        </g>
+        <g data-step="3">
+          <path d="M135 136 L205 92" class="ink"/>
+          <rect x="165" y="62" width="132" height="36" rx="5" class="c-warn" data-hi="3"/>
+          <text x="231" y="78" text-anchor="middle" font-weight="600">Batched Decode B=32</text>
+          <text x="231" y="92" text-anchor="middle">I = 17.3 to 32 FLOP/B</text>
+        </g>
+        <g data-step="4">
+          <rect x="312" y="54" width="155" height="40" rx="5" class="c-good" data-hi="4"/>
+          <text x="389" y="71" text-anchor="middle" font-weight="600">Prefill S=256 (GEMM)</text>
+          <text x="389" y="87" text-anchor="middle">I = 213.8 FLOP/B (Compute)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Every GPU has two ceilings: a diagonal HBM bandwidth ramp (I * BW) and a flat peak compute roof (F_peak), meeting at the ridge point (156 FLOP/B on A100, 295 FLOP/B on H100).</li>
+      <li>Single-request decode (B=1) sits at the bottom-left at I = 1.11 FLOP/B because it streams all weights for 1 token, pinning speed to HBM bandwidth.</li>
+      <li>Batching B=32 concurrent decode requests reuses each weight fetch across 32 tokens, climbing the bandwidth slope toward the ridge without increasing step time proportionally on a GPU.</li>
+      <li>Prefill (S=256) multiplies 256 tokens at once (I = 213.8 FLOP/B), landing on or near the flat compute roof where tensor cores run at full utilization.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> You speed up prefill with faster FLOPs or fewer prompt tokens; you speed up decode by shrinking bytes read (quantization, GQA) or raising arithmetic intensity (batching B, speculative decoding).</figcaption>
+  </figure>
+
+  <h3>4. Latency equations (TTFT vs TPOT) and batching B</h3>
+  <p>User-perceived latency splits neatly across the two phases. <strong>Time to First Token (TTFT)</strong> is the prefill duration plus network/scheduling overhead, governed by peak FLOP/s: <code>TTFT ≈ (2 * B * S * P + 4 * B * L * H * S^2 * d_head) / F_peak</code>. Notice the quadratic <code>S^2</code> attention term: for short prompts (<code>S &lt; 2,048</code>), linear projections (<code>O(S)</code>) dominate TTFT, whereas for long prompts (<code>S &gt; 16,384</code>), quadratic self-attention (<code>O(S^2)</code>) dominates. <strong>Time Per Output Token (TPOT)</strong> is the duration of a single decode step, governed by HBM bandwidth:</p>
+  <div class="codewrap"><pre>TPOT_min (at small B) ≈ (Weight_Bytes + KV_Cache_Bytes(B, S)) / BW
+
+Example (7B parameter model in FP16 = 14 GB weights, on A100 with BW = 2,000 GB/s):
+  TPOT_min >= 14 GB / 2,000 GB/s = 0.007 s = 7.0 ms/token  (max 142.9 tok/s at B=1)</pre></div>
+  <p>This gives you an ironclad physical speed limit for interviews: no matter how many TFLOPs a chip advertises, a single unbatched decode stream cannot run faster than the time required to read the model weights once from memory. When you batch <code>B</code> requests together during decode, the weight read <code>2P</code> is shared across all <code>B</code> requests while the KV cache read grows linearly with <code>B * S</code>. Total token throughput scales almost linearly with <code>B</code> until either arithmetic intensity crosses the ridge point or KV cache bytes exceed weight bytes.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: 7B FP16 Roofline calculator (TTFT, TPOT, and Arithmetic Intensity)</div>
+    <p class="ask">Predict first. On a 7B FP16 model (14 GB weights) with 2,000 GB/s bandwidth and 312 TFLOP/s compute, if you raise decode batch size B from 1 to 16 at prompt length S=512, does single-step TPOT grow by 16x or stay nearly flat around 7 to 8 ms?</p>
+    <div class="ctl">
+      <label><span>Prompt tokens S</span><input type="range" name="s" min="128" max="4096" step="128" value="512"><output data-for="s" data-unit=" tok"></output></label>
+      <label><span>Decode batch B</span><input type="range" name="b" min="1" max="64" step="1" value="1"><output data-for="b" data-unit=" req"></output></label>
+      <label><span>GPU preset (312 TFLOP/s)</span><select name="bw" data-num><option value="2000">A100 SXM (2000 GB/s, ridge 156)</option><option value="3350">H100 SXM BW (3350 GB/s, ridge 93)</option><option value="900">Consumer GPU (900 GB/s, ridge 347)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Derived from the Roofline equations for a 7B GQA model (14.0 GB FP16 weights, 0.13 MB KV/token, 312 TFLOP/s peak compute): batching B multiplies decode arithmetic intensity and system tok/s while keeping per-step TPOT nearly flat until KV traffic or compute saturates.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var P=7e9, W_bytes=14e9, kv_per_tok=131072, F_peak=312e12, BW=v.bw*1e9;
+    var ridge=F_peak/BW;
+    var pf_flops=2*v.b*v.s*P + 4*v.b*32*32*v.s*v.s*128;
+    var pf_bytes=W_bytes + v.b*v.s*kv_per_tok;
+    var pf_ai=pf_flops/pf_bytes;
+    var ttft_ms=Math.max(pf_flops/F_peak, pf_bytes/BW)*1000;
+    var dc_flops=2*v.b*P + 4*v.b*32*32*v.s*128;
+    var dc_bytes=W_bytes + v.b*v.s*kv_per_tok;
+    var dc_ai=dc_flops/dc_bytes;
+    var tpot_ms=Math.max(dc_flops/F_peak, dc_bytes/BW)*1000;
+    var sys_tok_s=(v.b*1000)/tpot_ms;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" FLOP/B",digits:1,rows:[
+      {label:"Hardware Ridge Point (F_peak / BW)",value:ridge,tone:"warn"},
+      {label:"Prefill Arith. Intensity (S="+v.s+", B="+v.b+")",value:pf_ai,tone:"good"},
+      {label:"Decode Arith. Intensity (1 tok, B="+v.b+")",value:dc_ai,tone:"bad"}
+    ]});
+    return {verdict:"At S="+v.s+" and B="+v.b+": Prefill TTFT = "+tl.fmt(ttft_ms,1)+" ms (AI = "+tl.fmt(pf_ai,1)+" FLOP/B). Decode TPOT = "+tl.fmt(tpot_ms,2)+" ms/step (AI = "+tl.fmt(dc_ai,1)+" FLOP/B, KV read = "+tl.fmt((v.b*v.s*kv_per_tok)/1e9,2)+" GB), delivering "+tl.fmt(sys_tok_s,0)+" total decode tok/s across "+v.b+" stream(s)."};
+  })});</script>
+
+  <details class="q"><summary>Check: On an A100 (ridge point 156 FLOP/Byte), roughly what batch size B is needed in decode for a short-context FP16 model before linear layers transition from memory-bound to compute-bound?</summary><div class="a">A batch size of roughly <strong>B = 156 requests</strong> (since <code>I_decode ≈ B</code> FLOP/Byte in FP16 when weight bytes dominate KV cache bytes). On an H100 (ridge point ~295 FLOP/Byte), it takes roughly <strong>B = 295</strong> concurrent requests!</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table>
+    <tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Kata model size (L=4, d=256, d_ff=688, H=8, KVH=2, V=4096)</td><td class="n">3,817,472 params (7.63 MB FP16)</td><td>Your own run</td></tr>
+    <tr><td>Kata prefill (B=1, S=256): latency, throughput, FLOPs, bytes</td><td class="n">43.17 ms | 5,930.2 tok/s | 1,688.21 M FLOPs | 7.90 MB</td><td>Your own run</td></tr>
+    <tr><td>Kata decode (B=1, 1 tok): TPOT, throughput, FLOPs, bytes</td><td class="n">3.89 ms | 257.1 tok/s | 8.75 M FLOPs | 7.91 MB</td><td>Your own run</td></tr>
+    <tr><td>Kata prefill vs decode throughput &amp; arithmetic intensity ratio (B=1, S=256)</td><td class="n">23.06x tok/s | 213.8 vs 1.11 FLOP/B (193.4x)</td><td>Your own run</td></tr>
+    <tr><td>Kata naive uncached vs cached positions (S=256, N=32)</td><td class="n">8,688 vs 287 positions (30.3x redundant work)</td><td>Your own run</td></tr>
+    <tr><td>Linear layer arithmetic intensity (FP16, weights &gt;&gt; KV cache)</td><td class="n">Prefill ≈ B * S FLOP/B | Decode ≈ B FLOP/B</td><td>Derived</td></tr>
+    <tr><td>Minimum single-stream decode TPOT (weight-streaming floor)</td><td class="n">TPOT_min &gt;= (2 * P_params) / BW_HBM (in FP16)</td><td>Derived</td></tr>
+    <tr><td>7B FP16 model (14 GB) weight-read floor on A100 (2.0 TB/s) vs H100 (3.35 TB/s)</td><td class="n">7.0 ms/tok (143 tok/s) | 4.2 ms/tok (239 tok/s)</td><td>Derived</td></tr>
+    <tr><td>GPU dense FP16 ridge point (F_peak / BW)</td><td class="n">A100 SXM: 156 FLOP/B | H100 SXM: 295 FLOP/B</td><td>Checked 2026-11-18</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table>
+    <tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td><strong>Large decode batch size (high B)</strong></td><td>Raises decode arithmetic intensity from ~1 to ~B FLOP/B; multiplies total system tok/s</td><td>KV cache memory grows as O(B * S); per-token TPOT creeps up once KV reads rival weight reads or B crosses the ridge point</td><td>HBM out-of-memory (OOM) spikes and p99 TPOT SLA violations when long-context requests join the batch</td></tr>
+    <tr><td><strong>Weight-only quantization (FP16 -&gt; INT8 / INT4)</strong></td><td>Cuts weight bytes read by 2x to 4x, directly cutting low-batch decode TPOT by ~2x to 4x</td><td>Dequantization compute overhead during compute-bound prefill; slight perplexity degradation at 4-bit</td><td>Prefill TTFT regressions on large batches if dequantization kernels add instruction overhead</td></tr>
+    <tr><td><strong>Mixed prefill + decode batching (continuous batching)</strong></td><td>High GPU utilization by slotting new prefill prompts into ongoing decode batches</td><td>A long prefill (compute-bound GEMM) stalls co-scheduled decode steps, causing massive inter-token jitter</td><td>Decode TPOT spikes (head-of-line blocking) whenever a multi-thousand-token prompt enters prefill (solved in K17 via chunked prefill or disaggregated serving)</td></tr>
+    <tr><td><strong>Disaggregated prefill and decode pools</strong></td><td>Isolates TTFT-optimized compute nodes from TPOT-optimized bandwidth nodes; zero prefill-on-decode interference</td><td>Must transfer the entire KV cache across the network fabric (NVLink/RDMA) between prefill and decode instances</td><td>Network bandwidth saturation when KV cache size per request is large and generation length N is short</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Timing prefill GEMM vs decode GEMV and arithmetic intensity</h2>
+  <p>A self-contained NumPy implementation of a 4-layer Grouped-Query Attention (GQA) transformer that runs parallel prefill and step-by-step cached decode, measures wall-clock latency and token throughput, computes exact FLOPs, bytes moved, and arithmetic intensity, and tests naive uncached autoregression and batched decode.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python K05_kata.py</pre></div>
+  <p class="cap">K05_kata.py</p><div class="codewrap"><pre data-copy>"""
+K05 Kata: Prefill vs decode
+Times prefill (compute-bound GEMM) and per-token decode (memory-bandwidth-bound GEMV)
+separately on a miniature Grouped-Query Attention transformer, computes exact FLOPs,
+bytes moved, and Arithmetic Intensity (FLOPs/Byte), and demonstrates three failure modes.
+"""
+import time
+import numpy as np
+
+np.random.seed(42)
+
+# Model dimensions (miniature Llama-style GQA architecture)
+L = 4            # transformer layers
+d_model = 256    # hidden dimension
+d_ff = 688       # SwiGLU intermediate size (~8/3 * d_model)
+H = 8            # query heads
+KVH = 2          # key-value heads (4:1 GQA)
+d_head = d_model // H  # 32
+V = 4096         # vocabulary size
+BYTES_FP16 = 2   # 2 bytes per parameter in FP16/BF16
+
+# Initialize random FP32 weights for timing on CPU
+layers = []
+for _ in range(L):
+    layers.append({
+        "wq": np.random.randn(d_model, H * d_head).astype(np.float32) * 0.05,
+        "wk": np.random.randn(d_model, KVH * d_head).astype(np.float32) * 0.05,
+        "wv": np.random.randn(d_model, KVH * d_head).astype(np.float32) * 0.05,
+        "wo": np.random.randn(H * d_head, d_model).astype(np.float32) * 0.05,
+        "wg": np.random.randn(d_model, d_ff).astype(np.float32) * 0.05,
+        "wu": np.random.randn(d_model, d_ff).astype(np.float32) * 0.05,
+        "wd": np.random.randn(d_ff, d_model).astype(np.float32) * 0.05,
+    })
+w_lm = np.random.randn(d_model, V).astype(np.float32) * 0.05
+
+# Count linear weight parameters per layer and total
+params_per_layer = (
+    d_model * (H * d_head)
+    + 2 * d_model * (KVH * d_head)
+    + (H * d_head) * d_model
+    + 3 * d_model * d_ff
+)
+total_params = L * params_per_layer + d_model * V
+weight_bytes_fp16 = total_params * BYTES_FP16
+
+def rmsnorm(x):
+    return x / np.sqrt(np.mean(x * x, axis=-1, keepdims=True) + 1e-5)
+
+def forward_prefill(x):
+    """Parallel forward pass over all S tokens [B, S, d_model]; returns last logits and KV cache."""
+    B, S, _ = x.shape
+    kv_cache = []
+    mask = np.triu(np.full((S, S), -1e9, dtype=np.float32), k=1)
+    for lyr in layers:
+        h = rmsnorm(x)
+        q = (h @ lyr["wq"]).reshape(B, S, H, d_head).transpose(0, 2, 1, 3)
+        k = (h @ lyr["wk"]).reshape(B, S, KVH, d_head)
+        v = (h @ lyr["wv"]).reshape(B, S, KVH, d_head)
+        kv_cache.append((k, v))
+        kr = np.repeat(k, H // KVH, axis=2).transpose(0, 2, 1, 3)
+        vr = np.repeat(v, H // KVH, axis=2).transpose(0, 2, 1, 3)
+        scores = (q @ kr.transpose(0, 1, 3, 2)) / np.sqrt(d_head) + mask
+        scores -= np.max(scores, axis=-1, keepdims=True)
+        probs = np.exp(scores) / np.sum(np.exp(scores), axis=-1, keepdims=True)
+        attn_out = (probs @ vr).transpose(0, 2, 1, 3).reshape(B, S, d_model)
+        x = x + attn_out @ lyr["wo"]
+        h2 = rmsnorm(x)
+        gate = h2 @ lyr["wg"]
+        up = h2 @ lyr["wu"]
+        act = (gate / (1.0 + np.exp(-gate))) * up
+        x = x + act @ lyr["wd"]
+    logits_last = rmsnorm(x[:, -1:, :]) @ w_lm
+    return logits_last, kv_cache
+
+def forward_decode_step(x_tok, kv_cache):
+    """Single-token decode step [B, 1, d_model] appending to existing KV cache."""
+    B = x_tok.shape[0]
+    new_cache = []
+    x = x_tok
+    for idx, lyr in enumerate(layers):
+        h = rmsnorm(x)
+        q = (h @ lyr["wq"]).reshape(B, 1, H, d_head).transpose(0, 2, 1, 3)
+        k_new = (h @ lyr["wk"]).reshape(B, 1, KVH, d_head)
+        v_new = (h @ lyr["wv"]).reshape(B, 1, KVH, d_head)
+        k_all = np.concatenate([kv_cache[idx][0], k_new], axis=1)
+        v_all = np.concatenate([kv_cache[idx][1], v_new], axis=1)
+        new_cache.append((k_all, v_all))
+        kr = np.repeat(k_all, H // KVH, axis=2).transpose(0, 2, 1, 3)
+        vr = np.repeat(v_all, H // KVH, axis=2).transpose(0, 2, 1, 3)
+        scores = (q @ kr.transpose(0, 1, 3, 2)) / np.sqrt(d_head)
+        scores -= np.max(scores, axis=-1, keepdims=True)
+        probs = np.exp(scores) / np.sum(np.exp(scores), axis=-1, keepdims=True)
+        attn_out = (probs @ vr).transpose(0, 2, 1, 3).reshape(B, 1, d_model)
+        x = x + attn_out @ lyr["wo"]
+        h2 = rmsnorm(x)
+        gate = h2 @ lyr["wg"]
+        up = h2 @ lyr["wu"]
+        act = (gate / (1.0 + np.exp(-gate))) * up
+        x = x + act @ lyr["wd"]
+    logits_last = rmsnorm(x) @ w_lm
+    return logits_last, new_cache
+
+def phase_math(B, S, is_prefill=True):
+    """Compute exact FLOPs, bytes moved (FP16), and Arithmetic Intensity (FLOPs/Byte)."""
+    if is_prefill:
+        linear_flops = 2 * B * S * (L * params_per_layer) + 2 * B * d_model * V
+        attn_flops = L * 4 * B * H * (S ** 2) * d_head
+        kv_bytes = B * S * L * 2 * KVH * d_head * BYTES_FP16
+    else:
+        linear_flops = 2 * B * 1 * total_params
+        attn_flops = L * 4 * B * H * S * d_head
+        kv_bytes = B * S * L * 2 * KVH * d_head * BYTES_FP16
+    total_flops = linear_flops + attn_flops
+    total_bytes = weight_bytes_fp16 + kv_bytes
+    return total_flops, total_bytes, total_flops / total_bytes
+
+# Warm-up
+_ = forward_prefill(np.random.randn(1, 16, d_model).astype(np.float32))
+
+print(f"=== K05 KATA: PREFILL VS DECODE (L={L}, d={d_model}, d_ff={d_ff}, H={H}, KVH={KVH}, V={V}) ===")
+print(f"Total parameters: {total_params:,} ({weight_bytes_fp16 / 1e6:.2f} MB in FP16)")
+print("\n1. PHASE COMPARISON (Batch B=1, Prompt S=256, Generate N=32 tokens)")
+x_prompt = np.random.randn(1, 256, d_model).astype(np.float32)
+
+t0 = time.perf_counter()
+for _ in range(5):
+    _, cache = forward_prefill(x_prompt)
+prefill_ms = (time.perf_counter() - t0) * 1000 / 5
+prefill_tok_s = 256 / (prefill_ms / 1000.0)
+
+x_step = np.random.randn(1, 1, d_model).astype(np.float32)
+t1 = time.perf_counter()
+cur_cache = cache
+for _ in range(32):
+    _, cur_cache = forward_decode_step(x_step, cur_cache)
+decode_total_ms = (time.perf_counter() - t1) * 1000
+decode_tpot_ms = decode_total_ms / 32
+decode_tok_s = 1000.0 / decode_tpot_ms
+
+pf_flops, pf_bytes, pf_ai = phase_math(1, 256, is_prefill=True)
+dc_flops, dc_bytes, dc_ai = phase_math(1, 256 + 16, is_prefill=False)
+
+print(f"{'Phase':&lt;18} | {'Latency (ms)':&gt;12} | {'Throughput':&gt;14} | {'FLOPs/step':&gt;12} | {'Bytes Read':&gt;10} | {'Arith Intensity':&gt;15}")
+print("-" * 92)
+print(f"{'Prefill (S=256)':&lt;18} | {prefill_ms:&gt;12.2f} | {prefill_tok_s:&gt;10.1f} tok/s | {pf_flops/1e6:&gt;9.2f} M | {pf_bytes/1e6:&gt;7.2f} MB | {pf_ai:&gt;10.1f} FLOP/B")
+print(f"{'Decode (1 tok)':&lt;18} | {decode_tpot_ms:&gt;12.2f} | {decode_tok_s:&gt;10.1f} tok/s | {dc_flops/1e6:&gt;9.2f} M | {dc_bytes/1e6:&gt;7.2f} MB | {dc_ai:&gt;10.2f} FLOP/B")
+print(f"Prefill-to-Decode throughput ratio: {prefill_tok_s / decode_tok_s:.2f}x faster tok/s in prefill")
+print(f"Arithmetic intensity gap (S=256 vs B=1): {pf_ai / dc_ai:.1f}x higher FLOP/Byte in prefill")
+
+print("\n2. BREAK IT #1: NAIVE AUTOREGRESSION WITHOUT KV STATE (Re-running full prefix every token)")
+naive_positions = sum(256 + t for t in range(32))
+cached_positions = 256 + 31
+print(f"Positions processed (S=256, N=32): Cached={cached_positions} vs Uncached={naive_positions} ({naive_positions/cached_positions:.1f}x redundant work)")
+
+print("\n3. BREAK IT #2: BATCHING DECODE TO RAISE ARITHMETIC INTENSITY (S=256)")
+for B in (1, 8, 32):
+    _, _, ai_b = phase_math(B, 256, is_prefill=False)
+    xb = np.random.randn(B, 1, d_model).astype(np.float32)
+    cb = [(np.zeros((B, 256, KVH, d_head), dtype=np.float32), np.zeros((B, 256, KVH, d_head), dtype=np.float32)) for _ in range(L)]
+    ts = time.perf_counter()
+    for _ in range(10):
+        forward_decode_step(xb, cb)
+    step_ms = (time.perf_counter() - ts) * 1000 / 10
+    print(f"  Batch B={B:&lt;2} -&gt; AI={ai_b:&gt;5.1f} FLOP/B | step={step_ms:&gt;6.2f} ms | total={B * 1000.0 / step_ms:&gt;8.1f} tok/s")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== K05 KATA: PREFILL VS DECODE (L=4, d=256, d_ff=688, H=8, KVH=2, V=4096) ===
+Total parameters: 3,817,472 (7.63 MB in FP16)
+
+1. PHASE COMPARISON (Batch B=1, Prompt S=256, Generate N=32 tokens)
+Phase              | Latency (ms) |     Throughput |   FLOPs/step | Bytes Read | Arith Intensity
+--------------------------------------------------------------------------------------------
+Prefill (S=256)    |        43.17 |     5930.2 tok/s |   1688.21 M |    7.90 MB |      213.8 FLOP/B
+Decode (1 tok)     |         3.89 |      257.1 tok/s |      8.75 M |    7.91 MB |       1.11 FLOP/B
+Prefill-to-Decode throughput ratio: 23.06x faster tok/s in prefill
+Arithmetic intensity gap (S=256 vs B=1): 193.4x higher FLOP/Byte in prefill
+
+2. BREAK IT #1: NAIVE AUTOREGRESSION WITHOUT KV STATE (Re-running full prefix every token)
+Positions processed (S=256, N=32): Cached=287 vs Uncached=8688 (30.3x redundant work)
+
+3. BREAK IT #2: BATCHING DECODE TO RAISE ARITHMETIC INTENSITY (S=256)
+  Batch B=1  -&gt; AI=  1.1 FLOP/B | step=  3.30 ms | total=   302.9 tok/s
+  Batch B=8  -&gt; AI=  7.1 FLOP/B | step= 26.53 ms | total=   301.5 tok/s
+  Batch B=32 -&gt; AI= 17.3 FLOP/B | step= 98.72 ms | total=   324.1 tok/s</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata throughput (tok/s) and arithmetic intensity (FLOP/Byte) across phases</div>
+    <div data-bars='{"unit":" tok/s","digits":1,"rows":[{"label":"Prefill S=256, B=1 (AI = 213.8 FLOP/B)","value":5930.2,"tone":"good"},{"label":"Decode 1 tok, B=32 (AI = 17.3 FLOP/B)","value":324.1,"tone":"warn"},{"label":"Decode 1 tok, B=1 (AI = 1.11 FLOP/B)","value":257.1,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> In the real kata run, prefill processes 5,930.2 tok/s versus 257.1 tok/s for B=1 decode (23.06x faster) because prefill achieves 213.8 FLOP/Byte while single-token decode achieves only 1.11 FLOP/Byte while reading the same 7.9 MB of memory.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Identical memory traffic, 193x different FLOPs:</strong> Prefill over <code>S=256</code> tokens performs <code>1,688.21 M FLOPs</code> and moves <code>7.90 MB</code> (<code>213.8 FLOP/B</code>), whereas one decode step performs only <code>8.75 M FLOPs</code> but still reads <code>7.91 MB</code> (<code>1.11 FLOP/B</code>). That <code>193.4x</code> drop in arithmetic intensity is why decode runs at <code>257.1 tok/s</code> vs prefill's <code>5,930.2 tok/s</code> (<code>23.06x</code> slower).</li>
+    <li><strong>Why prefill latency (43.17 ms) is only 11.1x one decode step (3.89 ms):</strong> Doing <code>256x</code> more tokens in prefill costs only <code>11.1x</code> more wall-clock time (<code>43.17 ms / 3.89 ms</code>) because matrix-matrix multiplication reuses weight cache lines across all 256 token rows.</li>
+    <li><strong>Uncached autoregression explodes quadratically:</strong> In Break It #1, generating <code>N=32</code> tokens after <code>S=256</code> without saving the KV state processes <code>8,688</code> token positions instead of <code>287</code> (<code>30.3x</code> redundant work).</li>
+    <li><strong>Batching raises arithmetic intensity (and why CPU vs GPU differs):</strong> In Break It #2, increasing decode batch size from <code>B=1</code> to <code>B=8</code> and <code>B=32</code> lifts arithmetic intensity from <code>1.1</code> to <code>7.1</code> and <code>17.3 FLOP/B</code>. On a single laptop CPU core with a tiny 7.63 MB model that already fits in L3 cache, total tok/s rises modestly (<code>302.9</code> to <code>324.1 tok/s</code>) because the CPU is already near its SIMD FLOP ceiling; on an H100 where a 14 GB model spills to HBM and the ridge point is 295 FLOP/B, that same jump from <code>1.1</code> to <code>17.3 FLOP/B</code> scales total GPU decode throughput by nearly <code>15x</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Trigger quadratic O(S^2) attention dominance in prefill.</strong> Change prompt length from <code>256</code> to <code>2048</code> in <code>phase_math(1, 2048, is_prefill=True)</code>. Predict before running: does the attention share of total prefill FLOPs stay under 20% or cross 60%? (At <code>S=256</code>, attention is <code>268.4 M / 1688.2 M = 15.9%</code>; at <code>S=2048</code>, attention grows by <code>64x</code> while linear grows by <code>8x</code>.)</li>
+      <li><strong>Simulate Multi-Head Attention (MHA) vs GQA KV traffic at large batch size.</strong> Change <code>KVH = 2</code> to <code>KVH = 8</code> (standard MHA) and check <code>phase_math(32, 2048, is_prefill=False)</code>. Predict how much arithmetic intensity drops during batched decode when KV cache reads (<code>4x</code> larger under MHA) overwhelm the 7.63 MB model weights.</li>
+      <li><strong>Run actual uncached decode timing.</strong> Replace the 32-step <code>forward_decode_step</code> loop with 32 calls to <code>forward_prefill</code> on slices of length <code>256..287</code>. Predict whether wall-clock generation time increases by closer to 2x or 10x+.</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Add a simulated speculative decoding verifier step that passes <code>K = 5</code> draft tokens simultaneously as a mini-matrix <code>[B, 5, d_model]</code> into <code>forward_decode_step</code>, and measure how verifying 5 tokens in one forward pass raises arithmetic intensity and cuts effective time per token compared to 5 serial decode steps.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>High p99 TTFT (~seconds) while decode TPOT is fast (~15 ms/tok)</td><td>Long input prompts saturating compute-bound prefill (O(S) linear + O(S^2) attention FLOPs) or queuing behind other prefills</td><td>Enable prefix/prompt caching for shared system prompts; use FlashAttention-2/3; scale out prefill replicas or tensor parallelism</td></tr>
+    <tr><td>Periodic 200+ ms stalls in the middle of streaming decode tokens (inter-token jitter)</td><td>A new request's long prefill GEMM was scheduled in the same iteration as ongoing decode steps (prefill head-of-line blocking)</td><td>Enable chunked prefill (splitting long prompts into fixed token budgets like 512 tokens per step, see K17) or disaggregate prefill and decode onto separate GPU pools</td></tr>
+    <tr><td>GPU compute utilization (SM occupancy / Tensor Core active) sits below 5% during heavy traffic</td><td>Serving decode at low batch size (B=1..4) where execution is 100% HBM memory-bandwidth-bound at ~1 to 4 FLOP/Byte</td><td>Use continuous batching (vLLM / TensorRT-LLM) to pack higher B; quantize weights to FP8/INT4 to cut weight bytes read; or use speculative decoding</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Track <strong>TTFT (p50, p95, p99)</strong> and <strong>TPOT / Inter-Token Latency (ITL, p50, p95, p99)</strong> as separate SLAs - never lump them into a single end-to-end request latency metric, because they diagnose opposite hardware bottlenecks (FLOPs vs HBM bandwidth). Alongside them, monitor <strong>active decode batch size B</strong>, <strong>prefill queue depth</strong>, and <strong>HBM bandwidth utilization vs Tensor Core pipe utilization</strong>.</p>
+  <details class="q"><summary>Scenario: You build a real-time clinical voice agent using a 70B FP16 model (140 GB weights) across 2x H100-80GB GPUs (combined HBM bandwidth 6.7 TB/s). First-word latency (TTFT) is 120 ms, which meets your SLA, but voice playback stutters because decode runs at only 38 tokens/s even with 1 user (B=1). Why is decode capped near 38 to 45 tok/s, and what three concrete levers will double it without changing the base model?</summary><div class="a"><ol>
+    <li><strong>Diagnose the physical bandwidth floor:</strong> At <code>B=1</code>, every decode token must stream all <code>140 GB</code> of FP16 weights across the two GPUs' combined <code>6.7 TB/s</code> HBM bus. Even at 100% ideal bandwidth efficiency with zero communication overhead, <code>TPOT_min = 140 GB / 6,700 GB/s = 20.9 ms/tok</code> (<code>47.8 tok/s</code> max). With real kernel and all-reduce overhead (~80% efficiency), you get <code>~26 ms/tok</code> (<code>38 tok/s</code>). Adding prompt caching will NOT help TPOT because weights (140 GB), not the tiny single-user KV cache, dominate the byte read.</li>
+    <li><strong>Lever 1 - Weight quantization (FP8 or AWQ INT4):</strong> Quantizing weights from FP16 (2 bytes) to FP8 (1 byte) or INT4 (0.5 bytes) cuts weight traffic from 140 GB to 70 GB or 35 GB per token, immediately doubling or tripling single-stream decode speed to 75 to 120+ tok/s.</li>
+    <li><strong>Lever 2 - Speculative decoding:</strong> Use a tiny draft model (or Medusa/EAGLE heads) to propose <code>K=4..5</code> tokens and verify them in a single 70B forward pass. Verify reads the 140 GB weights once for all <code>K</code> tokens, raising arithmetic intensity by <code>K</code> and cutting effective TPOT by 2x to 3x at <code>B=1</code>.</li>
+    <li><strong>Lever 3 - Higher Tensor Parallelism (TP=4 or TP=8):</strong> Spreading the 140 GB weights across 4 or 8 H100 GPUs multiplies aggregate HBM bandwidth by 2x or 4x (to 13.4 or 26.8 TB/s), cutting per-GPU weight bytes read per step down to 35 GB or 17.5 GB.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Serving an autoregressive transformer splits every request into two hardware regimes: prefill and decode. Prefill processes all prompt tokens in parallel to produce the first output token and populate the key-value state, governing Time to First Token (TTFT). Decode then generates one token per forward pass by feeding each newly sampled token back as input, governing Time Per Output Token (TPOT). Because prefill multiplies a token matrix against model weights while decode multiplies a single token vector against those same weights, prefill is compute-bound while decode is memory-bandwidth-bound.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Without caching, generating N tokens after a prompt of length S requires recomputing all previous tokens at every step, turning linear work into quadratic O(N squared) work. By saving each layer's key and value projections during prefill, each decode step computes query, key, and value projections only for the single new token. However, linear layers still must stream every model weight from high-bandwidth memory into the registers just to perform two floating-point operations per parameter for batch size one, yielding an arithmetic intensity of roughly one FLOP per byte.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>On an H100 GPU, the ridge point separating memory-bound from compute-bound execution is 989 teraFLOPs divided by 3.35 terabytes per second, or 295 FLOPs per byte. Single-stream decode sits near 1 FLOP per byte, leaving over 99 percent of tensor cores idle unless we batch B concurrent requests.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"Prefill reads the user prompt and is fast because it runs in parallel, while decode generates the response one token at a time so it is slower and costs more per output token."</p>
+    <p class="strong">"Prefill runs a matrix-matrix multiply (GEMM) over all S prompt tokens at once, giving an arithmetic intensity of roughly B*S FLOPs per byte - well above an A100's 156 FLOP/Byte ridge point, so TTFT is compute-bound. Decode generates one token per step via matrix-vector multiply (GEMV), streaming all 2P bytes of FP16 weights from HBM for just 2P FLOPs at B=1, or 1 FLOP/Byte, so TPOT is pinned to HBM memory bandwidth unless we batch B requests or quantize weights."</p>
+    <p>The strong answer names the exact linear algebra kernels (GEMM vs GEMV), derives the arithmetic intensity (<code>B*S</code> vs <code>B</code> FLOP/Byte), anchors against a real hardware ridge point (156 FLOP/B on A100, 295 on H100), and links each phase to its SLA metric (TTFT vs TPOT).</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Adding the KV cache makes per-token decode compute-bound because we no longer recompute the prompt tokens."</summary><div class="a"><strong>Wrong - it makes decode even more memory-bandwidth-bound.</strong> Saving the KV cache removes the redundant <code>O(S)</code> linear FLOPs over past tokens, shrinking compute per step to a single token vector <code>[B, 1, d_model]</code> while still requiring the GPU to read 100% of the model weights plus the growing KV cache from HBM.</div></details>
+  <details class="q"><summary>"Since a single decode step does S times fewer FLOPs than an S-token prefill, one decode step is S times faster than prefill."</summary><div class="a"><strong>Wrong.</strong> In our kata (<code>S=256</code>), one decode step does <code>193x</code> fewer FLOPs (<code>8.75 M</code> vs <code>1,688.21 M</code>), yet its latency is only <code>11.1x</code> shorter (<code>3.89 ms</code> vs <code>43.17 ms</code>), meaning per-token throughput is <code>23.06x</code> slower. Latency does not scale down by <code>S</code> because both steps read the same <code>7.9 MB</code> of memory and decode hits the memory-bandwidth wall.</div></details>
+  <details class="q"><summary>"Upgrading to a GPU with 2x more TFLOPs but the same HBM bandwidth will cut single-user (B=1) decode latency in half."</summary><div class="a"><strong>Wrong - single-user decode latency will not budge.</strong> At <code>B=1</code>, arithmetic intensity is ~1 FLOP/Byte, hundreds of times below the GPU ridge point. Tensor cores are already waiting on HBM data transfers over 99% of the time; only higher HBM bandwidth, fewer bytes read (quantization), or multi-token verification (speculative decoding) reduces <code>B=1</code> TPOT.</div></details>
+  <details class="q"><summary>"Increasing decode batch size from B=1 to B=16 increases per-token step latency (TPOT) by 16x."</summary><div class="a"><strong>Wrong on a GPU.</strong> Because <code>B=1</code> and <code>B=16</code> both sit on the memory-bandwidth-bound slope (below the 156 to 295 FLOP/B ridge point) and share the same single read of the model weights from HBM, step latency stays nearly flat (increasing only slightly for the extra KV cache reads) while total system throughput increases by nearly 16x.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Why can prefill process all S prompt tokens in a single forward pass while decode must run N separate forward passes for N output tokens?</summary><div class="a">In prefill, all <code>S</code> input tokens are already known from the user's prompt, and causal masking allows every position <code>1..S</code> to be computed in parallel inside one matrix pass. In decode, token <code>t+1</code> does not exist until token <code>t</code>'s logits have been computed and sampled, creating a strict sequential data dependency between steps.<div class="f"><b>Follow-up</b>Does teacher forcing during training look like prefill or decode? It looks like prefill: the entire ground-truth target sequence is known upfront, so training runs 100% as parallel compute-bound GEMMs with a causal mask.</div></div></details>
+  <details class="q"><summary>Derive the approximate arithmetic intensity (in FLOP/Byte) of an FP16 linear layer with P parameters during prefill (batch B, length S) versus decode (batch B, 1 token), assuming weight size dominates activation size.</summary><div class="a">A linear layer with <code>P</code> parameters performs <code>2 * T * P</code> multiply-add FLOPs for <code>T</code> tokens and reads <code>2 * P</code> bytes of FP16 weights. In prefill, <code>T = B * S</code>, so <code>I_prefill ≈ (2 * B * S * P) / (2 * P) = B * S</code> FLOP/Byte. In decode, <code>T = B * 1</code>, so <code>I_decode ≈ (2 * B * P) / (2 * P) = B</code> FLOP/Byte.<div class="f"><b>Follow-up</b>What happens to that formula if weights are quantized to INT4 (0.5 bytes/param) while activations remain FP16? The denominator drops by 4x to <code>0.5 * P</code> bytes, multiplying arithmetic intensity by 4x (to <code>4 * B</code> FLOP/Byte in decode).</div></div></details>
+  <details class="q"><summary>What is the hardware ridge point on an H100 SXM GPU (989 TFLOP/s dense FP16, 3.35 TB/s HBM3), and what does it tell you about unbatched decode?</summary><div class="a">The ridge point is <code>F_peak / BW = 989 TFLOP/s / 3.35 TB/s = 295.2 FLOP/Byte</code>. Any kernel with arithmetic intensity below 295.2 FLOP/Byte is memory-bandwidth-bound. Because unbatched FP16 decode sits near <code>1 FLOP/Byte</code>, it utilizes only <code>1 / 295.2 ≈ 0.34%</code> of the H100's compute capacity.</div></details>
+  <details class="q"><summary>Calculate the theoretical minimum single-stream (B=1) decode TPOT and maximum tokens/sec for a 13B parameter model in FP16 on a GPU with 2.0 TB/s memory bandwidth.</summary><div class="a">A 13B model in FP16 occupies <code>13 * 10^9 * 2 bytes = 26 GB</code> of weights. Streaming 26 GB at <code>2,000 GB/s</code> takes at least <code>26 / 2,000 = 0.013 seconds = 13.0 ms/token</code>. Maximum possible throughput at <code>B=1</code> is <code>1,000 / 13.0 = 76.9 tokens/sec</code>.<div class="f"><b>Follow-up</b>Why is real-world throughput typically 15% to 25% lower than this theoretical ceiling? Kernel launch overhead, reading the KV cache, non-linear layers (RMSNorm, softmax), and imperfect HBM bus utilization (~80-85% achievable bandwidth).</div></div></details>
+  <details class="q"><summary>How does prompt length S affect prefill latency (TTFT), and why does the scaling regime change between S = 512 and S = 32,768?</summary><div class="a">Prefill FLOPs are the sum of linear projections (<code>2 * B * S * P</code>, which scales linearly as <code>O(S)</code>) and self-attention (<code>4 * B * L * H * S^2 * d_head</code>, which scales quadratically as <code>O(S^2)</code>). At <code>S = 512</code>, <code>P</code> is much larger than <code>L * H * S * d_head</code>, so TTFT scales linearly with <code>S</code>; by <code>S = 32,768</code>, the <code>S^2</code> term dominates and doubling <code>S</code> quadruples attention FLOPs.</div></details>
+  <details class="q"><summary>Why do cloud LLM APIs charge 3x to 5x more per million output (decode) tokens than per million input (prefill) tokens?</summary><div class="a">Because an output token occupies the GPU's HBM bandwidth and KV cache memory at much lower arithmetic intensity and hardware utilization than an input token. As shown in our kata, generating tokens in decode delivers an order of magnitude fewer tokens per second per GPU than parallel prefill.<div class="f"><b>Follow-up</b>Why do cached input tokens get an additional 50% to 90% discount? Because prefix caching skips both the linear and attention prefill FLOPs for the cached prefix and simply loads or references the precomputed KV blocks.</div></div></details>
+  <details class="q"><summary>In our kata, generating N=32 tokens after S=256 without a KV cache required processing 8,688 token positions versus 287 with caching. Write the exact formula for both counts.</summary><div class="a">Uncached processes <code>sum_{t=0}^{N-1} (S + t) = N * S + N * (N - 1) / 2</code> positions (<code>32 * 256 + 32 * 31 / 2 = 8,688</code>). Cached processes <code>S</code> positions in prefill plus <code>N - 1</code> single-token decode steps, totaling <code>S + N - 1</code> positions (<code>256 + 31 = 287</code>).</div></details>
+  <details class="q"><summary>When you batch B concurrent requests during decode, what two factors eventually stop total token throughput from scaling linearly with B?</summary><div class="a">First, <strong>KV cache memory capacity and bandwidth</strong>: unlike model weights (shared across all <code>B</code> requests), each request has its own KV cache of size <code>O(S)</code>, so total KV bytes read grows as <code>O(B * S)</code> until it exceeds weight bytes or causes an HBM OOM. Second, <strong>crossing the Roofline ridge point</strong>: once <code>B</code> reaches the ridge point (~156 on A100, ~295 on H100), tensor cores saturate and step time grows linearly with <code>B</code>.</div></details>
+  <details class="q"><summary>What happens to ongoing decode requests when a naive continuous batching scheduler inserts a 4,096-token prefill into the middle of a decode batch?</summary><div class="a">All co-scheduled decode requests freeze for the entire duration of the 4,096-token compute-bound prefill pass (often 100 to 500+ ms), causing a severe spike in p99 Time Per Output Token (TPOT).<div class="f"><b>Follow-up</b>Name the two standard architectural fixes for this interference. Chunked prefill (splitting the 4,096 prompt into smaller chunks piggybacked onto decode steps) and disaggregated serving (running prefill and decode on separate GPU pools).</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: (1) the P-D-R-B memory hook, (2) the FLOP and byte formulas for prefill vs decode and why linear arithmetic intensity simplifies to <code>B*S</code> vs <code>B</code>, (3) the A100 and H100 ridge points, and (4) the weight-streaming floor formula <code>TPOT_min &gt;= 2P / BW</code> applied to a 7B FP16 model.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Redraw &amp; 5 steps:</strong> Prompt <code>[B, S=256, d]</code> enters parallel prefill -&gt; GEMM reuses weights across 256 tokens (<code>213.8 FLOP/B</code>, <code>5,930.2 tok/s</code>) -&gt; emits first token in <code>43.17 ms</code> (TTFT) and saves KV cache -&gt; serial decode feeds <code>[B, 1, d]</code> per step -&gt; GEMV reads <code>7.91 MB</code> for 1 token (<code>1.11 FLOP/B</code>, <code>257.1 tok/s</code>, <code>23.06x</code> slower).</li>
+    <li><strong>Hook (P-D-R-B):</strong> Prefill GEMM (TTFT, compute-bound), Decode GEMV (TPOT, bandwidth-bound), Roofline ridge = <code>F_peak / BW</code>, Batching <code>B</code> amortizes weight reads.</li>
+    <li><strong>Formulas:</strong> Linear FLOPs = <code>2*B*S*P</code> (prefill) vs <code>2*B*P</code> (decode); FP16 weight bytes = <code>2*P</code>; arithmetic intensity <code>I_prefill ≈ B*S</code>, <code>I_decode ≈ B</code>; uncached positions = <code>N*S + N(N-1)/2</code> vs cached <code>S + N - 1</code>.</li>
+    <li><strong>Hardware ridge points:</strong> A100 SXM = <code>312 TFLOP/s / 2.0 TB/s = 156 FLOP/B</code>; H100 SXM = <code>989 TFLOP/s / 3.35 TB/s = 295 FLOP/B</code>.</li>
+    <li><strong>Speed floor:</strong> <code>TPOT_min &gt;= Weight_Bytes / BW</code>; for 7B FP16 (<code>14 GB</code>) on A100 (<code>2,000 GB/s</code>), <code>14 / 2000 = 7.0 ms/tok</code> (<code>142.9 tok/s</code> ceiling at <code>B=1</code>).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K04: Trace the exact tensor shapes through a single Grouped-Query Attention (GQA) layer with batch B, sequence length S, hidden size d_model, H query heads, and KVH key-value heads (head size d_head = d_model / H).</summary><div class="a">Input <code>X</code> is <code>[B, S, d_model]</code>. Linear projections produce <code>Q</code> of shape <code>[B, H, S, d_head]</code> and <code>K, V</code> of shape <code>[B, KVH, S, d_head]</code>. Each K/V head is shared across <code>H / KVH</code> query heads to compute attention scores <code>Q @ K^T / sqrt(d_head)</code> of shape <code>[B, H, S, S]</code>, softmax probabilities of <code>[B, H, S, S]</code>, weighted values of <code>[B, H, S, d_head]</code>, reshaped back to <code>[B, S, d_model]</code> and multiplied by <code>W_o</code> of shape <code>[d_model, d_model]</code>.</div></details>
+  <details class="q"><summary>K04: Why do modern LLMs place RMSNorm before the attention and SwiGLU blocks (Pre-Norm) rather than after the residual addition (Post-Norm), and what statistics does RMSNorm skip compared to LayerNorm?</summary><div class="a">Pre-Norm leaves an clean identity highway along the residual stream so gradients flow directly from the loss to early layers without vanishing or requiring a delicate learning-rate warmup. RMSNorm skips subtracting the mean and omits the learnable bias beta, normalizing solely by <code>x / sqrt(mean(x^2) + eps) * gamma</code>, saving memory traffic with equivalent quality.</div></details>
+  <details class="q"><summary>D10: During autoregressive decoding, in what order should temperature scaling, top-k filtering, and top-p (nucleus) filtering be applied to the raw vocabulary logits before sampling?</summary><div class="a">First divide raw logits by temperature <code>T</code> (or short-circuit to argmax if <code>T = 0</code>), then apply top-k to keep the <code>k</code> highest logits (setting others to <code>-inf</code>), then convert to probabilities via softmax and apply top-p to keep the smallest prefix of sorted tokens whose cumulative probability reaches <code>p</code>, and finally renormalize and sample.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyNoYellow.pdf">Williams, Waterman &amp; Patterson (Communications of the ACM, 2009): Roofline: An Insightful Visual Performance Model for Multicore Architectures</a><small>Defines arithmetic intensity (FLOPs/Byte), the bandwidth roof, compute roof, and ridge point. Checked 2026-11-18.</small></li>
+    <li><a href="https://arxiv.org/abs/2211.05102">Pope et al. (Google Research, MLSys 2023): Efficiently Scaling Transformer Inference</a><small>Derives prefill vs decode FLOP-to-byte ratios, latency vs throughput tradeoffs, and multi-query/grouped-query attention scaling laws. Checked 2026-11-18.</small></li>
+    <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al. (SOSP 2023): Efficient Memory Management for Large Language Model Serving with PagedAttention (vLLM)</a><small>Quantifies how KV cache memory capacity limits decode batch size B and GPU utilization in production serving. Checked 2026-11-18.</small></li>
+    <li><a href="https://arxiv.org/abs/2401.09670">Zhong et al. (OSDI 2024): DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</a><small>Analyses prefill-decode interference on shared GPUs and separate TTFT vs TPOT optimization via disaggregation. Checked 2026-11-18.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Why two phases exist:</strong> All <code>S</code> prompt tokens are known upfront and run in one parallel pass (prefill), whereas each generated token depends on sampling the previous token and runs in a serial 1-token loop (decode).</li>
+    <li><strong>Redundant work without caching:</strong> Stateless autoregression over <code>S</code> prompt and <code>N</code> output tokens processes <code>N*S + N*(N-1)/2</code> positions vs <code>S + N - 1</code> with KV caching (<code>8,688</code> vs <code>287</code> positions, or <code>30.3x</code> redundant work in our kata).</li>
+    <li><strong>GEMM (prefill) vs GEMV (decode):</strong> Prefill multiplies <code>[B*S, d] @ [d, d]</code> (high weight reuse across <code>B*S</code> tokens); single-stream decode multiplies <code>[1, d] @ [d, d]</code> (zero weight reuse across tokens, streaming all weights for 1 token).</li>
+    <li><strong>Arithmetic intensity &amp; Roofline:</strong> For FP16 linear layers where weights dominate KV cache, <code>I_prefill ≈ B * S</code> FLOP/Byte and <code>I_decode ≈ B</code> FLOP/Byte; in our kata at <code>B=1, S=256</code>, prefill hits <code>213.8 FLOP/B</code> (<code>5,930.2 tok/s</code>) while decode drops <code>193.4x</code> to <code>1.11 FLOP/B</code> (<code>257.1 tok/s</code>, <code>23.06x</code> slower).</li>
+    <li><strong>TTFT vs TPOT &amp; batching B:</strong> TTFT is prefill latency (compute-bound, <code>O(S)</code> linear + <code>O(S^2)</code> attention); TPOT is per-token decode latency (HBM-bandwidth-bound, floor <code>&gt;= Weight_Bytes / BW</code>); batching <code>B</code> requests raises decode AI to <code>~B</code> FLOP/B and scales system tok/s until KV traffic or the ridge point saturates.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (P-D-R-B):</strong> <strong>P</strong>refill = parallel GEMM (sets TTFT, compute-bound); <strong>D</strong>ecode = serial GEMV (sets TPOT, HBM-bound); <strong>R</strong>idge point = <code>F_peak / BW</code>; <strong>B</strong>atching <code>B</code> raises decode AI from <code>~1</code> to <code>~B</code> FLOP/B.</li>
+      <li><strong>Must-know GPU ridge points (FP16):</strong> NVIDIA A100 SXM = <code>312 TFLOP/s / 2.0 TB/s = 156 FLOP/B</code>; NVIDIA H100 SXM = <code>989 TFLOP/s / 3.35 TB/s = 295 FLOP/B</code>.</li>
+      <li><strong>Physical decode speed limit at B=1:</strong> <code>TPOT_min &gt;= Weight_Bytes / BW_HBM</code>. A 7B FP16 model (<code>14 GB</code>) on a <code>2,000 GB/s</code> A100 cannot decode faster than <code>14 / 2000 = 7.0 ms/tok</code> (<code>143 tok/s</code>) at <code>B=1</code> without quantization or speculative decoding.</li>
+      <li><strong>Interview rule of thumb:</strong> Never optimize TTFT and TPOT with the same lever. Fix high TTFT with FlashAttention, prefix caching, or more FLOPs; fix high TPOT with weight quantization (FP8/INT4), speculative decoding, GQA, or higher HBM bandwidth.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K05 T1 W01", "cards": [{"q": "Why is LLM prefill compute-bound while single-stream decode is memory-bandwidth-bound?", "a": "Prefill runs parallel GEMM across all S prompt tokens (reusing weights S times), whereas decode runs serial GEMV, streaming all weights for 1 token."}, {"q": "What is the approximate FP16 linear-layer arithmetic intensity (FLOP/Byte) for prefill vs decode at batch size B and prompt length S?", "a": "Prefill is approximately B * S FLOP/Byte; decode is approximately B FLOP/Byte because 2*P weight bytes cancel in (2*T*P FLOPs) / (2*P bytes)."}, {"q": "How do you calculate a GPU's Roofline ridge point, and what are the dense FP16 values for A100 and H100 SXM?", "a": "Ridge point = Peak FLOP/s divided by HBM Bandwidth: 156 FLOP/Byte on A100 (312/2.0) and 295 FLOP/Byte on H100 (989/3.35)."}, {"q": "What sets the theoretical minimum Time Per Output Token (TPOT) for unbatched (B=1) decode, and what is it for a 7B FP16 model on A100?", "a": "TPOT_min >= Weight_Bytes / HBM_Bandwidth. For 7B FP16 (14 GB) on A100 (2,000 GB/s), minimum TPOT is 7.0 ms/token (143 tok/s max)."}, {"q": "How many token positions are processed when generating N tokens after an S-token prompt without a KV cache versus with a KV cache?", "a": "Uncached processes N*S + N*(N-1)/2 positions (recomputing prefixes); cached processes S + N - 1 positions (8,688 vs 287 at S=256, N=32)."}, {"q": "Why does raising decode batch size B from 1 to 16 on a GPU increase total tokens/sec by ~16x while keeping per-step latency nearly flat?", "a": "All 16 requests share one HBM read of the model weights, raising arithmetic intensity from ~1 to ~16 FLOP/Byte along the bandwidth slope."}, {"q": "What happens to ongoing decode latency (TPOT) when a long prefill is co-scheduled in the same batch, and what two architectures fix it?", "a": "The compute-bound prefill stalls co-scheduled decode steps (head-of-line blocking), spiking p99 TPOT; fixed by chunked prefill or disaggregated prefill/decode pools."}, {"q": "What does the P-D-R-B hook stand for in prefill vs decode?", "a": "Prefill GEMM sets TTFT (compute-bound); Decode GEMV sets TPOT (bandwidth-bound); Roofline ridge = F_peak/BW; Batching B amortizes weight reads across B tokens."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

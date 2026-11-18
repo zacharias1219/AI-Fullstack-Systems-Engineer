@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D23 The open-model landscape</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D23">
+<main>
+<header>
+  <div class="eyebrow"><b>D23</b><span>D Transformers and LLM internals</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>The open-model landscape</h1>
+  <p class="lede">Why two "7B to 9B open models" can differ by 6x in KV-cache memory and carry completely different legal rules, and how to compare Llama, Qwen, Mistral, Gemma, DeepSeek, and Phi from their model config files.</p>
+  <div class="chips"><span><em>Before</em>D01 What an LLM is</span><span><em>Before</em>K03 Run your first LLM</span><span><em>After</em>D05 Multi-head attention and its variants</span><span><em>After</em>K07 Memory math</span><span><em>After</em>G18 Model selection tradeoffs</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: commit to three predictions before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea and mechanism: attention geometry, vocabulary, and licenses</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the architecture-card kata</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production debugging and 90-second interview drill</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall, flashcards, and mixed review</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You deploy an FP16 model on a single 24 GB GPU serving 4 concurrent requests at 32,768 tokens each (131,072 active tokens). Which of Qwen 2.5 7B (7.62B params), Llama 3.1 8B (8.03B), and Gemma 2 9B (9.24B) fit without an out-of-memory crash?</summary><div class="a">Only <strong>Qwen 2.5 7B</strong> fits at <strong>22.39 GB</strong> total VRAM (14.19 GB weights + 7.00 GB KV cache + 1.20 GB overhead). <strong>Llama 3.1 8B</strong> crashes at <strong>32.16 GB</strong> (16.00 GB KV cache), and <strong>Gemma 2 9B</strong> crashes at <strong>60.41 GB</strong> (42.00 GB KV cache) because its 42 layers, 8 KV heads, and 256-dim heads use <strong>336.0 KB/token</strong> vs Qwen's <strong>56.0 KB/token</strong>.</div></details>
+  <details class="q"><summary>DeepSeek-V2-Lite has 15.70B total parameters, almost double Llama 3.1 8B (8.03B). At 131,072 cached tokens, which model consumes more KV-cache VRAM, and by how much?</summary><div class="a"><strong>Llama 3.1 8B consumes 4.2x more KV-cache VRAM</strong> (16.00 GB vs 3.80 GB). DeepSeek uses Multi-head Latent Attention (MLA), compressing each layer's KV state into a 512-dim latent vector plus a 64-dim RoPE key (<strong>30.4 KB/token</strong> across 27 layers), whereas Llama 3.1 stores 8 full 128-dim K and V heads across 32 layers (<strong>128.0 KB/token</strong>).</div></details>
+  <details class="q"><summary>Your legal team requires strict OSI-approved open-source licenses (Apache 2.0 or MIT) with zero monthly-active-user caps or mandatory branding notices. Which of the six flagship families (Llama 3.1, Qwen 2.5, Mistral 7B, Gemma 2, Phi-4, DeepSeek-V2-Lite) pass or fail?</summary><div class="a"><strong>Llama 3.1 8B and Gemma 2 9B fail</strong>; they are open-weight models governed by custom community terms (Llama 3.1 enforces a 700M MAU threshold, a "Built with Llama" notice, and acceptable-use restrictions; Gemma Terms include custom prohibited-use rules). <strong>Qwen 2.5 7B, Mistral 7B v0.3, and Phi-4 14B pass</strong> under Apache 2.0 or MIT (DeepSeek-V2-Lite code is MIT while model weights carry the permissive DeepSeek License).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Engineers often treat open-weight models in the same parameter tier (such as 7B to 16B) as drop-in commodities that differ only in benchmark scores. In reality, a parameter count like "8B" hides three structural choices inside <code>config.json</code> that control your production latency, maximum batch size, and legal exposure: <strong>attention and feed-forward geometry</strong> (GQA ratio, head dimension, sliding-window layers, or MoE + MLA compression), <strong>vocabulary and positional range</strong> (how many parameters sit in the embedding table vs transformer blocks, and the RoPE base frequency <code>theta</code>), and <strong>license regime</strong> (true OSI Apache 2.0/MIT vs custom open-weight community agreements).</p>
+  <p>Think of an open model's <code>config.json</code> as a hardware and legal contract. Before you download weights or run an eval, five integers in that JSON file tell you exact FP16 weight footprint, exact KV-cache growth per token, whether long-context requests will overflow a 24 GB GPU, and whether your company can ship the weights commercially without renegotiating a license.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: How three hidden axes separate "similar-sized" open models</div>
+    <svg viewBox="0 0 500 220" role="img" aria-label="Four-step diagram comparing open model families across weight allocation, KV cache growth per token, MoE active compute, and license restrictions.">
+      <g font-size="12">
+        <rect x="10" y="14" width="105" height="190" rx="6" class="c-paper" stroke="currentColor"/>
+        <text x="62" y="34" text-anchor="middle" font-weight="600">config.json</text>
+        <text x="20" y="58">params_b</text>
+        <text x="20" y="80">L, KVH, d_head</text>
+        <text x="20" y="102">V, rope_theta</text>
+        <text x="20" y="124">MoE / MLA</text>
+        <text x="20" y="146">license</text>
+        <g data-step="1">
+          <path d="M115 55 H145" class="ink"/>
+          <rect x="145" y="14" width="340" height="44" rx="6" class="c-soft" data-hi="1"/>
+          <text x="155" y="32" font-weight="600">1. Weight &amp; Vocab Split (FP16 Static VRAM)</text>
+          <text x="155" y="49">Gemma 2 (V=256k): 17.21 GB | Llama 3.1 (V=128k): 14.96 GB</text>
+        </g>
+        <g data-step="2">
+          <path d="M115 88 H145" class="ink"/>
+          <rect x="145" y="66" width="340" height="44" rx="6" class="c-warn" data-hi="2"/>
+          <text x="155" y="84" font-weight="600">2. KV Cache Geometry (Dynamic VRAM per token)</text>
+          <text x="155" y="101">Qwen 7:1 GQA = 56 KB/tok | Llama 4:1 = 128 KB | Gemma = 336 KB</text>
+        </g>
+        <g data-step="3">
+          <path d="M115 124 H145" class="ink"/>
+          <rect x="145" y="118" width="340" height="42" rx="6" class="c-good" data-hi="3"/>
+          <text x="155" y="135" font-weight="600">3. Sparse MoE + Latent KV (DeepSeek-V2-Lite 16B)</text>
+          <text x="155" y="151">15.70B total -> 2.40B active/tok, MLA KV = 30.4 KB/tok</text>
+        </g>
+        <g data-step="4">
+          <path d="M115 155 H145" class="ink"/>
+          <rect x="145" y="168" width="340" height="38" rx="6" class="c-bad" data-hi="4"/>
+          <text x="155" y="185" font-weight="600">4. Legal Gate: OSI Open vs Custom Open-Weight</text>
+          <text x="155" y="199">Apache/MIT: Qwen, Mistral, Phi-4 | Custom: Llama 3.1, Gemma 2</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Static FP16 weights scale with total parameters (2 bytes/param), while massive vocabularies like Gemma 2 (256,000 tokens) lock nearly 2B parameters inside the embedding table alone.</li>
+      <li>During inference, KV-cache memory scales with L * KVH * d_head, causing Gemma 2 9B (336.0 KB/tok) to burn 6x more KV memory than Qwen 2.5 7B (56.0 KB/tok).</li>
+      <li>DeepSeek decouples total capacity from runtime cost: Mixture-of-Experts activates 2.40B of 15.70B parameters per token while MLA shrinks KV state to 30.4 KB/tok.</li>
+      <li>Before deployment, licensing filters the survivors: Apache 2.0 and MIT models allow unrestricted use, while Llama 3.1 and Gemma 2 enforce custom MAU caps, attribution, or AUP clauses.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Parameter count only predicts static weight storage; attention geometry dictates concurrency, and licensing dictates where you can ship.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>W-K-V-L ("Weight, KV, Vocab, License")</strong> and the KV-cache ladder in KB/token: <strong>DeepSeek 30.4 &lt; Qwen 56 &lt; Llama/Mistral 128 &lt; Phi-4 200 &lt; Gemma 336</strong>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Attention geometry and KV-cache scaling across model families</h3>
+  <p>Every autoregressive transformer stores past Key and Value vectors so decoding a new token does not recompute prior tokens. For standard Grouped-Query Attention (GQA, covered deeply in D05), the FP16 KV-cache footprint per token is derived directly from the layer count <code>L</code>, the number of KV heads <code>KVH</code>, and the head dimension <code>d_head</code> (with 2 tensors for K and V, and 2 bytes per FP16 element):</p>
+  <div class="codewrap"><pre>KV_bytes_per_token (GQA) = 2 * L * KVH * d_head * 2
+Qwen 2.5 7B     : 2 * 28 * 4 * 128 * 2 =  57,344 B =  56.0 KB/tok (7:1 GQA, 28 Q heads : 4 KV heads)
+Llama 3.1 8B    : 2 * 32 * 8 * 128 * 2 = 131,072 B = 128.0 KB/tok (4:1 GQA, 32 Q heads : 8 KV heads)
+Mistral 7B v0.3 : 2 * 32 * 8 * 128 * 2 = 131,072 B = 128.0 KB/tok (4:1 GQA, 32 Q heads : 8 KV heads)
+Phi-4 14B       : 2 * 40 * 10 * 128 * 2 = 204,800 B = 200.0 KB/tok (4:1 GQA, 40 Q heads : 10 KV heads)
+Gemma 2 9B      : 2 * 42 * 8 * 256 * 2 = 344,064 B = 336.0 KB/tok (2:1 GQA, d_head=256, alternating SWA)</pre></div>
+  <p>Why do these numbers diverge so sharply? Qwen 2.5 7B uses an aggressive 7:1 GQA ratio (only 4 KV heads for 28 query heads), cutting KV cache to 56.0 KB/token. Gemma 2 9B doubles <code>d_head</code> to 256 across 42 layers with 8 KV heads, pushing its unwindowed KV footprint to 336.0 KB/token (to compensate, Gemma 2 alternates full global attention every other layer with 4,096-token Sliding Window Attention, or SWA, when the serving engine enables window eviction). DeepSeek-V2 and V3 go further with <strong>Multi-head Latent Attention (MLA)</strong>: instead of caching separate KV heads, MLA projects K and V into a shared low-rank compressed vector (<code>kv_lora_rank = 512</code> plus a <code>64</code>-dim decoupled RoPE key), requiring only <code>(512 + 64) * 2 = 1,152</code> bytes per layer, or <strong>30.4 KB/token</strong> across 27 layers.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Static Weight VRAM vs Dynamic KV-Cache VRAM on a 24 GB GPU</div>
+    <p class="ask">Predict first. At 131,072 active tokens across a batch (e.g., 4 requests x 32k context), which component is larger for Llama 3.1 8B: its FP16 model weights or its FP16 KV cache?</p>
+    <div class="ctl">
+      <label><span>Active batch tokens (k)</span><input type="range" name="tok_k" min="4" max="128" step="4" value="128"><output data-for="tok_k" data-unit="k tok"></output></label>
+      <label><span>Model family</span><select name="model" data-num>
+        <option value="0">Llama 3.1 8B (128.0 KB/tok)</option>
+        <option value="1">Qwen 2.5 7B (56.0 KB/tok)</option>
+        <option value="2">Mistral 7B v0.3 (128.0 KB/tok)</option>
+        <option value="3">Gemma 2 9B (336.0 KB/tok)</option>
+        <option value="4">Phi-4 14B (200.0 KB/tok)</option>
+        <option value="5">DeepSeek-V2-Lite 16B (30.4 KB/tok)</option>
+      </select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Total FP16 VRAM equals Weights + KV Cache + 1.20 GB runtime workspace; high-GQA or MLA models survive long-context batches where wider KV architectures go OOM.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var M=[
+      {n:"Llama 3.1 8B",p:8.03,kv:131072},
+      {n:"Qwen 2.5 7B",p:7.62,kv:57344},
+      {n:"Mistral 7B v0.3",p:7.25,kv:131072},
+      {n:"Gemma 2 9B",p:9.24,kv:344064},
+      {n:"Phi-4 14B",p:14.66,kv:204800},
+      {n:"DeepSeek-V2-Lite 16B",p:15.70,kv:31104}
+    ][v.model];
+    var toks=v.tok_k*1024;
+    var w=(M.p*1e9*2)/1073741824;
+    var k=(M.kv*toks)/1073741824;
+    var tot=w+k+1.2;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GB",digits:2,max:65,rows:[
+      {label:"FP16 Weights",value:w,tone:"muted"},
+      {label:"FP16 KV Cache",value:k,tone:k>w?"warn":"good"},
+      {label:"Total (+1.2 GB CUDA)",value:tot,tone:tot<=24?"good":"bad"}
+    ]});
+    return {verdict:M.n+" at "+tl.fmt(toks,0)+" tokens: "+tl.fmt(w,2)+" GB weights + "+tl.fmt(k,2)+" GB KV + 1.20 GB overhead = "+tl.fmt(tot,2)+" GB ("+(tot<=24?"FITS in 24 GB GPU":"OOM on 24 GB GPU")+")."};
+  })});</script>
+
+  <h3>2. Vocabulary size, RoPE theta, and synthetic data density</h3>
+  <p>A model's total parameter count includes its input and output token embedding matrices, each of shape <code>V * d_model</code>. Early open models like Mistral 7B v0.3 used a compact vocabulary of <code>V = 32,768</code>, spending only <code>2 * 32,768 * 4,096 = 268M</code> parameters (3.7% of the model) on embeddings. Modern multilingual and code-heavy families expand <code>V</code> dramatically so non-English scripts and source code compress into fewer tokens: Llama 3.1 uses <code>V = 128,256</code> (~1.05B params in untied input/output embeddings), Qwen 2.5 uses <code>V = 152,064</code> (~1.09B params), and Gemma 2 uses <code>V = 256,000</code> (even with tied embeddings, <code>256,000 * 3,584 = 918M</code> params). A larger vocabulary reduces sequence length by 15% to 30% on code and multilingual text, directly cutting attention FLOPs and KV-cache length, at the cost of a heavier final <code>lm_head</code> logits projection.</p>
+  <p>Context window capability also tracks the Rotary Position Embedding (RoPE) base frequency <code>theta</code>. Models designed for 128k native context stretch the wavelength of low-frequency rotary dimensions by raising <code>rope_theta</code> from the classic <code>10,000</code> (used in Gemma 2 9B with 8k context and DeepSeek-V2-Lite with 32k context) to <code>250,000</code> (Phi-4, 16k context), <code>500,000</code> (Llama 3.1, 128k context), or <code>1,000,000</code> (Qwen 2.5 128k and Mistral v0.3 32k). Meanwhile, Microsoft's <strong>Phi-4 (14.66B)</strong> demonstrates the textbook-quality synthetic data thesis: by curating multi-stage synthetic reasoning corpora, a dense 14B model matches larger 70B models on STEM and coding benchmarks while keeping a 16k context window.</p>
+  <details class="q"><summary>Check: Why does Qwen 2.5 7B use a 152,064-token vocabulary whereas Mistral 7B v0.3 uses 32,768, and what is the hardware tradeoff?</summary><div class="a">A 152,064-token vocabulary packs multilingual text, math, and code into fewer tokens per prompt, cutting prefill FLOPs, decode steps, and cached token count by 15% to 30% on non-English workloads. The price is ~1.09B parameters tied up in the embedding and <code>lm_head</code> tables (vs 268M in Mistral 7B) and a larger final softmax over 152,064 logits at every decode step.</div></details>
+
+  <h3>3. Open-weight vs OSI open-source licensing</h3>
+  <p>"Open weight" does not mean "open source" under the Open Source Initiative (OSI) definition. When choosing a base model for a commercial product, open models fall into two distinct legal buckets:</p>
+  <ul>
+    <li><strong>Permissive OSI licenses (Apache 2.0 and MIT):</strong> Used by <strong>Mistral 7B v0.3</strong> (Apache 2.0), <strong>Qwen 2.5 7B / 14B / 32B / 72B</strong> (Apache 2.0; note that Qwen 2.5 3B and 1.5B use a custom Qwen Research/non-commercial or bespoke license, so always verify per checkpoint!), and <strong>Phi-4 14B</strong> (MIT). You can fine-tune, quantize, distill synthetic data to train any other architecture, and ship commercially at any user scale without usage caps.</li>
+    <li><strong>Custom Open-Weight Community Licenses:</strong> Used by <strong>Llama 3.1</strong> (Llama 3.1 Community License) and <strong>Gemma 2</strong> (Gemma Terms of Use), with DeepSeek using MIT for repository code and the custom DeepSeek License (permissive commercial with an acceptable-use policy) for model weights. The Llama 3.1 license imposes three concrete legal requirements engineers get asked about in interviews: (1) a <strong>700 million Monthly Active Users (MAU)</strong> commercial cap on the release date (exceeding 700M MAU requires a separate license from Meta), (2) mandatory <strong>"Built with Llama"</strong> attribution on user-facing documentation or interfaces, and (3) any derivative model distributed must begin its name with <strong>"Llama"</strong>.</li>
+  </ul>
+  <details class="q"><summary>Check: A startup uses Llama 3.1 70B to generate synthetic training data and fine-tunes a custom Qwen 2.5 7B student model that they distribute publicly. What Llama 3.1 license rule applies?</summary><div class="a">Unlike Llama 2 (which forbade training non-Llama models on Llama outputs), the <strong>Llama 3.1 license explicitly permits using Llama outputs to train or distill other models</strong>, provided any publicly distributed derivative model states "Built with Llama" in its documentation and includes "Llama" at the start of its model name if it is a Llama derivative.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table>
+    <tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>DeepSeek-V2-Lite 16B FP16 KV cache per token (MLA, 27 layers)</td><td class="n">30.4 KB/tok (3.80 GB @ 128k tok)</td><td>Your own run</td></tr>
+    <tr><td>Qwen 2.5 7B FP16 KV cache per token (7:1 GQA, L=28, KVH=4)</td><td class="n">56.0 KB/tok (7.00 GB @ 128k tok)</td><td>Your own run</td></tr>
+    <tr><td>Llama 3.1 8B and Mistral 7B v0.3 FP16 KV cache per token (4:1 GQA, L=32, KVH=8)</td><td class="n">128.0 KB/tok (16.00 GB @ 128k tok)</td><td>Your own run</td></tr>
+    <tr><td>Phi-4 14B FP16 KV cache per token (4:1 GQA, L=40, KVH=10)</td><td class="n">200.0 KB/tok</td><td>Your own run</td></tr>
+    <tr><td>Gemma 2 9B FP16 unwindowed KV cache per token (2:1 GQA, L=42, KVH=8, d_head=256)</td><td class="n">336.0 KB/tok (42.00 GB @ 128k tok)</td><td>Your own run</td></tr>
+    <tr><td>Total FP16 VRAM at 131,072 active tokens (Batch=4, Context=32,768)</td><td class="n">Qwen 22.39 GB | Llama 32.16 GB | Gemma 60.41 GB</td><td>Your own run</td></tr>
+    <tr><td>DeepSeek-V2-Lite total vs active parameters per token (MoE)</td><td class="n">15.70B total / 2.40B active</td><td>Your own run</td></tr>
+    <tr><td>Vocabulary sizes (Mistral 7B / Phi-4 / Llama 3.1 / Qwen 2.5 / Gemma 2)</td><td class="n">32,768 / 100,352 / 128,256 / 152,064 / 256,000</td><td>Your own run</td></tr>
+    <tr><td>Llama 3.1 Community License commercial user threshold</td><td class="n">700M Monthly Active Users (MAU)</td><td>Checked 2026-11</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table>
+    <tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td><strong>Llama 3.1 (8B / 70B / 405B)</strong></td><td>Deepest ecosystem support (vLLM, TensorRT-LLM, LoRA adapters), 128k context (<code>rope_theta=500k</code>), synthetic data distillation explicitly allowed</td><td>128.0 KB/tok KV cache on 8B (2.3x Qwen 2.5 7B); custom license with 700M MAU cap and mandatory "Built with Llama" attribution</td><td>Long-context multi-tenant batches exhausting 24 GB GPUs; legal review if distributing derivative weights</td></tr>
+    <tr><td><strong>Qwen 2.5 (7B / 14B / 32B / 72B)</strong></td><td>Apache 2.0 license on 7B/14B/32B/72B, ultra-compact 56.0 KB/tok KV cache on 7B (7:1 GQA), strong coding/math and 152,064 multilingual vocab</td><td>1.09B params in embeddings/lm_head; 3B and 72B-math/specialized checkpoints carry different licenses if not checked per repo</td><td>Always inspect the exact Hugging Face repo <code>LICENSE</code> file (Qwen 2.5 3B is not Apache 2.0)</td></tr>
+    <tr><td><strong>Mistral 7B v0.3 / Ministral / Mixtral</strong></td><td>Apache 2.0 on Mistral 7B v0.3 and Mixtral 8x7B/8x22B, tiny 32,768 vocabulary minimizes <code>lm_head</code> memory overhead</td><td>32k vocabulary inflates token counts on multilingual and code workloads by 15% to 30%; newer Mistral Large models use non-commercial Research licenses</td><td>Do not assume all Mistral models are Apache 2.0; Mistral Large / Codestral use MRL (non-commercial)</td></tr>
+    <tr><td><strong>Gemma 2 (2B / 9B / 27B)</strong></td><td>High quality-per-parameter from knowledge distillation, 256,000 multilingual vocabulary, logit soft-capping stability</td><td>336.0 KB/tok unwindowed KV cache on 9B, 8k native context window, custom Gemma Terms of Use</td><td>Serving engines that disable Sliding Window Attention (SWA) eviction will OOM rapidly at batch &gt; 1</td></tr>
+    <tr><td><strong>Phi-4 (14B)</strong></td><td>MIT license, frontier STEM and coding reasoning in a 14.66B dense footprint trained on high-density synthetic textbooks</td><td>16k native context window (<code>rope_theta=250k</code>), weaker broad world-trivia recall than 70B models</td><td>Long-document RAG prompts exceeding 16k tokens degrade sharply without chunking</td></tr>
+    <tr><td><strong>DeepSeek-V2 / V3 / R1 (MoE + MLA)</strong></td><td>MLA compresses KV cache to 30.4 KB/tok (V2-Lite); MoE activates only 2.40B of 15.70B params per token for fast decode FLOPs</td><td>All 15.70B weights (29.24 GB FP16) must stay resident in VRAM despite only 2.40B firing per token</td><td>Memory capacity is bound by total MoE experts, making single-user local deployment VRAM-heavy unless quantized</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Architecture card &amp; VRAM evaluator</h2>
+  <p>Parse the exact <code>config.json</code> hyperparameters of six flagship open models, compute their FP16 weight footprint and KV-cache bytes per token from first principles, and test which models survive a 131,072-token batch on a 24 GB GPU.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python D23_kata.py</pre></div>
+  <p class="cap">D23_kata.py</p><div class="codewrap"><pre data-copy>"""
+D23 Kata: The open-model landscape
+Parses structured model cards for 6 flagship open-weight models (Llama 3.1, Qwen 2.5,
+Mistral, Gemma 2, DeepSeek, Phi-4), computes exact FP16 weight VRAM and KV-cache
+bytes per token from architectural hyperparameters, and tests license/memory constraints.
+"""
+
+MODELS = [
+    {
+        "name": "Llama 3.1 8B",
+        "params_b": 8.03,
+        "L": 32, "d_model": 4096, "H": 32, "KVH": 8, "d_head": 128,
+        "V": 128256, "ctx_k": 128, "attn": "GQA (4:1)",
+        "rope_theta": 500_000, "license": "Llama 3.1 (700M MAU cap)", "osi_open": False,
+    },
+    {
+        "name": "Qwen 2.5 7B",
+        "params_b": 7.62,
+        "L": 28, "d_model": 3584, "H": 28, "KVH": 4, "d_head": 128,
+        "V": 152064, "ctx_k": 128, "attn": "GQA (7:1)",
+        "rope_theta": 1_000_000, "license": "Apache 2.0", "osi_open": True,
+    },
+    {
+        "name": "Mistral 7B v0.3",
+        "params_b": 7.25,
+        "L": 32, "d_model": 4096, "H": 32, "KVH": 8, "d_head": 128,
+        "V": 32768, "ctx_k": 32, "attn": "GQA (4:1)",
+        "rope_theta": 1_000_000, "license": "Apache 2.0", "osi_open": True,
+    },
+    {
+        "name": "Gemma 2 9B",
+        "params_b": 9.24,
+        "L": 42, "d_model": 3584, "H": 16, "KVH": 8, "d_head": 256,
+        "V": 256000, "ctx_k": 8, "attn": "GQA (2:1) + SWA",
+        "rope_theta": 10_000, "license": "Gemma Terms (custom)", "osi_open": False,
+    },
+    {
+        "name": "Phi-4 14B",
+        "params_b": 14.66,
+        "L": 40, "d_model": 5120, "H": 40, "KVH": 10, "d_head": 128,
+        "V": 100352, "ctx_k": 16, "attn": "GQA (4:1)",
+        "rope_theta": 250_000, "license": "MIT", "osi_open": True,
+    },
+    {
+        "name": "DeepSeek-V2-Lite 16B",
+        "params_b": 15.70,
+        " active_b": 2.40,
+        "L": 27, "d_model": 2048, "H": 16, "KVH": 1, "d_head": 576,  # MLA compressed kv_lora_rank=512 + qk_rope_head_dim=64
+        "V": 102400, "ctx_k": 32, "attn": "MLA + MoE",
+        "rope_theta": 10_000, "license": "MIT (Code) / DeepSeek", "osi_open": True,
+        "mla_bytes_per_layer": (512 + 64) * 2,  # 1,152 bytes/layer in FP16
+    },
+]
+
+def kv_bytes_per_token(m, bytes_per_elem=2):
+    if "mla_bytes_per_layer" in m:
+        return m["L"] * m["mla_bytes_per_layer"]
+    return 2 * m["L"] * m["KVH"] * m["d_head"] * bytes_per_elem
+
+def total_vram_gb(m, batch_tokens=32768, bytes_per_weight=2):
+    weight_gb = (m["params_b"] * 1e9 * bytes_per_weight) / (1024 ** 3)
+    kv_gb = (kv_bytes_per_token(m, 2) * batch_tokens) / (1024 ** 3)
+    overhead_gb = 1.2  # CUDA context + activation workspace
+    return weight_gb, kv_gb, weight_gb + kv_gb + overhead_gb
+
+print("=== D23 KATA: OPEN-MODEL LANDSCAPE CARD &amp; ARCHITECTURE COMPARISON ===")
+print(f"{'Model':&lt;20} | {'Params':&gt;6} | {'Attn / GQA':&lt;15} | {'Vocab':&gt;7} | {'KV/tok':&gt;9} | {'VRAM @ 32k':&gt;10} | {'License'}")
+print("-" * 102)
+for m in MODELS:
+    kv_kb = kv_bytes_per_token(m) / 1024.0
+    w_gb, kv_gb, tot_gb = total_vram_gb(m, batch_tokens=32768)
+    print(f"{m['name']:&lt;20} | {m['params_b']:&gt;5.2f}B | {m['attn']:&lt;15} | {m['V']:&gt;7,} | {kv_kb:&gt;6.1f} KB | {tot_gb:&gt;8.2f} GB | {m['license']}")
+
+print("\n1. BREAK IT #1: THE 'ALL 7B-9B MODELS USE THE SAME KV CACHE' TRAP (Batch=4, Context=32,768 = 131,072 tokens)")
+for name in ("Qwen 2.5 7B", "Llama 3.1 8B", "Gemma 2 9B", "DeepSeek-V2-Lite 16B"):
+    m = next(x for x in MODELS if x["name"] == name)
+    w_gb, kv_gb, tot_gb = total_vram_gb(m, batch_tokens=4 * 32768)
+    fits_24gb = "FITS 24GB" if tot_gb &lt;= 24.0 else "OOM (&gt;24GB)!"
+    print(f"  {name:&lt;20} -&gt; Weights={w_gb:&gt;5.2f} GB | KV(128k tok)={kv_gb:&gt;5.2f} GB | Total={tot_gb:&gt;5.2f} GB [{fits_24gb}]")
+
+print("\n2. BREAK IT #2: LICENSE &amp; NAMING COMPLIANCE FILTER")
+strict_osi = [m["name"] for m in MODELS if m["osi_open"]]
+custom_terms = [m["name"] for m in MODELS if not m["osi_open"]]
+print(f"  True OSI (Apache 2.0 / MIT) : {', '.join(strict_osi)}")
+print(f"  Custom Terms / Restrictions : {', '.join(custom_terms)} (check MAU caps, 'Built with Llama' notice, &amp; AUP)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== D23 KATA: OPEN-MODEL LANDSCAPE CARD &amp; ARCHITECTURE COMPARISON ===
+Model                | Params | Attn / GQA      |   Vocab |    KV/tok | VRAM @ 32k | License
+------------------------------------------------------------------------------------------------------
+Llama 3.1 8B         |  8.03B | GQA (4:1)       | 128,256 |  128.0 KB |    20.16 GB | Llama 3.1 (700M MAU cap)
+Qwen 2.5 7B          |  7.62B | GQA (7:1)       | 152,064 |   56.0 KB |    17.14 GB | Apache 2.0
+Mistral 7B v0.3      |  7.25B | GQA (4:1)       |  32,768 |  128.0 KB |    18.70 GB | Apache 2.0
+Gemma 2 9B           |  9.24B | GQA (2:1) + SWA | 256,000 |  336.0 KB |    28.91 GB | Gemma Terms (custom)
+Phi-4 14B            | 14.66B | GQA (4:1)       | 100,352 |  200.0 KB |    34.76 GB | MIT
+DeepSeek-V2-Lite 16B | 15.70B | MLA + MoE       | 102,400 |   30.4 KB |    31.39 GB | MIT (Code) / DeepSeek
+
+1. BREAK IT #1: THE 'ALL 7B-9B MODELS USE THE SAME KV CACHE' TRAP (Batch=4, Context=32,768 = 131,072 tokens)
+  Qwen 2.5 7B          -&gt; Weights=14.19 GB | KV(128k tok)= 7.00 GB | Total=22.39 GB [FITS 24GB]
+  Llama 3.1 8B         -&gt; Weights=14.96 GB | KV(128k tok)=16.00 GB | Total=32.16 GB [OOM (&gt;24GB)!]
+  Gemma 2 9B           -&gt; Weights=17.21 GB | KV(128k tok)=42.00 GB | Total=60.41 GB [OOM (&gt;24GB)!]
+  DeepSeek-V2-Lite 16B -&gt; Weights=29.24 GB | KV(128k tok)= 3.80 GB | Total=34.24 GB [OOM (&gt;24GB)!]
+
+2. BREAK IT #2: LICENSE &amp; NAMING COMPLIANCE FILTER
+  True OSI (Apache 2.0 / MIT) : Qwen 2.5 7B, Mistral 7B v0.3, Phi-4 14B, DeepSeek-V2-Lite 16B
+  Custom Terms / Restrictions : Llama 3.1 8B, Gemma 2 9B (check MAU caps, 'Built with Llama' notice, &amp; AUP)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: FP16 KV-Cache footprint per token across six open model architectures (KB/token)</div>
+    <div data-bars='{"unit":" KB/tok","digits":1,"rows":[{"label":"DeepSeek-V2-Lite 16B (MLA)","value":30.4,"tone":"good"},{"label":"Qwen 2.5 7B (7:1 GQA)","value":56.0,"tone":"good"},{"label":"Llama 3.1 8B (4:1 GQA)","value":128.0,"tone":"muted"},{"label":"Mistral 7B v0.3 (4:1 GQA)","value":128.0,"tone":"muted"},{"label":"Phi-4 14B (4:1 GQA)","value":200.0,"tone":"warn"},{"label":"Gemma 2 9B (2:1 GQA, d=256)","value":336.0,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> KV-cache cost per token does not correlate with total parameter count: 15.70B DeepSeek-V2-Lite uses 11x less KV cache per token than 9.24B Gemma 2.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Parameter count misleads on long-context VRAM:</strong> At a single 32k context window, Qwen 2.5 7B (7.62B) needs <strong>17.14 GB</strong> while Llama 3.1 8B (8.03B) needs <strong>20.16 GB</strong>. Once concurrency rises to Batch=4 (131,072 tokens), Llama's KV cache hits <strong>16.00 GB</strong> (exceeding its 14.96 GB weights!) and crashes a 24 GB card at <strong>32.16 GB</strong>, while Qwen's 7:1 GQA keeps KV cache at <strong>7.00 GB</strong> and fits inside 24 GB at <strong>22.39 GB</strong>.</li>
+    <li><strong>Gemma 2's wide heads and 42 layers create a 42.00 GB KV spike:</strong> Because Gemma 2 9B uses <code>d_head = 256</code> with 8 KV heads across 42 layers, unwindowed KV cache consumes <strong>336.0 KB/token</strong>, reaching <strong>42.00 GB</strong> at 128k tokens (60.41 GB total VRAM). That is why Gemma 2 pairs global layers with 4,096-token sliding-window attention on alternating layers.</li>
+    <li><strong>MoE + MLA flips the weight-to-KV ratio:</strong> DeepSeek-V2-Lite 16B spends <strong>29.24 GB</strong> on static FP16 weights (since all 15.70B parameters must load into VRAM), yet its MLA latent projection uses just <strong>30.4 KB/token</strong> (<strong>3.80 GB</strong> for 131,072 tokens), making it ideal when weights are quantized to INT4/FP8 for high-concurrency serving.</li>
+    <li><strong>License compliance splits the table in half:</strong> Four models (Qwen 2.5 7B, Mistral 7B v0.3, Phi-4 14B, DeepSeek-V2-Lite) pass an OSI permissive filter, while Llama 3.1 8B and Gemma 2 9B require custom terms review.</li>
+  </ol>
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Simulate INT4 (AWQ/GPTQ) weight quantization on DeepSeek-V2-Lite 16B.</strong> Change <code>bytes_per_weight=2</code> to <code>bytes_per_weight=0.5</code> in <code>total_vram_gb</code> while leaving the KV cache in FP16. Predict first: will DeepSeek-V2-Lite 16B now fit in 24 GB at Batch=4, 32k context (131,072 tokens), and will it use less total VRAM than INT4 Llama 3.1 8B? (At 0.5 bytes/weight, DeepSeek weights drop from 29.24 GB to 7.31 GB; plus 3.80 GB KV + 1.20 GB = <strong>12.31 GB</strong>, beating INT4 Llama 3.1 8B at 3.74 + 16.00 + 1.20 = <strong>20.94 GB</strong> by 8.63 GB!)</li>
+      <li><strong>Enable Gemma 2 Sliding Window Attention eviction.</strong> Half of Gemma 2 9B's 42 layers (21 layers) use a 4,096-token sliding window while 21 layers use full global context. Modify Gemma 2's KV calculation for a 32,768-token sequence so half the layers cap at 4,096 tokens. Predict how much the single-request 32k KV cache drops from 10.50 GB. (It drops by 43.75%, from 10.50 GB to <strong>5.91 GB</strong>.)</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Add a function <code>embedding_share(m)</code> that computes what percentage of each model's total parameters reside in its input and output vocabulary matrices (assuming untied embeddings <code>2 * V * d_model</code> for Llama 3.1 and Qwen 2.5, and tied embeddings <code>V * d_model</code> for Gemma 2), and print the ratio.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Swapping Qwen 2.5 7B for Gemma 2 9B or Llama 3.1 8B causes vLLM to reduce maximum concurrent sequences by 2.3x to 6x on the same 24 GB GPU</td><td>KV-cache bytes per token jumped from 56.0 KB (Qwen 7:1 GQA) to 128.0 KB (Llama 4:1 GQA) or 336.0 KB (Gemma 2 unwindowed)</td><td>Enable FP8 KV-cache quantization in vLLM (<code>--kv-cache-dtype fp8</code>), verify sliding-window eviction is active for Gemma 2, or switch back to a 7:1 GQA / MLA architecture</td></tr>
+    <tr><td>MoE model (DeepSeek-V2 or Mixtral 8x7B) decodes fast at batch=1 but OOMs immediately when loading on a single GPU</td><td>Engineers sized GPU memory for active parameters (e.g., 2.4B or 12.9B) instead of total resident parameters (15.7B or 46.7B)</td><td>Size VRAM for 100% of MoE expert weights (or apply AWQ/FP8 weight quantization); active parameters only reduce compute FLOPs and memory bandwidth per token, not static VRAM</td></tr>
+    <tr><td>Model generates coherent text up to 8k or 16k tokens, then outputs repetitive gibberish at 32k tokens</td><td>Model was trained with a short native context and small <code>rope_theta</code> (e.g., Gemma 2 at 8k, <code>theta=10,000</code>; Phi-4 at 16k, <code>theta=250,000</code>)</td><td>Route &gt;16k prompts to a 128k-native model with high RoPE base frequency (Llama 3.1 <code>theta=500k</code> or Qwen 2.5 <code>theta=1M</code>), or configure YaRN / dynamic RoPE scaling with perplexity validation</td></tr>
+    <tr><td>Enterprise legal blocks production release two days before launch due to open-model license terms</td><td>Team assumed "open weights on Hugging Face" meant Apache 2.0/MIT, overlooking custom terms on Llama, Gemma, Qwen 2.5 3B, or Mistral Large</td><td>Audit the exact checkpoint's <code>LICENSE</code> file before fine-tuning; add "Built with Llama" notice and "Llama-" model naming for Llama 3.1 derivatives, or migrate to Apache 2.0 (Qwen 2.5 7B/14B/32B/72B) or MIT (Phi-4)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> vLLM KV-cache block utilization percentage, tokens per prompt by language/domain (detecting tokenizer bloat on 32k-vocab models), effective max batch concurrency before preemption, and model registry license metadata tags.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Choosing an open-weight model is not just picking the highest benchmark score at a parameter size. Two models in the seven-to-nine-billion class can differ by sixfold in KV-cache memory per token, use incompatible commercial licenses, and allocate billions of parameters to vocabulary embeddings rather than transformer layers.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>We evaluate open model families across three axes: attention geometry, tokenizer allocation, and license compliance. For attention, standard Grouped-Query Attention scales KV-cache bytes per token as two times layers times KV heads times head dimension times two bytes in FP16. Qwen 2.5 7B uses four KV heads across twenty-eight layers for 56.0 kilobytes per token, while Llama 3.1 8B uses eight KV heads across thirty-two layers for 128.0 kilobytes per token, and Gemma 2 9B uses 256-dim heads across forty-two layers for 336.0 kilobytes per token. DeepSeek replaces GQA with Multi-head Latent Attention and Mixture-of-Experts, compressing KV state to 30.4 kilobytes per token while activating only 2.40 billion of 15.70 billion parameters per token.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>At batch four and 32k context on a 24-gigabyte L4 GPU, Qwen 2.5 7B fits in 22.39 gigabytes total, whereas Llama 3.1 8B overflows at 32.16 gigabytes and Gemma 2 9B requires 60.41 gigabytes. Finally, Qwen, Mistral, Phi-4, and DeepSeek ship under permissive Apache 2.0 or MIT licenses, while Llama 3.1 imposes a 700-million monthly-active-user cap and attribution requirements.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We compared Llama 3.1, Qwen, Mistral, and Gemma and picked Qwen because it is open source, has great benchmark performance, and saves us GPU infrastructure costs at scale."</p>
+    <p class="strong">"On a 24 GB L4 GPU serving 4 concurrent 32k-token sessions, Llama 3.1 8B's 8 KV heads require 128.0 KB/token (16.00 GB KV cache, 32.16 GB total, which OOMs), whereas Qwen 2.5 7B uses 7:1 GQA with 4 KV heads at 56.0 KB/token (7.00 GB KV cache, 22.39 GB total) and ships under Apache 2.0 with no MAU cap."</p>
+    <p>The strong answer names the exact GQA head counts, computes the per-token KV-cache bytes and total batch VRAM against a real 24 GB GPU limit, and states the specific license difference.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"All 7B to 9B open models have roughly the same memory footprint, so if Llama 3.1 8B fits our GPU budget, Gemma 2 9B or Qwen 2.5 7B will behave the same way."</summary><div class="a">Wrong because static weight VRAM is only half the equation; dynamic KV-cache VRAM depends on <code>L * KVH * d_head</code>, not total parameter count. In FP16, Qwen 2.5 7B uses <strong>56.0 KB/token</strong>, Llama 3.1 8B uses <strong>128.0 KB/token</strong> (2.29x more), and Gemma 2 9B uses <strong>336.0 KB/token</strong> (6.0x more). At 131,072 active tokens, their KV caches alone take 7.00 GB, 16.00 GB, and 42.00 GB respectively.</div></details>
+  <details class="q"><summary>"Llama 3.1, Gemma 2, and all Mistral and Qwen models are open source, so we can embed any of them in a commercial product without legal review."</summary><div class="a">Wrong on two counts. First, Llama 3.1 and Gemma 2 are <strong>open-weight</strong> under custom licenses, not OSI open-source: Llama 3.1 enforces a 700M MAU limit, mandatory "Built with Llama" attribution, and naming rules ("Llama" prefix on distributed derivatives), while Gemma 2 has custom prohibited-use terms. Second, even within mostly Apache 2.0 families, specific checkpoints vary: <strong>Qwen 2.5 3B</strong> uses a non-Apache research license and <strong>Mistral Large / Codestral</strong> use non-commercial Mistral Research licenses.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through how you calculate the exact KV-cache memory per token from an open model's Hugging Face config.json, and compare Qwen 2.5 7B against Llama 3.1 8B.</summary><div class="a">Read <code>num_hidden_layers</code> (<code>L</code>), <code>num_key_value_heads</code> (<code>KVH</code>), and <code>head_dim</code> (or <code>hidden_size / num_attention_heads</code>). For standard GQA in FP16/BF16, multiply <code>2 (K and V) * L * KVH * d_head * 2 bytes</code>. Qwen 2.5 7B has <code>L=28, KVH=4, d_head=128</code> -> <code>2 * 28 * 4 * 128 * 2 = 57,344 bytes = 56.0 KB/token</code>. Llama 3.1 8B has <code>L=32, KVH=8, d_head=128</code> -> <code>2 * 32 * 8 * 128 * 2 = 131,072 bytes = 128.0 KB/token</code>.<div class="f"><b>Follow-up</b>Why does that formula not work directly on DeepSeek-V2 or DeepSeek-V3? Because DeepSeek uses Multi-head Latent Attention (MLA), which caches a compressed joint KV latent vector (<code>kv_lora_rank</code>, e.g., 512) plus a single decoupled RoPE key vector (<code>qk_rope_head_dim</code>, e.g., 64) per layer rather than full K and V heads, dropping DeepSeek-V2-Lite to <code>27 * (512 + 64) * 2 = 30.4 KB/token</code>.</div></div></details>
+  <details class="q"><summary>How does DeepSeek-V2-Lite have 15.70B parameters yet run with fewer FLOPs per token and less KV-cache memory than an 8B dense model?</summary><div class="a">It combines two orthogonal mechanisms: <strong>fine-grained Mixture-of-Experts (MoE)</strong> for the feed-forward layers and <strong>Multi-head Latent Attention (MLA)</strong> for attention. MoE routes each token to a small subset of routed and shared experts so only <strong>2.40B parameters</strong> execute per token (cutting matrix-multiply FLOPs and memory-bandwidth reads during decode by ~3.3x compared to an 8B dense model), while MLA compresses the KV cache to <strong>30.4 KB/token</strong> (4.2x smaller than Llama 3.1 8B).<div class="f"><b>Follow-up</b>What is the catch when deploying that 15.70B MoE model on a single edge GPU? All 15.70B parameters (29.24 GB in FP16) must stay resident in GPU VRAM because any expert can be selected on any token, so static weight memory scales with total parameters, not active parameters.</div></div></details>
+  <details class="q"><summary>Compare the tokenizer vocabularies of Mistral 7B v0.3, Llama 3.1 8B, Qwen 2.5 7B, and Gemma 2 9B. How does a large vocabulary affect both memory and throughput?</summary><div class="a">Mistral 7B v0.3 uses <code>V = 32,768</code>; Llama 3.1 uses <code>128,256</code>; Qwen 2.5 uses <code>152,064</code>; and Gemma 2 uses <code>256,000</code>. A larger vocabulary (128k to 256k) increases static parameter memory in the embedding and <code>lm_head</code> layers (roughly 0.9B to 1.1B parameters) and makes the final logits GEMM and softmax wider, but it compresses code and multilingual prompts into 15% to 30% fewer tokens, which directly reduces prefill FLOPs, total decode steps, and KV-cache length.</div></details>
+  <details class="q"><summary>What architectural mechanisms does Gemma 2 9B use that differentiate it from a standard Llama-style decoder, and what operational care do they require?</summary><div class="a">Gemma 2 9B uses three distinctive design choices: (1) wider 256-dim attention heads across 42 layers (<code>KVH=8</code>), which would cost 336.0 KB/token if every layer used full context; (2) <strong>interleaved Sliding Window Attention (SWA)</strong>, alternating 1 local layer (4,096-token window) with 1 global layer (8,192-token context) to halve KV growth when window eviction is supported; and (3) <strong>logit soft-capping</strong> (using <code>tanh</code> to bound attention and final logits) alongside knowledge distillation from larger teacher models.<div class="f"><b>Follow-up</b>What happens if your inference engine does not implement Gemma 2's attention logit soft-capping or SWA buffer rotation? Disabling logit soft-capping degrades output perplexity on long generations, and disabling SWA buffer rotation forces all 42 layers to cache full sequence history at 336.0 KB/token, causing early OOMs.</div></div></details>
+  <details class="q"><summary>When would you select Microsoft Phi-4 14B over Llama 3.1 8B or Qwen 2.5 7B, and when would you avoid it?</summary><div class="a">Select <strong>Phi-4 14B</strong> when you need an <strong>MIT-licensed</strong> dense model with maximum multi-step math, STEM, or code reasoning accuracy per GPU and your prompts fit inside its <strong>16k context window</strong>. Avoid Phi-4 when you need 64k-128k long-document ingestion (where Llama 3.1 or Qwen 2.5 have 128k native context and <code>rope_theta &gt;= 500,000</code>) or when your VRAM budget cannot hold 14.66B weights + 200.0 KB/token KV cache.</div></details>
+  <details class="q"><summary>What are the three specific legal obligations in the Llama 3.1 Community License that do not exist in Apache 2.0 or MIT, and how did Llama 3.1 change the rule on synthetic data distillation?</summary><div class="a">The three obligations are: (1) a <strong>700 million Monthly Active Users (MAU)</strong> cap on the release date (above which you must request a commercial license from Meta), (2) mandatory <strong>"Built with Llama"</strong> attribution on any product or documentation using the model, and (3) any distributed derivative model must start its name with <strong>"Llama"</strong> and include the license and acceptable use policy. Unlike Llama 2, Llama 3.1 explicitly allows using model outputs as synthetic data to train or distill other models.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its four steps, then write: (1) the GQA KV-cache byte formula and the exact KB/token for DeepSeek-V2-Lite, Qwen 2.5 7B, Llama 3.1 8B, Phi-4 14B, and Gemma 2 9B; (2) which of Qwen 2.5 7B, Llama 3.1 8B, and Gemma 2 9B fit on a 24 GB GPU at 131,072 cached tokens and their total VRAM; and (3) the licensing split between Apache 2.0/MIT families and custom open-weight terms.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Four-step concept diagram:</strong> <code>config.json</code> splits into (1) Static FP16 weights &amp; vocabulary split, (2) GQA KV-cache bytes per token (<code>2 * L * KVH * d_head * 2</code>), (3) Sparse MoE active compute + MLA latent compression, and (4) OSI permissive vs custom open-weight license filter.</li>
+    <li><strong>KV-cache KB/token ladder (FP16):</strong> DeepSeek-V2-Lite 16B = <strong>30.4 KB</strong> (MLA) &lt; Qwen 2.5 7B = <strong>56.0 KB</strong> (7:1 GQA) &lt; Llama 3.1 8B &amp; Mistral 7B v0.3 = <strong>128.0 KB</strong> (4:1 GQA) &lt; Phi-4 14B = <strong>200.0 KB</strong> (4:1 GQA) &lt; Gemma 2 9B = <strong>336.0 KB</strong> (2:1 GQA, <code>d_head=256</code>).</li>
+    <li><strong>24 GB GPU test at 131,072 tokens (Batch=4, 32k context):</strong> Only Qwen 2.5 7B fits at <strong>22.39 GB</strong> (14.19 GB weights + 7.00 GB KV + 1.20 GB overhead); Llama 3.1 8B OOMs at <strong>32.16 GB</strong> (16.00 GB KV); Gemma 2 9B OOMs at <strong>60.41 GB</strong> (42.00 GB KV).</li>
+    <li><strong>Vocabularies &amp; RoPE:</strong> Mistral 32,768; Phi-4 100,352; DeepSeek 102,400; Llama 3.1 128,256 (<code>theta=500k</code>); Qwen 2.5 152,064 (<code>theta=1M</code>); Gemma 2 256,000 (<code>theta=10k</code>).</li>
+    <li><strong>Licenses:</strong> Apache 2.0 (Qwen 2.5 7B/14B/32B/72B, Mistral 7B v0.3) and MIT (Phi-4 14B, DeepSeek code) vs Llama 3.1 Community License (700M MAU cap, "Built with Llama" notice, "Llama-" prefix on derivatives, synthetic distillation allowed) and Gemma Terms.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: What does a causal language model actually output at each forward pass before sampling takes place?</summary><div class="a">It outputs a raw, unnormalized logit vector of length <code>V</code> (the vocabulary size) for the next token position, which is then divided by temperature <code>T</code> and passed through a softmax to produce a probability distribution over the vocabulary.</div></details>
+  <details class="q"><summary>K03: Why is the prefill phase of LLM inference compute-bound while the autoregressive decode phase is memory-bandwidth-bound?</summary><div class="a">Prefill processes all prompt tokens in parallel using matrix-matrix multiplications (high arithmetic intensity, reusing weights across many tokens), whereas decode generates one token at a time using matrix-vector multiplications that must stream all active model weights and the KV cache from HBM for every single token.</div></details>
+  <details class="q"><summary>D01: Why does changing a single token at the start of a prompt invalidate the KV cache for every token that follows it?</summary><div class="a">Because causal self-attention computes each token's Key, Value, and hidden state as a function of all preceding tokens in the sequence; altering token <code>i</code> changes the attention outputs and K/V vectors at every position <code>j &gt;= i</code>.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/2407.21783">Meta AI: The Llama 3 Herd of Models (arXiv:2407.21783)</a><small>Supports Llama 3.1 8B architecture (L=32, KVH=8, V=128,256, RoPE theta=500,000) and Llama 3.1 Community License terms. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/2412.15115">Qwen Team: Qwen2.5 Technical Report (arXiv:2412.15115)</a><small>Supports Qwen 2.5 7B 7:1 GQA geometry (L=28, H=28, KVH=4, V=152,064, RoPE theta=1,000,000) and Apache 2.0 licensing on 7B/14B/32B/72B. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/2408.00118">Google Gemma Team: Gemma 2: Improving Open Language Models at a Practical Size (arXiv:2408.00118)</a><small>Supports Gemma 2 9B architecture (L=42, KVH=8, d_head=256, V=256,000), interleaved sliding-window attention, and logit soft-capping. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/2405.04434">DeepSeek-AI: DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model (arXiv:2405.04434)</a><small>Supports Multi-head Latent Attention (MLA) low-rank KV compression (kv_lora_rank=512, qk_rope_head_dim=64) and DeepSeekMoE active parameter counts. Checked 2026-11.</small></li>
+    <li><a href="https://arxiv.org/abs/2412.08905">Microsoft Research: Phi-4 Technical Report (arXiv:2412.08905)</a><small>Supports Phi-4 14B architecture (L=40, H=40, KVH=10, V=100,352), synthetic data curriculum, and MIT license release. Checked 2026-11.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Attention &amp; KV-cache geometry:</strong> Standard GQA FP16 KV cache costs <code>2 * L * KVH * d_head * 2</code> bytes/token, creating a 6x spread inside the 7B-9B tier from Qwen 2.5 7B (56.0 KB/tok, 7:1 GQA) to Llama 3.1 8B / Mistral 7B (128.0 KB/tok, 4:1 GQA) to Gemma 2 9B (336.0 KB/tok unwindowed, 2:1 GQA with <code>d_head=256</code> and alternating 4k SWA).</li>
+    <li><strong>Multi-head Latent Attention (MLA) &amp; MoE (DeepSeek):</strong> DeepSeek-V2-Lite 16B stores all 15.70B params in VRAM (29.24 GB FP16) but activates only 2.40B params/token via MoE and compresses KV state into a 512-dim latent + 64-dim RoPE key (30.4 KB/tok across 27 layers).</li>
+    <li><strong>Vocabulary &amp; RoPE base frequency:</strong> Large vocabularies (Llama 128,256; Qwen 152,064; Gemma 256,000 vs Mistral 32,768) spend ~1B params in embeddings to cut multilingual/code token counts by 15%-30%; 128k-context models raise <code>rope_theta</code> to 500,000 (Llama 3.1) or 1,000,000 (Qwen 2.5).</li>
+    <li><strong>Open-weight vs OSI open-source licensing:</strong> Qwen 2.5 (7B/14B/32B/72B) and Mistral 7B v0.3 use Apache 2.0, and Phi-4 14B uses MIT; Llama 3.1 and Gemma 2 use custom terms (Llama 3.1 enforces a 700M MAU cap, "Built with Llama" attribution, and "Llama-" prefix on derivatives, while permitting synthetic data distillation).</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>KV-cache ladder (FP16 KB/token):</strong> DeepSeek-V2-Lite <strong>30.4 KB</strong> &lt; Qwen 2.5 7B <strong>56.0 KB</strong> &lt; Llama 3.1 8B / Mistral 7B <strong>128.0 KB</strong> &lt; Phi-4 14B <strong>200.0 KB</strong> &lt; Gemma 2 9B <strong>336.0 KB</strong>.</li>
+      <li><strong>24 GB GPU survival at 131,072 tokens (4 x 32k):</strong> Qwen 2.5 7B fits at <strong>22.39 GB</strong> (7.00 GB KV); Llama 3.1 8B OOMs at <strong>32.16 GB</strong> (16.00 GB KV); Gemma 2 9B OOMs at <strong>60.41 GB</strong> (42.00 GB KV).</li>
+      <li><strong>MoE sizing rule:</strong> Size GPU VRAM for <strong>total parameters</strong> (all experts must stay in memory); size decode FLOPs and memory bandwidth for <strong>active parameters</strong>.</li>
+      <li><strong>License audit rule:</strong> Always check the specific checkpoint's <code>LICENSE</code> file (e.g., Qwen 2.5 3B is not Apache 2.0; Mistral Large / Codestral are not Apache 2.0; Llama 3.1 has a 700M MAU cap).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D23 T2 W01", "cards": [{"q": "Why does Qwen 2.5 7B fit 131,072 cached tokens on a 24 GB GPU (22.39 GB) while Llama 3.1 8B (32.16 GB) and Gemma 2 9B (60.41 GB) go OOM?", "a": "Qwen's 7:1 GQA (4 KV heads) uses 56.0 KB/token vs Llama's 128.0 KB/token (8 KV heads) and Gemma's 336.0 KB/token (d_head=256, 42 layers)."}, {"q": "How does DeepSeek-V2-Lite 16B cut FP16 KV-cache usage to 30.4 KB/token and decode FLOPs below an 8B dense model?", "a": "Multi-head Latent Attention compresses each layer's KV into 576 elements (1,152 B/layer), while Mixture-of-Experts activates only 2.40B of 15.70B parameters per token."}, {"q": "What is the hardware tradeoff of expanding a model's vocabulary from 32,768 (Mistral 7B) to 152,064 (Qwen 2.5) or 256,000 (Gemma 2)?", "a": "It puts ~1B parameters in embeddings and widens softmax, but cuts multilingual and code token counts by 15-30%, reducing attention FLOPs and KV length."}, {"q": "Which flagship open models use permissive OSI licenses (Apache 2.0/MIT) vs custom agreements, and what three obligations does Llama 3.1 enforce?", "a": "Qwen 2.5 (7B+), Mistral 7B, and Phi-4 use Apache 2.0/MIT; Llama 3.1 requires \u003c=700M MAU, 'Built with Llama' attribution, and 'Llama-' derivative names."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

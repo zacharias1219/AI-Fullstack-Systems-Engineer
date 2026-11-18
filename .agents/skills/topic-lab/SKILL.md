@@ -89,7 +89,7 @@ Scale by tier:
 
 | | T1 | T2 | T3 |
 |---|---|---|---|
-| Stations | All 11 | All 11, shorter; no scenario in station 7 | 2, 3, 4 and 5 merged, 8, 9, 11 |
+| Stations | All 12 | All 12, shorter; no scenario in station 7 | 2, 3, 4 and 5 merged, 8, 9, 11, 12 |
 | Explanation (stations 2 and 3) | 900 to 1,400 words | 500 to 800 | 250 to 400 |
 | Kata | Full, 3 break-its | Full, 1 or 2 break-its | A 10-minute micro-exercise, or none |
 | Traps | 3 or 4 | 2 | None |
@@ -111,6 +111,7 @@ Stations, in order. The numbering is the study loop, so keep it.
 9. **Recall.** A blank-page prompt that starts with redrawing the concept stepper's final picture and narrating its steps from memory and lists what else to reproduce, a checklist to compare against, the flashcards, the Anki text.
 10. **Mixed review.** Three questions from topics scheduled earlier than this one, labeled with their IDs, answers kept short. Interviews do not announce the topic, so practice should not either. In week 1, draw from the prerequisites.
 11. **Sources.** Two to six primary sources, each with one line on what it supports and the date checked. If none were used, say so.
+12. **Short notes.** A compact, easy-to-memorize summary at the end of the page (`#notes`) covering all subtopics on the page (one crisp bullet per subtopic with its mechanism and key number) plus an "Important things to remember" callout (`div.box.model`) listing must-know formulas, numbers, failure modes, and interview rules of thumb.
 
 End with the tracker note in the footer.
 
@@ -406,6 +407,19 @@ This is what goes in `content.html`. Replace the capitalized placeholders, repea
   <ul class="srcs"><li><a href="URL">PUBLISHER: TITLE</a><small>WHAT IT SUPPORTS. Checked DATE.</small></li></ul>
 </section>
 
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>SUBTOPIC:</strong> CRISP ONE-LINE SUMMARY WITH MECHANISM AND NUMBER.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>FORMULA / LIMIT / RULE:</strong> WHAT TO REMEMBER COLD IN AN INTERVIEW.</li>
+    </ul>
+  </div>
+</section>
+
 <footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
   <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
 ```
@@ -450,6 +464,7 @@ if chr(8212) in page or chr(8211) in page: flags.append("dash characters found: 
 if "{{" in body: flags.append("an unfilled {{...}} placeholder is left in the content")
 if 'id="recall-box"' in body and body.count('class="keep"') < 2: flags.append('the blank-page prompt and the recall box both need class="keep", or retest mode hides them')
 if 'id="interview"' in body and 'class="box hook"' not in body: flags.append("no memory hook: add one in station 2 (skip this flag only on a T3 page)")
+if 'id="notes"' not in body: flags.append("no short notes section: add station 12 (#notes) at the end of the page before the footer")
 if re.search(r">\s*(QUESTION|ANSWER|TEXT|SHORT NAME|DOMAIN NAME|STEP|ITEM|FACT|VALUE|LABEL)\s*<", body): flags.append("a template placeholder word is left in the content")
 nviz = len(re.findall(r'<figure class="viz[ "]', body))
 if nviz == 0: flags.append("no visualization: T1 pages need 3 to 5, T2 pages 2 or 3, T3 pages 1, always including a stepper")

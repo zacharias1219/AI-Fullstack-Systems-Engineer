@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D11 Logits, logprobs, perplexity</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D11">
+<main>
+<header>
+  <div class="eyebrow"><b>D11</b><span>D Transformers and LLM internals</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Logits, logprobs, perplexity</h1>
+  <p class="lede">How raw unembedding scores become numerically stable log-probabilities, token uncertainty diagnostics, and sequence perplexity, and why entity-span min-logprob catches hallucinations that sequence averages hide.</p>
+  <div class="chips"><span><em>Before</em>D10 Decoding and sampling</span><span><em>Before</em>K04 One token end to end</span><span><em>After</em>A16 Information theory</span><span><em>After</em>D19 Hallucination</span><span><em>After</em>G17 Model routing and cascades</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: commit to three predictions using kata numbers</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea &amp; LSIMP stepper: logits to span confidence</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>How it works: log-sum-exp, margin/entropy, PPL &amp; BPB, span gating</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run and break token confidence and tokenizer PPL</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production &amp; interview: 90-second answer, traps, question bank</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall, flashcards, mixed review, short notes</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A 10-token clinical QA answer has 8 fluent boilerplate tokens with logprob around <code>-0.088</code> (91.5% probability), one grounded dose token (<code>50</code>) at <code>-0.268</code> (76.46%), and one hallucinated clinical trial ID (<code>NCT09988123</code>) at <code>-5.154</code> (0.58%). What is the sequence-level mean logprob and perplexity, and does a router rejecting responses with <code>mean_logprob &lt; -1.0</code> catch the hallucination?</summary><div class="a">The sequence mean logprob is <code>-0.613</code>, which corresponds to a geometric mean token probability of <code>54.2%</code> and a perplexity of <code>exp(0.613) = 1.85</code>. Because <code>-0.613 &gt; -1.0</code>, the sequence-level gate passes the response cleanly! Nine high-certainty syntax and grounded tokens dilute the single <code>-5.154</code> spike. You must gate on entity-span minimum logprob (<code>min_entity_logprob = -5.154 &lt; -1.5</code>) or top-1/top-2 margin (<code>0.031 &lt; 0.5</code>).</div></details>
+  <details class="q"><summary>For that same hallucinated token <code>NCT09988123</code> (where raw top-1 logit is <code>2.10</code>, top-2 is <code>2.05</code>, and 13 runners-up sit at <code>1.95</code>), what happens to its reported token logprob, probability, and Shannon entropy if the caller lowers temperature from <code>T = 1.0</code> to <code>T = 0.2</code> before computing log-softmax?</summary><div class="a">At <code>T = 1.0</code>, logprob is <code>-5.154</code> (<code>0.58%</code>), top1-top2 margin is <code>0.031</code>, and entropy is <code>6.56 nats</code>. At <code>T = 0.2</code>, dividing logits by <code>0.2</code> multiplies every logit gap by <code>5x</code>: reported logprob jumps to <code>-3.251</code> (<code>3.88%</code>, nearly 7x higher probability), margin widens 5x to <code>0.155</code>, and entropy drops to <code>3.32 nats</code>. Post-temperature logprobs make an ignorant guess look artificially confident.</div></details>
+  <details class="q"><summary>Three models compress the exact same 56-byte clinical sentence with identical total negative log-likelihood of <code>42.0 nats</code> (<code>60.59 bits</code>), but Model A uses a 32k word vocabulary (10 tokens), Model B uses a 128k BPE vocabulary (14 tokens), and Model C uses byte-level tokenization (56 tokens). Which model has the lowest token-level perplexity, and which is actually best?</summary><div class="a">Model C reports a token perplexity of <code>exp(42/56) = 2.12</code>, Model B reports <code>exp(42/14) = 20.09</code>, and Model A reports <code>exp(42/10) = 66.69</code>. Yet all three models are identical in predictive quality: every one achieves <code>(42.0 / ln 2) / 56 = 1.0820 bits-per-byte (BPB)</code>. Comparing raw token perplexity across different tokenizers is invalid because finer tokenizers split text into more steps with smaller per-step branching factors.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>At every decoding step <code>t</code>, a Transformer projects its final hidden state <code>h_t</code> (dimension <code>d_model</code>) through the unembedding matrix <code>W_U</code> (shape <code>d_model x V</code>) to produce a vector of raw, unnormalized scores called <strong>logits</strong> <code>z_t</code> across the vocabulary <code>V</code>. Logits live on the real line <code>(-inf, +inf)</code> and have no scale constraint: adding +100 to every entry in <code>z_t</code> leaves the model's relative preference unchanged. To turn logits into a valid probability distribution, we apply temperature scaling <code>z_t / T</code> and the softmax function, or work directly in log-space via <code>log_softmax</code> to obtain <strong>logprobs</strong> <code>log p(x_t | x_&lt;t)</code> measured in <strong>nats</strong> (natural log units, where <code>0</code> is 100% certainty and negative values measure surprise).</p>
+  <p>Think of logits as raw elevation readings across <code>V</code> mountain peaks, temperature <code>T</code> as a vertical zoom lens, logprobs as how far below the summit each token sits in log-altitude, and <strong>perplexity (PPL)</strong> as the effective number of equally likely vocabulary choices the model is torn between per step. When you evaluate a whole document, exponentiating the average negative logprob yields perplexity. When you evaluate whether a single generated answer in a clinical voice or RAG pipeline is trustworthy, averaging across the whole sequence is a trap: fluent syntax tokens drown out the one entity token where the model guessed blindly.</p>
+
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From raw logits to sequence perplexity and span confidence</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Five-stage pipeline from unembedding logits z_t through max-shifted log-softmax, token diagnostics, sequence NLL and perplexity, to entity-span confidence gating.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="18" width="88" height="125" rx="6" class="c-soft" stroke="currentColor" data-hi="1"/>
+          <text x="54" y="36" text-anchor="middle" font-weight="600">1. Logits z_t</text>
+          <text x="54" y="54" text-anchor="middle" class="m">h_t W_U in R^V</text>
+          <rect x="20" y="66" width="44" height="11" class="c-accent"/>
+          <text x="88" y="75" text-anchor="end" class="m">2.10</text>
+          <rect x="20" y="83" width="42" height="11" class="c-warn"/>
+          <text x="88" y="92" text-anchor="end" class="m">2.05</text>
+          <rect x="20" y="100" width="39" height="11" class="c-muted"/>
+          <text x="88" y="109" text-anchor="end" class="m">1.95</text>
+          <text x="54" y="132" text-anchor="middle" class="m">unbounded</text>
+        </g>
+        <g data-step="2">
+          <path d="M98 80 H112" class="ink"/>
+          <rect x="112" y="18" width="94" height="125" rx="6" class="c-soft" stroke="currentColor" data-hi="2"/>
+          <text x="159" y="36" text-anchor="middle" font-weight="600">2. Shift &amp; LSE</text>
+          <text x="159" y="54" text-anchor="middle" class="m">u = (z - m)/T</text>
+          <text x="159" y="74" text-anchor="middle" class="m">m = max(z)</text>
+          <text x="159" y="94" text-anchor="middle" class="m">u_i &lt;= 0 (no NaN)</text>
+          <text x="159" y="114" text-anchor="middle" class="m">lp = u - ln sum e^u</text>
+          <text x="159" y="132" text-anchor="middle" class="m">in (-inf, 0]</text>
+        </g>
+        <g data-step="3">
+          <path d="M206 80 H220" class="ink"/>
+          <rect x="220" y="18" width="90" height="125" rx="6" class="c-soft" stroke="currentColor" data-hi="3"/>
+          <text x="265" y="36" text-anchor="middle" font-weight="600">3. Token info</text>
+          <text x="265" y="56" text-anchor="middle" class="m">lp = -5.154</text>
+          <text x="265" y="74" text-anchor="middle" class="m">p = 0.58%</text>
+          <text x="265" y="94" text-anchor="middle" class="m">margin = 0.031</text>
+          <text x="265" y="114" text-anchor="middle" class="m">H = 6.56 nats</text>
+          <text x="265" y="132" text-anchor="middle" class="m">flat tail!</text>
+        </g>
+        <g data-step="4">
+          <path d="M310 80 H324" class="ink"/>
+          <rect x="324" y="18" width="82" height="125" rx="6" class="c-soft" stroke="currentColor" data-hi="4"/>
+          <text x="365" y="36" text-anchor="middle" font-weight="600">4. Seq PPL</text>
+          <text x="365" y="56" text-anchor="middle" class="m">NLL = 0.613</text>
+          <text x="365" y="76" text-anchor="middle" class="m">PPL = e^NLL</text>
+          <text x="365" y="96" text-anchor="middle" class="m">PPL = 1.85</text>
+          <text x="365" y="116" text-anchor="middle" class="m">BPB = 1.082</text>
+          <text x="365" y="132" text-anchor="middle" class="m">looks fine?</text>
+        </g>
+        <g data-step="5">
+          <path d="M406 80 H418" class="ink"/>
+          <rect x="418" y="18" width="74" height="125" rx="6" class="c-bad" stroke="currentColor" data-hi="5"/>
+          <text x="455" y="36" text-anchor="middle" font-weight="600">5. Pinpoint</text>
+          <text x="455" y="58" text-anchor="middle" class="m">Span min lp</text>
+          <text x="455" y="78" text-anchor="middle" class="m">-5.154 &lt; -1.5</text>
+          <text x="455" y="98" text-anchor="middle" class="m">margin 0.031</text>
+          <text x="455" y="122" text-anchor="middle" font-weight="600">FLAG ID!</text>
+        </g>
+        <g data-step="1">
+          <rect x="10" y="156" width="482" height="54" rx="6" class="c-paper" stroke="currentColor"/>
+          <text x="22" y="176" font-weight="600">Spine (LSIMP):</text>
+          <text x="125" y="176" class="m">Logits (z) -&gt; Shift/Scale (u) -&gt; Info (lp, margin, H) -&gt; Mean NLL/PPL -&gt; Pinpoint span</text>
+          <text x="22" y="196" class="m">Formula chain: log p_i = u_i - ln sum exp(u_j) | NLL = -1/N sum log p_t | PPL = exp(NLL)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Unembedding projects hidden state h_t into V raw logits z_t (top candidates 2.10, 2.05, 1.95), which are unbounded real scores.</li>
+      <li>Subtracting m = max(z_t) and scaling by 1/T keeps all shifted exponents u_i at or below 0, preventing FP16 exp() overflow past 65504.</li>
+      <li>Log-softmax yields chosen token logprob (-5.154, or 0.58%), top1-top2 margin (0.031), and full-vocabulary Shannon entropy (6.56 nats).</li>
+      <li>Averaging negative logprobs over all 10 tokens gives NLL = 0.613 and Perplexity = exp(0.613) = 1.85, which masks the single bad token.</li>
+      <li>Isolating named-entity spans checks min_entity_logprob (-5.154 &lt; -1.5) and margin (0.031 &lt; 0.5), catching the hallucinated trial ID immediately.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Logits must be max-shifted into logprobs before exponentiation, and production confidence gates must inspect entity-span minima and margins rather than sequence-level perplexity.</figcaption>
+  </figure>
+
+  <div class="box hook"><b>Memory hook: LSIMP ("Limp Signals In Mean Perplexity")</b><p>Rebuild the five-stage spine in order from <strong>L-S-I-M-P</strong>: <strong>L</strong>ogits (raw <code>z_t = h_t W_U</code> in <code>R^V</code>) -&gt; <strong>S</strong>hift-and-scale (<code>u = (z - max(z))/T</code> so <code>exp(u) &lt;= 1</code>) -&gt; <strong>I</strong>nformation per token (<code>logprob</code>, top1-top2 <code>margin</code>, Shannon entropy <code>H</code>) -&gt; <strong>M</strong>ean NLL to <strong>P</strong>erplexity (<code>PPL = exp(-1/N sum log p_t)</code>, normalized across tokenizers as <code>BPB</code>) -&gt; <strong>P</strong>inpoint entity-span minimum (gate on <code>min_span_logprob</code> and <code>margin</code>, never sequence mean).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>1. Logits and numerically stable log-softmax (the Log-Sum-Exp trick)</h3>
+  <p>Given logit vector <code>z in R^V</code> and temperature <code>T &gt; 0</code>, the scaled logits are <code>s = z / T</code>. Naively computing <code>p_i = exp(s_i) / sum_j exp(s_j)</code> fails in half-precision arithmetic: IEEE-754 FP16 overflows to <code>+inf</code> at <code>65504</code>, which is reached whenever any scaled logit exceeds <code>ln(65504) = 11.0903</code> (and at <code>T = 0.2</code>, a modest raw logit of <code>2.3</code> becomes <code>11.5</code> and blows up to <code>inf / inf = NaN</code>). Even in BF16 or FP32, taking <code>log(exp(s_i))</code> loses precision for rare tokens in the negative tail via underflow to zero.</p>
+  <p>We eliminate both overflow and underflow using the shift-invariance of softmax. Let <code>m = max_j(s_j)</code>. Because multiplying numerator and denominator by <code>exp(-m)</code> leaves probabilities unchanged, we compute <code>log_softmax</code> directly via the <strong>Log-Sum-Exp (LSE)</strong> identity:</p>
+  <div class="codewrap"><pre>m = max_j(z_j / T)
+log p_i = (z_i / T - m) - ln( sum_{j=1..V} exp(z_j / T - m) )</pre></div>
+  <p>Every shifted argument <code>(z_j / T - m)</code> is at most <code>0</code>, so every <code>exp(.)</code> lies safely in <code>(0, 1]</code>, and the sum inside <code>ln(...)</code> is at least <code>1.0</code> (since the maximum element contributes <code>exp(0) = 1</code>). Therefore the log-partition term is bounded between <code>0</code> and <code>ln(V)</code>, never overflowing or underflowing.</p>
+
+  <h3>2. Token-level uncertainty: logprob, top-1/top-2 margin, and Shannon entropy</h3>
+  <p>A single token's chosen logprob <code>log p(x_t)</code> measures how much probability mass landed on the emitted token, but by itself it cannot distinguish between two completely different states of uncertainty:</p>
+  <ul>
+    <li><strong>Aleatoric / synonym ambiguity (concentrated split):</strong> The model chooses between two valid words like <code>"quick"</code> (49%, logprob <code>-0.713</code>) and <code>"fast"</code> (48%, logprob <code>-0.734</code>), with the remaining <code>V - 2</code> tokens sharing 3%. The model knows the answer and is merely splitting mass across synonyms.</li>
+    <li><strong>Epistemic ignorance / hallucination risk (flat tail):</strong> In our kata, on token 4 (<code>NCT09988123</code>), the model spreads probability across hundreds of candidate IDs. Top-1 gets <code>0.58%</code> (logprob <code>-5.154</code>), top-2 gets <code>0.56%</code> (logprob <code>-5.185</code>), and 13 more tokens sit right behind them.</li>
+  </ul>
+  <p>To separate synonym splits from flat-tail guessing, combine three token-level signals:</p>
+  <div class="codewrap"><pre>1. Chosen logprob : lp_chosen = log p(x_t) in (-inf, 0]          (prob = exp(lp_chosen))
+2. Top1-2 margin  : delta_12  = log p_(1) - log p_(2) = (z_(1) - z_(2)) / T &gt;= 0
+3. Shannon entropy: H(p_t)    = -sum_{i=1..V} p_i log p_i in [0, ln(V)] nats</pre></div>
+  <p>Notice that the logprob margin <code>log p_(1) - log p_(2)</code> equals the scaled logit gap <code>(z_(1) - z_(2)) / T</code> because the normalizer <code>LSE(z/T)</code> cancels out! In our kata, grounded syntax tokens have <code>margin &gt; 6.6 nats</code> and low entropy (<code>~0.84 nats</code> out of <code>ln(1000) = 6.91 nats</code>), whereas the hallucinated ID has <code>margin = 0.031 nats</code> and near-uniform entropy <code>6.558 nats</code>. When an API returns only <code>top_logprobs = 5</code> or <code>20</code> instead of full <code>V</code>, compute top-k concentrated mass <code>M_k = sum_{r=1..k} exp(lp_(r))</code>: a two-way synonym split has <code>M_2 &gt; 0.90</code>, whereas a flat hallucination tail has <code>M_5 &lt; 0.05</code>.</p>
+
+  <details class="q"><summary>Check: Why does the log-partition normalizer cancel out when you compute the top-1 to top-2 logprob margin, and how does temperature T affect that margin?</summary><div class="a">Because <code>log p_(1) = z_(1)/T - LSE(z/T)</code> and <code>log p_(2) = z_(2)/T - LSE(z/T)</code>, subtracting them cancels <code>LSE(z/T)</code> identically, leaving <code>(z_(1) - z_(2)) / T</code>. Scaling temperature by <code>T</code> scales the logprob margin inversely by <code>1/T</code>: dropping from <code>T = 1.0</code> to <code>T = 0.2</code> multiplies the margin by <code>5x</code> (from <code>0.031</code> to <code>0.155</code> in the kata) even though the raw logits did not change.</div></details>
+
+  <h3>3. Sequence NLL, Perplexity (PPL), and Bits-Per-Byte (BPB)</h3>
+  <p>For a token sequence <code>x_1, ..., x_N</code>, the chain rule of probability gives the sequence log-likelihood <code>sum_{t=1..N} log p(x_t | x_&lt;t)</code>. Dividing by <code>-N</code> yields the per-token <strong>Negative Log-Likelihood (NLL)</strong>, also called cross-entropy loss in nats. Exponentiating NLL defines <strong>Perplexity (PPL)</strong>:</p>
+  <div class="codewrap"><pre>NLL (nats/token) = -(1 / N) * sum_{t=1..N} log p(x_t | x_&lt;t)
+PPL              = exp(NLL) = ( prod_{t=1..N} p(x_t | x_&lt;t) )^(-1/N)
+BPB (bits/byte)  = ( sum_{t=1..N} -log_2 p(x_t | x_&lt;t) ) / N_bytes = (N * NLL / ln 2) / N_bytes</pre></div>
+  <p>Algebraically, perplexity is the <strong>reciprocal of the geometric mean token probability</strong>: if a model assigns <code>p = 0.25</code> to every token (a 4-sided fair die at every step), then <code>NLL = -ln(0.25) = 1.386 nats</code> and <code>PPL = exp(1.386) = 4.00</code>. If your model has <code>PPL = 1.85</code> (as in our 10-token kata sequence), its geometric mean token probability is <code>1 / 1.85 = 54.2%</code>.</p>
+  <p>Crucially, <code>NLL</code> and <code>PPL</code> divide by the token count <code>N</code>. If you compare two models with different tokenizers on the same text, the model with a larger vocabulary packs the same 56 bytes into fewer tokens (say <code>N = 10</code> instead of <code>N = 14</code> or <code>56</code>), making each step predict a larger chunk of text and inflating <code>PPL</code> from <code>2.12</code> to <code>20.09</code> to <code>66.69</code> even when the total document log-likelihood is an identical <code>-42.0 nats</code>. To compare across tokenizers fairly, divide total base-2 log-loss by the raw UTF-8 byte count <code>N_bytes</code> to get <strong>Bits-Per-Byte (BPB)</strong> (<code>1.0820 BPB</code> across all three tokenizers in our kata).</p>
+
+  <h3>4. Reading model confidence: why sequence mean hides entity hallucinations</h3>
+  <p>In production assistants, clinical note generators, and financial extraction pipelines, most output tokens are deterministic syntax or prompt echoes (<code>"The"</code>, <code>"trial"</code>, <code>"ID"</code>, <code>"is"</code>) with logprobs near <code>-0.088</code> (<code>~91.5%</code>). Factual claims live on a small fraction of tokens: proper nouns, clinical trial IDs, dosages, dates, and citations. When you average logprobs over the whole response, high-certainty boilerplate dilutes the single hallucinated entity token.</p>
+
+  <figure class="viz stepper" id="viz-confidence">
+    <div class="vt">Stepper: The Boilerplate Dilution Trap vs entity-span gating</div>
+    <svg viewBox="0 0 500 210" role="img" aria-label="Four-step comparison showing 10 token logprob bars where 9 high-confidence tokens at -0.09 dilute a single -5.154 hallucinated entity token in the sequence mean, and how entity-span min-logprob catches it.">
+      <g font-size="11">
+        <line x1="42" y1="28" x2="485" y2="28" class="ln"/>
+        <text x="38" y="32" text-anchor="end" class="m">0.0</text>
+        <text x="38" y="138" text-anchor="end" class="m">-5.2</text>
+        <g data-step="1">
+          <rect x="48" y="28" width="36" height="4" class="c-good"/><text x="66" y="22" text-anchor="middle" class="m">The</text>
+          <rect x="92" y="28" width="36" height="4" class="c-good"/><text x="110" y="22" text-anchor="middle" class="m">trial</text>
+          <rect x="136" y="28" width="36" height="4" class="c-good"/><text x="154" y="22" text-anchor="middle" class="m">ID</text>
+          <rect x="180" y="28" width="36" height="4" class="c-good"/><text x="198" y="22" text-anchor="middle" class="m">is</text>
+          <rect x="268" y="28" width="36" height="4" class="c-good"/><text x="286" y="22" text-anchor="middle" class="m">with</text>
+          <rect x="312" y="28" width="36" height="4" class="c-good"/><text x="330" y="22" text-anchor="middle" class="m">dose</text>
+          <rect x="356" y="28" width="36" height="8" class="c-good"/><text x="374" y="22" text-anchor="middle" class="m">50</text>
+          <rect x="400" y="28" width="36" height="4" class="c-good"/><text x="418" y="22" text-anchor="middle" class="m">mg</text>
+          <rect x="444" y="28" width="36" height="4" class="c-good"/><text x="462" y="22" text-anchor="middle" class="m">daily</text>
+          <text x="265" y="172" text-anchor="middle" class="m">9 grounded tokens: logprobs -0.085 to -0.268 (76% to 92% prob)</text>
+        </g>
+        <g data-step="2">
+          <rect x="224" y="28" width="36" height="106" class="c-bad" data-hi="2"/>
+          <text x="242" y="22" text-anchor="middle" font-weight="600">NCT..</text>
+          <text x="242" y="148" text-anchor="middle" font-weight="600">-5.154 (0.58%)</text>
+        </g>
+        <g data-step="3">
+          <line x1="42" y1="41" x2="485" y2="41" class="ink" stroke-dasharray="4 3"/>
+          <rect x="338" y="46" width="146" height="22" rx="4" class="c-warn" data-hi="3"/>
+          <text x="411" y="61" text-anchor="middle" font-weight="600">Seq mean -0.613 (PASS)</text>
+        </g>
+        <g data-step="4">
+          <line x1="42" y1="59" x2="485" y2="59" class="ink"/>
+          <rect x="48" y="156" width="436" height="38" rx="5" class="c-bad" data-hi="4"/>
+          <text x="266" y="173" text-anchor="middle" font-weight="600">Entity-span gate: min(lp_entity) = -5.154 &lt; -1.5 | margin = 0.031 &lt; 0.5</text>
+          <text x="266" y="188" text-anchor="middle" class="m">Catches hallucinated trial ID NCT09988123 while keeping grounded dose 50 (-0.268)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Eight syntax tokens sit near -0.089 logprob (91.5% probability) and grounded entity token '50' sits at -0.268 (76.46%).</li>
+      <li>At position 4, the model fabricates clinical trial ID 'NCT09988123' from a flat tail with logprob -5.154 (0.58% probability) and margin 0.031.</li>
+      <li>Averaging all 10 tokens dilutes the spike to a sequence mean logprob of -0.613 (PPL 1.85), sailing past a -1.0 sequence gate.</li>
+      <li>Filtering to entity tokens (NER/regex spans) and gating on min_entity_logprob &lt; -1.5 or margin &lt; 0.5 flags 'NCT09988123' immediately.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Never gate factual generations on sequence-mean logprob; isolate entity or claim tokens and gate on the span minimum logprob and top1-top2 margin.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Boilerplate dilution and temperature distortion on confidence gates</div>
+    <p class="ask">Predict first: With 1 hallucinated entity token at logprob -5.15 and 9 fluent tokens at -0.09, the sequence mean is -0.60. How many fluent tokens does it take for a harsh -8.00 hallucination (0.03% prob) to pass a sequence mean threshold of -1.0? And what happens if temperature drops to T = 0.2?</p>
+    <div class="ctl">
+      <label><span>Hallucinated entity raw logprob (at T=1)</span><input type="range" name="elp" min="-9.0" max="-0.5" step="0.1" value="-5.2"><output data-for="elp" data-unit=" nats"></output></label>
+      <label><span>Fluent boilerplate tokens (-0.09 nats each)</span><input type="range" name="nb" min="1" max="25" step="1" value="9"><output data-for="nb" data-unit=" tokens"></output></label>
+      <label><span>Sampling temperature T</span><select name="temp" data-num><option value="1">T = 1.0 (unscaled)</option><option value="0.5">T = 0.5 (sharpened)</option><option value="0.2">T = 0.2 (over-sharpened)</option><option value="2">T = 2.0 (flattened)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Adding fluent boilerplate tokens hides arbitrarily bad single-token hallucinations in the sequence mean, while lowering T artificially shrinks negative logprobs; entity-span min-logprob at T = 1 is invariant to sequence length.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var scale = 1 / Math.pow(v.temp, 0.35);
+    var adjElp = v.elp / (v.temp === 1 ? 1 : (v.temp < 1 ? (1 + (1 - v.temp)*0.73) : 0.87));
+    var boilerLp = -0.089 * v.temp;
+    var seqMean = (adjElp + v.nb * boilerLp) / (v.nb + 1);
+    var ppl = Math.exp(-seqMean);
+    var seqPass = seqMean > -1.0;
+    var spanCatch = adjElp < -1.5;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" nats (magnitude)",digits:2,max:9.5,rows:[
+      {label:"Sequence mean |logprob| (gate > 1.0)",value:Math.abs(seqMean),tone:seqPass?"warn":"bad",text:seqMean.toFixed(2)+" nats (PPL "+ppl.toFixed(2)+")"},
+      {label:"Entity span min |logprob| (gate > 1.5)",value:Math.abs(adjElp),tone:spanCatch?"bad":"good",text:adjElp.toFixed(2)+" nats ("+(Math.exp(adjElp)*100).toFixed(2)+"%)"},
+      {label:"Gate threshold (1.50 nats = 22.3% prob)",value:1.5,tone:"muted",text:"-1.50 nats cutoff"}
+    ]});
+    return {verdict:" Across "+(v.nb+1)+" tokens at T="+v.temp+", sequence mean is "+seqMean.toFixed(2)+" nats (PPL "+ppl.toFixed(2)+", "+(seqPass?"PASSES -1.0 sequence gate - false negative!":"flagged by sequence gate")+"), while entity-span min logprob is "+adjElp.toFixed(2)+" nats ("+(spanCatch?"CAUGHT by -1.5 span gate":"passes span gate")+")."};
+  })});</script>
+
+  <details class="q"><summary>Check: Suppose an LLM outputs a multi-token phone number or drug name where token 1 has logprob <code>-3.80</code> and tokens 2 and 3 have logprob <code>-0.05</code>. Why are tokens 2 and 3 near zero even when the entity is hallucinated, and how should you score multi-token entities?</summary><div class="a">Because autoregressive conditioning makes later subwords of a compound name deterministic once the first prefix subword is committed (e.g., after guessing prefix <code>" Ibu"</code>, continuing with <code>"profen"</code> has probability ~99%). Therefore you must score a multi-token entity by its <strong>first-token logprob</strong>, <strong>minimum token logprob across the entity span</strong>, or <strong>joint span log-probability</strong> <code>sum_{t in span} log p_t</code> rather than diluted mid-word continuations.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table>
+    <tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>FP16 max finite value / <code>exp(x)</code> overflow threshold</td><td class="n">65,504 / x &gt; 11.0903</td><td>Derived (IEEE-754 binary16)</td></tr>
+    <tr><td>Uniform distribution over <code>V = 1,000</code> / <code>V = 128,000</code> tokens</td><td class="n">logprob = -6.908 / -11.760 nats</td><td>Derived (<code>-ln V</code>)</td></tr>
+    <tr><td>Probability to logprob anchors: <code>90%</code> / <code>50%</code> / <code>22.3%</code> / <code>1%</code></td><td class="n">-0.105 / -0.693 / -1.500 / -4.605 nats</td><td>Derived (<code>ln p</code>)</td></tr>
+    <tr><td>Kata fluent syntax token (<code>"The"</code>..<code>"daily"</code>, 8 tokens)</td><td class="n">lp = -0.085 to -0.092 (~91.5%), margin 6.61-7.31, H = 0.82-0.87 nats</td><td>Your own run</td></tr>
+    <tr><td>Kata grounded entity token (<code>"50"</code>)</td><td class="n">lp = -0.268 (76.46%), margin = 5.300, H = 2.091 nats</td><td>Your own run</td></tr>
+    <tr><td>Kata hallucinated entity token (<code>"NCT09988123"</code> at <code>T = 1.0</code>)</td><td class="n">lp = -5.154 (0.58%), margin = 0.031, H = 6.558 nats</td><td>Your own run</td></tr>
+    <tr><td>Kata 10-token sequence mean logprob / Geom mean prob / PPL</td><td class="n">mean lp = -0.613 / 54.2% / PPL = 1.85</td><td>Your own run</td></tr>
+    <tr><td>Kata temperature shift on <code>"NCT09988123"</code>: <code>T = 1.0</code> vs <code>T = 0.2</code></td><td class="n">lp: -5.154 -&gt; -3.251 (0.58% -&gt; 3.88%), H: 6.56 -&gt; 3.32 nats</td><td>Your own run</td></tr>
+    <tr><td>Kata cross-tokenizer PPL on same 42.0-nat (56-byte) text</td><td class="n">PPL: 66.69 (10 tok) vs 20.09 (14 tok) vs 2.12 (56 tok); all = 1.0820 BPB</td><td>Your own run</td></tr>
+    <tr><td>OpenAI Chat Completions <code>top_logprobs</code> maximum per token</td><td class="n">0 to 20 most likely tokens</td><td>Checked 2025-05 (OpenAI API reference)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table>
+    <tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Sequence mean logprob / Perplexity (<code>exp(NLL)</code>)</td><td>Single scalar summary of full-text predictive fit; standard corpus evaluation metric</td><td>Boilerplate dilution hides single-token entity hallucinations; invalid across different tokenizers</td><td>A response with <code>PPL = 1.85</code> still fabricating an ID or dosage on 1 token</td></tr>
+    <tr><td>Entity-span minimum logprob (<code>min_{t in span} log p_t</code>)</td><td>Pinpoints the weakest link inside named entities, numbers, or citations; immune to sequence length</td><td>Requires NER, regex, or structured JSON field extraction; false alarms on valid synonyms</td><td>Multi-word synonyms where the first subword splits probability across 2 valid phrasing choices</td></tr>
+    <tr><td>Top-1 / Top-2 logprob margin (<code>log p_(1) - log p_(2)</code>)</td><td>Zero extra normalizer cost; separates clear winners (<code>&gt;2.0</code>) from coin-flip ties (<code>&lt;0.1</code>)</td><td>Cannot tell a 2-way synonym split (49% vs 48%) from a 200-way flat hallucination tail (0.58% vs 0.56%) alone</td><td>Always pair margin with chosen logprob or top-k cumulative mass <code>M_k</code></td></tr>
+    <tr><td>Full-vocabulary Shannon entropy <code>H(p_t)</code></td><td>Measures true dispersion across all <code>V</code> tokens in nats; cleanest epistemic spread signal</td><td>Requires full <code>V</code> logit vector (unavailable when hosted APIs return only <code>top_logprobs &lt;= 20</code>)</td><td>Truncated top-k entropy underestimating tail dispersion when mass is spread across thousands of tokens</td></tr>
+    <tr><td>Semantic entropy across <code>K</code> sampled generations (Farquhar et al.)</td><td>Clusters equivalent meanings before computing entropy, eliminating false alarms on phrasing variations</td><td><code>K = 5..10x</code> generation cost and latency plus NLI/clustering overhead</td><td>Latency budget violations on real-time voice or synchronous chat endpoints</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Logprobs, perplexity, and confidence traps</h2>
+  <p>Implement numerically stable <code>log_softmax</code>, compute per-token logprobs, top1-top2 margins, and Shannon entropy on a 10-token clinical QA trace, and verify the three confidence traps (boilerplate dilution, temperature distortion, and cross-tokenizer perplexity).</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python D11_kata.py</pre></div>
+  <p class="cap">D11_kata.py</p><div class="codewrap"><pre data-copy>"""
+D11 Kata: Logits, logprobs, perplexity; reading model confidence
+Computes log_softmax, token probabilities, Shannon entropy, top-1/top-2 logit margins,
+sequence Negative Log-Likelihood (NLL), and Perplexity (PPL), and demonstrates how to
+detect low-confidence / hallucinated spans and avoid three classic confidence traps.
+"""
+import numpy as np
+
+np.random.seed(7)
+
+def log_softmax(logits, temp=1.0):
+    scaled = logits / temp
+    shifted = scaled - np.max(scaled, axis=-1, keepdims=True)
+    return shifted - np.log(np.sum(np.exp(shifted), axis=-1, keepdims=True))
+
+def token_stats(logits, chosen_idx, temp=1.0):
+    lp = log_softmax(logits, temp=temp)
+    probs = np.exp(lp)
+    sorted_lp = np.sort(lp)[::-1]
+    chosen_lp = float(lp[chosen_idx])
+    chosen_p = float(probs[chosen_idx])
+    margin = float(sorted_lp[0] - sorted_lp[1])
+    entropy_nats = float(-np.sum(probs * lp))
+    return chosen_lp, chosen_p, margin, entropy_nats
+
+# Simulate a 10-token clinical QA response where 9 tokens are grounded/fluent
+# and 1 entity token ("NCT09988123") is a hallucinated trial identifier.
+V = 1000
+tokens = ["The", "trial", "ID", "is", "NCT09988123", "with", "dose", "50", "mg", "daily"]
+is_entity = [False, False, False, False, True, False, False, True, False, False]
+
+# Construct realistic logit vectors for each step
+trace = []
+for tok, ent in zip(tokens, is_entity):
+    z = np.random.normal(0.0, 0.8, size=V)
+    if tok == "NCT09988123":
+        # Flat, uncertain distribution across many candidate IDs
+        z[0] = 2.10   # chosen token barely leads or is sampled from flat tail
+        z[1] = 2.05
+        z[2:15] = 1.95
+    elif tok == "50":
+        # Grounded dose from context: strong peak
+        z[0] = 8.40
+        z[1] = 3.10
+    else:
+        # High-certainty syntax/boilerplate token
+        z[0] = 9.60
+        z[1] = 2.20
+    lp, p, margin, ent_nats = token_stats(z, chosen_idx=0, temp=1.0)
+    trace.append((tok, ent, lp, p, margin, ent_nats, z))
+
+print("=== D11 KATA: LOGITS, LOGPROBS, PERPLEXITY &amp; CONFIDENCE FLAGGING ===")
+print(f"{'Pos':&lt;3} | {'Token':&lt;12} | {'Entity':&lt;6} | {'Logprob':&gt;8} | {'Prob %':&gt;7} | {'Top1-2 Margin':&gt;13} | {'Entropy (nats)':&gt;14} | {'Flag'}")
+print("-" * 86)
+for idx, (tok, ent, lp, p, margin, ent_nats, _) in enumerate(trace):
+    flag = "LOW-CONF!" if (lp &lt; -1.5 or margin &lt; 0.5 or ent_nats &gt; 2.5) else "OK"
+    print(f"{idx:&lt;3} | {tok:&lt;12} | {str(ent):&lt;6} | {lp:&gt;8.3f} | {p*100:&gt;6.2f}% | {margin:&gt;13.3f} | {ent_nats:&gt;14.3f} | {flag}")
+
+all_lps = [t[2] for t in trace]
+ent_lps = [t[2] for t in trace if t[1]]
+nll = -np.mean(all_lps)
+ppl = np.exp(nll)
+geom_mean_p = np.exp(np.mean(all_lps))
+min_lp = np.min(all_lps)
+min_ent_lp = np.min(ent_lps)
+
+print("\n1. SEQUENCE AGGREGATION VS ENTITY MINIMUM (Break It #1: The Boilerplate Dilution Trap)")
+print(f"Sequence Mean Logprob : {np.mean(all_lps):.3f} (Geom Mean Prob = {geom_mean_p*100:.1f}%, Perplexity = {ppl:.2f})")
+print(f"Minimum Token Logprob : {min_lp:.3f} (Prob = {np.exp(min_lp)*100:.2f}% on token 'NCT09988123')")
+print(f"Entity-Only Mean/Min  : mean={np.mean(ent_lps):.3f}, min={min_ent_lp:.3f}")
+print("Verdict: A sequence threshold of mean_logprob &gt; -1.0 PASSES (-0.594), missing the 0.30% hallucinated ID!")
+print("         Gating on min_entity_logprob &lt; -1.5 or margin &lt; 0.5 catches 'NCT09988123' immediately.")
+
+print("\n2. BREAK IT #2: TEMPERATURE SCALING DISTORTS LOGPROB CONFIDENCE")
+ambig_z = trace[4][6]  # Logits for 'NCT09988123'
+for T in (1.0, 0.5, 0.2, 2.0):
+    lp_t, p_t, marg_t, ent_t = token_stats(ambig_z, chosen_idx=0, temp=T)
+    print(f"  Temp T={T:&lt;3.1f} -&gt; logprob={lp_t:&gt;7.3f} | prob={p_t*100:&gt;6.2f}% | margin={marg_t:&gt;6.3f} | entropy={ent_t:&gt;5.2f} nats")
+
+print("\n3. BREAK IT #3: PERPLEXITY ACROSS DIFFERENT TOKENIZERS")
+total_nll_nats = 42.0  # Identical document log-likelihood: -42.0 nats (60.59 bits)
+raw_bytes = 56
+for name, n_tokens in [("Word-level (V=32k)", 10), ("BPE subword (V=128k)", 14), ("Byte-level (V=256)", 56)]:
+    tok_ppl = np.exp(total_nll_nats / n_tokens)
+    bpb = (total_nll_nats / np.log(2)) / raw_bytes
+    print(f"  {name:&lt;22} | tokens={n_tokens:&lt;2} | Token PPL={tok_ppl:&gt;6.2f} | Bits-per-byte (BPB)={bpb:.4f}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== D11 KATA: LOGITS, LOGPROBS, PERPLEXITY &amp; CONFIDENCE FLAGGING ===
+Pos | Token        | Entity |  Logprob |  Prob % | Top1-2 Margin | Entropy (nats) | Flag
+--------------------------------------------------------------------------------------
+0   | The          | False  |   -0.085 |  91.84% |         7.311 |          0.823 | OK
+1   | trial        | False  |   -0.088 |  91.58% |         6.606 |          0.841 | OK
+2   | ID           | False  |   -0.090 |  91.37% |         6.867 |          0.862 | OK
+3   | is           | False  |   -0.087 |  91.63% |         6.753 |          0.840 | OK
+4   | NCT09988123  | True   |   -5.154 |   0.58% |         0.031 |          6.558 | LOW-CONF!
+5   | with         | False  |   -0.089 |  91.53% |         7.128 |          0.850 | OK
+6   | dose         | False  |   -0.089 |  91.52% |         6.888 |          0.849 | OK
+7   | 50           | True   |   -0.268 |  76.46% |         5.300 |          2.091 | OK
+8   | mg           | False  |   -0.089 |  91.44% |         6.933 |          0.856 | OK
+9   | daily        | False  |   -0.092 |  91.24% |         7.253 |          0.874 | OK
+
+1. SEQUENCE AGGREGATION VS ENTITY MINIMUM (Break It #1: The Boilerplate Dilution Trap)
+Sequence Mean Logprob : -0.613 (Geom Mean Prob = 54.2%, Perplexity = 1.85)
+Minimum Token Logprob : -5.154 (Prob = 0.58% on token 'NCT09988123')
+Entity-Only Mean/Min  : mean=-2.711, min=-5.154
+Verdict: A sequence threshold of mean_logprob &gt; -1.0 PASSES (-0.594), missing the 0.30% hallucinated ID!
+         Gating on min_entity_logprob &lt; -1.5 or margin &lt; 0.5 catches 'NCT09988123' immediately.
+
+2. BREAK IT #2: TEMPERATURE SCALING DISTORTS LOGPROB CONFIDENCE
+  Temp T=1.0 -&gt; logprob= -5.154 | prob=  0.58% | margin= 0.031 | entropy= 6.56 nats
+  Temp T=0.5 -&gt; logprob= -4.081 | prob=  1.69% | margin= 0.062 | entropy= 5.62 nats
+  Temp T=0.2 -&gt; logprob= -3.251 | prob=  3.88% | margin= 0.155 | entropy= 3.32 nats
+  Temp T=2.0 -&gt; logprob= -5.943 | prob=  0.26% | margin= 0.016 | entropy= 6.82 nats
+
+3. BREAK IT #3: PERPLEXITY ACROSS DIFFERENT TOKENIZERS
+  Word-level (V=32k)     | tokens=10 | Token PPL= 66.69 | Bits-per-byte (BPB)=1.0820
+  BPE subword (V=128k)   | tokens=14 | Token PPL= 20.09 | Bits-per-byte (BPB)=1.0820
+  Byte-level (V=256)     | tokens=56 | Token PPL=  2.12 | Bits-per-byte (BPB)=1.0820</pre></div>
+
+  <figure class="viz">
+    <div class="vt">Chart: Kata NLL / |Logprob| comparison (nats) across sequence, entity span, and temperature</div>
+    <div data-bars='{"unit":" nats","digits":3,"rows":[{"label":"Fluent syntax token (trial, 91.58%)","value":0.088,"tone":"good","text":"-0.088 nats"},{"label":"Grounded dose entity (50, 76.46%)","value":0.268,"tone":"good","text":"-0.268 nats"},{"label":"10-token Sequence Mean (PPL 1.85 - PASSES -1.0)","value":0.613,"tone":"warn","text":"-0.613 nats"},{"label":"Entity-Only Mean (50 + NCT09988123)","value":2.711,"tone":"bad","text":"-2.711 nats"},{"label":"Hallucinated ID at T=0.2 (3.88% - distorted)","value":3.251,"tone":"warn","text":"-3.251 nats"},{"label":"Hallucinated ID at T=1.0 (0.58% - CAUGHT)","value":5.154,"tone":"bad","text":"-5.154 nats"}]}'></div>
+    <figcaption><b>Takeaway.</b> The sequence average (-0.613 nats, PPL 1.85) hides the -5.154 nat hallucinated trial ID, while gating on entity-span minimum logprob at T = 1.0 catches it with a 8.4x stronger signal.</figcaption>
+  </figure>
+
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Nine fluent tokens mask one hallucination in the average:</strong> Eight syntax tokens have logprobs between <code>-0.085</code> and <code>-0.092</code> (<code>91.24%</code> to <code>91.84%</code>) and the grounded dose token <code>50</code> sits at <code>-0.268</code> (<code>76.46%</code>). Adding the hallucinated ID <code>NCT09988123</code> at <code>-5.154</code> (<code>0.58%</code>) produces a sequence mean logprob of <code>-0.613</code> (<code>PPL = 1.85</code>), which easily passes a <code>mean_logprob &gt; -1.0</code> threshold.</li>
+    <li><strong>Margin and entropy expose the flat tail:</strong> On <code>NCT09988123</code>, the top1-top2 margin collapses to <code>0.031 nats</code> (versus <code>5.300</code> on <code>50</code> and <code>&gt;6.60</code> on syntax tokens) while Shannon entropy jumps to <code>6.558 nats</code>: just below the maximum possible <code>ln(1000) = 6.908 nats</code> for a uniform distribution over 1,000 tokens.</li>
+    <li><strong>Temperature T distorts post-softmax confidence metrics:</strong> Lowering <code>T</code> from <code>1.0</code> to <code>0.2</code> on the exact same logit vector boosts the reported probability of <code>NCT09988123</code> nearly 7-fold from <code>0.58%</code> (<code>-5.154</code>) to <code>3.88%</code> (<code>-3.251</code>), widens the margin 5x from <code>0.031</code> to <code>0.155</code>, and cuts entropy from <code>6.56</code> to <code>3.32 nats</code> without adding a shred of factual knowledge.</li>
+    <li><strong>Perplexity changes 31x across tokenizers on identical predictions:</strong> For a 56-byte text with <code>42.0 nats</code> total NLL, word-level (<code>10 tokens</code>), BPE (<code>14 tokens</code>), and byte-level (<code>56 tokens</code>) tokenizers report token perplexities of <code>66.69</code>, <code>20.09</code>, and <code>2.12</code>, yet all three normalize to exactly <code>1.0820 bits-per-byte (BPB)</code>.</li>
+  </ol>
+
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Naive softmax FP16 overflow.</strong> Replace <code>log_softmax</code> with <code>np.log(np.exp(logits.astype(np.float16) / temp) / np.sum(np.exp(logits.astype(np.float16) / temp)))</code> at <code>temp = 0.2</code>. Predict which tokens turn into <code>nan</code> and why (hint: check where <code>z_0 / 0.2 &gt; 11.09</code>), then run it.</li>
+      <li><strong>The Synonym False-Positive Trap.</strong> Add a token <code>"daily"</code> where <code>z[0] = 8.50</code> (<code>"daily"</code>) and <code>z[1] = 8.48</code> (<code>"once-daily"</code>) while the rest of <code>V</code> stays at <code>N(0, 0.8)</code>. Predict what happens to <code>chosen_lp</code> (around <code>-0.70</code>), <code>margin</code> (<code>0.020</code>), and <code>entropy</code> (<code>~0.70 nats</code>), and explain why a gate that checks <code>margin &lt; 0.5</code> alone false-flags it unless paired with <code>lp &lt; -1.5</code> or <code>entropy &gt; 2.5</code>.</li>
+      <li><strong>Top-k truncated entropy blindness.</strong> Compute entropy using only the top-5 probabilities (renormalized or raw) on <code>NCT09988123</code> instead of all <code>V = 1000</code> logits. Predict how much of the <code>6.558 nats</code> entropy disappears when you only see the top 5 tokens from an API, and verify why <code>1 - sum(top_5_probs)</code> (tail mass) is the right fallback signal.</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Extend <code>token_stats</code> to take a multi-token entity span <code>(start, end)</code> and compute both the joint span logprob <code>sum(lp[start:end])</code> and the first-subword margin, then test a 3-subword clinical trial ID where subword 0 has <code>lp = -4.8</code> and subwords 1-2 have <code>lp = -0.04</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Hallucinated numbers, citations, or IDs pass the confidence router</td><td>Router gates on sequence mean logprob (<code>&gt; -1.0</code>), allowing 90%+ boilerplate tokens to dilute 1-2 low-logprob entity tokens</td><td>Extract entity/claim spans (via structured JSON keys, regex, or NER) and gate on <code>min_span_logprob &lt; -1.5</code> and first-subword top-5 tail mass</td></tr>
+    <tr><td>Confidence scores jump after an engineer changes decoding temperature from <code>T = 0.7</code> to <code>T = 0.1</code></td><td>API returns post-temperature logprobs; dividing logits by <code>T = 0.1</code> multiplies logit gaps by 10x and inflates top-1 probability</td><td>Calibrate thresholds per temperature, or reconstruct unscaled top-k probabilities from <code>T * logprob</code> before feeding your confidence classifier</td></tr>
+    <tr><td>High false-positive abstention rate on fluent conversational answers</td><td>Gate triggers on small top1-top2 margin (<code>&lt; 0.2</code>) during harmless synonym splits (<code>"great"</code> vs <code>"good"</code>)</td><td>Require joint condition: flag only when <code>margin &lt; 0.5</code> AND <code>top2_cumulative_prob &lt; 0.60</code> (or restricted to factual entity spans)</td></tr>
+    <tr><td>Model appears confidently wrong on a trick question (<code>logprob = -0.05</code>, 95% prob on a false fact)</td><td>Miscalibration / sycophancy / common misconception memorized in pretraining weights or induced by prompt framing</td><td>Logprobs measure <em>internal predictive concentration</em>, not external truth; pair logprob gating with retrieval verification (RAG citation check) or cross-prompt semantic consistency</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Track <strong>p5 / p50 entity-span minimum logprob</strong>, <strong>first-token top1-top2 margin on structured JSON value tokens</strong>, <strong>top-5 tail mass</strong> (<code>1 - sum_{r=1..5} p_(r)</code>), and your <strong>Expected Calibration Error (ECE)</strong> bucketed by entity logprob deciles against human/verifier ground-truth labels.</p>
+
+  <details class="q"><summary>Scenario: You run a voice-AI clinical intake pipeline that extracts structured JSON <code>{"medication": "...", "dosage_mg": ..., "trial_id": "..."}</code> from patient-doctor transcripts. Users report that 3% of records contain fabricated trial IDs or dosages when the transcript was mumbled, even though your sequence-level logprob filter (<code>mean_logprob &gt; -0.8</code>) passed every single record. Design a zero-added-latency confidence gate using the LLM's single-pass logprob stream.</summary><div class="a"><ol>
+    <li><strong>Stop averaging over JSON syntax and keys:</strong> In <code>{"medication": "Metformin", "dosage_mg": 500, "trial_id": "NCT09988123"}</code>, tokens for braces, quotes, colons, and schema keys have logprob near <code>-0.01</code> and dominate the sequence mean.</li>
+    <li><strong>Map token offsets to JSON value spans:</strong> Use character offsets from the tokenizer/API response to slice only the value tokens for each schema field (<code>"Metformin"</code>, <code>500</code>, <code>"NCT09988123"</code>).</li>
+    <li><strong>Compute span-level features on the value tokens at fixed temperature:</strong> For each field span, record (a) <strong>minimum token logprob</strong> <code>min_{t in field} lp_t</code>, (b) <strong>first-subword logprob</strong> <code>lp_{t_0}</code> (where autoregressive branching actually happens), and (c) <strong>top-5 cumulative probability</strong> <code>M_5 = sum_{r=1..5} exp(lp_(r))</code> on <code>t_0</code>.</li>
+    <li><strong>Apply a compound epistemic gate per field:</strong> Flag any entity field where <code>min_field_lp &lt; -1.5</code> (prob <code>&lt; 22.3%</code>) AND <code>M_5(t_0) &lt; 0.70</code> (ruling out a 2-way synonym/formatting split like <code>"500"</code> vs <code>"500.0"</code>). Route flagged fields to abstention (<code>null</code> + human review or clarification prompt) without running a second LLM call.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Logits, logprobs, and perplexity turn a Transformer's raw unembedding scores into calibrated probability distributions, corpus evaluation metrics, and real-time token confidence signals. Used properly, they let us gate factual hallucinations and route uncertain requests in a single pass with zero extra latency.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>At each step, the hidden state multiplies the unembedding matrix to produce V unbounded logits z. We scale by temperature 1/T and subtract the maximum logit m before exponentiating via the Log-Sum-Exp trick so FP16 never overflows past 65,504. That yields token logprobs in nats. To read uncertainty on a step, we combine the chosen logprob, the top-1 to top-2 margin (which equals the scaled logit gap), and Shannon entropy across the vocabulary. Across an N-token sequence, average negative logprob is cross-entropy loss or NLL, and exponentiating NLL gives perplexity, the reciprocal geometric mean token probability.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Three traps break production systems. First, boilerplate dilution: in a 10-token answer, nine fluent syntax tokens at -0.09 nats dilute a single -5.154 nat hallucinated entity into a healthy -0.613 sequence mean, or 1.85 perplexity, so we must gate on entity-span min-logprob and margin. Second, lowering temperature artificially inflates logprobs. Third, comparing perplexity across different tokenizers is invalid; normalize to bits-per-byte instead.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We use logprobs and perplexity to measure how confident the LLM is in its response. If the overall perplexity of the generated answer is low, we know the model isn't hallucinating and we can show the result to the user."</p>
+    <p class="strong">"Sequence-level perplexity is the exponential of mean negative logprob, which fails as a hallucination filter because 90% of tokens are high-certainty syntax or prompt echoes around -0.09 nats. In a 10-token clinical output, nine fluent tokens dilute a 0.58% hallucinated trial ID (-5.154 nats) to a sequence mean of -0.613 nats (PPL 1.85). Instead, we map token offsets to named-entity or JSON value spans and gate on the span minimum logprob (&lt; -1.5 nats) paired with top-5 cumulative probability (&lt; 0.70) on the entity's first subword at fixed temperature."</p>
+    <p>The strong answer names the exact math (<code>PPL = exp(NLL)</code>), explains the failure mechanism with concrete numbers (<code>-0.09</code> boilerplate diluting <code>-5.154</code> to <code>-0.613</code> / <code>PPL 1.85</code>), and gives the production engineering fix (entity-span min-logprob plus first-subword top-k mass).</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If a generated response has a low sequence perplexity (say PPL &lt; 2.0, or mean logprob &gt; -0.7), the model is confident in the facts it stated."</summary><div class="a">Wrong. Sequence perplexity averages negative logprobs across all <code>N</code> tokens equally. Because 80% to 90% of tokens in natural language or JSON responses are deterministic syntax, punctuation, and boilerplate with logprobs around <code>-0.01</code> to <code>-0.09</code>, a single catastrophic entity hallucination at <code>-5.154</code> (<code>0.58%</code> probability) gets diluted into a sequence mean of <code>-0.613</code> (<code>PPL = 1.85</code>). Factual confidence must be read on the specific entity or claim span, not the sequence average.</div></details>
+  <details class="q"><summary>"Setting decoding temperature to T = 0.0 (or T = 0.1) doesn't change the token logprobs returned by the model, because logprobs reflect the model's intrinsic probability distribution."</summary><div class="a">Wrong whenever logprobs are computed post-temperature (or when you apply <code>log_softmax(z / T)</code>). Dividing logits by <code>T = 0.2</code> multiplies every logit difference by <code>5x</code>, reshaping the distribution before normalization. In our kata, the exact same uncertain token jumps from logprob <code>-5.154</code> (<code>0.58%</code>) at <code>T = 1.0</code> to <code>-3.251</code> (<code>3.88%</code>) at <code>T = 0.2</code>, and its entropy drops from <code>6.56</code> to <code>3.32 nats</code>. Always verify whether your serving engine logs pre-temperature or post-temperature logprobs and lock <code>T</code> when calibrating thresholds.</div></details>
+  <details class="q"><summary>"Model B has a validation perplexity of 12.4 while Model A has a perplexity of 18.9 on the same test corpus, so Model B is definitely the stronger language model."</summary><div class="a">Wrong unless both models share the exact same tokenizer and vocabulary! Perplexity is <code>exp(total_NLL / N_tokens)</code>. A model with a smaller vocabulary splits the same text into more tokens <code>N_tokens</code>, shrinking per-token NLL and exponentially lowering token perplexity even when total document log-likelihood is identical (in our kata, <code>PPL = 66.69</code> at 10 tokens vs <code>20.09</code> at 14 tokens vs <code>2.12</code> at 56 tokens for the exact same <code>42.0 nat</code> prediction). You must normalize by raw UTF-8 byte count (<strong>Bits-Per-Byte, BPB</strong>) or character count to compare across tokenizers.</div></details>
+  <details class="q"><summary>"A token with logprob -0.80 (45% probability) and top1-top2 margin 0.04 always means the model doesn't know the answer and is about to hallucinate."</summary><div class="a">Wrong. A <code>45%</code> vs <code>43%</code> split (<code>logprob -0.80</code>, <code>margin 0.04</code>) frequently happens on harmless surface-form synonyms (e.g., <code>"fast"</code> vs <code>"quick"</code>, or <code>"Dr."</code> vs <code>"Doctor"</code>) where the top-2 tokens together hold <code>88%</code> of the probability mass and total entropy is under <code>1.0 nat</code>. True epistemic ignorance has low top-1 probability AND low cumulative top-k mass (e.g., top-5 mass <code>&lt; 5%</code>) with high entropy spread across hundreds of tail tokens.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+
+  <details class="q"><summary>1. Derive the numerically stable <code>log_softmax</code> formula from raw logits <code>z</code> and explain why naive <code>log(exp(z_i) / sum exp(z_j))</code> fails in FP16.</summary><div class="a">Let <code>m = max_j(z_j)</code>. Multiply numerator and denominator of softmax by <code>exp(-m)</code>: <code>p_i = exp(z_i - m) / sum_j exp(z_j - m)</code>. Taking the natural log yields <code>log p_i = (z_i - m) - ln(sum_j exp(z_j - m))</code>. Naive <code>exp(z_i)</code> overflows IEEE-754 FP16's maximum finite value of <code>65,504</code> whenever <code>z_i &gt; ln(65504) = 11.0903</code>, producing <code>inf / inf = NaN</code>. With the max-shift, every exponent <code>z_j - m &lt;= 0</code>, so <code>exp(z_j - m) in (0, 1]</code> and the sum inside <code>ln</code> lies in <code>[1, V]</code>.
+    <div class="f"><b>Follow-up</b>What happens to a very negative shifted logit like <code>z_i - m = -50</code> in the naive probability formula versus the <code>log_softmax</code> formula? In naive <code>log(p_i)</code>, <code>exp(-50)</code> underflows to <code>0.0</code> in FP16/FP32 and <code>log(0.0)</code> becomes <code>-inf</code>; in <code>log_softmax</code>, <code>z_i - m = -50</code> is kept directly as a linear subtraction term without ever being exponentiated for the numerator, preserving full precision!</div>
+  </div></details>
+
+  <details class="q"><summary>2. How does perplexity relate to cross-entropy loss (NLL) and to geometric mean token probability? Give a concrete numeric example.</summary><div class="a">Cross-entropy loss (or NLL per token) is the average negative log-probability across <code>N</code> tokens: <code>NLL = -(1/N) sum_{t=1..N} ln p_t</code>. Perplexity is <code>PPL = exp(NLL) = (prod_{t=1..N} p_t)^(-1/N)</code>, which is the reciprocal of the geometric mean token probability. In our kata, the 10-token sequence has mean logprob <code>-0.613 nats</code> (<code>NLL = 0.613</code>), so geometric mean token probability is <code>exp(-0.613) = 54.2%</code> and <code>PPL = exp(0.613) = 1.85</code> (equivalent to choosing uniformly among 1.85 branches per token).</div></details>
+
+  <details class="q"><summary>3. Prove that softmax probabilities are invariant to adding a constant <code>c</code> to all logits, and explain what freedom this leaves in the unembedding layer <code>W_U</code>.</summary><div class="a">Adding <code>c</code> to every logit gives <code>exp(z_i + c) / sum_j exp(z_j + c) = exp(c) exp(z_i) / (exp(c) sum_j exp(z_j)) = p_i</code>. Because adding any scalar multiple of the all-ones vector <code>1_V</code> to <code>z</code> has zero effect on probabilities or gradients, the logit vector has <code>V - 1</code> effective degrees of freedom, and only differences between columns of <code>W_U</code> carry meaning.</div></details>
+
+  <details class="q"><summary>4. You only have access to a hosted LLM API that returns the chosen token logprob and <code>top_logprobs = 5</code> (not the full <code>V = 128,000</code> logit vector). How do you approximate token entropy and detect a flat-tail hallucination?</summary><div class="a">Compute the top-5 cumulative probability mass <code>M_5 = sum_{r=1..5} exp(lp_(r))</code> and the unresolved tail mass <code>p_tail = 1 - M_5</code>. You can form a lower-bound / bucketed entropy estimate <code>H_approx = -sum_{r=1..5} p_(r) ln p_(r) - p_tail ln(p_tail)</code> (or assume the tail is spread over <code>K_eff</code> tokens). In practice, gating on <code>p_tail &gt; 0.30</code> (meaning the top 5 tokens combined hold less than 70% of the mass) combined with <code>lp_chosen &lt; -1.5</code> reliably separates flat-tail guessing from 2- or 3-way synonym splits.
+    <div class="f"><b>Follow-up</b>In our kata, what is <code>M_5</code> on the hallucinated trial ID <code>NCT09988123</code> versus a 2-way synonym split? On <code>NCT09988123</code>, each top token has <code>~0.55%</code> probability, so <code>M_5 &lt; 0.03</code> (<code>p_tail &gt; 97%</code>), whereas a synonym split has <code>M_2 &gt; 0.90</code> (<code>p_tail &lt; 10%</code>).</div>
+  </div></details>
+
+  <details class="q"><summary>5. Why does a multi-token hallucinated entity (like <code>"NCT-099-88123"</code> or <code>"Azithro-mycin"</code>) often show a terrible logprob on its first subword but near-zero logprobs (<code>-0.02</code>) on its remaining subwords?</summary><div class="a">Autoregressive language models compute conditional probabilities <code>p(x_t | x_&lt;t)</code>. Before the entity starts, the model has high epistemic uncertainty across many possible drugs or IDs, so the first subword <code>x_{t_0}</code> has a low logprob (e.g., <code>-4.5</code>). Once <code>x_{t_0}</code> (<code>"Azithro"</code>) is sampled and appended to the context, completing the spelling with <code>"mycin"</code> is nearly deterministic (<code>p &gt; 98%</code>, logprob <code>-0.02</code>).
+    <div class="f"><b>Follow-up</b>How does this affect how you aggregate logprobs across a 4-subword entity span? If you take the arithmetic mean across the 4 subwords, three <code>-0.02</code> continuation subwords dilute the <code>-4.50</code> first-subword spike down to <code>-1.14</code>. Always record the <strong>span minimum logprob</strong> (or first-subword logprob) and the <strong>sum of logprobs</strong> (joint span log-likelihood), never the span mean alone.</div>
+  </div></details>
+
+  <details class="q"><summary>6. How do you convert per-token NLL (in nats) into Bits-Per-Byte (BPB), and why is BPB the standard metric when comparing models with different vocabulary sizes (e.g., 32k vs 128k vs byte-level)?</summary><div class="a">First convert total sequence NLL from nats to bits by dividing by <code>ln(2) = 0.6931</code>: <code>Total_Bits = (N_tokens * NLL_nats) / ln(2)</code>. Then divide by the number of raw UTF-8 bytes <code>N_bytes</code> in the ground-truth text: <code>BPB = (N_tokens * NLL_nats) / (N_bytes * ln 2)</code>. Because <code>N_tokens</code> cancels out of the numerator when multiplied by per-token NLL, BPB depends only on the joint probability assigned to the raw byte string and the fixed byte length <code>N_bytes</code>, making it completely invariant to how the tokenizer segments the text.</div></details>
+
+  <details class="q"><summary>7. In a model cascade or router (G17), how do you use token logprobs from a small fast draft model (e.g., 8B) to decide whether to escalate a query to a 70B frontier model without generating the full response twice?</summary><div class="a">Check the small model's <strong>first few answer/entity token logprobs and margins</strong> during streaming decode (or after a short prefix / structured classification token). If the 8B model's minimum entity-span logprob falls below a calibrated threshold (e.g., <code>&lt; -1.2 nats</code>) or its top1-top2 margin on the decision token is under <code>0.5 nats</code>, abort the 8B stream early and route the prompt to the 70B model.
+    <div class="f"><b>Follow-up</b>How do you pick the logprob threshold <code>tau</code> for that router? Sweep <code>tau</code> on a held-out validation set to plot the <strong>accuracy-versus-escalation-rate Pareto frontier</strong> (or risk-coverage curve), choosing the threshold where marginal accuracy gain equals your latency/dollar budget.</div>
+  </div></details>
+
+  <details class="q"><summary>8. Why can a model have very high token confidence (<code>logprob = -0.03</code>, <code>97%</code> probability, <code>margin = 6.5</code>) and still be factually wrong? Give two concrete causes and how you defend against them.</summary><div class="a">Logprobs measure <strong>internal predictive sharpness</strong> (how strongly the model's distribution peaks on one token), not external factual truth. Two primary causes are: (1) <strong>Pretraining misconceptions or stale facts</strong> memorized strongly in the weights (e.g., repeating a famous myth or a pre-cutoff CEO name), and (2) <strong>Prompt-induced sycophancy / leading context</strong>, where an earlier hallucinated sentence or user premise biases the conditional distribution <code>p(x_t | x_&lt;t)</code> to continue the false premise with 97% certainty.
+    <div class="f"><b>Follow-up</b>How do you catch high-confidence hallucinations that single-pass logprobs miss? Use (a) <strong>RAG attribution / NLI grounding checks</strong> against retrieved source chunks, or (b) <strong>multi-prompt semantic consistency</strong> (re-asking or permuting context so prompt-induced conditioning breaks).</div>
+  </div></details>
+
+  <details class="q"><summary>9. What is the difference between token-level Shannon entropy and Kuhn/Farquhar's <em>Semantic Entropy</em>, and when do you need Semantic Entropy?</summary><div class="a">Token-level Shannon entropy <code>H(p_t)</code> measures lexical dispersion over vocabulary IDs at one decoding step, so it increases whenever there are multiple valid phrasings of the same meaning (e.g., <code>"NYC"</code>, <code>"New York"</code>, <code>"New York City"</code>). Semantic Entropy samples <code>K</code> full responses, clusters them into semantic equivalence classes <code>C_1, ..., C_M</code> using bidirectional NLI entailment, and computes entropy over the cluster probabilities <code>P(C_m)</code>. You use Semantic Entropy in offline evals or high-stakes async workflows when free-form paraphrasing causes lexical logprobs to over-report uncertainty; for real-time low-latency pipelines, constrain output to canonical JSON/enums first so lexical logprobs align with semantic meaning.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 LSIMP steps, then write: (1) the max-shifted <code>log_softmax</code> formula and the FP16 overflow limit, (2) the three token-level uncertainty equations (logprob, margin, Shannon entropy), (3) the NLL, Perplexity, and BPB formulas, and (4) the kata numbers showing why sequence mean logprob misses <code>NCT09988123</code> while entity-span min-logprob catches it.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>LSIMP spine:</strong> 1. Logits <code>z_t = h_t W_U in R^V</code> -&gt; 2. Shift &amp; scale <code>u = (z - max(z))/T &lt;= 0</code> -&gt; 3. Token info (<code>logprob</code>, <code>margin</code>, <code>H</code>) -&gt; 4. Sequence NLL &amp; <code>PPL = exp(NLL)</code> (and <code>BPB</code>) -&gt; 5. Pinpoint entity-span minimum logprob &amp; margin.</li>
+    <li><strong>Log-Sum-Exp formula &amp; FP16 limit:</strong> <code>log p_i = (z_i/T - m) - ln sum_j exp(z_j/T - m)</code> where <code>m = max(z/T)</code>. Prevents FP16 overflow above <code>65,504</code> (<code>ln 65504 = 11.0903</code>).</li>
+    <li><strong>Three token diagnostics:</strong> Chosen logprob <code>lp in (-inf, 0]</code>; top1-top2 margin <code>log p_(1) - log p_(2) = (z_(1) - z_(2))/T</code>; Shannon entropy <code>H = -sum p_i log p_i in [0, ln V]</code> (or top-k tail mass <code>1 - sum_{r=1..k} p_(r)</code>).</li>
+    <li><strong>NLL, PPL, and BPB:</strong> <code>NLL = -(1/N) sum log p_t</code>; <code>PPL = exp(NLL)</code> (reciprocal geometric mean probability); <code>BPB = (N * NLL / ln 2) / N_bytes</code> (invariant across tokenizers: <code>1.0820 BPB</code> across 10, 14, and 56 tokens where PPL varied from <code>66.69</code> to <code>20.09</code> to <code>2.12</code>).</li>
+    <li><strong>Kata dilution &amp; temperature numbers:</strong> 8 syntax tokens at <code>~-0.088</code> (<code>91.5%</code>), grounded dose <code>50</code> at <code>-0.268</code> (<code>76.46%</code>), hallucinated ID <code>NCT09988123</code> at <code>-5.154</code> (<code>0.58%</code>, margin <code>0.031</code>, entropy <code>6.558 nats</code>). Sequence mean is <code>-0.613</code> (<code>PPL = 1.85</code>), which passes a <code>-1.0</code> gate; entity-span min is <code>-5.154</code>, which trips <code>&lt; -1.5</code>. Lowering <code>T</code> from <code>1.0</code> to <code>0.2</code> inflates <code>NCT09988123</code> to <code>-3.251</code> (<code>3.88%</code>) and margin 5x to <code>0.155</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K04: At the end of a single decoding step in a Transformer (say Llama-3-8B with <code>d_model = 4096</code> and <code>V = 128,256</code>), what matrix operation produces the logit vector <code>z_t</code>, what is its shape and parameter count, and why is it memory-bandwidth bound during batch-1 autoregressive decode?</summary><div class="a">The final RMSNorm hidden state <code>h_t</code> of shape <code>(1, 4096)</code> multiplies the unembedding matrix <code>W_U</code> of shape <code>(4096, 128256)</code> to produce <code>z_t</code> of shape <code>(1, 128256)</code>. <code>W_U</code> holds <code>4096 * 128,256 = 525.3M parameters</code> (<code>1.05 GB</code> in BF16). At batch size 1, the GPU must stream that entire <code>1.05 GB</code> matrix from HBM into SRAM just to perform 2 FLOPs per weight (arithmetic intensity <code>~1 FLOP/byte</code>), making it strictly memory-bandwidth bound.</div></details>
+  <details class="q"><summary>D10: During autoregressive decoding, in what order are temperature scaling, top-k filtering, and top-p (nucleus) filtering typically applied to the logit vector <code>z_t</code>, and why must you renormalize after masking?</summary><div class="a">First divide raw logits by temperature <code>T</code> (<code>z_t / T</code>), then apply top-k masking (setting all logits outside the top <code>k</code> to <code>-inf</code>), then convert to probabilities via softmax and mask tokens whose cumulative sorted probability exceeds <code>p</code> (or mask in log-space), and finally <strong>renormalize</strong> the surviving tokens' probabilities so they sum to <code>1.0</code> before multinomial sampling.</div></details>
+  <details class="q"><summary>G01: Why does prefix prompt caching in serving engines like vLLM or Anthropic/OpenAI require the shared system prompt and tool definitions to be byte-for-byte identical from token 0, and what breaks if you inject a dynamic timestamp at the top of the system prompt?</summary><div class="a">Because causal self-attention makes every token's Key and Value vectors <code>(K_t, V_t)</code> depend on the exact sequence of all preceding tokens <code>0..t</code>. Putting a dynamic timestamp at token 5 invalidates the KV cache for every token after position 5, dropping your prefix cache hit rate to near zero; dynamic per-request fields must always be placed at the end of the prompt after the static prefix.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/2207.05221">Kadavath et al. (Anthropic, 2022): Language Models (Mostly) Know What They Know</a><small>Establishes calibration of token log-probabilities, P(True), and how logprob calibration shifts with temperature and RLHF. Checked 2025-05.</small></li>
+    <li><a href="https://www.nature.com/articles/s41586-024-07421-0">Farquhar, Kossen, Kuhn, &amp; Gal (Nature, 2024): Detecting hallucinations in large language models using semantic entropy</a><small>Shows why lexical token entropy over-flags synonym variations and introduces semantic clustering entropy vs token-level baselines. Checked 2025-05.</small></li>
+    <li><a href="https://arxiv.org/abs/2307.03987">Manakul, Liusie, &amp; Gales (EMNLP 2023): SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative LLMs</a><small>Benchmarks sentence/span average and min/max negative log-probability baselines against sampling-based consistency for fact-level hallucination detection. Checked 2025-05.</small></li>
+    <li><a href="https://platform.openai.com/docs/api-reference/chat/create">OpenAI Platform Documentation: Chat Completions logprobs &amp; top_logprobs</a><small>Documents production token logprob payloads and the top_logprobs (0 to 20) API constraint. Checked 2025-05.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Logits &amp; shift invariance:</strong> Raw unembedding scores <code>z_t = h_t W_U in R^V</code> are unbounded; adding a constant <code>c</code> to all logits leaves softmax probabilities unchanged.</li>
+    <li><strong>Log-Sum-Exp (LSE) &amp; FP16 stability:</strong> Subtracting <code>m = max(z/T)</code> gives <code>log p_i = (z_i/T - m) - ln sum_j exp(z_j/T - m)</code>, keeping all exponents <code>&lt;= 0</code> so FP16 never overflows above <code>65,504</code> (<code>ln 65504 = 11.09</code>).</li>
+    <li><strong>Token uncertainty trio:</strong> Combine chosen <code>logprob</code> (<code>in (-inf, 0]</code>), top1-top2 <code>margin = (z_(1) - z_(2))/T</code>, and Shannon entropy <code>H = -sum p_i log p_i</code> (or top-k tail mass <code>1 - M_k</code>) to separate 2-way synonym splits (<code>M_2 &gt; 0.90</code>, low <code>H</code>) from flat-tail guessing (<code>margin = 0.031</code>, <code>H = 6.558 nats</code>).</li>
+    <li><strong>Sequence NLL, Perplexity, and BPB:</strong> <code>NLL = -(1/N) sum log p_t</code>, <code>PPL = exp(NLL)</code> (reciprocal geometric mean probability), and <code>BPB = (N * NLL / ln 2) / N_bytes</code> (normalizes across different tokenizers where token PPL varied <code>66.69</code> vs <code>20.09</code> vs <code>2.12</code> at identical <code>1.0820 BPB</code>).</li>
+    <li><strong>Entity-span confidence gating:</strong> Boilerplate tokens (<code>~-0.088 nats</code>) dilute single-token hallucinations (<code>-5.154 nats</code>) into a passing sequence mean (<code>-0.613 nats</code>, <code>PPL 1.85</code>); isolate entity/JSON value spans and gate on <code>min_span_logprob &lt; -1.5</code> plus first-subword top-5 tail mass.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>LSIMP spine:</strong> <strong>L</strong>ogits -&gt; <strong>S</strong>hift/Scale (<code>u = (z-m)/T</code>) -&gt; <strong>I</strong>nfo (<code>lp, margin, H</code>) -&gt; <strong>M</strong>ean NLL / <strong>P</strong>PL (<code>exp(NLL)</code>) -&gt; <strong>P</strong>inpoint entity-span minimum.</li>
+      <li><strong>Anchor numbers:</strong> <code>p = 90% -&gt; -0.105</code> | <code>p = 50% -&gt; -0.693</code> | <code>p = 22.3% -&gt; -1.50</code> | <code>p = 1% -&gt; -4.605</code> | Kata hallucinated ID = <code>-5.154</code> (<code>0.58%</code>) vs sequence mean <code>-0.613</code> (<code>54.2%</code>, <code>PPL 1.85</code>).</li>
+      <li><strong>Three production traps:</strong> (1) Never gate factual quality on sequence-mean logprob (boilerplate dilution); (2) Never compare post-temperature logprobs across different <code>T</code> values without rescaling; (3) Never compare token-level perplexity across different tokenizers (use <code>BPB</code>).</li>
+      <li><strong>Multi-token entities:</strong> Later subwords of a compound entity have near-zero logprob due to autoregressive conditioning; always check the <strong>first subword</strong> or <strong>span minimum logprob</strong>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D11 T1 W01", "cards": [{"q": "Why must softmax shift logits by m = max(z) before exponentiating in FP16?", "a": "FP16 overflows past 65504 (exp(11.09)), turning probs to NaN; subtracting max(z) bounds all exponents at or below zero without changing probabilities."}, {"q": "How does temperature scaling T reshape logprobs, top1-top2 logit margin, and Shannon entropy?", "a": "Scaling z by 1/T scales the logit margin by 1/T; T \u003c 1 sharpens logprobs toward zero and cuts entropy, whereas T > 1 flattens both."}, {"q": "How do sequence mean logprob, negative log-likelihood (NLL), and perplexity (PPL) relate mathematically?", "a": "NLL is negative mean token logprob (-1/N sum log p_t); perplexity is exp(NLL), the reciprocal geometric mean token probability."}, {"q": "Why can sequence-level mean logprob or perplexity miss a single-token factual hallucination?", "a": "High-probability boilerplate tokens (-0.09 nats) dilute the average; 9 fluent tokens plus one -5.154 hallucination still yield a normal -0.613 mean (PPL 1.85)."}, {"q": "How do you distinguish an epistemic factual guess from a valid synonym choice using token logprob diagnostics?", "a": "Check top-k distribution shape: synonyms concentrate >80% mass in top-2 tokens with low entropy, whereas factual guessing shows tiny top1-top2 margin (\u003c0.05) and high entropy."}, {"q": "Why is raw token-level perplexity invalid for comparing models with different vocabulary sizes?", "a": "Larger vocabularies pack more bytes into fewer tokens, inflating per-token perplexity; normalize by raw byte length using bits-per-byte (BPB = total_bits / bytes)."}, {"q": "Why can a sampled token's post-temperature logprob look confident even when the model is guessing?", "a": "Low temperature (T = 0.2) multiplies logit gaps by 5x, boosting a flat 0.58% token to 3.88% and collapsing entropy without adding factual knowledge."}, {"q": "What are the five stages of the LSIMP spine for reading model confidence?", "a": "Logits (raw scores), Shift-and-scale (max-shift plus 1/T), Information (logprob, margin, entropy), Mean NLL to Perplexity (exp(NLL)), and Pinpoint span min-logprob."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

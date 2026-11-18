@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A09 Matrices, matmul, tensor shapes, broadcasting, einsum</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A09">
+<main>
+<header>
+  <div class="eyebrow"><b>A09</b><span>A Foundations and applied math</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Matrices, matmul, tensor shapes, broadcasting, einsum</h1>
+  <p class="lede">How do transformer layers transform a batch of token IDs through 3D and 4D tensors without scrambling head memory, triggering silent outer-product broadcasts, or multiplying FLOPs by 6.67x?</p>
+  <div class="chips"><span><em>Before</em>A08 Vectors, dot product, norms, cosine similarity</span><span><em>Before</em>K04 One token end to end</span><span><em>After</em>D04 Self-attention</span><span><em>After</em>A10 Eigenvalues, SVD, low-rank approximation</span><span><em>After</em>A11 Derivatives, gradients, chain rule, Jacobians</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Attempt the 3 warm-up predictions before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Walk through the core idea and 2 steppers + 1 FLOP explorable</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run A09_kata.py, verify 15 shapes, and inspect the 3 break-its</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Drill production debugging, spoken 90s answer, traps, and 10 questions</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Complete blank-page recall and mixed review</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Review short notes and import the 8 Anki cards</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You project queries into <code>q_flat</code> of shape <code>(B=2, S=6, d_model=64)</code> and want 4 attention heads of width <code>d_head=16</code> in shape <code>(2, 4, 6, 16)</code>. Why is <code>q_flat.reshape(2, 4, 6, 16)</code> a silent bug when it produces the exact target shape <code>(2, 4, 6, 16)</code>?</summary><div class="a">Because <code>reshape</code> reads row-major memory sequentially without moving bytes. Reshaping directly to <code>(B, H, S, d_head)</code> slices the sequence axis across heads so head 0 gets tokens 0 to 2 and head 1 gets tokens 3 to 5. In the kata, both tensors have shape <code>(2, 4, 6, 16)</code>, yet <code>max_abs_diff = 36.2399</code> compared to the true <code>q_flat.reshape(2, 6, 4, 16).transpose(0, 2, 1, 3)</code>.</div></details>
+  <details class="q"><summary>You have per-sample losses <code>loss_per_sample</code> of shape <code>(2,)</code> with values <code>[1.2, 0.8]</code> and column weights <code>sample_weights</code> of shape <code>(2, 1)</code> with values <code>[[1.0], [0.5]]</code>. What shape and mean does <code>np.mean(loss_per_sample * sample_weights)</code> return?</summary><div class="a">It silently broadcasts to an outer-product matrix of shape <code>(2, 2)</code> and returns a mean of <code>0.750</code> instead of the true elementwise weighted mean <code>0.800</code> over shape <code>(2,)</code>. Right-alignment pads <code>(2,)</code> on the left to <code>(1, 2)</code>, which stretches against <code>(2, 1)</code> into <code>(2, 2)</code>.</div></details>
+  <details class="q"><summary>For input <code>x_norm</code> of shape <code>(B=2, S=6, d_model=64)</code> and rank-8 LoRA adapters <code>A</code> of shape <code>(64, 8)</code> and <code>B</code> of shape <code>(8, 64)</code>, both <code>(x_norm @ A) @ B</code> and <code>x_norm @ (A @ B)</code> produce shape <code>(2, 6, 64)</code>. How many FLOPs does each grouping take?</summary><div class="a">Factored <code>(x_norm @ A) @ B</code> takes <code>24,576</code> FLOPs (two skinny matmuls through rank <code>r = 8</code>), whereas unfactored <code>x_norm @ (A @ B)</code> takes <code>163,840</code> FLOPs (forming a dense <code>64 x 64</code> matrix first, then multiplying), which is <code>6.67x</code> more compute for the exact same output.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every forward pass in deep learning is a pipeline of coordinate contractions and axis rearrangements. Matrix multiplication (matmul) contracts the last axis of the left tensor against the second-to-last axis of the right tensor while treating all leading dimensions as parallel batches. When a layer needs independent subspaces, such as multi-head attention or Grouped-Query Attention (GQA), we factor a wide feature axis into <code>(H, d_head)</code>, permute the head axis ahead of the sequence axis so each head runs its own sequence-by-sequence matmul, and merge the heads back afterward.</p>
+  <p>Because Python frameworks verify only shape compatibility at each step, the hardest bugs in ML systems are operations that succeed with plausible shapes while corrupting data or exploding compute. Direct <code>reshape(B, H, S, d_head)</code> scrambles token memory across heads without throwing an error; right-aligned broadcasting turns a 1D vector and a 2D column vector into an <code>O(B^2)</code> outer product; and unfactored matrix chains waste massive FLOPs. Mastering tensor shapes means tracking both logical axes and physical memory strides at every line, and using <code>einsum</code> to name every contracted and surviving axis explicitly.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: A transformer block's tensor shape lifecycle (B=2, S=6, d=64, H=4, KVH=2)</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Five-stage tensor shape flow from token IDs (2,6) through embedding and RMSNorm (2,6,64), Q and GQA K head split (2,4,6,16), attention einsum and 4D mask broadcast (2,4,6,6), and head merge plus SwiGLU MLP and LoRA back to logits (2,1000).">
+      <g font-size="12">
+        <rect x="8" y="10" width="484" height="205" rx="6" class="c-paper ln"/>
+        <g data-step="1">
+          <rect x="18" y="25" width="135" height="72" rx="4" class="c-soft ln" data-hi="1"/>
+          <text x="85" y="45" text-anchor="middle" font-weight="bold">1. Embed &amp; RMSNorm</text>
+          <text x="85" y="64" text-anchor="middle">ids (2,6) -&gt; x (2,6,64)</text>
+          <text x="85" y="82" text-anchor="middle" class="m">rms (2,6,1) * gamma (64,)</text>
+        </g>
+        <g data-step="2">
+          <path d="M153 61 H178" class="ink"/>
+          <rect x="178" y="25" width="145" height="72" rx="4" class="c-accent ln" data-hi="2"/>
+          <text x="250" y="45" text-anchor="middle" font-weight="bold">2. Q &amp; GQA K Split</text>
+          <text x="250" y="64" text-anchor="middle">Q: (2,6,4,16)-&gt;(2,4,6,16)</text>
+          <text x="250" y="82" text-anchor="middle">K: (2,6,2,16)-&gt;rep(2,4,6,16)</text>
+        </g>
+        <g data-step="3">
+          <path d="M323 61 H348" class="ink"/>
+          <rect x="348" y="25" width="134" height="72" rx="4" class="c-warn ln" data-hi="3"/>
+          <text x="415" y="45" text-anchor="middle" font-weight="bold">3. Scores &amp; Masks</text>
+          <text x="415" y="64" text-anchor="middle">bhid,bhjd-&gt;bhij (2,4,6,6)</text>
+          <text x="415" y="82" text-anchor="middle">+(1,1,6,6) + (2,1,1,6)</text>
+        </g>
+        <g data-step="4">
+          <path d="M415 97 V125 H315" class="ink"/>
+          <rect x="165" y="125" width="150" height="72" rx="4" class="c-good ln" data-hi="4"/>
+          <text x="240" y="145" text-anchor="middle" font-weight="bold">4. Value &amp; Merge</text>
+          <text x="240" y="164" text-anchor="middle">bhij,bhjd-&gt;bhid (2,4,6,16)</text>
+          <text x="240" y="182" text-anchor="middle">transpose+reshape (2,6,64)</text>
+        </g>
+        <g data-step="5">
+          <path d="M165 161 H143" class="ink"/>
+          <rect x="18" y="125" width="125" height="72" rx="4" class="c-accent ln" data-hi="5"/>
+          <text x="80" y="145" text-anchor="middle" font-weight="bold">5. MLP, LoRA, LM</text>
+          <text x="80" y="164" text-anchor="middle">FFN (2,6,172)+LoRA r=8</text>
+          <text x="80" y="182" text-anchor="middle">[:,-1:,:]@W_lm -&gt; (2,1000)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Indexing <code>W_emb[ids]</code> expands <code>(2, 6)</code> token IDs to <code>(2, 6, 64)</code>, and <code>keepdims=True</code> preserves shape <code>(2, 6, 1)</code> so RMS division broadcasts cleanly across all 64 features.</li>
+      <li>Linear projection yields <code>(2, 6, 64)</code>, which must be reshaped to <code>(2, 6, 4, 16)</code> before transposing axes 1 and 2 to <code>(2, 4, 6, 16)</code>; GQA keys start at <code>KVH=2</code> and repeat to 4 heads.</li>
+      <li>Einsum <code>bhid,bhjd-&gt;bhij</code> contracts the <code>d=16</code> head width to form <code>(2, 4, 6, 6)</code> scores, then broadcasts causal mask <code>(1, 1, 6, 6)</code> and pad mask <code>(2, 1, 1, 6)</code> simultaneously.</li>
+      <li>Einsum <code>bhij,bhjd-&gt;bhid</code> weights values back to <code>(2, 4, 6, 16)</code>, and transposing back to <code>(2, 6, 4, 16)</code> before reshaping restores contiguous <code>(2, 6, 64)</code> hidden states.</li>
+      <li>SwiGLU expands to <code>(2, 6, 172)</code> and back, factored LoRA <code>(x @ A) @ B</code> adds a rank-8 delta in 24,576 FLOPs, and slicing <code>[:, -1:, :]</code> before <code>W_lm</code> outputs <code>(2, 1000)</code> logits at 1/6 the cost.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every transformer layer alternates between feature contractions on the last axis and explicit transpose-plus-reshape permutations that move heads into batch position.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>R-T-E-B-F</strong> rebuilds the five rules of tensor geometry: <strong>R</strong>ight-align shapes for broadcasting (1s stretch, mismatches fail), <strong>T</strong>ranspose before and after multi-head reshape (never reshape across non-adjacent logical axes), <strong>E</strong>insum contracts every index absent from the arrow's right side, <strong>B</strong>atched matmul contracts only <code>(..., M, K) @ (..., K, N) -&gt; (..., M, N)</code>, and <strong>F</strong>actor low-rank chains as <code>(x @ A) @ B</code> so FLOPs scale with rank <code>r</code> instead of <code>d_model^2</code>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Matrix multiplication as linear transformation and batched contraction</h3>
+  <p>A 2D matrix <code>W</code> of shape <code>(K, N)</code> is a linear map from <code>R^K</code> to <code>R^N</code>. When multiplying <code>A @ B</code> with shapes <code>(M, K)</code> and <code>(K, N)</code>, entry <code>(i, j)</code> is the dot product of row <code>i</code> of <code>A</code> and column <code>j</code> of <code>B</code>, requiring <code>K</code> multiplies and <code>K</code> adds (counted as <code>2 * M * K * N</code> FLOPs). Equivalently, <code>A @ B</code> is a sum of <code>K</code> rank-1 outer products of columns of <code>A</code> with rows of <code>B</code>.</p>
+  <p>For N-D tensors (rank 3 or higher), the <code>@</code> operator (<code>np.matmul</code> / <code>torch.matmul</code>) acts exclusively on the last two axes and broadcasts all leading batch axes. Given activations <code>x_norm</code> of shape <code>(B, S, d_model) = (2, 6, 64)</code> and a 2D weight matrix <code>W_q</code> of shape <code>(64, 64)</code>, matmul treats <code>(2, 6)</code> as 12 independent row vectors of length 64, contracting the shared 64-dim axis to return <code>(2, 6, 64)</code> in <code>2 * 2 * 6 * 64 * 64 = 98,304</code> FLOPs.</p>
+  <div class="codewrap"><pre># Batched matmul rule: (..., M, K) @ (..., K, N) -&gt; (..., M, N)
+# 2D weight (K, N) broadcasts across all leading batch dimensions (...)
+q_flat = x_norm @ W_q  # (2, 6, 64) @ (64, 64) -&gt; (2, 6, 64)</pre></div>
+
+  <h3>2. Memory layout, strides, reshape vs transpose</h3>
+  <p>A tensor in NumPy or PyTorch is a 1D contiguous block of memory paired with a <code>shape</code> tuple and a <code>strides</code> tuple stating how many elements (or bytes) to step along each axis. For a row-major (C-contiguous) tensor of shape <code>(B=2, S=6, d=64)</code>, the element strides are <code>(384, 64, 1)</code>: moving +1 along the feature axis steps 1 element, moving +1 token steps 64 elements, and moving +1 batch item steps <code>6 * 64 = 384</code> elements.</p>
+  <p><code>reshape</code> changes the shape metadata while reading physical memory in sequential order. Therefore, splitting <code>d_model=64</code> into <code>(H=4, d_head=16)</code> MUST first reshape the contiguous last axis into <code>(2, 6, 4, 16)</code> (strides <code>(384, 64, 16, 1)</code>), and only then call <code>transpose(0, 2, 1, 3)</code> to swap the stride metadata to <code>(384, 16, 64, 1)</code> with logical shape <code>(2, 4, 6, 16)</code>. Calling <code>q_flat.reshape(2, 4, 6, 16)</code> directly assumes memory is already laid out head-first (stride 96 per head), mixing tokens 0 to 2 into head 0 and tokens 3 to 5 into head 1.</p>
+  <div class="codewrap"><pre># RIGHT: split contiguous last axis first, then permute stride metadata
+q = q_flat.reshape(B, S, H, d_head).transpose(0, 2, 1, 3)  # (2, 4, 6, 16)
+
+# WRONG: same (2, 4, 6, 16) shape, but scrambles tokens across heads!
+q_bug = q_flat.reshape(B, H, S, d_head)  # max_abs_diff = 36.2399</pre></div>
+  <details class="q"><summary>Check: Why does merging attention heads back to <code>(B, S, d_model)</code> in PyTorch require <code>.contiguous()</code> (or <code>.reshape()</code>) after <code>.transpose(1, 2)</code> instead of <code>.view(B, S, d_model)</code>?</summary><div class="a">Because <code>attn_out</code> of shape <code>(B, H, S, d_head)</code> after <code>transpose(1, 2)</code> has shape <code>(B, S, H, d_head)</code> with non-monotonic strides <code>(384, 64, 16, 1)</code> only if it was already contiguous in <code>(B, S, H, d_head)</code>; since <code>attn_out</code> was produced by matmul in <code>(B, H, S, d_head)</code> order, its physical strides are <code>(384, 96, 16, 1)</code> and transposing to <code>(B, S, H, d_head)</code> leaves strides <code>(384, 16, 96, 1)</code>. Since <code>16 != 4 * 16</code>, the last two axes are not contiguous in memory, so <code>.view()</code> throws a stride error until <code>.contiguous()</code> or <code>.reshape()</code> copies the bytes into row-major order.</div></details>
+
+  <h3>3. Broadcasting rules, keepdims, and silent outer products</h3>
+  <p>When two tensors of different ranks or sizes meet in an elementwise operation, NumPy and PyTorch apply two deterministic rules: first, align the shape tuples on the <strong>right</strong> and prepend <code>1</code>s to the shorter shape until both have the same rank; second, compare each axis pair, succeeding if the dimensions are equal or one of them is <code>1</code> (in which case the size-1 axis is virtually stretched with stride 0 without copying memory).</p>
+  <p>This rule makes 4D mask combination effortless: adding attention scores <code>(2, 4, 6, 6)</code>, causal mask <code>(1, 1, 6, 6)</code>, and key-padding mask <code>(2, 1, 1, 6)</code> stretches every singleton axis to <code>(2, 4, 6, 6)</code> in zero extra memory allocations. However, right-alignment causes two classic bugs: omitting <code>keepdims=True</code> in a reduction like <code>mean(x**2, axis=-1)</code> collapses <code>(2, 6, 64)</code> to <code>(2, 6)</code>, which right-aligns against <code>(2, 6, 64)</code> as <code>(1, 2, 6)</code> and crashes; worse, multiplying a 1D vector <code>(B,)</code> by a column vector <code>(B, 1)</code> pads <code>(B,)</code> on the left to <code>(1, B)</code> and silently outputs a <code>(B, B)</code> outer product.</p>
+  <figure class="viz stepper" id="viz-broadcast">
+    <div class="vt">Stepper: Right-aligned broadcasting rules vs silent shape and stride bugs</div>
+    <svg viewBox="0 0 500 215" role="img" aria-label="Four-step comparison of valid 4D attention mask broadcasting, missing keepdims alignment crash, silent (2,) times (2,1) outer product broadcast to (2,2), and reshape versus transpose memory layout.">
+      <g font-size="12">
+        <rect x="8" y="8" width="484" height="198" rx="6" class="c-paper ln"/>
+        <g data-step="1">
+          <rect x="18" y="18" width="225" height="82" rx="4" class="c-good ln" data-hi="1"/>
+          <text x="130" y="36" text-anchor="middle" font-weight="bold">1. Valid 4D Mask Broadcast</text>
+          <text x="30" y="54">scores:      (2, 4, 6, 6)</text>
+          <text x="30" y="70">causal_mask: (1, 1, 6, 6)</text>
+          <text x="30" y="86">pad_mask:    (2, 1, 1, 6) -&gt; (2,4,6,6)</text>
+        </g>
+        <g data-step="2">
+          <rect x="257" y="18" width="225" height="82" rx="4" class="c-accent ln" data-hi="2"/>
+          <text x="370" y="36" text-anchor="middle" font-weight="bold">2. RMSNorm keepdims=True</text>
+          <text x="268" y="54">x:           (2, 6, 64)</text>
+          <text x="268" y="70">rms (keep):  (2, 6,  1) -&gt; OK</text>
+          <text x="268" y="86">no keepdims: (1, 2,  6) -&gt; CRASH</text>
+        </g>
+        <g data-step="3">
+          <rect x="18" y="112" width="225" height="82" rx="4" class="c-bad ln" data-hi="3"/>
+          <text x="130" y="130" text-anchor="middle" font-weight="bold">3. Silent Outer Product Bug</text>
+          <text x="30" y="148">loss (2,) -&gt;   (1, 2) [1.2, 0.8]</text>
+          <text x="30" y="164">weights:       (2, 1) [[1.0],[0.5]]</text>
+          <text x="30" y="180">result (2,2): mean 0.750 != 0.800</text>
+        </g>
+        <g data-step="4">
+          <rect x="257" y="112" width="225" height="82" rx="4" class="c-warn ln" data-hi="4"/>
+          <text x="370" y="130" text-anchor="middle" font-weight="bold">4. Stride Scramble Bug</text>
+          <text x="268" y="148">q_flat (2,6,64) row-major</text>
+          <text x="268" y="164">reshape(2,4,6,16) mixes S into H</text>
+          <text x="268" y="180">max_abs_diff = 36.2399 vs transpose</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Right-aligning 4D attention tensors matches every axis: size-1 axes in <code>(1, 1, 6, 6)</code> and <code>(2, 1, 1, 6)</code> stretch with stride 0 to produce <code>(2, 4, 6, 6)</code> without copying memory.</li>
+      <li>Reducing <code>mean(x**2, axis=-1, keepdims=True)</code> retains the trailing singleton axis <code>(2, 6, 1)</code>; dropping <code>keepdims</code> yields <code>(2, 6)</code>, which right-aligns as <code>(1, 2, 6)</code> against <code>(2, 6, 64)</code> and fails on <code>6 != 64</code>.</li>
+      <li>Multiplying <code>loss_per_sample</code> of shape <code>(2,)</code> by <code>sample_weights</code> of shape <code>(2, 1)</code> left-pads <code>(2,)</code> to <code>(1, 2)</code> and creates a <code>(2, 2)</code> outer product whose mean is <code>0.750</code> instead of <code>0.800</code>.</li>
+      <li>Reshaping <code>(2, 6, 64)</code> directly to <code>(2, 4, 6, 16)</code> passes every shape check but slices token positions across heads, creating a <code>36.2399</code> max error compared to <code>reshape(2, 6, 4, 16).transpose(0, 2, 1, 3)</code>.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Right-alignment and row-major reshape never warn you when two axes happen to share compatible sizes or products: enforce ranks with <code>keepdims=True</code> and permute axes explicitly with <code>transpose</code>.</figcaption>
+  </figure>
+
+  <h3>4. Einstein summation (einsum) grammar and attention contractions</h3>
+  <p><code>einsum("subscripts-&gt;output", *operands)</code> specifies any multi-linear contraction in a single string. Every letter names an axis: letters repeated across inputs are multiplied elementwise, and any letter omitted from the right side of <code>-&gt;</code> is summed over (contracted). Letters that appear on the right side survive in the exact permutation written.</p>
+  <p>In multi-head attention, queries <code>q</code> have shape <code>(B, H, S_q, d_head)</code> labeled <code>bhid</code> and keys <code>k_rep</code> have shape <code>(B, H, S_k, d_head)</code> labeled <code>bhjd</code>. Writing <code>np.einsum("bhid,bhjd-&gt;bhij", q, k_rep)</code> contracts the shared head dimension <code>d</code> (since <code>d</code> is absent after <code>-&gt;</code>) while keeping batch <code>b</code> and head <code>h</code> locked together and taking all pairwise token products <code>(i, j)</code> to yield <code>(2, 4, 6, 6)</code> without needing a separate <code>k_rep.transpose(0, 1, 3, 2)</code> call.</p>
+  <div class="codewrap"><pre># Einsum grammar: missing index on RHS = summed over; order on RHS = output transpose
+scores   = np.einsum("bhid,bhjd-&gt;bhij", q, k_rep)       # contracts d -&gt; (2, 4, 6, 6)
+attn_out = np.einsum("bhij,bhjd-&gt;bhid", masked, k_rep)  # contracts j -&gt; (2, 4, 6, 16)</pre></div>
+
+  <h3>5. Contraction order, low-rank factoring, and slice-before-project</h3>
+  <p>Matrix multiplication is associative in exact arithmetic, <code>(X @ A) @ B == X @ (A @ B)</code>, but its computational complexity depends dramatically on parenthesization. For input <code>X</code> of shape <code>(B*S, d_model)</code> and LoRA adapters <code>A</code> of shape <code>(d_model, r)</code> and <code>B</code> of shape <code>(r, d_model)</code> with <code>r &lt;&lt; d_model</code>, computing <code>(X @ A) @ B</code> projects down to the narrow rank-<code>r</code> bottleneck first in <code>2*B*S*d*r + 2*B*S*r*d = 4*B*S*d*r</code> FLOPs. Grouping as <code>X @ (A @ B)</code> materializes a dense <code>(d_model, d_model)</code> matrix first in <code>2*d^2*r</code> FLOPs and then runs a full dense matmul in <code>2*B*S*d^2</code> FLOPs.</p>
+  <p>Similarly, during autoregressive decode or next-token evaluation, projecting all <code>S</code> tokens through the vocabulary head <code>x_norm @ W_lm</code> computes <code>(B, S, V)</code> logits only to discard <code>S - 1</code> rows. Slicing the last token first via <code>x_norm[:, -1:, :] @ W_lm</code> reduces the matmul from <code>(2, 6, 64) @ (64, 1000)</code> to <code>(2, 1, 64) @ (64, 1000)</code>, cutting FLOPs and output memory by a factor of <code>S = 6</code>.</p>
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Transformer &amp; LoRA contraction FLOP scaling</div>
+    <p class="ask">Predict first. At the kata settings (<code>B=2, S=6, d_model=64, r=8</code>), how many times more FLOPs does unfactored <code>x @ (A @ B)</code> take than factored <code>(x @ A) @ B</code>, and what happens to attention vs linear projection FLOPs when you drag sequence length <code>S</code> above <code>d_model</code>?</p>
+    <div class="ctl">
+      <label><span>Batch B</span><input type="range" name="B" min="1" max="8" step="1" value="2"><output data-for="B" data-unit=""></output></label>
+      <label><span>Sequence S</span><input type="range" name="S" min="2" max="256" step="2" value="6"><output data-for="S" data-unit=" tok"></output></label>
+      <label><span>Width d_model</span><input type="range" name="d" min="32" max="256" step="32" value="64"><output data-for="d" data-unit=""></output></label>
+      <label><span>LoRA rank r</span><input type="range" name="r" min="2" max="32" step="2" value="8"><output data-for="r" data-unit=""></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Factored LoRA scales linearly with rank <code>r</code> (<code>4*B*S*d*r</code>), whereas unfactored LoRA pays the full dense <code>2*B*S*d^2 + 2*d^2*r</code> cost; meanwhile quadratic attention <code>4*B*S^2*d</code> overtakes linear projection <code>2*B*S*d^2</code> once <code>2*S &gt; d_model</code>.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var attn = 4 * v.B * v.S * v.S * v.d;
+    var lin = 2 * v.B * v.S * v.d * v.d;
+    var lora_f = 4 * v.B * v.S * v.d * v.r;
+    var lora_u = 2 * v.d * v.r * v.d + 2 * v.B * v.S * v.d * v.d;
+    var ratio = lora_u / lora_f;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" FLOPs",digits:0,rows:[
+      {label:"Factored LoRA (x@A)@B (4BSdr)",value:lora_f,tone:"good"},
+      {label:"Attention QK^T + PV (4BS^2d)",value:attn,tone:attn>lin?"warn":"muted"},
+      {label:"Single linear proj x@W (2BSd^2)",value:lin,tone:"muted"},
+      {label:"Unfactored LoRA x@(A@B)",value:lora_u,tone:"bad"}
+    ]});
+    return {verdict:"At B=" + v.B + ", S=" + v.S + ", d=" + v.d + ", r=" + v.r + ": factored LoRA uses " + tl.fmt(lora_f,0) + " FLOPs vs " + tl.fmt(lora_u,0) + " unfactored (" + ratio.toFixed(2) + "x penalty). Attention/Linear ratio = " + (attn/lin).toFixed(2) + "x."};
+  })});</script>
+  <details class="q"><summary>Check: In Grouped-Query Attention (GQA) with <code>H=4</code> query heads and <code>KVH=2</code> key-value heads, why do we project keys to <code>(B, S, KVH * d_head) = (2, 6, 32)</code> and then apply <code>repeat_interleave</code> along the head axis to reach <code>(2, 4, 6, 16)</code>?</summary><div class="a">Because sharing each KV head across <code>H // KVH = 2</code> query heads cuts the KV projection weights and KV cache memory footprint in half (32 features per token instead of 64), while repeating each KV head twice along the head axis produces a <code>(2, 4, 6, 16)</code> view that aligns 1-to-1 with the 4 query heads in batched matmul or <code>einsum("bhid,bhjd-&gt;bhij")</code>.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Dense matmul FLOPs for <code>(M, K) @ (K, N)</code> (multiply + add)</td><td class="n">2 * M * K * N</td><td>Derived</td></tr>
+    <tr><td>Batched linear projection FLOPs for <code>(B, S, d_in) @ (d_in, d_out)</code></td><td class="n">2 * B * S * d_in * d_out</td><td>Derived</td></tr>
+    <tr><td>Multi-head attention matmul FLOPs (<code>QK^T</code> + <code>PV</code> across all heads)</td><td class="n">4 * B * S^2 * d_model</td><td>Derived</td></tr>
+    <tr><td>Kata Q/K/V head tensor shape after <code>reshape(2,6,4,16).transpose(0,2,1,3)</code></td><td class="n">(2, 4, 6, 16)</td><td>Your own run</td></tr>
+    <tr><td>Kata direct <code>reshape(2, 4, 6, 16)</code> without transpose max absolute error</td><td class="n">36.2399</td><td>Your own run</td></tr>
+    <tr><td>Kata silent broadcast <code>(2,) * (2, 1) -&gt; (2, 2)</code> mean vs true <code>(2,)</code> mean</td><td class="n">0.750 vs 0.800</td><td>Your own run</td></tr>
+    <tr><td>Kata rank-8 LoRA FLOPs: factored <code>(x @ A) @ B</code> vs unfactored <code>x @ (A @ B)</code></td><td class="n">24,576 vs 163,840 (6.67x)</td><td>Your own run</td></tr>
+    <tr><td>Kata sliced LM head <code>x[:, -1:, :] @ W_lm</code> shape vs full sequence logits</td><td class="n">(2, 1000) vs (2, 6, 1000) (6x less)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Explicit <code>einsum("bhid,bhjd-&gt;bhij", q, k)</code></td><td>Self-documenting axis names; fuses transpose and contraction into one readable call</td><td>Slightly higher dispatch overhead on some runtimes if contraction path is not cached</td><td>Misspelled index letters that turn a contraction into an uncontracted outer product</td></tr>
+    <tr><td><code>transpose</code> + <code>matmul</code> (<code>q @ k.transpose(-1, -2)</code>)</td><td>Dispatches directly to vendor cuBLAS / strided batched GEMM kernels</td><td>Requires manual tracking of numerical axis indices (<code>0, 2, 1, 3</code>) across 4D tensors</td><td>Non-contiguous output strides that crash a subsequent <code>.view()</code> call</td></tr>
+    <tr><td>Factored LoRA <code>(x @ A) @ B</code> at runtime</td><td>Only <code>4*B*S*d*r</code> FLOPs (<code>24,576</code> in kata); lets different batch items use different adapters</td><td>Two sequential kernel launches per layer if weights are not merged into base <code>W</code></td><td>Parenthesizing as <code>x @ (A @ B)</code> per forward pass, which costs <code>6.67x</code> more FLOPs</td></tr>
+    <tr><td>Merged LoRA <code>W_eff = W_0 + A @ B</code> once at load time</td><td>Zero extra latency or kernel launches at inference for a single static adapter</td><td>Cannot serve multiple tenant adapters in the same batch without unmerging</td><td>Recomputing <code>A @ B</code> inside the forward loop instead of caching <code>W_eff</code> once</td></tr>
+    <tr><td>GQA KV projection <code>(B, S, KVH, d_head)</code> with <code>KVH &lt; H</code></td><td>Reduces KV cache memory and memory-bandwidth bottleneck by factor <code>H / KVH</code></td><td>Requires repeating or striding KV heads to match <code>H</code> query heads during attention</td><td>Repeating KV heads into a new allocated tensor before storing in the KV cache</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 15 canonical LLM tensor shapes and 3 silent bugs</h2>
+  <p>Predicts and verifies all 15 tensor shapes across an end-to-end GQA transformer layer (embedding, RMSNorm, Q/K head split, repeat_interleave, einsum scores, 4D dual-mask broadcast, value projection, head merge, SwiGLU MLP, LoRA, and sliced LM unembedding), then triggers the three classic silent shape bugs.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python A09_kata.py</pre></div>
+  <p class="cap">A09_kata.py</p><div class="codewrap"><pre data-copy>"""
+A09 Kata: Matrices, matmul, tensor shapes, broadcasting, einsum
+Predicts 15 canonical LLM and ML tensor shapes and verifies every one in NumPy,
+then demonstrates three silent shape/broadcasting/einsum bugs.
+"""
+import numpy as np
+
+np.random.seed(42)
+
+# Canonical dimensions
+B, S, V = 2, 6, 1000
+d_model, d_ff = 64, 172
+H, KVH, d_head = 4, 2, 16
+r = 8  # LoRA rank
+
+ids = np.random.randint(0, V, size=(B, S))
+W_emb = np.random.randn(V, d_model)
+W_q = np.random.randn(d_model, H * d_head)
+W_k = np.random.randn(d_model, KVH * d_head)
+W_g = np.random.randn(d_model, d_ff)
+W_d = np.random.randn(d_ff, d_model)
+W_lm = np.random.randn(d_model, V)
+gamma = np.ones((d_model,))
+causal_mask = np.triu(np.full((1, 1, S, S), -1e9), k=1)
+pad_mask = np.zeros((B, 1, 1, S))
+lora_A = np.random.randn(d_model, r)
+lora_B = np.random.randn(r, d_model)
+
+# 15 shape predictions vs live NumPy execution
+x = W_emb[ids]                                            # 1. Embedding lookup
+rms = np.sqrt(np.mean(x ** 2, axis=-1, keepdims=True))    # 2. RMS reducer with keepdims
+x_norm = (x / (rms + 1e-5)) * gamma                       # 3. Broadcast scale [B,S,d] * [d]
+q_flat = x_norm @ W_q                                     # 4. Batched Q projection
+q = q_flat.reshape(B, S, H, d_head).transpose(0, 2, 1, 3) # 5. Split + transpose heads
+k = (x_norm @ W_k).reshape(B, S, KVH, d_head)             # 6. GQA K projection
+k_rep = np.repeat(k, H // KVH, axis=2).transpose(0, 2, 1, 3) # 7. GQA repeat_interleave
+scores = np.einsum("bhid,bhjd-&gt;bhij", q, k_rep)           # 8. Attention scores via einsum
+masked = scores + causal_mask + pad_mask                  # 9. 4D broadcast of two masks
+attn_out = np.einsum("bhij,bhjd-&gt;bhid", masked, k_rep)    # 10. Value weighted sum
+merged = attn_out.transpose(0, 2, 1, 3).reshape(B, S, d_model) # 11. Merge heads
+ff_act = (x_norm @ W_g) * (x_norm @ W_g)                  # 12. Gated MLP intermediate
+ff_out = ff_act @ W_d                                     # 13. MLP down-projection
+lora_delta = (x_norm @ lora_A) @ lora_B                   # 14. LoRA low-rank update
+logits_last = (x_norm[:, -1:, :] @ W_lm)[:, 0, :]         # 15. Sliced LM head unembedding
+
+cases = [
+    ("01. W_emb[ids] lookup",               (2, 6, 64),      x.shape),
+    ("02. mean(x^2, axis=-1, keepdims)",    (2, 6, 1),       rms.shape),
+    ("03. (x / rms) * gamma broadcast",     (2, 6, 64),      x_norm.shape),
+    ("04. x_norm @ W_q batched matmul",     (2, 6, 64),      q_flat.shape),
+    ("05. Q reshape+transpose(0,2,1,3)",    (2, 4, 6, 16),   q.shape),
+    ("06. K GQA reshape(B,S,KVH,d_head)",   (2, 6, 2, 16),   k.shape),
+    ("07. K repeat_interleave + transpose", (2, 4, 6, 16),   k_rep.shape),
+    ("08. einsum('bhid,bhjd-&gt;bhij')",       (2, 4, 6, 6),    scores.shape),
+    ("09. scores + [1,1,S,S] + [B,1,1,S]",  (2, 4, 6, 6),    masked.shape),
+    ("10. einsum('bhij,bhjd-&gt;bhid')",       (2, 4, 6, 16),   attn_out.shape),
+    ("11. transpose(0,2,1,3)+reshape",      (2, 6, 64),      merged.shape),
+    ("12. SwiGLU gate*up intermediate",     (2, 6, 172),     ff_act.shape),
+    ("13. ff_act @ W_d down-projection",    (2, 6, 64),      ff_out.shape),
+    ("14. LoRA (x @ A) @ B rank-8",         (2, 6, 64),      lora_delta.shape),
+    ("15. Sliced LM head [:, -1:, :] @ W",  (2, 1000),       logits_last.shape),
+]
+
+print(f"=== A09 KATA: 15 TENSOR SHAPE PREDICTIONS &amp; VERIFICATION (B={B}, S={S}, d={d_model}, H={H}, KVH={KVH}) ===")
+print(f"{'Operation':&lt;37} | {'Predicted':&lt;16} | {'Actual':&lt;16} | {'Match'}")
+print("-" * 80)
+for name, pred, actual in cases:
+    assert pred == actual, f"Mismatch on {name}: {pred} != {actual}"
+    print(f"{name:&lt;37} | {str(pred):&lt;16} | {str(actual):&lt;16} | OK")
+
+print("\n1. BREAK IT #1: RESHAPE(B, H, S, d_head) WITHOUT TRANSPOSE (Same shape, scrambled memory!)")
+q_bug = q_flat.reshape(B, H, S, d_head)  # WRONG: mixes sequence positions into heads!
+max_diff = float(np.max(np.abs(q - q_bug)))
+print(f"  q.shape={q.shape} vs q_bug.shape={q_bug.shape} -&gt; shapes identical, max_abs_diff = {max_diff:.4f}")
+
+print("\n2. BREAK IT #2: SILENT OUTER-PRODUCT BROADCAST ([B] * [B, 1] instead of [B, 1] * [B, 1])")
+loss_per_sample = np.array([1.2, 0.8])          # shape (2,)
+sample_weights = np.array([[1.0], [0.5]])       # shape (2, 1)
+silent_outer = loss_per_sample * sample_weights # broadcasts to (2, 2) instead of (2,)!
+print(f"  (2,) * (2, 1) -&gt; shape {silent_outer.shape}, mean={np.mean(silent_outer):.3f} vs true weighted mean={np.mean(loss_per_sample * sample_weights.squeeze()):.3f}")
+
+print("\n3. BREAK IT #3: LORA CONTRACTION ORDER FLOPS ((x @ A) @ B vs x @ (A @ B))")
+flops_factored = 2 * B * S * d_model * r + 2 * B * S * r * d_model
+flops_dense = 2 * d_model * r * d_model + 2 * B * S * d_model * d_model
+print(f"  Factored (x @ A) @ B : {flops_factored:,} FLOPs")
+print(f"  Unfactored x @ (A@B) : {flops_dense:,} FLOPs ({flops_dense / flops_factored:.2f}x more FLOPs!)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== A09 KATA: 15 TENSOR SHAPE PREDICTIONS &amp; VERIFICATION (B=2, S=6, d=64, H=4, KVH=2) ===
+Operation                             | Predicted        | Actual           | Match
+--------------------------------------------------------------------------------
+01. W_emb[ids] lookup                 | (2, 6, 64)       | (2, 6, 64)       | OK
+02. mean(x^2, axis=-1, keepdims)      | (2, 6, 1)        | (2, 6, 1)        | OK
+03. (x / rms) * gamma broadcast       | (2, 6, 64)       | (2, 6, 64)       | OK
+04. x_norm @ W_q batched matmul       | (2, 6, 64)       | (2, 6, 64)       | OK
+05. Q reshape+transpose(0,2,1,3)      | (2, 4, 6, 16)    | (2, 4, 6, 16)    | OK
+06. K GQA reshape(B,S,KVH,d_head)     | (2, 6, 2, 16)    | (2, 6, 2, 16)    | OK
+07. K repeat_interleave + transpose   | (2, 4, 6, 16)    | (2, 4, 6, 16)    | OK
+08. einsum('bhid,bhjd-&gt;bhij')         | (2, 4, 6, 6)     | (2, 4, 6, 6)     | OK
+09. scores + [1,1,S,S] + [B,1,1,S]    | (2, 4, 6, 6)     | (2, 4, 6, 6)     | OK
+10. einsum('bhij,bhjd-&gt;bhid')         | (2, 4, 6, 16)    | (2, 4, 6, 16)    | OK
+11. transpose(0,2,1,3)+reshape        | (2, 6, 64)       | (2, 6, 64)       | OK
+12. SwiGLU gate*up intermediate       | (2, 6, 172)      | (2, 6, 172)      | OK
+13. ff_act @ W_d down-projection      | (2, 6, 64)       | (2, 6, 64)       | OK
+14. LoRA (x @ A) @ B rank-8           | (2, 6, 64)       | (2, 6, 64)       | OK
+15. Sliced LM head [:, -1:, :] @ W    | (2, 1000)        | (2, 1000)        | OK
+
+1. BREAK IT #1: RESHAPE(B, H, S, d_head) WITHOUT TRANSPOSE (Same shape, scrambled memory!)
+  q.shape=(2, 4, 6, 16) vs q_bug.shape=(2, 4, 6, 16) -&gt; shapes identical, max_abs_diff = 36.2399
+
+2. BREAK IT #2: SILENT OUTER-PRODUCT BROADCAST ([B] * [B, 1] instead of [B, 1] * [B, 1])
+  (2,) * (2, 1) -&gt; shape (2, 2), mean=0.750 vs true weighted mean=0.800
+
+3. BREAK IT #3: LORA CONTRACTION ORDER FLOPS ((x @ A) @ B vs x @ (A @ B))
+  Factored (x @ A) @ B : 24,576 FLOPs
+  Unfactored x @ (A@B) : 163,840 FLOPs (6.67x more FLOPs!)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata FLOPs and silent error magnitudes (B=2, S=6, d=64, H=4, r=8)</div>
+    <div data-bars='{"unit":" FLOPs","digits":0,"rows":[{"label":"Sliced LM head [:,-1:,:] @ W_lm (15)","value":256000,"tone":"good"},{"label":"Full sequence x @ W_lm (un-sliced 6x)","value":1536000,"tone":"warn"},{"label":"Factored LoRA (x @ A) @ B (Break #3)","value":24576,"tone":"good"},{"label":"Unfactored LoRA x @ (A @ B) (6.67x)","value":163840,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Contraction order and slicing before projection slash compute by 6.67x on LoRA (<code>24,576</code> vs <code>163,840</code> FLOPs) and 6.00x on the vocabulary head (<code>256,000</code> vs <code>1,536,000</code> FLOPs) without changing a single output logit.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Every single head-level attention operation lives in 4D <code>(B, H, S, *)</code>:</strong> step 05 splits and transposes queries to <code>(2, 4, 6, 16)</code>, step 08 contracts <code>d=16</code> via <code>einsum('bhid,bhjd-&gt;bhij')</code> to <code>(2, 4, 6, 6)</code>, step 10 contracts <code>j=6</code> back to <code>(2, 4, 6, 16)</code>, and step 11 transposes and reshapes back to <code>(2, 6, 64)</code>.</li>
+    <li><strong>Identical shape does not mean identical tensor (Break #1):</strong> <code>q_flat.reshape(2, 4, 6, 16)</code> has the exact same <code>(2, 4, 6, 16)</code> shape tuple as the properly transposed tensor, yet its elements differ by <code>max_abs_diff = 36.2399</code> because tokens were chunked across heads.</li>
+    <li><strong>Right-aligned broadcasting turns mismatched ranks into silent outer products (Break #2):</strong> multiplying <code>loss_per_sample</code> of shape <code>(2,)</code> by <code>sample_weights</code> of shape <code>(2, 1)</code> produces a <code>(2, 2)</code> matrix whose mean is <code>0.750</code> instead of the true weighted mean <code>0.800</code>.</li>
+    <li><strong>Parenthesization changes FLOPs by 6.67x on the exact same algebraic expression (Break #3):</strong> <code>(x_norm @ lora_A) @ lora_B</code> costs <code>24,576</code> FLOPs via rank <code>r=8</code>, while <code>x_norm @ (lora_A @ lora_B)</code> costs <code>163,840</code> FLOPs.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Drop <code>keepdims=True</code> in step 02.</strong> Change <code>keepdims=True</code> to <code>keepdims=False</code> on line 31 so <code>rms</code> has shape <code>(2, 6)</code>. Predict which axis alignment fails on line 32 when dividing <code>(2, 6, 64) / (2, 6)</code>, then run it to confirm the <code>ValueError: operands could not be broadcast together with shapes (2,6,64) (2,6)</code>.</li>
+    <li><strong>Swap an index letter in einsum step 08.</strong> Change <code>np.einsum("bhid,bhjd-&gt;bhij", q, k_rep)</code> to <code>np.einsum("bhid,bhjd-&gt;bhid", q, k_rep)</code>. Predict the output shape and explain why summing over <code>j</code> before softmax collapses all key positions into one vector.</li>
+    <li><strong>Test the crossover point where factored LoRA equals unfactored LoRA.</strong> Change <code>r = 8</code> on line 14 to <code>r = 32</code> and <code>r = 64</code>. Predict the FLOP ratio <code>flops_dense / flops_factored</code> at <code>r = 32</code> before running.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Replace step 07 (<code>np.repeat(k, H // KVH, axis=2)</code>) with a broadcast-free 5D <code>einsum("bshgd,bthgd-&gt;bhgst", ...)</code> by reshaping queries to <code>(B, S, KVH, H // KVH, d_head) = (2, 6, 2, 2, 16)</code> and keys to <code>(2, 6, 2, 1, 16)</code>, verifying that the reshaped output matches <code>scores</code> to within <code>1e-12</code> without duplicating key memory.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Model trains without crashing, but validation loss plateaus way above baseline after refactoring attention</td><td>Used <code>q.reshape(B, H, S, d_head)</code> instead of <code>q.reshape(B, S, H, d_head).transpose(0, 2, 1, 3)</code>, scrambling token positions across heads</td><td>Split the contiguous feature axis to <code>(B, S, H, d_head)</code> first, then permute axes 1 and 2 via <code>transpose</code></td></tr>
+    <tr><td>Training step time and GPU memory spike quadratically with batch size <code>B</code> inside the loss function</td><td>Per-sample target <code>(B,)</code> subtracted from or multiplied by prediction <code>(B, 1)</code>, broadcasting to a <code>(B, B)</code> matrix</td><td>Enforce matching ranks explicitly (<code>target.reshape(B, 1)</code> or <code>pred.squeeze(-1)</code>) and assert <code>loss_vec.shape == (B,)</code></td></tr>
+    <tr><td><code>RuntimeError: view size is not compatible with input tensor's size and stride</code> when merging heads</td><td>Called <code>.view(B, S, d_model)</code> directly after <code>attn_out.transpose(1, 2)</code> on a non-contiguous tensor</td><td>Call <code>.contiguous().view(B, S, d_model)</code> or <code>.reshape(B, S, d_model)</code> after transposing</td></tr>
+    <tr><td>Prefill / decode throughput drops and VRAM spikes at the LM head projection</td><td>Projected the entire sequence <code>x @ W_lm</code> to shape <code>(B, S, V)</code> when only the last token's logits are needed</td><td>Slice before projecting: <code>x[:, -1:, :] @ W_lm</code> so matmul runs on <code>S=1</code> instead of full context <code>S</code></td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Shape assertions at module boundaries (or <code>jaxtyping</code> / <code>einops</code> runtime checks), peak allocated activation memory per token, and effective TFLOP/s vs theoretical GEMM roof to catch unfactored contractions or stray <code>(B, B)</code> broadcasts.</p>
+  <details class="q"><summary>Scenario: You deploy a voice clinic assistant using a custom GQA + LoRA wrapper. Latency per decode step is 4x higher than expected and multi-turn transcripts degrade into gibberish after token 16, even though unit tests checking output tensor shapes all pass. How do you isolate the bugs?</summary><div class="a"><ol>
+    <li><strong>Check head split and merge strides first (quality bug):</strong> Inspect the Q/K/V projection and output merge lines. Verify that the code reshapes to <code>(B, S, H, d_head)</code> and transposes axes 1 and 2, rather than reshaping directly to <code>(B, H, S, d_head)</code>. Run a 1-token vs 2-token equivalence test: in causal attention, token 0's output must remain identical when token 1 is appended; a direct <code>reshape(B, H, S, d_head)</code> fails this causality test immediately because token 1 shifts memory offsets across heads.</li>
+    <li><strong>Check mask broadcasting axes:</strong> Print the shapes of <code>scores</code>, <code>causal_mask</code>, and <code>pad_mask</code>. Confirm <code>pad_mask</code> is shaped <code>(B, 1, 1, S_k)</code> rather than <code>(B, S_k)</code> or <code>(B, 1, S_q, 1)</code>, which would mask query rows instead of padded key columns.</li>
+    <li><strong>Audit LoRA parenthesization and LM head slicing (latency bug):</strong> Check that LoRA computes <code>(x @ A) @ B</code> (or pre-merges <code>W + A @ B</code> once at startup) rather than <code>x @ (A @ B)</code> on every token, and confirm the LM head slices <code>x[:, -1:, :] @ W_lm</code> during prefill-to-decode transition instead of materializing <code>(B, S, V)</code> logits.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Matrix multiplication, broadcasting, stride permutations, and einsum are the core execution primitives of every neural network. Mastering them lets you trace any 3D or 4D transformer forward pass by hand, eliminate silent data-corruption bugs that pass shape checks, and cut compute by 6x or more through optimal contraction order.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Batched matmul contracts the last axis of the left tensor against the second-to-last axis of the right tensor while broadcasting leading batch axes. To split a hidden state of shape <code>(B, S, d_model)</code> into attention heads, we first factor the contiguous feature axis to <code>(B, S, H, d_head)</code> and then transpose axes 1 and 2 to <code>(B, H, S, d_head)</code>. Einsum expresses multi-head contractions directly by index letter, such as <code>bhid,bhjd-&gt;bhij</code> to contract head width <code>d</code> into <code>(B, H, S, S)</code> attention scores. Elementwise broadcasting right-aligns shape tuples and stretches size-1 axes with stride zero, merging causal mask <code>(1, 1, S, S)</code> and padding mask <code>(B, 1, 1, S)</code> in place.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Three failure modes dominate production code. First, reshaping <code>(B, S, d_model)</code> directly to <code>(B, H, S, d_head)</code> without transposing keeps the target shape but scrambles tokens across heads, yielding a 36.24 max error in our kata. Second, multiplying shapes <code>(B,)</code> and <code>(B, 1)</code> right-aligns to a <code>(B, B)</code> outer product. Third, computing LoRA as <code>x @ (A @ B)</code> instead of <code>(x @ A) @ B</code> costs 163,840 FLOPs vs 24,576 FLOPs, a 6.67x penalty.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"Tensor shapes and broadcasting are important so your neural network layers line up properly and don't crash, and using einsum or LoRA helps make the model cleaner and faster in production."</p><p class="strong">"In a transformer with B=2, S=6, d_model=64, and H=4, projecting queries gives (2, 6, 64). You must reshape the contiguous last axis to (2, 6, 4, 16) before transposing to (2, 4, 6, 16); reshaping directly to (2, 4, 6, 16) passes shape checks but mixes token positions across heads with a 36.24 max error. Similarly, parenthesizing rank-8 LoRA as (x @ A) @ B takes 24,576 FLOPs versus 163,840 FLOPs for x @ (A @ B)."</p><p>The strong answer names exact 4D shapes, explains physical row-major memory strides versus shape metadata, and quantifies the FLOP ratio from contraction order.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If <code>tensor.shape</code> matches the expected <code>(B, H, S, d_head)</code> tuple at every layer, the tensor transformations are bug-free."</summary><div class="a">Wrong. Shape metadata only verifies axis lengths, not which physical elements sit at each coordinate. Calling <code>q_flat.reshape(B, H, S, d_head)</code> on a <code>(B, S, d_model)</code> tensor produces the exact <code>(2, 4, 6, 16)</code> shape tuple while slicing sequence positions across heads, producing <code>max_abs_diff = 36.2399</code> against the true transposed tensor.</div></details>
+  <details class="q"><summary>"Broadcasting aligns tensor shapes from left to right, just like reading a tuple in Python."</summary><div class="a">Wrong. Broadcasting always aligns shape tuples from the <strong>right</strong> (trailing axis first) and prepends <code>1</code>s on the left of the lower-rank shape. That is why a 1D tensor of shape <code>(64,)</code> broadcasts across the last axis of <code>(2, 6, 64)</code>, whereas a 2D tensor of shape <code>(2, 6)</code> becomes <code>(1, 2, 6)</code> and fails against <code>(2, 6, 64)</code> unless you keep the trailing singleton axis <code>(2, 6, 1)</code> via <code>keepdims=True</code>.</div></details>
+  <details class="q"><summary>"Because matrix multiplication is associative, <code>(X @ A) @ B</code> and <code>X @ (A @ B)</code> have the same runtime cost."</summary><div class="a">Wrong. Associativity guarantees identical mathematical results (up to floating-point rounding), not identical FLOPs. When <code>A</code> is <code>(64, 8)</code> and <code>B</code> is <code>(8, 64)</code> on input <code>X</code> of shape <code>(2, 6, 64)</code>, <code>(X @ A) @ B</code> contracts through the narrow rank-8 bottleneck in <code>24,576</code> FLOPs, whereas <code>X @ (A @ B)</code> forms a dense <code>(64, 64)</code> matrix first and takes <code>163,840</code> FLOPs (<code>6.67x</code> more work).</div></details>
+  <details class="q"><summary>"Broadcasting a mask of shape <code>(1, 1, S, S)</code> onto attention scores of shape <code>(B, H, S, S)</code> copies the mask <code>B * H</code> times in GPU memory before adding."</summary><div class="a">Wrong. Broadcasting stretches singleton dimensions by setting their physical memory stride to <code>0</code> in the kernel iterator. The fused elementwise addition reads the same <code>(1, 1, S, S)</code> mask elements across all batches and heads without allocating a duplicated <code>(B, H, S, S)</code> mask buffer.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through the exact tensor shapes from token IDs <code>(B=2, S=6)</code> to multi-head attention output <code>(2, 6, 64)</code> when <code>d_model=64, H=4, KVH=2, d_head=16</code>.</summary><div class="a">1) Embedding lookup <code>W_emb[ids]</code> maps <code>(2, 6)</code> with <code>(1000, 64)</code> to <code>(2, 6, 64)</code>. 2) RMSNorm computes <code>rms</code> of shape <code>(2, 6, 1)</code> via <code>keepdims=True</code>, divides <code>(2, 6, 64) / (2, 6, 1)</code>, and scales by <code>gamma</code> of shape <code>(64,)</code> to stay <code>(2, 6, 64)</code>. 3) <code>x_norm @ W_q</code> gives <code>(2, 6, 64)</code>, reshaped to <code>(2, 6, 4, 16)</code> and transposed via <code>(0, 2, 1, 3)</code> to <code>q</code> of shape <code>(2, 4, 6, 16)</code>. 4) <code>x_norm @ W_k</code> gives <code>(2, 6, 32)</code>, reshaped to <code>(2, 6, 2, 16)</code>, repeated by <code>H // KVH = 2</code> along axis 2, and transposed to <code>(2, 4, 6, 16)</code>. 5) <code>einsum("bhid,bhjd-&gt;bhij", q, k_rep)</code> contracts <code>d=16</code> to <code>(2, 4, 6, 6)</code>, adds masks <code>(1, 1, 6, 6)</code> and <code>(2, 1, 1, 6)</code>, contracts against values via <code>bhij,bhjd-&gt;bhid</code> to <code>(2, 4, 6, 16)</code>, and transposes <code>(0, 2, 1, 3)</code> plus reshapes back to <code>(2, 6, 64)</code>.<div class="f"><b>Follow-up</b>What is the shape of <code>W_k</code> in this GQA layer, and how many parameters does it save compared to standard MHA? It has shape <code>(64, 32)</code> instead of <code>(64, 64)</code>, cutting K (and V) projection parameters by 50% (2,048 vs 4,096 weights each).</div></div></details>
+  <details class="q"><summary>State the two rules of NumPy and PyTorch broadcasting and trace what happens when you add tensors of shape <code>(2, 4, 6, 6)</code>, <code>(1, 1, 6, 6)</code>, and <code>(2, 1, 1, 6)</code>.</summary><div class="a">Rule 1 (Right-alignment): align shape tuples on their trailing axis and prepend <code>1</code>s to the left of any shorter shape tuple until ranks match. Rule 2 (Axis compatibility): at each axis position, dimensions must either be equal or one of them must be <code>1</code>; size-1 axes stretch with stride 0 to the maximum size along that axis. For <code>(2, 4, 6, 6)</code>, <code>(1, 1, 6, 6)</code>, and <code>(2, 1, 1, 6)</code>, all three are already rank 4, and the axis-wise maxima are <code>(max(2,1,2), max(4,1,1), max(6,6,1), max(6,6,6)) = (2, 4, 6, 6)</code>.<div class="f"><b>Follow-up</b>What happens if someone passes a padding mask of shape <code>(2, 6)</code> without unsqueezing it first? Right-alignment pads <code>(2, 6)</code> on the left to <code>(1, 1, 2, 6)</code>, which collides with axis 2 of <code>(2, 4, 6, 6)</code> because <code>2 != 6</code>, raising a broadcast error (or even worse, if <code>B == S</code>, silently broadcasting batch items across query token rows!).</div></div></details>
+  <details class="q"><summary>Why does multiplying a 1D loss vector of shape <code>(B,)</code> by a 2D weight vector of shape <code>(B, 1)</code> silently corrupt training gradients?</summary><div class="a">Right-alignment pads <code>(B,)</code> on the left to <code>(1, B)</code>. When multiplied by <code>(B, 1)</code>, axis 0 stretches from 1 to <code>B</code> and axis 1 stretches from 1 to <code>B</code>, producing a <code>(B, B)</code> outer-product matrix where every sample's loss is multiplied by every other sample's weight. Calling <code>.mean()</code> on that <code>(B, B)</code> matrix collapses it to a scalar without raising an error; in the kata, <code>[1.2, 0.8] * [[1.0], [0.5]]</code> yields a mean of <code>0.750</code> instead of the true weighted mean <code>0.800</code>.</div></details>
+  <details class="q"><summary>Explain in terms of physical memory strides why <code>q_flat.reshape(B, H, S, d_head)</code> fails when <code>q_flat</code> has shape <code>(B, S, d_model)</code>.</summary><div class="a">In row-major memory, <code>q_flat</code> of shape <code>(2, 6, 64)</code> stores all 64 features of token 0 first (offsets 0..63), then all 64 features of token 1 (offsets 64..127), and so on. Reshaping never moves bytes; it just assigns new strides for the target shape. Reshaping directly to <code>(2, 4, 6, 16)</code> assigns head stride <code>6 * 16 = 96</code>, so head 0 reads offsets 0..95 (all 4 heads of token 0 plus the first 2 heads of token 1!). Reshaping first to <code>(2, 6, 4, 16)</code> assigns head stride <code>16</code> within each token, and <code>transpose(0, 2, 1, 3)</code> swaps the token stride (<code>64</code>) and head stride (<code>16</code>) so each head steps by 64 across tokens.<div class="f"><b>Follow-up</b>What are the exact element strides of <code>q</code> after <code>q_flat.reshape(2, 6, 4, 16).transpose(0, 2, 1, 3)</code>? Before transpose, strides of <code>(2, 6, 4, 16)</code> are <code>(384, 64, 16, 1)</code>; swapping axes 1 and 2 gives strides <code>(384, 16, 64, 1)</code>.</div></div></details>
+  <details class="q"><summary>How do you read an <code>einsum</code> string like <code>"bhid,bhjd-&gt;bhij"</code>, and what is the rule for which indices get summed over?</summary><div class="a">Each distinct letter represents one axis of the input tensors: here <code>b</code>=batch, <code>h</code>=head, <code>i</code>=query sequence index, <code>j</code>=key sequence index, and <code>d</code>=head dimension. Any letter that appears on the left of <code>-&gt;</code> in multiple inputs is multiplied elementwise, and any letter that does NOT appear on the right of <code>-&gt;</code> is summed over (contracted). Because <code>d</code> is absent from <code>bhij</code>, <code>d</code> is summed out, leaving a 4D output ordered as <code>(b, h, i, j)</code>.<div class="f"><b>Follow-up</b>Write the <code>einsum</code> string that computes the trace of each <code>(S, S)</code> attention matrix inside a 4D score tensor of shape <code>(B, H, S, S)</code>, returning shape <code>(B, H)</code>. <code>"bhii-&gt;bh"</code>: repeating <code>i</code> on the last two axes selects the diagonal, and omitting <code>i</code> from the right side sums over that diagonal.</div></div></details>
+  <details class="q"><summary>Derive the FLOP counts for factored LoRA <code>(x @ A) @ B</code> versus unfactored LoRA <code>x @ (A @ B)</code> for <code>x</code> of shape <code>(B, S, d)</code>, <code>A</code> of shape <code>(d, r)</code>, and <code>B</code> of shape <code>(r, d)</code>.</summary><div class="a">Treat <code>x</code> as <code>(B*S, d)</code>. In factored order, <code>u = x @ A</code> multiplies <code>(B*S, d) @ (d, r)</code> in <code>2*B*S*d*r</code> FLOPs, and <code>u @ B</code> multiplies <code>(B*S, r) @ (r, d)</code> in another <code>2*B*S*r*d</code> FLOPs, totaling <code>4*B*S*d*r</code> FLOPs (<code>24,576</code> in the kata). In unfactored order, <code>W_delta = A @ B</code> multiplies <code>(d, r) @ (r, d)</code> in <code>2*d^2*r</code> FLOPs (<code>65,536</code>), and <code>x @ W_delta</code> multiplies <code>(B*S, d) @ (d, d)</code> in <code>2*B*S*d^2</code> FLOPs (<code>98,304</code>), totaling <code>163,840</code> FLOPs.<div class="f"><b>Follow-up</b>When IS it faster to compute <code>A @ B</code> explicitly? Only when the adapter is static across all requests and you pre-merge <code>W_merged = W_base + A @ B</code> once at model load time, paying <code>2*d^2*r</code> FLOPs once offline and <code>0</code> extra LoRA FLOPs at inference.</div></div></details>
+  <details class="q"><summary>In a SwiGLU MLP block, why does the intermediate activation have shape <code>(B, S, d_ff) = (2, 6, 172)</code>, and how many matmuls does the full SwiGLU block execute?</summary><div class="a">SwiGLU replaces a single up-projection with two parallel projections from <code>d_model=64</code> to <code>d_ff=172</code>: a gate projection <code>x @ W_gate</code> and an up projection <code>x @ W_up</code>, both of shape <code>(2, 6, 172)</code>. They are combined via elementwise multiplication <code>silu(x @ W_gate) * (x @ W_up)</code> (retaining shape <code>(2, 6, 172)</code>), and then contracted back to <code>(2, 6, 64)</code> by a third matmul with <code>W_down</code> of shape <code>(172, 64)</code>.</div></details>
+  <details class="q"><summary>At what sequence length <code>S</code> does multi-head attention matmul compute (<code>QK^T</code> and <code>PV</code>) exceed a single linear projection <code>x @ W</code> of shape <code>(d_model, d_model)</code>?</summary><div class="a">Across all <code>H</code> heads, <code>QK^T</code> takes <code>2 * B * H * S^2 * d_head = 2 * B * S^2 * d_model</code> FLOPs, and <code>PV</code> takes another <code>2 * B * S^2 * d_model</code> FLOPs, for a total of <code>4 * B * S^2 * d_model</code> FLOPs. A single <code>(B, S, d_model) @ (d_model, d_model)</code> projection takes <code>2 * B * S * d_model^2</code> FLOPs. Setting <code>4 * B * S^2 * d_model &gt; 2 * B * S * d_model^2</code> simplifies to <code>2 * S &gt; d_model</code> (or <code>S &gt; d_model / 2</code>; compared against all four Q, K, V, O linear projections totaling <code>8 * B * S * d_model^2</code>, attention matmuls overtake when <code>S &gt; 2 * d_model</code>).</div></details>
+  <details class="q"><summary>Why does slicing <code>x_norm[:, -1:, :]</code> with a slice <code>-1:</code> instead of an integer index <code>-1</code> before multiplying by <code>W_lm</code> simplify downstream code?</summary><div class="a">Using the slice <code>-1:</code> preserves the 3D tensor rank <code>(B, 1, d_model) = (2, 1, 64)</code> so multiplying by <code>W_lm</code> of shape <code>(64, 1000)</code> yields <code>(2, 1, 1000)</code>, matching the 3D rank expected by unified prefill/decode loss or sampling wrappers before indexing <code>[:, 0, :]</code> to get <code>(2, 1000)</code>. Either way, slicing before the matmul cuts compute by a factor of <code>S = 6</code> (<code>256,000</code> FLOPs instead of <code>1,536,000</code> FLOPs).</div></details>
+  <details class="q"><summary>How do you express batched matrix multiplication of two 3D tensors <code>A</code> of shape <code>(B, M, K)</code> and <code>B</code> of shape <code>(B, K, N)</code> versus broadcasting a 2D weight matrix <code>W</code> of shape <code>(K, N)</code> across <code>A</code> using <code>einsum</code>?</summary><div class="a">For two 3D tensors sharing batch axis <code>b</code>, write <code>einsum("bmk,bkn-&gt;bmn", A, B)</code>. For a 3D activation tensor <code>A</code> of shape <code>(B, S, K)</code> and a 2D weight matrix <code>W</code> of shape <code>(K, N)</code>, write <code>einsum("bsk,kn-&gt;bsn", A, W)</code>; omitting <code>b</code> and <code>s</code> from the second operand tells <code>einsum</code> to broadcast <code>W</code> across both leading axes while contracting <code>k</code>.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) all 15 shapes from the kata for <code>B=2, S=6, d=64, H=4, KVH=2, d_ff=172, r=8, V=1000</code>, (2) the two broadcasting rules and why <code>(2,) * (2, 1)</code> produces <code>(2, 2)</code> with mean <code>0.750</code> instead of <code>0.800</code>, (3) why <code>reshape(B, H, S, d_head)</code> gives <code>max_abs_diff = 36.2399</code>, and (4) the exact FLOP formulas and kata values for factored vs unfactored LoRA.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>5-stage stepper &amp; memory hook:</strong> <strong>R-T-E-B-F</strong> (Right-align broadcasts, Transpose before/after multi-head reshape, Einsum contracts indices missing from RHS, Batched matmul contracts last of left with second-to-last of right, Factor low-rank chains as <code>(x @ A) @ B</code>).</li>
+    <li><strong>15 kata shapes:</strong> Embed <code>(2, 6, 64)</code> -&gt; RMS <code>(2, 6, 1)</code> -&gt; RMSNorm <code>(2, 6, 64)</code> -&gt; Q flat <code>(2, 6, 64)</code> -&gt; Q heads <code>(2, 4, 6, 16)</code> -&gt; K GQA <code>(2, 6, 2, 16)</code> -&gt; K repeated <code>(2, 4, 6, 16)</code> -&gt; scores <code>(2, 4, 6, 6)</code> -&gt; masked <code>(2, 4, 6, 6)</code> -&gt; attn_out <code>(2, 4, 6, 16)</code> -&gt; merged <code>(2, 6, 64)</code> -&gt; SwiGLU intermediate <code>(2, 6, 172)</code> -&gt; FFN out <code>(2, 6, 64)</code> -&gt; LoRA delta <code>(2, 6, 64)</code> -&gt; sliced LM head <code>(2, 1000)</code>.</li>
+    <li><strong>Break #1 (reshape vs transpose):</strong> <code>q_flat.reshape(2, 4, 6, 16)</code> reads contiguous row-major token memory into heads without moving bytes, causing <code>max_abs_diff = 36.2399</code> vs <code>q_flat.reshape(2, 6, 4, 16).transpose(0, 2, 1, 3)</code> (strides <code>(384, 16, 64, 1)</code>).</li>
+    <li><strong>Break #2 (silent outer-product broadcast):</strong> Right-aligning <code>(2,)</code> and <code>(2, 1)</code> pads <code>(2,)</code> on the left to <code>(1, 2)</code>, stretching to <code>(2, 2)</code> with mean <code>0.750</code> instead of true weighted mean <code>0.800</code>.</li>
+    <li><strong>Break #3 (contraction order FLOPs):</strong> Factored <code>(x @ A) @ B</code> takes <code>4 * B * S * d * r = 24,576</code> FLOPs; unfactored <code>x @ (A @ B)</code> takes <code>2 * d^2 * r + 2 * B * S * d^2 = 163,840</code> FLOPs (<code>6.67x</code> penalty).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A08: Why do transformer attention scores divide the dot product <code>q . k</code> by <code>sqrt(d_head)</code> before applying softmax?</summary><div class="a">If <code>q</code> and <code>k</code> have independent components with mean 0 and variance 1, their dot product over <code>d_head</code> dimensions has mean 0 and variance <code>d_head</code> (standard deviation <code>sqrt(d_head)</code>). Dividing by <code>sqrt(d_head)</code> restores unit variance so large dot products do not push softmax into flat saturation regions with vanishing gradients.</div></details>
+  <details class="q"><summary>K04: During autoregressive decoding of one new token at sequence position <code>S</code>, what changes in the Q, K, and V tensor shapes compared to the prefill pass?</summary><div class="a">During prefill, Q, K, and V all have sequence length <code>S</code> (shape <code>(B, H, S, d_head)</code>), making <code>QK^T</code> an <code>(S, S)</code> matrix-matrix multiply. During decode of one token, Q has sequence length <code>1</code> (shape <code>(B, H, 1, d_head)</code>) while K and V are read from the KV cache with length <code>S</code> (shape <code>(B, H, S, d_head)</code>), turning attention into a memory-bandwidth-bound matrix-vector multiply producing scores of shape <code>(B, H, 1, S)</code>.</div></details>
+  <details class="q"><summary>A08: What is the difference between the L2 norm and cosine similarity of two embedding vectors, and when does dot product equal cosine similarity?</summary><div class="a">The L2 norm <code>||x||_2 = sqrt(sum(x_i^2))</code> measures a single vector's Euclidean magnitude, whereas cosine similarity <code>(x . y) / (||x||_2 ||y||_2)</code> measures the angle between two vectors invariant to scale. Dot product equals cosine similarity when both vectors are L2-normalized to unit length (<code>||x||_2 = ||y||_2 = 1</code>).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://numpy.org/doc/stable/user/basics.broadcasting.html">NumPy Documentation: Broadcasting</a><small>Right-alignment rules, singleton axis stretching with zero stride, and outer-product behavior. Checked 2026-11-18.</small></li>
+    <li><a href="https://numpy.org/doc/stable/reference/generated/numpy.einsum.html">NumPy Documentation: numpy.einsum</a><small>Explicit and implicit Einstein summation grammar, repeated-index contraction, and contraction path optimization. Checked 2026-11-18.</small></li>
+    <li><a href="https://pytorch.org/docs/stable/tensor_view.html">PyTorch Documentation: Tensor Views and Strides</a><small>Physical memory layout, row-major strides, and when transpose requires contiguous() before view(). Checked 2026-11-18.</small></li>
+    <li><a href="https://arxiv.org/abs/2305.13245">Ainslie et al. (2023): GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a><small>Grouped-Query Attention tensor shapes, KV head grouping, and repeat_interleave alignment. Checked 2026-11-18.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Matrices &amp; batched matmul:</strong> Contracts the last axis of the left operand with the second-to-last axis of the right operand <code>(..., M, K) @ (..., K, N) -&gt; (..., M, N)</code> in <code>2*M*K*N</code> FLOPs per batch item while broadcasting leading batch axes.</li>
+    <li><strong>Tensor shapes &amp; physical strides:</strong> A tensor is a 1D memory buffer plus <code>shape</code> and <code>strides</code>; splitting <code>(B, S, d_model)</code> into heads requires <code>reshape(B, S, H, d_head).transpose(0, 2, 1, 3)</code> because direct <code>reshape(B, H, S, d_head)</code> slices tokens across heads (<code>max_abs_diff = 36.2399</code>).</li>
+    <li><strong>Broadcasting &amp; keepdims:</strong> Shapes align on the right and prepend 1s on the left; size-1 axes stretch with stride 0, so <code>(2,4,6,6) + (1,1,6,6) + (2,1,1,6) -&gt; (2,4,6,6)</code>, whereas <code>(2,) * (2,1)</code> silently creates a <code>(2,2)</code> outer product (mean <code>0.750</code> vs <code>0.800</code>).</li>
+    <li><strong>Einsum grammar:</strong> In <code>"bhid,bhjd-&gt;bhij"</code>, letters omitted after <code>-&gt;</code> (<code>d</code>) are summed over, letters shared on both sides (<code>b, h</code>) act as batch dimensions, and the RHS order sets the output permutation without separate transpose calls.</li>
+    <li><strong>Contraction order &amp; slicing:</strong> Factored LoRA <code>(x @ A) @ B</code> costs <code>4*B*S*d*r = 24,576</code> FLOPs vs <code>163,840</code> FLOPs for unfactored <code>x @ (A @ B)</code> (<code>6.67x</code> penalty), and slicing <code>x[:, -1:, :] @ W_lm</code> outputs <code>(2, 1000)</code> logits at <code>1/S</code> the cost.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (R-T-E-B-F):</strong> Right-align broadcasts, Transpose before/after head reshape, Einsum sums indices absent from RHS, Batched matmul contracts <code>(..., M, K) @ (..., K, N)</code>, Factor low-rank chains as <code>(x @ A) @ B</code>.</li>
+      <li><strong>Core FLOP formulas:</strong> Linear projection = <code>2*B*S*d_in*d_out</code>; Multi-head attention (<code>QK^T + PV</code>) = <code>4*B*S^2*d_model</code>; Factored LoRA = <code>4*B*S*d_model*r</code>.</li>
+      <li><strong>Three silent bugs to check first in debugging:</strong> (1) <code>reshape(B, H, S, d_head)</code> without <code>transpose</code>, (2) <code>(B,) * (B, 1) -&gt; (B, B)</code> outer product in loss computation, (3) missing <code>.contiguous()</code> before <code>.view()</code> after <code>transpose</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A09 T1 W01", "cards": [{"q": "Why does reshaping (B, S, d_model) directly to (B, H, S, d_head) without transpose corrupt attention?", "a": "Reshape reads row-major memory sequentially without moving bytes, slicing sequence tokens across heads (36.24 max error in kata)."}, {"q": "What is the exact reshape-and-transpose sequence to split (B, S, d_model) into multi-head queries (B, H, S, d_head)?", "a": "First reshape the contiguous last axis to (B, S, H, d_head), then call transpose(0, 2, 1, 3)."}, {"q": "Why does multiplying a 1D tensor of shape (B,) by a 2D tensor of shape (B, 1) cause a silent bug?", "a": "Right-aligned broadcasting pads (B,) on the left to (1, B), stretching against (B, 1) into a (B, B) outer product."}, {"q": "How do the two broadcasting rules combine scores (B, H, S, S), causal mask (1, 1, S, S), and pad mask (B, 1, 1, S)?", "a": "Shapes align on the right and size-1 axes stretch with stride zero to (B, H, S, S) without copying memory."}, {"q": "In einsum('bhid,bhjd->bhij', Q, K), which axis is contracted and why?", "a": "Axis d (head width) is multiplied elementwise and summed over because d is omitted from the right side of ->."}, {"q": "How many FLOPs do linear projection (B, S, d) @ (d, d) and attention matmuls (QK^T + PV) require?", "a": "Linear projection takes 2*B*S*d^2 FLOPs; attention QK^T and PV together take 4*B*S^2*d FLOPs across all heads."}, {"q": "Why must a rank-r LoRA forward pass be grouped as (x @ A) @ B instead of x @ (A @ B)?", "a": "(x @ A) @ B contracts through rank r in 4*B*S*d*r FLOPs (24,576 vs 163,840 unfactored in kata, 6.67x faster)."}, {"q": "What does the R-T-E-B-F memory hook stand for in tensor geometry?", "a": "Right-align broadcasts, Transpose before/after head reshape, Einsum sums missing RHS indices, Batched matmul contracts last two axes, Factor low-rank chains."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

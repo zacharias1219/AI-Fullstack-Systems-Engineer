@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L03 Back-of-the-envelope capacity planning</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L03">
+<main>
+<header>
+  <div class="eyebrow"><b>L03</b><span>L System design concepts</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Back-of-the-envelope capacity planning</h1>
+  <p class="lede">How do you turn product numbers like 2 million DAU and 4k-token prompts into an exact count of QPS, concurrent connections, RAM, storage, and H100 GPUs in three minutes on a whiteboard - without getting blindsided by tail-latency concurrency or the KV-cache memory wall?</p>
+  <div class="chips"><span><em>Before</em>L01 Requirements clarification and logical design</span><span><em>Before</em>L02 Non-functional requirements and tradeoffs</span><span><em>After</em>L04 How a server handles many requests</span><span><em>After</em>K07 Memory math</span><span><em>After</em>K48 Capacity planning from benchmark data</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: guess the 3 capacity traps before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea &amp; 5-step capacity pipeline stepper</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>How it works: QPS math, Little's Law, latency hierarchy, GPU &amp; vector sizing</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Run the 10-drill capacity kata and break the assumptions</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production symptoms, 90-second interview answer, traps &amp; question bank</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall, flashcards, mixed review &amp; short notes</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A service has 2,000,000 DAU sending 5 requests per day (115.7 average QPS) with a 1.8 s mean latency. If you provision connection slots and GPU batch capacity for `115.7 * 1.8 = 208` concurrent requests, by what factor are you under-provisioned during a 3x diurnal traffic peak that coincides with a 4.2 s p99 latency spike?</summary><div class="a">You are under-provisioned by <strong>7.0x</strong> (`1,458` slots required vs `208` provisioned). By Little's Law (`L = lambda * W`), concurrency multiplies both the arrival rate spike (`3.0x`, from `115.7` to `347.2 QPS`) and the dwell-time spike (`4.2 s / 1.8 s = 2.33x`), turning 208 average slots into <strong>1,458 simultaneous in-flight slots</strong>.</div></details>
+  <details class="q"><summary>In our kata, 347.2 peak QPS generating 160 output tokens per request requires 55,556 decode tokens/s, which fits on 18 H100 GPUs by compute throughput (3,200 tok/s per GPU). Why does expanding the context window to 16,384 tokens during a 4.2 s tail spike suddenly force you to buy 49 H100 GPUs even though total output tokens per second did not change?</summary><div class="a">Because <strong>GPU capacity is bound by `max(N_compute, N_kv_memory)`</strong>, and long-context tail spikes hit the HBM memory wall long before FLOPs saturate. An 80 GB H100 holding 16 GB of Llama-3.1-8B weights and 4 GB of runtime buffers has 60 GB left for KV cache. At 128 KB per token, a 16k-token request occupies 2.0 GB of KV cache (`30` concurrent slots per GPU). Holding `1,458` in-flight requests requires `ceil(1458 / 30) = 49` H100s - <strong>2.7x more GPUs</strong> than compute throughput alone predicts.</div></details>
+  <details class="q"><summary>Why can you not just keep a 16 GB FP16 LLM in cheap host DDR5 RAM and stream the weights over PCIe Gen5 (64 GB/s) into the GPU on each decode token instead of paying for HBM3 (3,000 GB/s)?</summary><div class="a">Because autoregressive decode is <strong>memory-bandwidth bound</strong> and must read every model weight for every generated token batch. Streaming 16 GB over HBM3 at 3,000 GB/s takes <strong>5.33 ms per step</strong> (`187 tok/s`), whereas streaming 16 GB over PCIe Gen5 at 64 GB/s takes <strong>250.0 ms per step</strong> (`4.0 tok/s`) - a <strong>46.9x latency penalty</strong> that makes interactive serving impossible.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Back-of-the-envelope capacity planning is not about guessing exact bills to three decimal places; it is about finding <strong>which physical resource binds first</strong> (network, CPU threads, RAM, disk IOPS, HBM capacity, or HBM bandwidth) within an order of magnitude before you commit to an architecture. In a system design interview or architecture review, a 3-minute calculation immediately tells you whether your data fits in a single node's RAM (`95.4 GB` FP16 vectors) or must be sharded, and whether your LLM fleet is compute-bound (`18 H100s`) or KV-cache memory-bound (`49 H100s`).</p>
+  <p>The mental model is a <strong>five-stage conversion funnel</strong>: you convert daily human behavior into <strong>arrival rate</strong> (`lambda`, in QPS), multiply by <strong>residence time</strong> (`W`, in seconds) via Little's Law to get <strong>simultaneous concurrency</strong> (`L`, in-flight slots), multiply each slot and request by its <strong>hardware footprint</strong> (bytes of KV cache, FLOPs, vector RAM, log bytes) using the latency and bandwidth hierarchy, and finally apply a <strong>headroom envelope</strong> (70% utilization ceiling plus `N+2` fault domains).</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The 5-step capacity estimation pipeline from DAU to fleet size</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Five-stage capacity estimation pipeline converting 2M DAU to 347.2 peak QPS, then via Little's Law to 1,458 in-flight slots, then via hardware latency and HBM limits to max of 18 compute GPUs vs 49 KV-memory GPUs, and finally applying N+2 and 30 percent headroom.">
+      <g font-size="12">
+        <rect x="8" y="10" width="484" height="26" rx="4" class="c-soft"/>
+        <text x="250" y="27" text-anchor="middle">Workload: 2M DAU x 5 req/day | Llama-3.1-8B FP16 on 80 GB H100 | 50M vectors</text>
+        <g data-step="1">
+          <rect x="10" y="52" width="88" height="72" rx="6" class="c-accent" data-hi="1"/>
+          <text x="54" y="74" text-anchor="middle">1. Traffic</text>
+          <text x="54" y="92" text-anchor="middle">10M / 86.4k s</text>
+          <text x="54" y="110" text-anchor="middle">347.2 Peak QPS</text>
+        </g>
+        <g data-step="2">
+          <path d="M98 88 H112" class="ink"/>
+          <rect x="112" y="52" width="90" height="72" rx="6" class="c-warn" data-hi="2"/>
+          <text x="157" y="74" text-anchor="middle">2. Little's Law</text>
+          <text x="157" y="92" text-anchor="middle">L = lambda * W</text>
+          <text x="157" y="110" text-anchor="middle">1,458 p99 slots</text>
+        </g>
+        <g data-step="3">
+          <path d="M202 88 H216" class="ink"/>
+          <rect x="216" y="52" width="88" height="72" rx="6" class="c-good" data-hi="3"/>
+          <text x="260" y="74" text-anchor="middle">3. Compute</text>
+          <text x="260" y="92" text-anchor="middle">55.6k tok/s</text>
+          <text x="260" y="110" text-anchor="middle">18 H100 GPUs</text>
+        </g>
+        <g data-step="4">
+          <path d="M304 88 H318" class="ink"/>
+          <rect x="318" y="52" width="88" height="72" rx="6" class="c-bad" data-hi="4"/>
+          <text x="362" y="74" text-anchor="middle">4. KV Memory</text>
+          <text x="362" y="92" text-anchor="middle">1,458 / 30 GPU</text>
+          <text x="362" y="110" text-anchor="middle">49 H100 GPUs!</text>
+        </g>
+        <g data-step="5">
+          <path d="M406 88 H420" class="ink"/>
+          <rect x="420" y="52" width="72" height="72" rx="6" class="c-accent" data-hi="5"/>
+          <text x="456" y="74" text-anchor="middle">5. Fleet</text>
+          <text x="456" y="92" text-anchor="middle">max(18,49)</text>
+          <text x="456" y="110" text-anchor="middle">+30% / N+2</text>
+        </g>
+        <g data-step="4">
+          <rect x="10" y="142" width="482" height="68" rx="6" class="c-paper" stroke="currentColor"/>
+          <text x="22" y="164">Binding bottleneck check: N_gpus = max(N_compute=18, N_kv_16k_p99=49) = 49 H100s</text>
+          <text x="22" y="184">Stateful tiers: 50M x 1024d vectors = 202.7 GB HNSW FP32 (95.4 GB FP16) | 3-yr logs = 40.8 TB</text>
+          <text x="22" y="201">Why memory binds: HBM3 is 3,000 GB/s (5.33 ms/step) vs PCIe Gen5 64 GB/s (250.0 ms/step)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Convert product demand (2M DAU x 5 req/day = 10M req/day) into average QPS (115.7 QPS using 86,400 s/day) and multiply by 3x for peak QPS (347.2 QPS).</li>
+      <li>Apply Little's Law (L = lambda * W) at peak arrival and p99 latency (4.2 s) to find that 1,458 requests occupy server sockets and GPU KV slots at once.</li>
+      <li>Size the compute floor: 347.2 QPS x 160 output tokens = 55,556 decode tok/s, requiring ceil(55,556 / 3,200) = 18 H100 GPUs.</li>
+      <li>Size the memory wall: at 16k context (2.0 GB KV cache/req), each 80 GB H100 (60 GB usable KV) holds only 30 requests, so 1,458 slots require 49 H100s.</li>
+      <li>Take max(18, 49) = 49 H100s, add 202.7 GB vector RAM and 40.8 TB 3-year log storage, and add 30 percent queue headroom plus N+2 availability nodes.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Always compute both the throughput floor and the Little's Law concurrency memory floor; in long-context LLM serving, KV-cache capacity binds at 49 H100s while compute predicts only 18.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>"QLM-SH" (Quite Large Models Demand Smart Headroom):</strong> <strong>Q</strong>PS from DAU (`10^5` s/day, `3x` peak) -&gt; <strong>L</strong>ittle's Law concurrency (`L = lambda_peak * W_p99`) -&gt; <strong>M</strong>emory vs compute bound (`max(N_compute, N_kv)`) -&gt; <strong>S</strong>tateful RAM and 3-year disk (`vectors + logs`) -&gt; <strong>H</strong>eadroom (`70%` target load + `N+2` nodes).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Powers of two, time shortcuts, and traffic conversion</h3>
+  <p>Fast mental math relies on separating powers of 10 from powers of 2: `2^10 = 1,024 ~ 10^3` (1 KB), `2^20 ~ 10^6` (1 MB), `2^30 ~ 10^9` (1 GB), and `2^40 ~ 10^12` (1 TB). A day has `86,400` seconds, which you round to `10^5` seconds on a whiteboard (a 13.6% conservative buffer) and verify accurately when checking SLAs. A year is `3.15 * 10^7` seconds (`~pi * 10^7` s), and 3 years is roughly `10^8` seconds (`~1,095` days).</p>
+  <div class="codewrap"><pre>R_day      = DAU * reqs_per_user          # 2,000,000 * 5 = 10,000,000 req/day
+QPS_avg    = R_day / 86,400               # 115.74 QPS (~100 QPS via 10^5 rule)
+QPS_peak   = QPS_avg * peak_factor        # 115.74 * 3.0 = 347.22 QPS</pre></div>
+  <p>Never size any synchronous tier for `QPS_avg`. Human traffic follows diurnal business curves with a `2x` to `5x` peak-to-average ratio, plus marketing or webhook bursts. In our kata, `10,000,000` daily requests equal `115.7 QPS` on average, or `347.2 QPS` at a `3x` diurnal peak.</p>
+
+  <h3>2. Little's Law (`L = lambda * W`) and the compound tail explosion</h3>
+  <p><strong>Little's Law</strong> states that for any steady-state queueing system, the average number of items concurrently inside the system (`L`) equals the average arrival rate (`lambda`) multiplied by the average time an item spends in the system (`W`). In systems engineering, every in-flight request holds open a file descriptor, an HTTP/gRPC stream, a database connection slot, and - in LLM inference - an allocated slice of GPU HBM for its Key-Value (KV) cache from the moment prefill starts until the final `[EOS]` token leaves.</p>
+  <div class="codewrap"><pre>L_avg_offpeak = QPS_avg  * W_mean         # 115.74 * 1.80 s =   208 in-flight slots
+L_peak_mean   = QPS_peak * W_mean         # 347.22 * 1.80 s =   625 in-flight slots
+L_peak_p99    = QPS_peak * W_p99          # 347.22 * 4.20 s = 1,458 in-flight slots (7.0x!)</pre></div>
+  <p>Notice the compound trap: when traffic surges `3x` (`347.2 QPS`) at the same time upstream tool calls or long prompts push latency from `1.8 s` to `4.2 s` (`2.33x`), concurrency does not add - it <strong>multiplies</strong> by `3.0 * 2.33 = 7.0x`, jumping from `208` slots to `1,458` simultaneous slots.</p>
+
+  <figure class="viz stepper" id="viz-littles">
+    <div class="vt">Stepper: How Little's Law turns a 3x peak + p99 latency spike into a 7.0x KV-cache OOM</div>
+    <svg viewBox="0 0 500 215" role="img" aria-label="Four-step comparison showing Little's Law concurrency growing from 208 slots at average load to 625 slots at 3x peak QPS, then 1,458 slots under a 4.2 second tail spike, exceeding the 540-slot KV-cache capacity of an 18-GPU compute-sized fleet.">
+      <g font-size="12">
+        <rect x="10" y="12" width="480" height="24" rx="4" class="c-soft"/>
+        <text x="250" y="28" text-anchor="middle">Little's Law: L (concurrent in-flight slots) = lambda (QPS) x W (latency in seconds)</text>
+        <g data-step="1">
+          <rect x="14" y="48" width="108" height="74" rx="6" class="c-good" data-hi="1"/>
+          <text x="68" y="68" text-anchor="middle">1. Naive Average</text>
+          <text x="68" y="86" text-anchor="middle">115.7 QPS x 1.8s</text>
+          <text x="68" y="106" text-anchor="middle">L = 208 slots</text>
+        </g>
+        <g data-step="2">
+          <path d="M122 85 H136" class="ink"/>
+          <rect x="136" y="48" width="108" height="74" rx="6" class="c-accent" data-hi="2"/>
+          <text x="190" y="68" text-anchor="middle">2. Diurnal Peak</text>
+          <text x="190" y="86" text-anchor="middle">347.2 QPS x 1.8s</text>
+          <text x="190" y="106" text-anchor="middle">L = 625 slots</text>
+        </g>
+        <g data-step="3">
+          <path d="M244 85 H258" class="ink"/>
+          <rect x="258" y="48" width="112" height="74" rx="6" class="c-warn" data-hi="3"/>
+          <text x="314" y="68" text-anchor="middle">3. Peak + Tail W</text>
+          <text x="314" y="86" text-anchor="middle">347.2 QPS x 4.2s</text>
+          <text x="314" y="106" text-anchor="middle">L = 1,458 slots</text>
+        </g>
+        <g data-step="4">
+          <path d="M370 85 H384" class="ink"/>
+          <rect x="384" y="48" width="104" height="74" rx="6" class="c-bad" data-hi="4"/>
+          <text x="436" y="68" text-anchor="middle">4. KV Ceiling</text>
+          <text x="436" y="86" text-anchor="middle">18 GPUs = 540</text>
+          <text x="436" y="106" text-anchor="middle">Need 49 GPUs!</text>
+        </g>
+        <g data-step="3">
+          <rect x="14" y="138" width="474" height="62" rx="6" class="c-paper" stroke="currentColor"/>
+          <text x="26" y="159">Compound multiplier: (347.2 / 115.7) x (4.2 s / 1.8 s) = 3.0 x 2.33 = 7.0x more slots (1,458 vs 208)</text>
+          <text x="26" y="182" data-step="4">At 16k ctx (30 slots/H100), 18 compute-sized H100s hold only 540 slots -&gt; 918 requests preempted/503!</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>At off-peak average QPS (115.7) and mean latency (1.8 s), only 208 requests are in flight simultaneously.</li>
+      <li>When diurnal traffic hits 3x peak (347.2 QPS) at the same 1.8 s latency, concurrent slots triple to 625.</li>
+      <li>When a long-context or slow-decode tail pushes dwell time W to 4.2 s during peak QPS, concurrent slots jump to 1,458 (7.0x the naive average).</li>
+      <li>At 16k context (2.0 GB KV/req, 30 slots/GPU), an 18-GPU compute-sized fleet holds only 540 slots, forcing 49 H100s to avoid KV-cache eviction or 503 drops.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Concurrency scales with the product of arrival rate and latency (`lambda * W`), so a simultaneous traffic peak and latency spike blows past compute-only GPU sizing.</figcaption>
+  </figure>
+
+  <details class="q"><summary>Check: If a RAG gateway receives 347.2 peak QPS and an upstream vector DB slowdown raises end-to-end request dwell time from 0.5 s to 3.5 s, what happens to the number of open worker sockets and why?</summary><div class="a">By Little's Law (`L = lambda * W`), open worker sockets jump <strong>7x</strong> from `347.2 * 0.5 = 174` sockets to `347.2 * 3.5 = 1,215` sockets. Even though arrival QPS did not change at all, every request stays resident 7x longer, exhausting thread pools or connection limits if sized only for fast responses.</div></details>
+
+  <h3>3. The latency and bandwidth hierarchy</h3>
+  <p>You memorize the latency hierarchy so you can spot physically impossible designs in five seconds. Every time you cross a boundary - from SRAM to DRAM, from HBM to PCIe, from same-AZ network to cross-region WAN - latency jumps by `10x` to `1,000x` and bandwidth drops sharply:</p>
+  <ul>
+    <li><strong>CPU / GPU on-chip SRAM (L1/L2):</strong> `~1-4 ns` (`>10 TB/s`).</li>
+    <li><strong>Main RAM access / GPU HBM3:</strong> `~100 ns` latency; CPU DDR5 is `~100 GB/s`, while H100 HBM3 is `~3,000 GB/s` (`3 TB/s`).</li>
+    <li><strong>PCIe Gen5 x16 (CPU-to-GPU bus):</strong> `~64 GB/s` unidirectional (`46.9x` slower than HBM3).</li>
+    <li><strong>NVMe SSD random read:</strong> `~16-100 us` (`~3-7 GB/s` sequential).</li>
+    <li><strong>Same-datacenter / same-AZ RPC:</strong> `~0.5 ms` (`500,000 ns`).</li>
+    <li><strong>Cross-continent WAN RPC (US-East to EU):</strong> `~75-150 ms`.</li>
+    <li><strong>LLM prefill (2k prompt) / decode step (8B-70B FP16):</strong> `~50-200 ms` Time-To-First-Token (TTFT); `~10-30 ms` Time-Per-Output-Token (TPOT).</li>
+  </ul>
+  <p>Our kata's Break It #2 proves why this hierarchy dictates hardware topology: streaming `16 GB` of Llama-8B FP16 weights per decode step takes `16 / 3000 = 5.33 ms` (`187 tok/s`) from HBM3, versus `16 / 64 = 250.0 ms` (`4.0 tok/s`) over PCIe Gen5.</p>
+
+  <h3>4. LLM GPU fleet sizing: Compute floor vs KV-cache memory floor</h3>
+  <p>An LLM serving fleet must satisfy two independent physical constraints simultaneously: <strong>decode token throughput</strong> and <strong>KV-cache HBM capacity</strong>. You always compute both and take the maximum:</p>
+  <div class="codewrap"><pre>KV_bytes_per_tok = 2 * n_layers * n_kv_heads * d_head * bytes_per_elem
+# Llama-3.1-8B FP16 (GQA 8 KV heads, 32 layers, d_head=128):
+# 2 * 32 * 8 * 128 * 2 = 131,072 bytes = 128 KB/token
+KV_per_req_4k    = 4,096 * 128 KB = 0.50 GB/req (2.00 GB/req at 16k ctx)
+Usable_KV_H100   = 80 GB - 16 GB (weights) - 4 GB (overhead) = 60.0 GB
+Slots_per_GPU    = floor(60.0 GB / KV_per_req)    # 120 at 4k ctx; 30 at 16k ctx
+N_gpus           = max(ceil(Peak_tok_s / GPU_tok_s), ceil(L_in_flight / Slots_per_GPU))</pre></div>
+  <p>In our kata, `347.2 QPS * 160 output tokens = 55,556 tok/s`, which requires `ceil(55,556 / 3,200) = 18` H100 GPUs by compute. At a 4k context and `1.8 s` mean latency (`L = 625`), KV cache needs only `ceil(625 / 120) = 6` H100s, so compute binds (`18` H100s). When context expands to 16k (`30` slots/GPU) and latency hits `4.2 s` (`L = 1,458`), KV memory demands `ceil(1458 / 30) = 49` H100s!</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: When does KV-cache memory overtake compute FLOPs as the GPU fleet bottleneck?</div>
+    <p class="ask">Predict first. At 2.0M DAU (347.2 peak QPS), set context length to 16,384 tokens and dwell latency W to 4.2 s. How many H100 GPUs does KV-cache memory require compared to compute throughput?</p>
+    <div class="ctl">
+      <label><span>DAU (millions)</span><input type="range" name="dau" min="0.5" max="5.0" step="0.5" value="2.0"><output data-for="dau" data-unit="M"></output></label>
+      <label><span>Latency W</span><input type="range" name="w" min="0.6" max="5.0" step="0.3" value="1.8"><output data-for="w" data-unit=" s"></output></label>
+      <label><span>Context tokens</span><select name="ctx" data-num><option value="4096">4,096 tok (0.50 GB KV/req)</option><option value="8192">8,192 tok (1.00 GB KV/req)</option><option value="16384">16,384 tok (2.00 GB KV/req)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Compute GPU count scales only with token emission rate, while KV-cache GPU count scales with `DAU * W * context_length`; long contexts and tail latency shift the fleet from compute-bound to memory-bound.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var peakQps=(v.dau*1000000*5/86400)*3.0;
+    var inFlight=Math.round(peakQps*v.w);
+    var kvGb=(v.ctx*131072)/1073741824;
+    var slotsPerGpu=Math.floor(60.0/kvGb);
+    var gpusCompute=Math.ceil((peakQps*160)/3200);
+    var gpusKv=Math.ceil(inFlight/slotsPerGpu);
+    var fleet=Math.max(gpusCompute,gpusKv);
+    var bound=gpusKv>gpusCompute?"KV-MEMORY BOUND":"COMPUTE BOUND";
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" H100s",digits:0,rows:[
+      {label:"Compute floor (55.6k tok/s @ 2M DAU)",value:gpusCompute,tone:"good"},
+      {label:"KV-cache memory floor ("+inFlight+" slots @ "+slotsPerGpu+"/GPU)",value:gpusKv,tone:gpusKv>gpusCompute?"bad":"accent"},
+      {label:"Required H100 fleet: max(compute, KV)",value:fleet,tone:"warn"}
+    ]});
+    return {verdict:bound+": Peak = "+tl.fmt(peakQps,1)+" QPS | Little's Law L = "+tl.fmt(inFlight,0)+" in-flight slots | "+slotsPerGpu+" slots/H100 -> Need "+fleet+" H100s (Compute: "+gpusCompute+", KV Memory: "+gpusKv+")."};
+  })});</script>
+
+  <h3>5. Vector index RAM, multi-year storage, and `N+2` availability headroom</h3>
+  <p>For retrieval-augmented generation (RAG) and stateful storage, estimate both raw payload and index structural overhead:</p>
+  <div class="codewrap"><pre># Vector RAM (50M passages, d = 1024):
+Raw_FP16_GB      = 50M * 1024 * 2 B / 2^30         =  95.4 GB
+HNSW_FP32_GB     = 50M * (1024*4 + 32*8) B / 2^30  = 202.7 GB
+
+# 3-Year Audit Log Storage (10M req/day, 4 KB/req):
+Daily_GB         = 10,000,000 * 4,096 B / 2^30     =  38.1 GB/day
+Three_Year_TB    = 38.15 GB * 365 * 3 / 1024       =  40.8 TB</pre></div>
+  <p>Finally, never run production fleets at 100% capacity. Wait times in an `M/M/1` or `M/G/k` queue grow proportional to `u / (1 - u)`, exploding once utilization `u` passes `70%-80%`. Divide active capacity by `0.7` (adding `~30-43%` headroom) and add `N+2` fault domains so one node can fail during a rolling upgrade without violating p99 SLOs.</p>
+
+  <details class="q"><summary>Check: How much RAM do 50 million 1024-dimensional embeddings consume in raw FP16 versus an uncompressed FP32 HNSW index (`M=16`, roughly 32 neighbor edges x 8 bytes per vector)?</summary><div class="a">Raw FP16 takes `50,000,000 * 1,024 * 2 bytes = 95.4 GiB` (`~102.4 GB`), whereas FP32 with HNSW graph edges takes `50,000,000 * (4,096 + 256) bytes = 202.7 GiB` (`~217.6 GB`) - more than double the RAM once graph links and FP32 precision are included.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Seconds per day / rule-of-thumb divisor</td><td class="n">86,400 s (~10^5 s/day)</td><td>Derived</td></tr>
+    <tr><td>Kata workload: 2M DAU x 5 req/day (Avg -&gt; 3x Peak QPS)</td><td class="n">10,000,000/day -&gt; 115.7 avg / 347.2 peak QPS</td><td>Your own run</td></tr>
+    <tr><td>Little's Law slots: off-peak mean (`115.7 * 1.8 s`) vs peak mean (`347.2 * 1.8 s`)</td><td class="n">208 slots vs 625 slots</td><td>Your own run</td></tr>
+    <tr><td>Little's Law slots at peak + p99 spike (`347.2 QPS * 4.2 s`)</td><td class="n">1,458 in-flight slots (7.0x naive avg)</td><td>Your own run</td></tr>
+    <tr><td>L1/L2 SRAM access vs Main RAM / HBM access latency</td><td class="n">~1-4 ns vs ~100 ns</td><td>From memory, verify</td></tr>
+    <tr><td>H100 HBM3 bandwidth vs PCIe Gen5 x16 unidirectional bandwidth</td><td class="n">3,000 GB/s vs 64 GB/s (46.9x ratio)</td><td>Your own run</td></tr>
+    <tr><td>Streaming 16 GB Llama-8B weights per decode step (HBM3 vs PCIe Gen5)</td><td class="n">5.33 ms (187 tok/s) vs 250.0 ms (4.0 tok/s)</td><td>Your own run</td></tr>
+    <tr><td>Same-AZ datacenter RPC vs Cross-continent WAN RPC (US-to-EU)</td><td class="n">~0.5 ms vs ~75-150 ms</td><td>From memory, verify</td></tr>
+    <tr><td>Llama-3.1-8B FP16 KV cache per token (`2 * 32 * 8 * 128 * 2 B`)</td><td class="n">128 KB/token (0.50 GB @ 4k, 2.00 GB @ 16k)</td><td>Your own run</td></tr>
+    <tr><td>Usable KV slots per 80 GB H100 (`60 GB` usable after 16 GB weights + 4 GB buffers)</td><td class="n">120 reqs @ 4k ctx | 30 reqs @ 16k ctx</td><td>Your own run</td></tr>
+    <tr><td>Kata H100 fleet: compute floor (`55,556 tok/s`) vs 16k + p99 KV floor (`1,458 / 30`)</td><td class="n">18 H100s (compute) vs 49 H100s (KV memory)</td><td>Your own run</td></tr>
+    <tr><td>50M x 1024d vector index RAM (HNSW FP32 vs raw FP16)</td><td class="n">202.7 GB vs 95.4 GB</td><td>Your own run</td></tr>
+    <tr><td>3-year audit log storage at 10M req/day x 4 KB/req</td><td class="n">38.1 GB/day -&gt; 40.8 TB / 3 yrs</td><td>Your own run</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Size for Peak QPS x p99 Latency (`1,458` slots) vs Average (`208` slots)</td><td>Zero connection drops or KV-cache preemptions during diurnal bursts and tail spikes</td><td>`7.0x` higher slot reservation and higher baseline GPU/connection memory footprint</td><td>Idle GPU HBM off-peak unless paired with spot burst or async batch jobs</td></tr>
+    <tr><td>Keep weights + KV cache in HBM3 (`3,000 GB/s`) vs PCIe Gen5 host offload (`64 GB/s`)</td><td>`5.33 ms` weight read per decode step (`187 tok/s` single-stream ceiling)</td><td>High cost of 80 GB H100 HBM capacity (`60 GB` usable KV budget per chip)</td><td>`250.0 ms/step` (`46.9x` slowdown) if active weights or hot KV pages spill over PCIe</td></tr>
+    <tr><td>FP16 / PQ-compressed vectors (`95.4 GB` or less) vs HNSW FP32 in RAM (`202.7 GB`)</td><td>Cuts RAM footprint by `2.1x` (FP16) to `8x` (PQ8), fitting 50M vectors on 1-2 nodes</td><td>1-4% recall@10 drop under heavy quantization and higher CPU decode overhead</td><td>HNSW graph links (`~256 B/vec`) still consume `~12 GB` for 50M vectors even when vectors are quantized</td></tr>
+    <tr><td>30% queueing headroom + `N+2` nodes vs running fleet at 90%+ utilization</td><td>Absorbs single-node failure during rolling deploys while keeping `M/G/k` queue wait sub-linear</td><td>`~35-45%` higher baseline infrastructure bill</td><td>Correlated retry storms that consume all `30%` headroom within seconds if clients lack backoff</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 10 back-of-the-envelope capacity drills &amp; sizing failure simulator</h2>
+  <p>This script executes 10 linked capacity estimation drills for a 2,000,000-DAU AI service (QPS, Little's Law concurrency, Llama-8B KV cache per request, compute-bound vs KV-memory-bound H100 counts, 50M vector index RAM, and 3-year storage growth) and proves two catastrophic sizing mistakes.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python L03_kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""
+L03 Kata: Back-of-the-envelope capacity planning; the latency numbers to know
+Executes 10 back-of-the-envelope estimation drills (QPS, Little's Law concurrency,
+GPU KV-cache capacity vs compute capacity, vector index RAM, storage growth, bandwidth,
+and N+2 availability headroom) and demonstrates three sizing failures.
+"""
+import math
+
+print("=== L03 KATA: 10 BACK-OF-THE-ENVELOPE CAPACITY PLANNING DRILLS ===")
+
+# workload assumptions: 2,000,000 DAU, 5 requests/user/day, peak = 3x average
+dau = 2_000_000
+reqs_per_user = 5
+total_daily_reqs = dau * reqs_per_user            # 10,000,000 req/day
+seconds_per_day = 86_400                          # ~10^5 s/day rule of thumb
+avg_qps = total_daily_reqs / seconds_per_day      # 115.74 QPS
+peak_qps = avg_qps * 3.0                          # 347.22 QPS
+
+# Latency &amp; Little's Law (L = lambda * W)
+mean_latency_s = 1.80                             # 200ms prefill + 1.6s decode (64 tokens @ 25ms)
+p99_latency_s = 4.20                              # long prompt / tail decode
+in_flight_avg = peak_qps * mean_latency_s         # 625 concurrent requests at peak
+in_flight_p99 = peak_qps * p99_latency_s          # 1,458 slots needed during tail spike
+
+# LLM GPU Sizing (Llama 3.1 8B FP16 on 80GB H100, S_avg = 4,096 tokens/req)
+weight_gb = 16.0
+overhead_gb = 4.0
+usable_kv_gb = 80.0 - weight_gb - overhead_gb     # 60.0 GB for KV cache per GPU
+kv_bytes_per_tok = 2 * 32 * 8 * 128 * 2           # 131,072 bytes = 128 KB/tok
+kv_gb_per_req = (4096 * kv_bytes_per_tok) / (1024 ** 3)  # 0.50 GB/req at 4k context
+max_batch_kv = int(usable_kv_gb // kv_gb_per_req) # 120 concurrent requests per GPU
+
+# Throughput vs KV-memory GPU count at peak
+gpu_tok_s_cap = 3200.0                            # ~3,200 decode tok/s per H100 at batch
+tokens_out_per_req = 160
+peak_decode_tok_s = peak_qps * tokens_out_per_req # 55,556 tok/s
+gpus_by_compute = math.ceil(peak_decode_tok_s / gpu_tok_s_cap)   # 18 GPUs
+gpus_by_kv_avg = math.ceil(in_flight_avg / max_batch_kv)         # 6 GPUs at 4k (or 24 at 16k!)
+gpus_by_kv_16k = math.ceil(in_flight_p99 / (max_batch_kv // 4))  # 49 GPUs at 16k context + p99!
+
+# Vector Index RAM (50M passages, d=1024, FP16 vs HNSW FP32 vs PQ8)
+n_vecs, dim = 50_000_000, 1024
+vec_fp32_hnsw_gb = (n_vecs * (dim * 4 + 32 * 8)) / (1024 ** 3)   # ~202.7 GB
+vec_fp16_gb = (n_vecs * dim * 2) / (1024 ** 3)                   # ~95.4 GB
+
+# Storage growth over 3 years (4 KB audit log per request)
+daily_log_gb = (total_daily_reqs * 4096) / (1024 ** 3)           # 38.15 GB/day
+three_year_tb = (daily_log_gb * 365 * 3) / 1024.0                # 40.80 TB
+
+drills = [
+    ("01. Daily requests (2M DAU x 5 req)",         f"{total_daily_reqs:,} req/day"),
+    ("02. Average QPS (10M / 86,400s)",             f"{avg_qps:.1f} QPS (rule of 10^5: 100 QPS)"),
+    ("03. Peak QPS (3x diurnal multiplier)",        f"{peak_qps:.1f} QPS"),
+    ("04. Little's Law concurrency (W=1.8s)",       f"{in_flight_avg:.0f} in-flight requests"),
+    ("05. Tail-spike concurrency (W_p99=4.2s)",     f"{in_flight_p99:.0f} in-flight slots"),
+    ("06. Llama-8B KV cache per 4k request",        f"{kv_gb_per_req:.2f} GB ({max_batch_kv} reqs/80GB GPU)"),
+    ("07. Peak decode token rate (160 tok/req)",    f"{peak_decode_tok_s:,.0f} tok/s ({gpus_by_compute} H100s by compute)"),
+    ("08. GPU fleet @ 16k ctx + p99 KV ceiling",    f"{gpus_by_kv_16k} H100s (KV memory binds before FLOPs!)"),
+    ("09. 50M x 1024d vectors (HNSW FP32 vs FP16)", f"{vec_fp32_hnsw_gb:.1f} GB vs {vec_fp16_gb:.1f} GB"),
+    ("10. 3-year audit log storage (4 KB/req)",     f"{daily_log_gb:.1f} GB/day -&gt; {three_year_tb:.1f} TB / 3 yrs"),
+]
+
+for title, ans in drills:
+    print(f"  {title:&lt;43} : {ans}")
+
+print("\n1. BREAK IT #1: SIZING FOR AVERAGE QPS &amp; MEAN LATENCY INSTEAD OF PEAK + P99")
+avg_slots = avg_qps * mean_latency_s
+print(f"  Avg QPS x Mean W = {avg_slots:.0f} slots vs Peak QPS x p99 W = {in_flight_p99:.0f} slots ({in_flight_p99/avg_slots:.1f}x under-provisioned!)")
+
+print("\n2. BREAK IT #2: PCIe GEN5 (64 GB/s) VS HBM3 (3,000 GB/s) WEIGHT STREAMING")
+t_hbm_ms = (16.0 / 3000.0) * 1000.0
+t_pcie_ms = (16.0 / 64.0) * 1000.0
+print(f"  16 GB weights per decode step: HBM3={t_hbm_ms:.2f} ms (187 tok/s) vs PCIe={t_pcie_ms:.1f} ms (4.0 tok/s, {t_pcie_ms/t_hbm_ms:.1f}x slower)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== L03 KATA: 10 BACK-OF-THE-ENVELOPE CAPACITY PLANNING DRILLS ===
+  01. Daily requests (2M DAU x 5 req)         : 10,000,000 req/day
+  02. Average QPS (10M / 86,400s)             : 115.7 QPS (rule of 10^5: 100 QPS)
+  03. Peak QPS (3x diurnal multiplier)        : 347.2 QPS
+  04. Little's Law concurrency (W=1.8s)       : 625 in-flight requests
+  05. Tail-spike concurrency (W_p99=4.2s)     : 1458 in-flight slots
+  06. Llama-8B KV cache per 4k request        : 0.50 GB (120 reqs/80GB GPU)
+  07. Peak decode token rate (160 tok/req)    : 55,556 tok/s (18 H100s by compute)
+  08. GPU fleet @ 16k ctx + p99 KV ceiling    : 49 H100s (KV memory binds before FLOPs!)
+  09. 50M x 1024d vectors (HNSW FP32 vs FP16) : 202.7 GB vs 95.4 GB
+  10. 3-year audit log storage (4 KB/req)     : 38.1 GB/day -&gt; 40.8 TB / 3 yrs
+
+1. BREAK IT #1: SIZING FOR AVERAGE QPS &amp; MEAN LATENCY INSTEAD OF PEAK + P99
+  Avg QPS x Mean W = 208 slots vs Peak QPS x p99 W = 1458 slots (7.0x under-provisioned!)
+
+2. BREAK IT #2: PCIe GEN5 (64 GB/s) VS HBM3 (3,000 GB/s) WEIGHT STREAMING
+  16 GB weights per decode step: HBM3=5.33 ms (187 tok/s) vs PCIe=250.0 ms (4.0 tok/s, 46.9x slower)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata concurrency and H100 GPU count under naive vs peak+tail assumptions</div>
+    <div data-bars='{"unit":"","digits":0,"rows":[{"label":"Naive concurrency: Avg QPS x Mean W (slots)","value":208,"tone":"muted","text":"208 slots"},{"label":"Peak concurrency: 3x Peak QPS x Mean W (slots)","value":625,"tone":"good","text":"625 slots"},{"label":"Tail-spike concurrency: 3x Peak QPS x p99 W (slots)","value":1458,"tone":"bad","text":"1,458 slots (7.0x)"},{"label":"H100 fleet @ 4k ctx: KV floor (6) vs Compute floor (18)","value":18,"tone":"good","text":"18 H100s (compute binds)"},{"label":"H100 fleet @ 16k ctx + p99 W: KV memory binds!","value":49,"tone":"bad","text":"49 H100s (2.7x compute!)"}]}'></div>
+    <figcaption><b>Takeaway.</b> Sizing for average traffic and mean latency under-provisions concurrency by 7.0x (208 vs 1,458 slots), and expanding context to 16k at p99 latency jumps the H100 fleet from 18 GPUs to 49 GPUs.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>The `10^5` seconds/day shortcut is within 14% of exact math:</strong> dividing `10,000,000` daily requests by `10^5` gives `100 QPS` mentally in two seconds, while exact division by `86,400 s` gives `115.7 QPS` (`347.2 QPS` at a `3x` diurnal peak).</li>
+    <li><strong>Little's Law multiplies traffic spikes by latency spikes:</strong> moving from `115.7 QPS * 1.8 s = 208` slots to `347.2 QPS * 4.2 s = 1,458` slots is a `7.0x` jump in concurrent memory and socket demand, even though traffic only rose `3.0x`.</li>
+    <li><strong>The regime flip from compute-bound (`18 H100s`) to KV-memory-bound (`49 H100s`):</strong> at 4k context (`0.50 GB` KV/req, `120` reqs/GPU), 625 concurrent requests fit on `6` GPUs so decode throughput (`55,556 tok/s` -&gt; `18` H100s) dominates. At 16k context (`2.00 GB` KV/req, `30` reqs/GPU) and `1,458` tail slots, KV memory requires `49` H100s (`2.7x` more hardware for the exact same token throughput).</li>
+    <li><strong>HBM3 vs PCIe Gen5 is a `46.9x` cliff:</strong> reading `16 GB` of weights per decode step takes `5.33 ms` (`187 tok/s`) from HBM3 at `3,000 GB/s`, versus `250.0 ms` (`4.0 tok/s`) over PCIe Gen5 at `64 GB/s`.</li>
+  </ol>
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Switch KV cache from FP16 to FP8 quantization.</strong> Change the final `* 2` in `kv_bytes_per_tok` (line 29) to `* 1` for 1-byte FP8 KV cache. Predict first: how many 16k-context slots fit per H100 (`60 GB` usable), and does the 16k p99 GPU fleet drop from `49` to `25` H100s?</li>
+      <li><strong>Trigger a retry storm (`peak_factor = 6.0`, `p99_latency_s = 8.4`).</strong> Double both the peak multiplier and p99 latency to simulate client retries without jitter. Predict first: by what factor does `in_flight_p99` exceed the 208-slot average baseline (`28.0x`, or `5,833` slots)?</li>
+      <li><strong>Forget GQA and use Multi-Head Attention (`32` KV heads instead of `8`).</strong> Change `8` to `32` in `kv_bytes_per_tok` (line 29). Predict first: what happens to `kv_gb_per_req` at 4k context (`2.00 GB` instead of `0.50 GB`) and how many 16k-context requests fit on a single 80 GB H100 (`7` requests)?</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Add a cost-per-million-tokens estimator to `L03_kata.py` assuming `$2.50/hour` per H100 GPU. Compute the effective dollar cost per 1M output tokens in the 18-GPU compute-bound regime (`$0.225 / 1M tok`) versus the 49-GPU KV-memory-bound regime (`$0.612 / 1M tok`).</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>vLLM / TensorRT-LLM logs `Preempted request` and TTFT/TPOT p99 jumps from `1.8 s` to `>8 s` while GPU SM compute utilization sits below `45%`</td><td>Little's Law concurrency (`L = lambda * W`) exceeded physical KV-cache block capacity (`120` slots @ 4k or `30` slots @ 16k), forcing recomputation or swap over PCIe (`64 GB/s`)</td><td>Enable FP8 KV cache (`2x` slots), enforce a hard `max_num_seqs` admission queue at the gateway, or scale GPU replicas for the KV memory ceiling (`49` H100s)</td></tr>
+    <tr><td>API gateway throws `502/503` connection pool exhaustion during a downstream vector DB latency blip even though ingress QPS (`347.2 QPS`) is flat</td><td>Downstream dwell time `W` jumped `5x`, multiplying concurrent open sockets `L` by `5x` and saturating fixed worker/connection limits</td><td>Set aggressive per-hop timeouts, shed load via bounded token-bucket admission control, and size async socket pools for `lambda_peak * W_timeout`</td></tr>
+    <tr><td>Vector DB node OOM-kills during HNSW index rebuild despite raw embeddings (`50M * 1024 * 2 B = 95.4 GB`) fitting inside `128 GB` RAM</td><td>Uncompressed FP32 vectors plus HNSW graph adjacency lists (`32 * 8 B` per vector = `202.7 GB`) plus copy-on-write segment merge buffers exceed physical RAM</td><td>Use FP16/BF16 or int8/PQ vectors in memory, cap HNSW `M=16`, or shard the index across 3 nodes with `30%` free RAM headroom for segment merges</td></tr></table></div>
+  <p><strong>Monitor:</strong> KV-cache block utilization (`gpu_cache_usage_perc` alert at `&gt;80%`), active in-flight requests `L` versus `lambda * W` drift, preemption/recompute rate (must stay `0/s` in steady state), HBM bandwidth utilization vs SM FLOP utilization, and vector node resident RSS during compaction.</p>
+  <details class="q"><summary>Scenario: Your healthcare voice-AI assistant scales to 2M DAU (347.2 peak QPS). Product wants to attach full patient chart history, raising average prompt context from 4,096 tokens to 16,384 tokens and p99 latency to 4.2 s. Your current fleet has 24 H100 GPUs (sized as 18 compute GPUs + 33% headroom). Walk through what breaks on launch day and how you re-architect capacity.</summary><div class="a"><ol>
+    <li><strong>Quantify the new Little's Law concurrency:</strong> At `347.2 peak QPS` and `W_p99 = 4.2 s`, simultaneous in-flight requests reach `L = 347.2 * 4.2 = 1,458` slots.</li>
+    <li><strong>Calculate KV-cache capacity per GPU at 16k context:</strong> On Llama-3.1-8B FP16 (`128 KB/tok`), each 16k request consumes `16,384 * 128 KB = 2.00 GB` of KV cache. Each 80 GB H100 (`60 GB` usable KV) drops from `120` slots to `30` slots.</li>
+    <li><strong>Expose the outage on the 24-GPU fleet:</strong> `24 H100s * 30 slots = 720` total cluster slots - less than half of the `1,458` slots required (`49 H100s`). Once traffic crosses `50%` of peak, vLLM thrashes with KV block preemptions, latency explodes, and Little's Law locks the cluster into a tail-latency death spiral.</li>
+    <li><strong>Mitigate in software before buying hardware:</strong> Enable <strong>FP8 KV-cache quantization</strong> (`64 KB/tok`, doubling capacity from `30` to `60` slots/GPU so `1,458 / 60 = 25` H100s nearly fits) and <strong>prefix caching</strong> (since chart history is shared across multi-turn voice turns, cutting unique resident KV by `50-70%`), then add `N+2` headroom nodes.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Back-of-the-envelope capacity planning translates product volume, such as daily active users and context lengths, into physical hardware counts for QPS, concurrent slots, RAM, storage, and GPU fleets before you write a line of code. It prevents the two classic sizing disasters in AI systems: provisioning for average QPS instead of peak times tail latency, and sizing LLM servers by compute FLOPs when KV-cache memory actually binds first.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>I run a five-step estimation pipeline. First, convert DAU and requests per user into average QPS by dividing daily volume by one hundred thousand seconds per day, then multiply by a three-to-five-x diurnal peak factor. Second, apply Little's Law, L equals lambda times W, at peak QPS and p99 latency to find the simultaneous in-flight slots holding sockets and GPU memory. Third, size the binding bottleneck using hardware hierarchy constants: HBM3 streams at three terabytes per second while PCIe Gen5 crawls at sixty-four gigabytes per second, so LLM decode and KV cache must stay resident in VRAM. Fourth, size stateful RAM and disk over three years, including HNSW graph overhead. Fifth, add thirty percent utilization headroom and N-plus-two redundancy.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In our two-million-DAU Llama-8B workload at peak 347.2 QPS, compute requires eighteen H100s, but a 16k-context p99 latency spike drives Little's Law concurrency to 1,458 slots and demands forty-nine H100s.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"For 2 million DAU we'll have around 100 QPS, so we can deploy a few GPU servers behind an auto-scaler with a vector database and scale out horizontally in the cloud whenever CPU or GPU utilization gets high."</p>
+    <p class="strong">"2 million DAU at 5 requests a day is 10 million requests, or 115.7 average QPS and 347.2 peak QPS at a 3x diurnal multiplier. At 160 output tokens per request, peak decode is 55,556 tokens/s, which gives a compute floor of 18 H100 GPUs. However, by Little's Law, 347.2 QPS times a 4.2-second p99 latency creates 1,458 concurrent in-flight requests. On Llama-3.1-8B FP16, each 16k-token request takes 2.0 GB of KV cache, so an 80 GB H100 with 60 GB usable KV holds only 30 requests - forcing 49 H100s unless we enable FP8 KV quantization and prefix caching."</p>
+    <p>The strong answer derives QPS, applies Little's Law (`L = lambda * W`) at peak and p99, checks both compute and KV-cache memory ceilings (`max(18, 49)`), and proposes concrete engineering levers (FP8 KV cache, prefix caching) instead of hand-waving "auto-scaling".</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If traffic increases 3x at peak, we just need 3x more concurrent connection and KV-cache slots than our average off-peak baseline."</summary><div class="a">Wrong because concurrency is `L = lambda * W`, and tail latency `W` also stretches under peak load. When a `3x` QPS peak (`347.2 QPS`) coincides with a `4.2 s` p99 dwell time (up from `1.8 s` mean), required slots multiply by `3.0 * (4.2 / 1.8) = 7.0x` (`1,458` slots vs `208` slots).</div></details>
+  <details class="q"><summary>"Prompt prefill tokens are processed in parallel in 200 ms, so making the prompt 4x longer (4k to 16k tokens) only increases prefill FLOPs and does not change decode GPU count."</summary><div class="a">Wrong because every prompt token's Key and Value tensors must stay pinned in GPU HBM for the <strong>entire duration of autoregressive decode</strong> (`W`). Quadrupling context from 4k to 16k quadruples KV memory per request from `0.50 GB` to `2.00 GB`, cutting per-GPU batch capacity from `120` to `30` requests and raising the fleet from `18` to `49` H100s.</div></details>
+  <details class="q"><summary>"50 million 1024-d float32 vectors is `50M * 1024 * 4 bytes = 200 GB`, so a single 192 GB / 200 GB RAM node can easily host our HNSW production index."</summary><div class="a">Wrong for two reasons: first, HNSW adds graph adjacency lists (`~256 bytes/vector` at `M=16`, pushing the index to `202.7 GiB` or `217.6 GB`); second, production vector nodes require `~30%` RAM headroom for OS page cache, query buffers, and background segment compaction without OOM-killing.</div></details>
+  <details class="q"><summary>"If our 80 GB GPU runs out of VRAM for KV cache, we can transparently spill active KV blocks or model weights over PCIe Gen5 to host DDR5 RAM with minor latency impact."</summary><div class="a">Wrong because H100 HBM3 runs at `3,000 GB/s` while PCIe Gen5 x16 is `64 GB/s` (`46.9x` slower). Streaming 16 GB of weights or active KV pages over PCIe takes `250.0 ms` per decode step (`4.0 tok/s`) instead of `5.33 ms` (`187 tok/s`), destroying interactive SLOs.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>How do you convert DAU into average QPS and peak QPS in your head in five seconds?</summary><div class="a">Multiply DAU by daily requests per user, divide by `10^5` seconds/day (which conservatively approximates `86,400 s/day` within 14%), and multiply by a `3x` to `5x` diurnal peak factor. For `2M DAU * 5 req/day = 10M req/day`, the `10^5` shortcut gives `100 avg QPS` (`115.7 QPS` exact) and `~300-347.2 peak QPS`.<div class="f"><b>Follow-up</b>When is a 3x peak multiplier dangerously too low? When traffic is event-driven (push notifications, market open, breaking news, cron storms at the top of the hour), where peak-to-average ratios routinely reach `10x-20x`.</div></div></details>
+  <details class="q"><summary>State Little's Law, define all three variables with units, and explain why it governs memory sizing in stateful and LLM servers.</summary><div class="a">`L = lambda * W`, where `L` is the average number of concurrent requests in flight (unitless slots), `lambda` is the arrival rate (requests/second), and `W` is the average residence time in the system (seconds). Because each in-flight request holds open a socket buffer and an LLM KV-cache reservation (`S * kv_bytes_per_tok`) for its entire lifetime `W`, peak concurrent memory equals `L * memory_per_request`.</div></details>
+  <details class="q"><summary>Derive the per-token KV-cache size for Llama-3.1-8B in FP16 (`32` layers, `8` KV heads via GQA, `128` head dimension) and the total KV memory for a 4,096-token request.</summary><div class="a">Each token stores both Key and Value (`2`) across `32` layers, `8` KV heads, `128` dimensions, and `2` bytes (FP16): `2 * 32 * 8 * 128 * 2 = 131,072 bytes = 128 KB/token`. Multiplying by `4,096` tokens yields `536,870,912 bytes = 0.50 GiB` per in-flight request.<div class="f"><b>Follow-up</b>What would that number be if Llama-8B used standard Multi-Head Attention (`32` KV heads) instead of GQA (`8` KV heads)? It would be `4x` larger: `512 KB/token`, or `2.00 GiB` per 4k request (`8.00 GiB` at 16k).</div></div></details>
+  <details class="q"><summary>Write the two equations that determine the minimum GPU count for an LLM serving fleet and explain when the bottleneck flips from one to the other.</summary><div class="a">`N_compute = ceil((QPS_peak * tokens_out) / GPU_tok_s_cap)` and `N_kv = ceil((QPS_peak * W_p99) / floor(Usable_KV_GB / KV_GB_per_req))`, with `N_gpus = max(N_compute, N_kv)`. Compute binds when prompts are short and output generations are fast (`18` H100s vs `6` KV H100s at 4k context, `W=1.8 s`); KV memory binds when context length `S` or residence time `W` grows (`49` H100s vs `18` compute H100s at 16k context, `W=4.2 s`).</div></details>
+  <details class="q"><summary>Why is LLM prefill compute-bound while autoregressive decode is memory-bandwidth-bound?</summary><div class="a">During prefill, all `S` prompt tokens are known at once, so matrix-matrix multiplications (`GEMM`) reuse each weight across hundreds or thousands of tokens (high arithmetic intensity, saturating Tensor Core TFLOPs). During decode, each step generates only `1` token per request in the batch, turning projections into matrix-vector-like operations (`GEMV`) that must stream all `16 GB` of weights from HBM3 (`3,000 GB/s`, `5.33 ms` floor) for only a handful of FLOPs per byte.<div class="f"><b>Follow-up</b>How does continuous batching improve decode throughput? By batching `B` concurrent requests together so all `B` tokens share a single `16 GB` weight read from HBM3, multiplying arithmetic intensity up to the KV-cache memory ceiling.</div></div></details>
+  <details class="q"><summary>Give the order-of-magnitude latencies for L1/L2 SRAM, main RAM, NVMe random read, same-AZ RPC, and cross-continent WAN RPC.</summary><div class="a">L1/L2 SRAM: `~1-4 ns`; Main RAM / HBM: `~100 ns`; NVMe SSD random read: `~16-100 us`; Same-AZ datacenter RPC: `~0.5 ms` (`500 us`); Cross-continent WAN RPC: `~75-150 ms`.</div></details>
+  <details class="q"><summary>How do you estimate the 3-year storage footprint for an audit log that records 4 KB per request across 10,000,000 daily requests?</summary><div class="a">Daily volume is `10,000,000 * 4 KB = 40 * 10^9 B ~ 38.1 GiB/day`. Over 3 years (`3 * 365 = 1,095 days`, or `~10^3` days), storage is `38.15 GiB * 1,095 / 1,024 = 40.8 TiB` before replication or compression.<div class="f"><b>Follow-up</b>If compliance requires 3x replication across availability zones, what is the raw physical disk allocation? `40.8 TiB * 3 = 122.4 TiB` raw SSD/object storage (or `~25-35 TiB` with 4x Zstd compression).</div></div></details>
+  <details class="q"><summary>Why do we divide active capacity by 0.7 (adding ~30-43% headroom) and add N+2 nodes instead of running servers at 95% utilization?</summary><div class="a">In queueing theory (`M/G/k`), expected queue wait time scales with `u / (1 - u)` and shoots toward infinity as utilization `u` approaches `100%`; targeting `70%` load keeps queueing delay below service time during bursts. `N+2` ensures that if 1 node is offline for a rolling deployment and 1 node suffers an unexpected hardware fault, the remaining `N` nodes still carry 100% of peak traffic without cascading overload.</div></details>
+  <details class="q"><summary>You have 50 million documents with 1024-d embeddings. How do you cut the in-memory vector index from 202.7 GB (HNSW FP32) to under 32 GB so it fits on a single commodity server?</summary><div class="a">Apply Product Quantization (`PQ8` or `SQ8` int8 quantization) or binary quantization with disk/FP16 rescoring: `SQ8` drops vector payload by `4x` (`200 GB -&gt; 50 GB`), and `PQ` (`64` subspaces x `1 byte` = `64 B/vec`) compresses 50M vectors to `~3.2 GB` plus HNSW graph links (`~12 GB`), easily fitting inside `32 GB` RAM with a fast disk/RAM rerank pass.<div class="f"><b>Follow-up</b>What metric must you measure when switching from FP32 HNSW to PQ8? `Recall@k` (e.g., `Recall@10` or `Recall@100`) on your domain eval set alongside end-to-end p99 retrieval latency.</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the QPS and Little's Law formulas with the kata's exact numbers (`115.7`, `347.2`, `208`, `625`, `1,458`), (2) the Llama-8B KV-cache bytes/token derivation (`128 KB/tok`) and why 16k context flips the fleet from `18` to `49` H100s, (3) the 6-level latency/bandwidth hierarchy (`1 ns` to `150 ms`, `3,000 GB/s` vs `64 GB/s`), and (4) the 50M vector RAM (`202.7 GB` vs `95.4 GB`) and 3-year log storage (`40.8 TB`) calculations.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Step 1 - Traffic conversion:</strong> `2M DAU * 5 req/day = 10M req/day`; divide by `86,400 s` (`~10^5 s`) = `115.7 avg QPS` (`100 QPS` rule of thumb); `3x` peak = `347.2 peak QPS`.</li>
+    <li><strong>Step 2 - Little's Law (`L = lambda * W`):</strong> `115.7 * 1.8 s = 208` off-peak slots; `347.2 * 1.8 s = 625` peak mean slots; `347.2 * 4.2 s = 1,458` peak p99 slots (`7.0x` naive average).</li>
+    <li><strong>Step 3 - Compute vs KV-cache GPU sizing:</strong> Llama-8B FP16 KV = `2 * 32 * 8 * 128 * 2 = 128 KB/tok` (`0.50 GB` @ 4k, `2.00 GB` @ 16k). 80 GB H100 has `60 GB` usable KV (`120` slots @ 4k, `30` slots @ 16k). Compute floor = `ceil(55,556 / 3,200) = 18` H100s; 16k p99 KV floor = `ceil(1,458 / 30) = 49` H100s; take `max(18, 49) = 49` H100s.</li>
+    <li><strong>Step 4 - Hardware latency &amp; bandwidth hierarchy:</strong> L1/L2 `1-4 ns`, RAM `100 ns`, NVMe `16-100 us`, Same-AZ RPC `0.5 ms`, WAN RPC `75-150 ms`. HBM3 `3,000 GB/s` (`5.33 ms` for 16 GB weights) vs PCIe Gen5 `64 GB/s` (`250.0 ms`, `46.9x` slower).</li>
+    <li><strong>Step 5 - Vector RAM, 3-yr storage &amp; headroom:</strong> 50M x 1024d vectors = `95.4 GB` raw FP16 vs `202.7 GB` HNSW FP32; 4 KB log x 10M/day = `38.1 GB/day` -&gt; `40.8 TB` over 3 years; apply `70%` max utilization (`+30%` headroom) and `N+2` redundancy.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L01: During requirements clarification for an enterprise AI system, what are the five logical scoping axes you must lock down before drawing boxes or estimating capacity?</summary><div class="a">Users &amp; traffic scale (DAU, peak QPS, read/write ratio), Latency &amp; quality SLOs (TTFT, TPOT, p99, recall/accuracy floor), Data boundary &amp; mutability (corpus size, freshness SLA, tenant isolation/ACL), Failure &amp; compliance posture (auditability, PII erasure, fallback degradation), and Cost envelope (budget per 1k requests).</div></details>
+  <details class="q"><summary>L02: Why is reporting mean latency instead of p95 and p99 latency dangerous in a multi-service fan-out or agentic workflow?</summary><div class="a">Because of <strong>tail-latency amplification</strong>: if one user request fans out to `k` parallel or sequential sub-calls, the probability that at least one call hits the 99th percentile grows as `1 - 0.99^k` (`~10%` of user requests hit p99 when `k=10`), and in Little's Law (`L = lambda * W`), p99 slowdowns pin concurrent memory slots and connection pools across the entire cluster.</div></details>
+  <details class="q"><summary>L02: When designing a multi-region data store or RAG index, what is the real operational tradeoff described by PACELC (`if Partition: A vs C; Else: Latency vs Consistency`)?</summary><div class="a">Even when the network is healthy (`Else`), replicating writes synchronously across regions for strong consistency (`EC`) pays the `~75-150 ms` speed-of-light WAN RTT on every write, whereas asynchronous replication (`EL`) gives sub-millisecond local latency at the cost of stale reads and conflict resolution on failover.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://research.google/pubs/pub40801/">Jeff Dean &amp; Luiz Andre Barroso - The Tail at Scale / Latency Numbers Every Programmer Should Know</a><small>Supports the memory-to-network latency hierarchy (L1/L2 ns, RAM 100 ns, SSD us, datacenter 0.5 ms, WAN 150 ms) and tail amplification math. Checked 2026-11-18.</small></li>
+    <li><a href="https://www.nvidia.com/en-us/data-center/h100/">NVIDIA H100 Tensor Core GPU Datasheet</a><small>Supports 80 GB HBM3 capacity, ~3,000 GB/s HBM3 memory bandwidth, and 64 GB/s PCIe Gen5 x16 interconnect bandwidth. Checked 2026-11-18.</small></li>
+    <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al. (SOSP 2023) - Efficient Memory Management for Large Language Model Serving with PagedAttention (vLLM)</a><small>Supports KV-cache byte-per-token sizing, Little's Law concurrency limits on GPU batch size, and preemption behavior when KV blocks saturate. Checked 2026-11-18.</small></li>
+    <li><a href="https://dl.acm.org/doi/10.1287/opre.9.3.383">John D. C. Little (Operations Research, 1961) - A Proof for the Queuing Formula: L = lambda * W</a><small>Supports Little's Law relating steady-state concurrency L to arrival rate lambda and residence time W. Checked 2026-11-18.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Traffic &amp; QPS conversion:</strong> Convert DAU to daily requests (`2M * 5 = 10M/day`), divide by `86,400 s` (`~10^5 s/day` rule) for `115.7 avg QPS` (`100 QPS` mental shortcut), and multiply by `3x` diurnal peak for `347.2 peak QPS`.</li>
+    <li><strong>Little's Law concurrency (`L = lambda * W`):</strong> In-flight requests hold sockets and KV-cache memory for their full dwell time `W`; combining a `3x` QPS peak (`347.2 QPS`) with a `4.2 s` p99 latency spike multiplies slots by `7.0x` (`1,458` slots vs `208` off-peak average slots).</li>
+    <li><strong>Latency &amp; bandwidth hierarchy:</strong> L1/L2 `1-4 ns`, RAM/HBM `100 ns`, NVMe `16-100 us`, Same-AZ RPC `0.5 ms`, Cross-continent WAN `75-150 ms`; H100 HBM3 (`3,000 GB/s`, `5.33 ms` per 16 GB weight read) is `46.9x` faster than PCIe Gen5 (`64 GB/s`, `250.0 ms`).</li>
+    <li><strong>LLM GPU fleet sizing (`max(N_compute, N_kv)`):</strong> Llama-3.1-8B FP16 KV cache is `2 * 32 * 8 * 128 * 2 = 128 KB/tok` (`0.50 GB` @ 4k, `2.00 GB` @ 16k), giving `120` (@ 4k) or `30` (@ 16k) slots in `60 GB` usable H100 HBM; compute needs `18` H100s (`55,556 tok/s / 3,200`), while 16k p99 KV memory needs `ceil(1,458 / 30) = 49` H100s.</li>
+    <li><strong>Vector RAM, 3-year storage &amp; headroom:</strong> `50M * 1024d` vectors take `95.4 GB` in raw FP16 vs `202.7 GB` in HNSW FP32; `4 KB/req` logs at `10M/day` grow at `38.1 GB/day` to `40.8 TB` over 3 years; always size with `30%` queueing headroom (`70%` target load) and `N+2` redundancy.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Core formulas:</strong> `QPS_avg ~ Daily_Reqs / 10^5`; `QPS_peak = 3 * QPS_avg`; `L = lambda_peak * W_p99`; `KV_bytes/tok = 2 * n_layers * n_kv_heads * d_head * bytes`; `N_gpus = max(N_compute, N_kv)`.</li>
+      <li><strong>Anchor numbers from our run:</strong> `115.7 avg QPS` -&gt; `347.2 peak QPS`; `208` naive slots -&gt; `625` peak mean slots -&gt; `1,458` peak p99 slots (`7.0x`); `128 KB/tok` KV (`0.50 GB/4k`); `18` compute H100s vs `49` KV-memory H100s; `5.33 ms` HBM3 vs `250.0 ms` PCIe (`46.9x`); `202.7 GB` HNSW FP32 vs `95.4 GB` FP16; `40.8 TB` 3-yr logs.</li>
+      <li><strong>Top interview rule of thumb:</strong> Never stop at throughput FLOPs when sizing an LLM or stateful cluster - always compute Little's Law concurrency `L` at peak QPS and p99 latency and check whether HBM KV-cache capacity binds first.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L03 T1 W01", "cards": [{"q": "What are the five steps of the QLM-SH back-of-the-envelope capacity pipeline?", "a": "1. QPS (DAU/10^5, 3x peak); 2. Little's Law (L=lambda*W_p99); 3. max(N_compute, N_kv); 4. Vector RAM and 3-yr disk; 5. 30% headroom plus N+2."}, {"q": "Why does sizing connection or KV-cache slots for average QPS and mean latency fail by 7.0x under a 3x peak and 4.2s p99 spike (from 1.8s mean)?", "a": "By Little's Law (L=lambda*W), concurrency multiplies the 3.0x arrival spike by the 2.33x dwell spike (4.2s/1.8s), jumping from 208 to 1,458 slots."}, {"q": "How do you calculate per-token KV-cache bytes, and what is it for Llama-3.1-8B FP16 (32 layers, 8 KV heads, 128 head dim)?", "a": "2 * n_layers * n_kv_heads * d_head * bytes = 2*32*8*128*2 = 131,072 bytes (128 KB/token, or 0.50 GB per 4k-token request)."}, {"q": "Why does an 18-H100 compute-sized Llama-8B fleet need 49 H100s at 347.2 peak QPS when context hits 16k tokens and p99 latency reaches 4.2s?", "a": "At 16k context (2.0 GB KV/req), each 60 GB usable H100 holds 30 slots; 1,458 p99 slots require ceil(1458/30) = 49 H100s."}, {"q": "Why must active LLM weights and hot KV cache stay in HBM3 (3,000 GB/s) instead of streaming over PCIe Gen5 (64 GB/s) during decode?", "a": "Autoregressive decode reads all 16 GB weights per step: HBM3 takes 5.33 ms (187 tok/s) versus PCIe's 250.0 ms (4.0 tok/s, 46.9x slower)."}, {"q": "What are the order-of-magnitude latencies for L1/L2 SRAM, main RAM, NVMe random read, same-AZ RPC, and cross-continent WAN RPC?", "a": "L1/L2 SRAM: 1-4 ns; Main RAM/HBM: ~100 ns; NVMe SSD: 16-100 us; Same-AZ RPC: ~0.5 ms; Cross-continent WAN RPC: 75-150 ms."}, {"q": "How much RAM do 50 million 1024-d vectors require in raw FP16 versus an uncompressed FP32 HNSW index (32 neighbor links x 8B)?", "a": "Raw FP16 takes 95.4 GiB (50M*1024*2B), while FP32 HNSW takes 202.7 GiB (50M*(4096+256)B), plus ~30% free RAM headroom for segment merges."}, {"q": "Why do production capacity plans target 70% maximum utilization (+30% headroom) and N+2 fault domains instead of 95% utilization?", "a": "Queue wait scales as u/(1-u) and explodes past 70-80% load; N+2 survives one node failure during a rolling deploy without breaching SLOs."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
