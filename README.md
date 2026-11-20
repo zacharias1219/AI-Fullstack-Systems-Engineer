@@ -51,23 +51,23 @@ Every topic is built around four rules, in order of importance:
 
 | ID | Folder | Topics | T1 | Hours | Built Pages |
 |---|---|---:|---:|---:|---|
-| **A** | [`A - Foundations and Applied Math`](./A%20-%20Foundations%20and%20Applied%20Math) | 27 | 11 | 24 h | [`A01`](./A%20-%20Foundations%20and%20Applied%20Math/A01%20Python%20for%20AI%20engineering.html), [`A02`](./A%20-%20Foundations%20and%20Applied%20Math/A02%20Async%20Python.html), [`A03`](./A%20-%20Foundations%20and%20Applied%20Math/A03%20Linux%20and%20shell%20fluency.html), [`A06`](./A%20-%20Foundations%20and%20Applied%20Math/A06%20Debugging%20method.html), [`A07`](./A%20-%20Foundations%20and%20Applied%20Math/A07%20Profiling%20Python.html), [`A08`](./A%20-%20Foundations%20and%20Applied%20Math/A08%20Vectors,%20dot%20product,%20norms,%20cosine%20similarity.html), [`A09`](./A%20-%20Foundations%20and%20Applied%20Math/A09%20Matrices,%20matmul,%20tensor%20shapes,%20broadcasting,%20einsum.html) |
+| **A** | [`A - Foundations and Applied Math`](./A%20-%20Foundations%20and%20Applied%20Math) | 27 | 11 | 24 h | [`A01`](./A%20-%20Foundations%20and%20Applied%20Math/A01%20Python%20for%20AI%20engineering.html), [`A02`](./A%20-%20Foundations%20and%20Applied%20Math/A02%20Async%20Python.html), [`A03`](./A%20-%20Foundations%20and%20Applied%20Math/A03%20Linux%20and%20shell%20fluency.html), [`A06`](./A%20-%20Foundations%20and%20Applied%20Math/A06%20Debugging%20method.html), [`A07`](./A%20-%20Foundations%20and%20Applied%20Math/A07%20Profiling%20Python.html), [`A08`](./A%20-%20Foundations%20and%20Applied%20Math/A08%20Vectors,%20dot%20product,%20norms,%20cosine%20similarity.html), [`A09`](./A%20-%20Foundations%20and%20Applied%20Math/A09%20Matrices,%20matmul,%20tensor%20shapes,%20broadcasting,%20einsum.html), [`A16`](./A%20-%20Foundations%20and%20Applied%20Math/A16%20Information%20theory.html) |
 | **B** | [`B - Classical Machine Learning`](./B%20-%20Classical%20Machine%20Learning) | 21 | 5 | 16 h | - |
 | **C** | [`C - Deep Learning`](./C%20-%20Deep%20Learning) | 18 | 1 | 12 h | - |
 | **D** | [`D -Transformers and LLM Internals`](./D%20-Transformers%20and%20LLM%20Internals) | 26 | 12 | 24 h | [`D01`](./D%20-Transformers%20and%20LLM%20Internals/D01%20What%20an%20LLM%20is.html), [`D02`](./D%20-Transformers%20and%20LLM%20Internals/D02%20Tokenization.html), [`D03`](./D%20-Transformers%20and%20LLM%20Internals/D03%20Embeddings%20and%20the%20unembedding.html), [`D10`](./D%20-Transformers%20and%20LLM%20Internals/D10%20Decoding%20and%20sampling.html), [`D11`](./D%20-Transformers%20and%20LLM%20Internals/D11%20Logits,%20logprobs,%20perplexity.html), [`D23`](./D%20-Transformers%20and%20LLM%20Internals/D23%20The%20open-model%20landscape.html) |
 | **E** | [`E - Post-Training`](./E%20-%20Post-Training) | 16 | 2 | 12 h | - |
 | **F** | [`F - Training Infrastructure`](./F%20-%20Training%20Infrastructure) | 11 | 0 | 7 h | - |
-| **G** | [`G - LLM Application Layer`](./G%20-%20LLM%20Application%20Layer) | 30 | 17 | 29 h | - |
+| **G** | [`G - LLM Application Layer`](./G%20-%20LLM%20Application%20Layer) | 30 | 17 | 29 h | [`G01`](./G%20-%20LLM%20Application%20Layer/G01%20Token%20optimization%20playbook.html), [`G02`](./G%20-%20LLM%20Application%20Layer/G02%20LLM%20API%20mechanics.html) |
 | **H** | [`H - Retrieval and RAG`](./H%20-%20Retrieval%20and%20RAG) | 25 | 11 | 23 h | - |
 | **I** | [`I - Agents and Orchestration`](./I%20-%20Agents%20and%20Orchestration) | 23 | 9 | 21 h | - |
 | **J** | [`J - Evals and Quality`](./J%20-%20Evals%20and%20Quality) | 19 | 10 | 18 h | - |
-| **K** | [`K - Inference Engineering and Hardware`](./K%20-%20Inference%20Engineering%20and%20Hardware) | 66 | 21 | 55 h | [`K01`](./K%20-%20Inference%20Engineering%20and%20Hardware/K01%20What%20inference%20engineering%20is.html), [`K02`](./K%20-%20Inference%20Engineering%20and%20Hardware/K02%20Inference%20setup.html), [`K03`](./K%20-%20Inference%20Engineering%20and%20Hardware/K03%20Run%20your%20first%20LLM.html), [`K04`](./K%20-%20Inference%20Engineering%20and%20Hardware/K04%20One%20token%20end%20to%20end.html), [`K05`](./K%20-%20Inference%20Engineering%20and%20Hardware/K05%20Prefill%20vs%20decode.html) |
+| **K** | [`K - Inference Engineering and Hardware`](./K%20-%20Inference%20Engineering%20and%20Hardware) | 66 | 21 | 55 h | [`K01`](./K%20-%20Inference%20Engineering%20and%20Hardware/K01%20What%20inference%20engineering%20is.html), [`K02`](./K%20-%20Inference%20Engineering%20and%20Hardware/K02%20Inference%20setup.html), [`K03`](./K%20-%20Inference%20Engineering%20and%20Hardware/K03%20Run%20your%20first%20LLM.html), [`K04`](./K%20-%20Inference%20Engineering%20and%20Hardware/K04%20One%20token%20end%20to%20end.html), [`K05`](./K%20-%20Inference%20Engineering%20and%20Hardware/K05%20Prefill%20vs%20decode.html), [`K06`](./K%20-%20Inference%20Engineering%20and%20Hardware/K06%20KV%20cache.html) |
 
 ### Pillar 2: Supplementary Systems and Cloud (Domains L, Y, M to U)
 
 | ID | Folder | Topics | T1 | Hours | Built Pages |
 |---|---|---:|---:|---:|---|
-| **L** | [`L - System Design Concepts`](./L%20-%20System%20Design%20Concepts) | 85 | 32 | 72 h | [`L01`](./L%20-%20System%20Design%20Concepts/L01%20Requirements%20and%20logical%20design.html), [`L02`](./L%20-%20System%20Design%20Concepts/L02%20Non-functional%20requirements.html), [`L03`](./L%20-%20System%20Design%20Concepts/L03%20Back-of-the-envelope%20capacity%20planning.html) |
+| **L** | [`L - System Design Concepts`](./L%20-%20System%20Design%20Concepts) | 85 | 32 | 72 h | [`L01`](./L%20-%20System%20Design%20Concepts/L01%20Requirements%20and%20logical%20design.html), [`L02`](./L%20-%20System%20Design%20Concepts/L02%20Non-functional%20requirements.html), [`L03`](./L%20-%20System%20Design%20Concepts/L03%20Back-of-the-envelope%20capacity%20planning.html), [`L04`](./L%20-%20System%20Design%20Concepts/L04%20How%20a%20server%20handles%20many%20requests.html) |
 | **Y** | [`Y - System Design Drills and Case Studies`](./Y%20-%20System%20Design%20Drills%20and%20Case%20Studies) | 47 | 14 | 39 h | - |
 | **M** | [`M - Backend Engineering`](./M%20-%20Backend%20Engineering) | 16 | 4 | 13 h | - |
 | **N** | [`N - Databases`](./N%20-%20Databases) | 15 | 4 | 12 h | - |
@@ -77,7 +77,7 @@ Every topic is built around four rules, in order of importance:
 | **R** | [`R - DevOps, Platform, MLOps, LLMOps`](./R%20-%20DevOps,%20Platform,%20MLOps,%20LLMOps) | 25 | 8 | 21 h | - |
 | **S** | [`S - Security, Privacy, Safety, Governance`](./S%20-%20Security,%20Privacy,%20Safety,%20Governance) | 21 | 6 | 18 h | - |
 | **T** | [`T - Domain and Applied AI`](./T%20-%20Domain%20and%20Applied%20AI) | 15 | 0 | 10 h | - |
-| **U** | [`U - Research and Engineering Craft`](./U%20-%20Research%20and%20Engineering%20Craft) | 13 | 1 | 9 h | [`U01`](./U%20-%20Research%20and%20Engineering%20Craft/U01%20Learning%20system.html) |
+| **U** | [`U - Research and Engineering Craft`](./U%20-%20Research%20and%20Engineering%20Craft) | 13 | 1 | 9 h | [`U01`](./U%20-%20Research%20and%20Engineering%20Craft/U01%20Learning%20system.html), [`U02`](./U%20-%20Research%20and%20Engineering%20Craft/U02%20Reading%20papers.html) |
 
 ### Pillar 3: Business, People, and Interview Craft (Domains V, W, X)
 
@@ -85,7 +85,7 @@ Every topic is built around four rules, in order of importance:
 |---|---|---:|---:|---:|---|
 | **V** | [`V -Business and Product`](./V%20-Business%20and%20Product) | 24 | 6 | 20 h | [`V01`](./V%20-Business%20and%20Product/V01%20Engineer%20voice%20vs%20business%20voice.html) |
 | **W** | [`W - People Skills`](./W%20-%20People%20Skills) | 19 | 8 | 17 h | [`W01`](./W%20-%20People%20Skills/W01%20Tactical%20empathy.html), [`W19`](./W%20-%20People%20Skills/W19%20Active%20listening%20and%20summarizing%20back.html) |
-| **X** | [`X - Interview Craft`](./X%20-%20Interview%20Craft) | 17 | 11 | 17 h | [`X01`](./X%20-%20Interview%20Craft/X01%20Three-level%20answers.html) |
+| **X** | [`X - Interview Craft`](./X%20-%20Interview%20Craft) | 17 | 11 | 17 h | [`X01`](./X%20-%20Interview%20Craft/X01%20Three-level%20answers.html), [`X02`](./X%20-%20Interview%20Craft/X02%20The%20question%20log.html) |
 
 ---
 

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G02 LLM API mechanics</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="G02">
+<main>
+<header>
+  <div class="eyebrow"><b>G02</b><span>G LLM application layer</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>LLM API mechanics</h1>
+  <p class="lede">How a stateless HTTP call carries messages, roles, and decoding parameters to an LLM provider, streams tokens back over Server-Sent Events, and reports stop reasons and token usage. Structured output grammars live in G05, tool schemas and execution loops in G06, and retries or circuit breakers in G21.</p>
+  <div class="chips"><span><em>Before</em>D10 Decoding and sampling</span><span><em>Before</em>D11 Logits, logprobs, perplexity</span><span><em>After</em>G05 Structured outputs</span><span><em>After</em>G06 Function and tool calling</span><span><em>After</em>G21 Reliability at the API layer</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses (station 1)</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper, and mechanism (stations 2 to 5)</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the kata (station 6)</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production incidents and interview drill (stations 7 and 8)</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and mixed review (stations 9 and 10)</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import Anki cards and log tracker row</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You enable streaming on an OpenAI Chat Completions call and log usage from every response. In the kata below, why did <code>openai_no_usage</code> report 0 accounted tokens even though it returned a full 8-token JSON object with HTTP 200?</summary><div class="a">When <code>stream: true</code> is set on OpenAI Chat Completions, the API omits the <code>usage</code> object by default. Unless you explicitly pass <code>stream_options: {"include_usage": true}</code>, no final usage chunk arrives before <code>[DONE]</code>, so your billing logger silently records 0 tokens while the provider bills all 1,208 tokens.</div></details>
+  <details class="q"><summary>In the kata, <code>anth_truncated</code> returned HTTP 200, billed 1,204 tokens, and crashed <code>json.loads()</code>. What single field in the stream tells your code to reject that payload before parsing?</summary><div class="a">The stop reason: <code>stop_reason: "max_tokens"</code> on Anthropic (or <code>finish_reason: "length"</code> on OpenAI). HTTP 200 only means the transport succeeded, not that the model finished its thought.</div></details>
+  <details class="q"><summary>Both providers processed 1,200 total prompt tokens, of which 900 were cached. Why does OpenAI report <code>prompt_tokens: 1200</code> while Anthropic reports <code>input_tokens: 300</code>?</summary><div class="a">OpenAI's <code>prompt_tokens</code> is inclusive of <code>prompt_tokens_details.cached_tokens</code> (300 uncached + 900 cached = 1,200). Anthropic's <code>input_tokens</code> counts only uncached tokens after the last cache breakpoint, so you must add <code>cache_read_input_tokens</code> (and <code>cache_creation_input_tokens</code>) to get total prompt size.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every standard LLM API call is a stateless HTTP POST carrying the entire conversation history as a typed array of messages plus decoding parameters. The server holds no session memory between turns (unless you opt into a stateful thread or cache layer), so turn 10 re-sends turns 1 through 9 as input tokens every time.</p>
+  <p>Because autoregressive decoding emits one token at a time, production clients request Server-Sent Events (SSE) instead of waiting for one giant JSON body. Your client is responsible for three wire contracts: assembling partial delta frames into complete text or tool JSON, branching on the final stop reason rather than trusting HTTP 200, and normalizing provider-specific usage fields so billing and observability stay accurate.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: A stateless LLM API call, end to end</div>
+    <svg viewBox="0 0 480 220" role="img" aria-label="Six-step flow of a stateless LLM API call from messages and parameters through HTTP POST prefill, SSE delta streaming, stop reason check, and final usage accounting.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="18" width="104" height="54" rx="6" class="c-accent" data-hi="1"/>
+          <text x="62" y="42" text-anchor="middle" font-weight="600">1. Messages</text>
+          <text x="62" y="58" text-anchor="middle" class="m">sys/user/asst</text>
+        </g>
+        <g data-step="2">
+          <path d="M114 45 H140" class="ink"/>
+          <rect x="140" y="18" width="104" height="54" rx="6" class="c-soft" data-hi="2"/>
+          <text x="192" y="42" text-anchor="middle" font-weight="600">2. Params</text>
+          <text x="192" y="58" text-anchor="middle" class="m">max_tok, stream</text>
+        </g>
+        <g data-step="3">
+          <path d="M244 45 H270" class="ink"/>
+          <rect x="270" y="18" width="198" height="54" rx="6" class="c-warn" data-hi="3"/>
+          <text x="369" y="42" text-anchor="middle" font-weight="600">3. HTTP POST + Prefill</text>
+          <text x="369" y="58" text-anchor="middle" class="m">1,200 in tok -> TTFT 83 ms</text>
+        </g>
+        <g data-step="4">
+          <path d="M369 72 V112" class="ink"/>
+          <rect x="270" y="112" width="198" height="54" rx="6" class="c-good" data-hi="4"/>
+          <text x="369" y="136" text-anchor="middle" font-weight="600">4. SSE Delta Stream</text>
+          <text x="369" y="152" text-anchor="middle" class="m">12.5 ms/tok (text / tool)</text>
+        </g>
+        <g data-step="5">
+          <path d="M270 139 H244" class="ink"/>
+          <rect x="140" y="112" width="104" height="54" rx="6" class="c-accent" data-hi="5"/>
+          <text x="192" y="136" text-anchor="middle" font-weight="600">5. Stop Reason</text>
+          <text x="192" y="152" text-anchor="middle" class="m">stop / length / tool</text>
+        </g>
+        <g data-step="6">
+          <path d="M140 139 H114" class="ink"/>
+          <rect x="10" y="112" width="104" height="54" rx="6" class="c-bad" data-hi="6"/>
+          <text x="62" y="136" text-anchor="middle" font-weight="600">6. Usage Chunk</text>
+          <text x="62" y="152" text-anchor="middle" class="m">0 if omitted</text>
+        </g>
+        <g data-only="6">
+          <text x="240" y="196" text-anchor="middle" class="m">Warning: without include_usage=true, step 6 is absent on OpenAI streams.</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Pack the full conversation history into a role-tagged messages array because the API is stateless and forgets prior turns.</li>
+      <li>Attach model, max_tokens, sampling controls, and stream flags so the server knows how to decode and when to cap output.</li>
+      <li>Send one HTTP POST; the server prefills all 1,200 prompt tokens before token 1 arrives, setting TTFT (83.1 ms in our kata).</li>
+      <li>Read SSE delta frames incrementally every TPOT (12.5 ms/token), buffering partial text or tool-argument JSON fragments across chunks.</li>
+      <li>Inspect the stop reason before parsing: stop or end_turn means complete, length or max_tokens means truncated, tool_calls means run tools.</li>
+      <li>Reconcile the final usage chunk (uncached, cached, output tokens); omit include_usage on OpenAI and your billing log silently drops to 0.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> An LLM API call is a stateless request followed by a stateful SSE stream whose contract ends only after you check both stop reason and usage.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>M-P-H-S-R-U</strong> ("My Prompt Hits Stream, Reason, Usage"): <strong>M</strong>essages (stateless history + roles), <strong>P</strong>arameters (budget + sampling), <strong>H</strong>TTP prefill (TTFT), <strong>S</strong>SE deltas (TPOT + buffering), stop <strong>R</strong>eason (complete vs truncated vs tool), <strong>U</strong>sage (uncached + cached + output).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>Stateless messages and role hierarchy</h3>
+  <p>Chat APIs model a turn as an ordered list of <code>{role, content}</code> objects. Roles establish instruction priority: <code>system</code> (or <code>developer</code> on newer OpenAI models) sets policy and persona, <code>user</code> carries untrusted caller input, <code>assistant</code> holds prior model replies or tool requests, and <code>tool</code> returns tool execution results. Because HTTP is stateless, multi-turn apps must resend the whole transcript on every request, so input token count grows quadratically across a long conversation unless you trim or summarize history.</p>
+  <p>Provider schemas diverge in small ways that break naive wrappers. OpenAI puts the system prompt inside <code>messages[0]</code>, whereas Anthropic hoists <code>system</code> to a top-level request parameter and enforces strict <code>user</code> / <code>assistant</code> alternation (consecutive user messages must be merged, and tool results travel inside a <code>user</code> message block).</p>
+
+  <h3>Request parameters and output budgets</h3>
+  <p>Beyond <code>model</code> and <code>messages</code>, four parameter groups govern generation. Sampling controls (<code>temperature</code>, <code>top_p</code>, covered in D10) reshape the next-token distribution; set one, not both, and note Anthropic rejects requests that set both on newer models. Stop controls (<code>stop</code> or <code>stop_sequences</code>) halt generation cleanly the instant a delimiter string is emitted.</p>
+  <p>The budget cap (<code>max_tokens</code> or OpenAI's <code>max_completion_tokens</code>) is a hard circuit breaker, not a brevity hint. The model does not see <code>max_tokens</code> in its prompt, so it will happily start a JSON object at token 48 and get sliced in half at token 50. On reasoning models, <code>max_completion_tokens</code> covers hidden reasoning tokens plus visible output, so a small cap can return zero visible text while still hitting <code>length</code>.</p>
+
+  <details class="q"><summary>Check: Why does setting <code>max_tokens: 50</code> fail as a way to ask the model for concise JSON responses?</summary><div class="a">Because <code>max_tokens</code> is a server-side hard cutoff invisible to the model during decoding. The model plans a normal-length reply and gets cut mid-object at token 50, producing invalid JSON with <code>finish_reason: "length"</code> while still billing every prompt and partial output token.</div></details>
+
+  <h3>Wire protocol: SSE streaming and latency math</h3>
+  <p>Standard LLM APIs stream over Server-Sent Events (<code>Content-Type: text/event-stream</code>) on a regular HTTP POST response rather than WebSockets. Token generation is unidirectional after the request body is sent, so SSE works cleanly through standard HTTP load balancers, proxies, and TLS without connection upgrade overhead. Each SSE frame ends with a blank line (<code>\n\n</code>) and carries <code>data:</code> JSON lines, optionally preceded by a named <code>event:</code> line.</p>
+  <p>Streaming does not speed up total generation time, it decouples perceived latency from output length. If prefill takes time <code>T_prefill</code> and decoding emits <code>N_out</code> tokens at <code>TPOT</code> per token, then:</p>
+  <div class="codewrap"><pre>TTFT = T_network + T_prefill + TPOT
+E2E  = TTFT + (N_out - 1) * TPOT</pre></div>
+  <p>Without streaming, the caller waits the full <code>E2E</code> before seeing byte 1. For a voice AI clinic agent piping LLM text into TTS, streaming cuts silence from seconds to a few hundred milliseconds. On the wire, however, TCP packets can split a single SSE frame or a multi-byte UTF-8 character across chunks, and tool-call arguments arrive as raw JSON string fragments. Always decode with an incremental UTF-8 decoder, split on <code>\n\n</code> frame boundaries, and buffer tool argument strings until the stop reason arrives.</p>
+
+  <figure class="viz" id="viz-wire">
+    <div class="vt">Diagram: OpenAI vs Anthropic SSE wire frames</div>
+    <svg viewBox="0 0 480 215" role="img" aria-label="Side-by-side comparison of OpenAI unnamed SSE data frames ending in a separate usage chunk and DONE sentinel versus Anthropic named SSE events carrying input usage at message_start and output usage plus stop_reason at message_delta.">
+      <g font-size="12">
+        <rect x="8" y="8" width="224" height="198" rx="6" class="c-paper"/>
+        <text x="120" y="28" text-anchor="middle" font-weight="700">OpenAI Chat Completions</text>
+        <rect x="20" y="38" width="200" height="32" rx="4" class="c-soft"/>
+        <text x="120" y="58" text-anchor="middle">data: {delta.content, finish:null}</text>
+        <rect x="20" y="78" width="200" height="32" rx="4" class="c-accent"/>
+        <text x="120" y="98" text-anchor="middle">data: {delta:{}, finish:"stop"}</text>
+        <rect x="20" y="118" width="200" height="36" rx="4" class="c-warn"/>
+        <text x="120" y="134" text-anchor="middle">data: {choices:[], usage:{...}}</text>
+        <text x="120" y="148" text-anchor="middle" class="m">only if include_usage: true</text>
+        <rect x="20" y="162" width="200" height="30" rx="4" class="c-muted"/>
+        <text x="120" y="181" text-anchor="middle">data: [DONE]</text>
+
+        <rect x="248" y="8" width="224" height="198" rx="6" class="c-paper"/>
+        <text x="360" y="28" text-anchor="middle" font-weight="700">Anthropic Messages</text>
+        <rect x="260" y="38" width="200" height="32" rx="4" class="c-warn"/>
+        <text x="360" y="58" text-anchor="middle">event: message_start (in_tok)</text>
+        <rect x="260" y="78" width="200" height="32" rx="4" class="c-soft"/>
+        <text x="360" y="98" text-anchor="middle">event: content_block_delta</text>
+        <rect x="260" y="118" width="200" height="36" rx="4" class="c-good"/>
+        <text x="360" y="134" text-anchor="middle">event: message_delta</text>
+        <text x="360" y="148" text-anchor="middle" class="m">stop_reason + output_tokens</text>
+        <rect x="260" y="162" width="200" height="30" rx="4" class="c-muted"/>
+        <text x="360" y="181" text-anchor="middle">event: message_stop</text>
+      </g>
+    </svg>
+    <figcaption><b>Takeaway.</b> OpenAI sends all usage in one optional trailing chunk with empty choices, whereas Anthropic splits input usage into message_start and output usage plus stop_reason into message_delta.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Streaming TTFT vs non-streaming E2E and truncation retry cost</div>
+    <p class="ask">Predict first. With a 1,200-token prompt, 200 output tokens at 25 ms/token, and a <code>max_tokens</code> cap of 150, how much worse is effective latency when truncation forces a retry compared to streaming TTFT?</p>
+    <div class="ctl">
+      <label><span>Prompt tokens</span><input type="range" name="prompt" min="200" max="8000" step="200" value="1200"><output data-for="prompt" data-unit=" tok"></output></label>
+      <label><span>Output needed</span><input type="range" name="out" min="20" max="500" step="10" value="200"><output data-for="out" data-unit=" tok"></output></label>
+      <label><span>Decode TPOT</span><input type="range" name="tpot" min="5" max="60" step="5" value="25"><output data-for="tpot" data-unit=" ms/tok"></output></label>
+      <label><span>max_tokens cap</span><input type="range" name="cap" min="50" max="500" step="10" value="150"><output data-for="cap" data-unit=" tok"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Streaming hides decode time behind TTFT, while setting max_tokens below the needed output turns one call into two full prefills and nearly doubles end-to-end latency. Prefill modeled as 40 ms network + 0.04 ms per prompt token.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var prefill=40+0.04*v.prompt;
+    var ttft=prefill+v.tpot;
+    var emitted=Math.min(v.out,v.cap);
+    var e2eFirst=ttft+(emitted-1)*v.tpot;
+    var trunc=v.out>v.cap;
+    var e2eFull=ttft+(v.out-1)*v.tpot;
+    var effective=trunc?(e2eFirst+e2eFull):e2eFull;
+    var wasted=trunc?(v.prompt+emitted):0;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" ms",digits:0,rows:[
+      {label:"Streaming TTFT",value:ttft,tone:"good"},
+      {label:"Non-streaming E2E (1 call)",value:e2eFull,tone:"muted"},
+      {label:trunc?"Effective E2E (truncated + retry)":"Effective E2E (no truncation)",value:effective,tone:trunc?"bad":"accent"}
+    ]});
+    return {verdict:trunc
+      ?("Truncated at "+emitted+"/"+v.out+" tokens (stop_reason=length): effective latency jumps to "+tl.fmt(effective,0)+" ms ("+tl.fmt(effective/ttft,1)+"x TTFT) and wastes "+tl.fmt(wasted,0)+" billed tokens.")
+      :("Clean stop ("+v.out+" <= "+v.cap+"): streaming cuts first-token wait from "+tl.fmt(e2eFull,0)+" ms to "+tl.fmt(ttft,0)+" ms ("+tl.fmt(e2eFull/ttft,1)+"x faster perceived start).")};
+  })});</script>
+
+  <details class="q"><summary>Check: Why does SSE streaming lower TTFT without lowering total E2E latency?</summary><div class="a">Prefill time and autoregressive decode time per token (TPOT) are unchanged on the server. Streaming delivers token 1 right after prefill (TTFT) instead of buffering all N_out tokens until the last token finishes (E2E).</div></details>
+
+  <h3>Stop reasons: the only contract for completion</h3>
+  <p>Never assume HTTP 200 means a valid, finished answer. Every provider returns an explicit stop reason that your application state machine must branch on:</p>
+  <div class="codewrap"><pre>Normal completion : OpenAI "stop"           | Anthropic "end_turn"
+Token cap hit     : OpenAI "length"         | Anthropic "max_tokens"
+Tool invocation   : OpenAI "tool_calls"     | Anthropic "tool_use"
+Safety / refusal  : OpenAI "content_filter" | Anthropic "refusal"
+Custom delimiter  : OpenAI "stop"           | Anthropic "stop_sequence"</pre></div>
+  <p>Treating <code>length</code> or <code>max_tokens</code> like a normal stop causes silent truncation bugs: broken JSON, missing closing tags, or half-written clinical instructions. Treating <code>tool_calls</code> like plain text leaves the user staring at an empty string because <code>content</code> is null while arguments sit in <code>tool_calls</code>.</p>
+
+  <h3>Usage accounting and provider schema traps</h3>
+  <p>Accurate cost attribution requires normalizing every provider's usage payload into one internal ledger: <code>uncached_input</code>, <code>cached_input</code>, <code>cache_write</code>, <code>output</code>, and <code>reasoning</code> tokens. Three traps silently break cost dashboards in production.</p>
+  <p>First, OpenAI's <code>prompt_tokens</code> includes <code>prompt_tokens_details.cached_tokens</code>, so uncached input is <code>prompt_tokens - cached_tokens</code>. Anthropic's <code>input_tokens</code> excludes <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code>, so total prompt size is their sum. Swapping those formulas either double-bills cached tokens or produces negative uncached counts. Second, OpenAI streaming omits usage unless <code>stream_options.include_usage</code> is true, and when enabled it arrives in an extra trailing chunk where <code>choices</code> is empty (<code>[]</code>), which crashes naive parsers that index <code>choices[0]</code> unconditionally. Third, if a user cancels mid-stream and closes the socket, you never receive the final usage chunk, yet the provider still bills full prompt prefill plus every token generated before cancellation propagated.</p>
+
+  <details class="q"><summary>Check: Your wrapper indexes <code>chunk.choices[0].delta</code> on every OpenAI SSE chunk. What happens the moment you turn on <code>stream_options: {"include_usage": true}</code>?</summary><div class="a">It throws an IndexError on the final usage chunk, because OpenAI sends usage in a trailing SSE frame with <code>"choices": []</code> right before <code>data: [DONE]</code>.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Streaming E2E formula</td><td class="n">TTFT + (N_out - 1) * TPOT</td><td>Derived</td></tr>
+    <tr><td>Kata OpenAI vs Anthropic TTFT (1,200 in tok)</td><td class="n">83.1 ms vs 111.1 ms</td><td>Your own run</td></tr>
+    <tr><td>Kata OpenAI vs Anthropic E2E (8 out tok)</td><td class="n">170.5 ms vs 219.2 ms</td><td>Your own run</td></tr>
+    <tr><td>Kata accounted tokens without <code>include_usage</code></td><td class="n">0 vs 1,208 actual</td><td>Your own run</td></tr>
+    <tr><td>OpenAI uncached input formula</td><td class="n">prompt_tokens - cached_tokens</td><td>Checked 2026-11-19</td></tr>
+    <tr><td>Anthropic total prompt formula</td><td class="n">input + cache_read + cache_creation</td><td>Checked 2026-11-19</td></tr>
+    <tr><td>Typical interactive voice/chat TTFT budget</td><td class="n">300 to 800 ms</td><td>From memory, verify</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>SSE streaming (<code>stream: true</code>)</td><td>Low perceived latency (TTFT instead of E2E); early cancel on bad output</td><td>Chunk framing, UTF-8/tool buffering, missing usage on disconnect</td><td><code>choices: []</code> usage chunk and proxy buffering</td></tr>
+    <tr><td>Non-streaming JSON</td><td>Single response body, guaranteed usage object, trivial retries</td><td>Full E2E wait before byte 1; higher HTTP timeout risk</td><td>Gateway 30 s to 60 s idle timeouts on long outputs</td></tr>
+    <tr><td>Tight <code>max_tokens</code> cap</td><td>Bounded worst-case spend and latency per call</td><td>Silent mid-JSON truncation (<code>length</code>/<code>max_tokens</code>) and retry cost</td><td>Spike in <code>length</code> stop reasons or reasoning-token starvation</td></tr>
+    <tr><td>Generous <code>max_tokens</code> cap</td><td>Rare truncation; safe headroom for reasoning tokens</td><td>Higher tail latency and cost if model loops</td><td>Repetition loops hitting max context; monitor P99 output tokens</td></tr>
+    <tr><td>Normalized internal API adapter</td><td>Swap providers cleanly; unified billing ledger and stop-reason enum</td><td>Lowest-common-denominator mapping; must track provider schema drift</td><td>Cached-token double counting between OpenAI and Anthropic</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Dual-provider SSE parser and usage ledger</h2>
+  <p>Simulates OpenAI and Anthropic SSE wire formats with real wall-clock timers, normalizes stop reasons and cached/uncached token usage, and exposes three production failure modes.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import json, time
+
+INCLUDE_USAGE = True        # Break-it 1: set False -&gt; OpenAI logs 0 tokens
+MAX_TOKENS = 32             # Break-it 2: set 5 -&gt; truncates JSON mid-stream
+BUFFER_TOOL_DELTAS = True   # Break-it 3: set False -&gt; parses partial tool JSON
+
+TOKENS = ['{"status":', ' "ok",', ' "slot":', ' "09:30",', ' "clinic":', ' "north",', ' "confirmed":', ' true}']
+TOOL_ARGS = ['{"patient_id":', ' "p_42",', ' "action":', ' "book"}']
+
+def sse_openai(tokens, max_tok, prefill_s, tpot_s, include_usage, tool_mode=False):
+    time.sleep(prefill_s)
+    emitted = tokens[:max_tok]
+    reason = "length" if len(tokens) &gt; max_tok else ("tool_calls" if tool_mode else "stop")
+    for tok in emitted:
+        time.sleep(tpot_s)
+        delta = {"tool_calls": [{"arguments": tok}]} if tool_mode else {"content": tok}
+        yield "data: " + json.dumps({"choices": [{"delta": delta, "finish_reason": None}]}) + "\n\n"
+    yield "data: " + json.dumps({"choices": [{"delta": {}, "finish_reason": reason}]}) + "\n\n"
+    if include_usage:
+        usage = {"prompt_tokens": 1200, "prompt_tokens_details": {"cached_tokens": 900}, "completion_tokens": len(emitted)}
+        yield "data: " + json.dumps({"choices": [], "usage": usage}) + "\n\n"
+    yield "data: [DONE]\n\n"
+
+def sse_anthropic(tokens, max_tok, prefill_s, tpot_s):
+    time.sleep(prefill_s)
+    yield "event: message_start\ndata: " + json.dumps({"message": {"usage": {"input_tokens": 300, "cache_read_input_tokens": 900}}}) + "\n\n"
+    emitted = tokens[:max_tok]
+    for tok in emitted:
+        time.sleep(tpot_s)
+        yield "event: content_block_delta\ndata: " + json.dumps({"delta": {"type": "text_delta", "text": tok}}) + "\n\n"
+    reason = "max_tokens" if len(tokens) &gt; max_tok else "end_turn"
+    yield "event: message_delta\ndata: " + json.dumps({"delta": {"stop_reason": reason}, "usage": {"output_tokens": len(emitted)}}) + "\n\n"
+    yield "event: message_stop\ndata: {}\n\n"
+
+def consume(provider, stream, buffer_tools=True):
+    t0, ttft, text, tool_buf = time.perf_counter(), None, [], []
+    stop_reason, in_tok, cached_tok, out_tok, chunks, parse_err = None, 0, 0, 0, 0, None
+    for frame in stream:
+        ev, data = None, ""
+        for line in frame.strip().splitlines():
+            if line.startswith("event:"): ev = line[6:].strip()
+            elif line.startswith("data:"): data = line[5:].strip()
+        if not data or data == "[DONE]": continue
+        obj = json.loads(data)
+        if provider == "openai":
+            if obj.get("usage"):
+                u = obj["usage"]
+                in_tok = u["prompt_tokens"] - u["prompt_tokens_details"]["cached_tokens"]
+                cached_tok = u["prompt_tokens_details"]["cached_tokens"]
+                out_tok = u["completion_tokens"]
+            if obj["choices"]:
+                c = obj["choices"][0]
+                if c.get("finish_reason"): stop_reason = c["finish_reason"]
+                d = c.get("delta", {})
+                if d.get("content"):
+                    if ttft is None: ttft = time.perf_counter() - t0
+                    text.append(d["content"]); chunks += 1
+                if d.get("tool_calls"):
+                    if ttft is None: ttft = time.perf_counter() - t0
+                    frag = d["tool_calls"][0]["arguments"]
+                    tool_buf.append(frag); chunks += 1
+                    if not buffer_tools and parse_err is None:
+                        try: json.loads(frag)
+                        except json.JSONDecodeError: parse_err = "partial_tool_json"
+        else:
+            if ev == "message_start":
+                u = obj["message"]["usage"]
+                in_tok, cached_tok = u["input_tokens"], u["cache_read_input_tokens"]
+            elif ev == "content_block_delta":
+                if ttft is None: ttft = time.perf_counter() - t0
+                text.append(obj["delta"]["text"]); chunks += 1
+            elif ev == "message_delta":
+                stop_reason, out_tok = obj["delta"]["stop_reason"], obj["usage"]["output_tokens"]
+    total = time.perf_counter() - t0
+    tpot = ((total - ttft) / max(chunks - 1, 1)) if ttft is not None else 0.0
+    payload = "".join(tool_buf if tool_buf else text)
+    if parse_err is None:
+        try: json.loads(payload)
+        except json.JSONDecodeError: parse_err = "truncated_json"
+    return {
+        "ttft_ms": round((ttft or 0) * 1000, 1), "e2e_ms": round(total * 1000, 1),
+        "tpot_ms": round(tpot * 1000, 1), "stop": stop_reason,
+        "in_tok": in_tok, "cached_tok": cached_tok, "out_tok": out_tok,
+        "acct_total": in_tok + cached_tok + out_tok, "err": parse_err or "ok",
+    }
+
+runs = [
+    ("openai_ok",       "openai",    sse_openai(TOKENS, MAX_TOKENS, 0.070, 0.012, INCLUDE_USAGE)),
+    ("anthropic_ok",    "anthropic", sse_anthropic(TOKENS, MAX_TOKENS, 0.095, 0.015)),
+    ("openai_no_usage", "openai",    sse_openai(TOKENS, MAX_TOKENS, 0.070, 0.012, False)),
+    ("anth_truncated",  "anthropic", sse_anthropic(TOKENS, 4, 0.095, 0.015)),
+    ("openai_tool_buf", "openai",    sse_openai(TOOL_ARGS, MAX_TOKENS, 0.070, 0.012, INCLUDE_USAGE, True)),
+]
+print(f"{'run':16} {'ttft_ms':&gt;7} {'tpot_ms':&gt;7} {'e2e_ms':&gt;7} {'stop':11} {'in':&gt;4} {'cache':&gt;5} {'out':&gt;3} {'acct':&gt;5} {'parse'}")
+for name, prov, stream in runs:
+    r = consume(prov, stream, BUFFER_TOOL_DELTAS)
+    print(f"{name:16} {r['ttft_ms']:7.1f} {r['tpot_ms']:7.1f} {r['e2e_ms']:7.1f} {r['stop']:11} {r['in_tok']:4d} {r['cached_tok']:5d} {r['out_tok']:3d} {r['acct_total']:5d} {r['err']}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">run              ttft_ms tpot_ms  e2e_ms stop          in cache out  acct parse
+openai_ok           83.1    12.5   170.5 stop         300   900   8  1208 ok
+anthropic_ok       111.1    15.4   219.2 end_turn     300   900   8  1208 ok
+openai_no_usage     83.3    12.5   171.0 stop           0     0   0     0 ok
+anth_truncated     111.2    15.4   157.5 max_tokens   300   900   4  1204 truncated_json
+openai_tool_buf     82.6    12.8   120.9 tool_calls   300   900   4  1204 ok</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Real kata wall-clock latency (TTFT vs E2E) across runs</div>
+    <div data-bars='{"unit":" ms","digits":1,"rows":[{"label":"openai_ok TTFT","value":83.1,"tone":"good"},{"label":"openai_ok E2E (8 tok)","value":170.5,"tone":"accent"},{"label":"anthropic_ok TTFT","value":111.1,"tone":"good"},{"label":"anthropic_ok E2E (8 tok)","value":219.2,"tone":"accent"},{"label":"anth_truncated E2E (4 tok, broken JSON)","value":157.5,"tone":"bad"},{"label":"openai_tool_buf E2E (4 tok, buffered)","value":120.9,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> Streaming delivers first bytes in 83 to 111 ms (half the 8-token E2E), while truncating at 4 tokens finishes faster (157.5 ms) only to return unparseable JSON that still bills 1,204 tokens.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li><strong>Same total tokens, different wire math.</strong> Both <code>openai_ok</code> and <code>anthropic_ok</code> normalize to 300 uncached input, 900 cached input, and 8 output tokens (1,208 total), even though OpenAI sends <code>prompt_tokens: 1200</code> (inclusive) at the end and Anthropic sends <code>input_tokens: 300</code> (exclusive) at <code>message_start</code>.</li>
+    <li><strong>Silent billing blind spot.</strong> <code>openai_no_usage</code> returns the exact same valid JSON and <code>stop</code> reason in 171.0 ms, yet logs <code>0</code> accounted tokens because <code>include_usage</code> was false.</li>
+    <li><strong>Fast failure is still expensive failure.</strong> <code>anth_truncated</code> finishes in 157.5 ms instead of 219.2 ms, but emits <code>stop_reason: max_tokens</code>, crashes JSON parsing (<code>truncated_json</code>), and still bills 1,204 tokens.</li>
+    <li><strong>Tool arguments must be buffered.</strong> <code>openai_tool_buf</code> splits <code>{"patient_id": "p_42", "action": "book"}</code> across 4 SSE deltas; buffering until <code>finish_reason: tool_calls</code> yields valid JSON in 120.9 ms.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Drop streaming usage.</strong> Set <code>INCLUDE_USAGE = False</code> at the top of <code>kata.py</code>. Predict what happens to <code>openai_ok</code> and <code>openai_tool_buf</code> in the <code>acct</code> column before running.</li>
+    <li><strong>Starve the output budget.</strong> Set <code>MAX_TOKENS = 5</code>. Predict which runs flip from <code>ok</code> to <code>truncated_json</code>, what their <code>stop</code> column prints, and whether <code>acct</code> drops meaningfully.</li>
+    <li><strong>Parse tool deltas too early.</strong> Set <code>BUFFER_TOOL_DELTAS = False</code>. Predict what happens on the very first chunk of <code>openai_tool_buf</code> before running.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a simulated client disconnect after chunk 3 of <code>openai_ok</code> and implement a fallback local token estimator so aborted streams still record approximate usage instead of 0.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Provider invoice is 35% higher than internal token logs</td><td>Streaming routes omit <code>stream_options.include_usage</code>, or client-aborted streams drop before the final usage frame</td><td>Enable <code>include_usage: true</code> everywhere; log estimated prompt + emitted tokens on socket abort</td></tr>
+    <tr><td>Intermittent JSON parse errors on HTTP 200 responses</td><td>Caller parses body without checking <code>finish_reason == "length"</code> or <code>stop_reason == "max_tokens"</code></td><td>Gate parsing on stop reason; raise <code>max_completion_tokens</code> or switch to structured outputs (G05)</td></tr>
+    <tr><td>Anthropic cost dashboard is 2x too low or OpenAI is 2x too high</td><td>Mixed inclusive vs exclusive cached-token math in the shared usage normalizer</td><td>Unit-test provider adapters: OpenAI <code>uncached = prompt - cached</code>; Anthropic <code>total = input + cache_read + cache_write</code></td></tr>
+    <tr><td>SSE stream stalls for 10 s then dumps all tokens at once</td><td>Reverse proxy (Nginx, Cloudflare, ALB) is buffering the HTTP response</td><td>Set <code>X-Accel-Buffering: no</code>, <code>Cache-Control: no-cache</code>, and flush each SSE frame immediately</td></tr>
+    <tr><td>Random Unicode replacement characters or JSON syntax errors in streamed tool calls</td><td>Raw byte chunks decoded individually instead of incrementally, or tool deltas parsed per chunk</td><td>Use an incremental UTF-8 decoder, split on <code>\n\n</code>, and buffer tool arguments by tool call index until stop reason</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> TTFT P50/P95, TPOT P50/P95, stop-reason distribution (alert if <code>length</code> or <code>max_tokens</code> exceeds 1% or <code>content_filter</code> spikes), stream-abort rate, and daily reconciliation delta between internal token logs and provider billing exports.</p>
+  <details class="q"><summary>Scenario: Your voice AI clinic booking agent streams GPT and Claude calls. Over one weekend, 8% of booking turns crash with JSONDecodeError while finance reports your internal token ledger is 40% lower than the OpenAI invoice. How do you diagnose and fix both?</summary><div class="a"><ol>
+    <li><strong>Check stop-reason logs on the failing 8% of turns.</strong> Inspect <code>finish_reason</code> / <code>stop_reason</code>; a spike in <code>length</code> or <code>max_tokens</code> (often triggered when a reasoning model eats the budget or a longer patient transcript shifts output size) explains valid HTTP 200 responses with truncated JSON.</li>
+    <li><strong>Audit tool-call delta buffering.</strong> Verify that streamed JSON or tool arguments are buffered across SSE frames and only parsed after <code>stop</code>/<code>end_turn</code> or <code>tool_calls</code>/<code>tool_use</code>.</li>
+    <li><strong>Audit streaming usage flags and abort paths.</strong> Confirm <code>stream_options: {"include_usage": true}</code> is set on every OpenAI streaming route (handling the trailing <code>choices: []</code> chunk) and verify whether voice barge-ins cancel streams mid-flight without logging fallback prompt + emitted token estimates.</li>
+    <li><strong>Reconcile cached-token normalization.</strong> Check that OpenAI <code>cached_tokens</code> are subtracted from <code>prompt_tokens</code> rather than added, and Anthropic <code>cache_read_input_tokens</code> are added rather than dropped.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>LLM APIs are stateless HTTP endpoints that stream autoregressive tokens back over Server-Sent Events. Getting the wire mechanics right cuts perceived latency from full end-to-end generation down to time-to-first-token, prevents silent truncation bugs in downstream parsers, and keeps token cost attribution accurate across multiple providers.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Every request sends the full role-tagged messages array plus parameters like model, max_tokens, sampling controls, and stream flags. The server runs prefill over all prompt tokens before emitting token one, which sets TTFT, then streams SSE deltas every TPOT milliseconds so end-to-end latency equals TTFT plus N minus one times TPOT. On the client, you split frames on blank lines, buffer partial text or tool-call JSON fragments across chunks, and branch on the explicit stop reason such as stop, length, tool_calls, or content_filter instead of trusting HTTP 200. Finally, you reconcile usage from the stream's metadata into normalized uncached input, cached input, and output buckets.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Three production traps bite teams in practice. First, OpenAI streaming omits usage unless stream_options include_usage is true, and then sends it in a trailing chunk with an empty choices array. Second, OpenAI prompt_tokens includes cached tokens while Anthropic input_tokens excludes cache_read_input_tokens, which corrupts cost dashboards if not normalized. Third, max_tokens is a hard cutoff invisible to the model, and aborted streams never deliver final usage chunks even though the server bills every prefilled and emitted token.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We call the OpenAI and Anthropic SDKs with streaming enabled so the app feels faster for customers, and we track token usage from the responses so we can keep API costs under control."</p>
+    <p class="strong">"We wrap both providers behind a normalized SSE adapter that separates TTFT from E2E (TTFT plus N minus 1 times TPOT), buffers tool-call deltas until a terminal stop reason arrives, and rejects length or max_tokens completions before JSON parsing. On OpenAI streams we pass include_usage=true and handle the trailing empty-choices chunk, and we normalize cached tokens separately because OpenAI prompt_tokens is inclusive while Anthropic input_tokens is exclusive. On client-aborted streams we log a local fallback estimate so billing reconciliation does not drift."</p>
+    <p>The strong answer names the exact wire protocol (SSE), the latency formula, a concrete failure mode (truncation on length/max_tokens and missing usage on stream abort), and a real cross-provider schema difference.</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Streaming makes the LLM generate tokens faster, so total request latency drops."</summary><div class="a">Wrong. Streaming does not change server prefill time or TPOT, so total E2E latency is essentially identical. Streaming lowers perceived latency from E2E down to TTFT by delivering token 1 right after prefill.</div></details>
+  <details class="q"><summary>"If the LLM API returns HTTP 200, the response finished cleanly and is safe to pass straight to json.loads."</summary><div class="a">Wrong. Truncation (<code>length</code> / <code>max_tokens</code>), tool calls (<code>tool_calls</code> / <code>tool_use</code>), and safety refusals (<code>content_filter</code>) all return HTTP 200. You must check the stop reason before parsing.</div></details>
+  <details class="q"><summary>"Setting max_tokens=100 tells the model to write a concise 100-token summary."</summary><div class="a">Wrong. The model cannot see <code>max_tokens</code> during decoding. It is a hard server cutoff that slices the output mid-sentence or mid-JSON at token 100. Ask for brevity in the prompt and set <code>max_tokens</code> as a safety ceiling.</div></details>
+  <details class="q"><summary>"OpenAI prompt_tokens and Anthropic input_tokens measure the same thing, so you can sum them directly in one billing table."</summary><div class="a">Wrong. OpenAI <code>prompt_tokens</code> includes cached prompt tokens, whereas Anthropic <code>input_tokens</code> excludes <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code>. Treating them identically skews both cache-hit rate and dollar cost.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Why do LLM chat APIs require sending the entire conversation history on every turn?</summary><div class="a">Standard chat endpoints are stateless HTTP POSTs with no server-side session memory. The model needs every prior turn in the prompt to compute attention over context, so input tokens grow with conversation length unless truncated or summarized.<div class="f"><b>Follow-up</b>Does prompt caching eliminate resending the messages over the network? No. You still send the full messages array in the HTTP body; caching reuses server-side KV state for matching prefixes to cut prefill compute and cost.</div></div></details>
+  <details class="q"><summary>How do OpenAI and Anthropic differ in how they represent system prompts and message turns?</summary><div class="a">OpenAI places the <code>system</code> or <code>developer</code> role inside the <code>messages</code> array. Anthropic hoists <code>system</code> to a top-level request field and requires strict alternating <code>user</code> and <code>assistant</code> messages, with tool results sent inside a <code>user</code> turn.</div></details>
+  <details class="q"><summary>Why do LLM providers use Server-Sent Events (SSE) instead of WebSockets for text streaming?</summary><div class="a">Text generation is unidirectional after the request POST is sent. SSE runs over standard HTTP/1.1 or HTTP/2, works cleanly through existing load balancers and proxies without upgrade handshakes, and has trivial line-based framing.<div class="f"><b>Follow-up</b>When would you actually choose WebSockets or WebRTC instead? For bidirectional, full-duplex real-time audio (voice agents with barge-in), where the client streams audio frames up while receiving audio frames down simultaneously.</div></div></details>
+  <details class="q"><summary>Write the formula linking TTFT, TPOT, output tokens, and E2E latency, and explain what each term depends on.</summary><div class="a"><code>E2E = TTFT + (N_out - 1) * TPOT</code>. TTFT is dominated by network RTT plus prefill compute (scales with uncached prompt length and KV cache misses). TPOT is dominated by memory-bandwidth-bound autoregressive decode per token.</div></details>
+  <details class="q"><summary>What happens on OpenAI Chat Completions when you set <code>stream: true</code> without <code>stream_options.include_usage</code>?</summary><div class="a">OpenAI omits token usage from every SSE chunk, so your client logs 0 tokens while still getting billed. Turning on <code>include_usage: true</code> emits one final chunk with <code>choices: []</code> and the full <code>usage</code> object right before <code>data: [DONE]</code>.<div class="f"><b>Follow-up</b>What breaks in a naive streaming loop when you enable <code>include_usage</code>? Indexing <code>chunk.choices[0]</code> throws an IndexError on that trailing usage-only chunk because <code>choices</code> is empty.</div></div></details>
+  <details class="q"><summary>How do you normalize cached and uncached input tokens across OpenAI and Anthropic?</summary><div class="a">For OpenAI: <code>uncached = prompt_tokens - prompt_tokens_details.cached_tokens</code>, <code>cached = cached_tokens</code>. For Anthropic: <code>uncached = input_tokens</code>, <code>cached = cache_read_input_tokens</code>, plus track <code>cache_creation_input_tokens</code> separately because cache writes have a different price.</div></details>
+  <details class="q"><summary>Name the four main stop reasons and the exact action your application should take for each.</summary><div class="a"><code>stop</code>/<code>end_turn</code>: parse and return to user. <code>length</code>/<code>max_tokens</code>: reject incomplete output, retry with larger budget or continue prompt. <code>tool_calls</code>/<code>tool_use</code>: execute buffered tool arguments and send tool result turn. <code>content_filter</code>/<code>refusal</code>: surface safe fallback without retrying blindly.<div class="f"><b>Follow-up</b>Why is <code>max_completion_tokens</code> especially dangerous on reasoning models? Hidden reasoning tokens count toward the same cap, so a tight budget can burn all tokens thinking and emit 0 visible characters with <code>finish_reason: "length"</code>.</div></div></details>
+  <details class="q"><summary>Why do streamed tool calls fail if you parse JSON on each incoming SSE chunk?</summary><div class="a">The provider streams tool arguments as raw string fragments (for example <code>{"patient_id":</code> then <code> "p_42"}</code>), which are invalid JSON individually. You must concatenate fragments per tool call index and call <code>json.loads</code> only after the terminal stop reason arrives.</div></details>
+  <details class="q"><summary>A user closes the browser tab halfway through a 500-token stream. Why does your internal token ledger disagree with the provider invoice?</summary><div class="a">Closing the socket prevents your server from receiving the final SSE usage chunk (or Anthropic's <code>message_delta</code>), so your logger records 0 output tokens. Meanwhile the provider bills full prompt prefill plus all tokens generated before cancellation reached the inference engine.<div class="f"><b>Follow-up</b>How do you close that accounting gap? On stream abort or timeout, emit a fallback usage record using a local tokenizer estimate for the prompt plus the chunks already received.</div></div></details>
+  <details class="q"><summary>Why can a single SSE stream suddenly deliver all tokens in one burst after a 10-second freeze in production?</summary><div class="a">An intermediate reverse proxy (such as Nginx or an API gateway) is buffering the HTTP response body until its buffer fills or the upstream closes. Disable proxy buffering with <code>X-Accel-Buffering: no</code> and <code>Cache-Control: no-cache</code>, and flush after every chunk.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 6 steps (M-P-H-S-R-U), then write: the E2E latency formula, the 4 stop-reason mappings across OpenAI and Anthropic, the cached-token normalization formulas for both providers, and the 3 streaming failure modes from the kata.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>6-step lifecycle (M-P-H-S-R-U): Messages, Parameters, HTTP POST + prefill (TTFT), SSE deltas (TPOT), Stop reason, Usage chunk.</li>
+    <li>Latency formula: <code>E2E = TTFT + (N_out - 1) * TPOT</code>; streaming cuts perceived wait to TTFT, not E2E.</li>
+    <li>Stop reasons: <code>stop</code>/<code>end_turn</code>, <code>length</code>/<code>max_tokens</code>, <code>tool_calls</code>/<code>tool_use</code>, <code>content_filter</code>/<code>refusal</code>.</li>
+    <li>Usage math: OpenAI <code>prompt_tokens</code> includes <code>cached_tokens</code>; Anthropic <code>input_tokens</code> excludes <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code>.</li>
+    <li>Three streaming traps: missing <code>include_usage</code> (0 logged tokens + <code>choices: []</code> chunk), mid-JSON truncation on <code>max_tokens</code>, and unbuffered tool-call deltas or aborted streams.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D10: Why does setting both <code>temperature</code> and <code>top_p</code> at the same time make decoding harder to reason about?</summary><div class="a">Temperature rescales all logits before softmax (flattening or sharpening the whole distribution), while top-p truncates the tail after softmax to cumulative probability p. Changing both interacts nonlinearly, so best practice is to tune one and leave the other at default.</div></details>
+  <details class="q"><summary>D11: How do token logprobs let you detect low-confidence extractions without running a second judge model?</summary><div class="a">Logprobs expose the log-probability of each emitted token. Taking the exponent of the minimum or mean logprob over critical field tokens flags uncertain extractions (for example, p &lt; 0.6 on a date or ID) at zero extra inference cost.</div></details>
+  <details class="q"><summary>A02: Why should an async Python service handling 200 concurrent SSE LLM streams avoid blocking calls inside the event loop?</summary><div class="a">Asyncio runs on a single thread cooperatively yielding at <code>await</code> points. One synchronous network call or heavy CPU loop stalls all 200 open SSE streams simultaneously, spiking TTFT and causing upstream timeouts.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://platform.openai.com/docs/api-reference/chat/create">OpenAI: Chat Completions API reference</a><small>Messages roles, <code>max_completion_tokens</code>, <code>finish_reason</code>, <code>stream_options.include_usage</code>, and <code>prompt_tokens_details.cached_tokens</code>. Checked 2026-11-19.</small></li>
+    <li><a href="https://docs.anthropic.com/en/api/messages-streaming">Anthropic: Messages API streaming reference</a><small>Named SSE events (<code>message_start</code>, <code>content_block_delta</code>, <code>message_delta</code>, <code>message_stop</code>), <code>stop_reason</code>, and exclusive <code>input_tokens</code> accounting. Checked 2026-11-19.</small></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events">MDN Web Docs: Using Server-Sent Events</a><small>SSE <code>text/event-stream</code> wire format, <code>event:</code> and <code>data:</code> fields, and <code>\n\n</code> frame boundaries. Checked 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Messages and roles:</strong> Stateless HTTP POST re-sending full history every turn; roles (<code>system</code>/<code>developer</code>, <code>user</code>, <code>assistant</code>, <code>tool</code>) set instruction priority; Anthropic hoists <code>system</code> top-level and enforces user/assistant alternation.</li>
+    <li><strong>Parameters:</strong> Tune either <code>temperature</code> or <code>top_p</code> (not both); <code>max_tokens</code>/<code>max_completion_tokens</code> is a hard cutoff invisible to the model and includes hidden reasoning tokens on reasoning models.</li>
+    <li><strong>SSE streaming:</strong> Unidirectional <code>text/event-stream</code> over HTTP cuts perceived wait from E2E to TTFT; split on <code>\n\n</code>, decode UTF-8 incrementally, and buffer tool-call JSON fragments until stream end.</li>
+    <li><strong>Stop reasons:</strong> Always branch on <code>finish_reason</code>/<code>stop_reason</code> (<code>stop</code>/<code>end_turn</code>, <code>length</code>/<code>max_tokens</code>, <code>tool_calls</code>/<code>tool_use</code>, <code>content_filter</code>/<code>refusal</code>), never trust HTTP 200 alone.</li>
+    <li><strong>Usage accounting:</strong> Enable <code>stream_options.include_usage</code> on OpenAI (guard against trailing <code>choices: []</code>), normalize OpenAI inclusive vs Anthropic exclusive cached input tokens, and log fallback estimates on aborted streams.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Spine (M-P-H-S-R-U):</strong> Messages, Parameters, HTTP prefill (TTFT), SSE deltas (TPOT), Stop reason, Usage reconciliation.</li>
+      <li><strong>Latency formula:</strong> <code>E2E = TTFT + (N_out - 1) * TPOT</code>. Streaming improves TTFT, not total E2E.</li>
+      <li><strong>Cached-token math:</strong> OpenAI <code>uncached = prompt_tokens - cached_tokens</code>; Anthropic <code>total_in = input_tokens + cache_read + cache_creation</code>.</li>
+      <li><strong>Silent failure rule:</strong> HTTP 200 + <code>length</code>/<code>max_tokens</code> = truncated payload billed in full; HTTP 200 + missing <code>include_usage</code> = 0 logged tokens on a real bill.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::G LLM application layer: prompts, context, memory, cost, latency", "tags": "G02 T1 W01", "cards": [{"q": "What are the six stages of a stateless LLM API call (M-P-H-S-R-U)?", "a": "Messages (history + roles), Parameters, HTTP POST prefill (TTFT), SSE deltas (TPOT), Stop reason check, and Usage reconciliation."}, {"q": "How do TTFT, TPOT, and output length determine end-to-end streaming latency?", "a": "E2E = TTFT + (N_out - 1) * TPOT. Streaming hides decode time behind TTFT without reducing total E2E."}, {"q": "Why does OpenAI Chat Completions streaming log 0 tokens unless you set stream_options.include_usage?", "a": "OpenAI omits the usage object on streams by default; enabling include_usage adds a final chunk with empty choices and usage before [DONE]."}, {"q": "What crashes a naive OpenAI SSE parser when stream_options.include_usage is turned on?", "a": "Indexing chunk.choices[0] unconditionally raises an IndexError because the final usage chunk arrives with an empty choices array."}, {"q": "How do OpenAI prompt_tokens and Anthropic input_tokens differ when prompt caching is active?", "a": "OpenAI prompt_tokens includes cached_tokens (subtract to get uncached); Anthropic input_tokens excludes cache_read and cache_creation tokens (add to get total)."}, {"q": "Why should downstream JSON parsers never trust HTTP 200 alone on an LLM API response?", "a": "Truncation (length/max_tokens), tool calls (tool_calls/tool_use), and refusals (content_filter) all return HTTP 200; always branch on stop reason first."}, {"q": "Why does setting max_tokens to 50 fail as a way to request concise JSON?", "a": "The model cannot see max_tokens; it is a hard server cutoff that slices output mid-JSON at token 50 while billing every token."}, {"q": "Why do streamed tool calls fail if you parse JSON on each incoming SSE chunk?", "a": "Tool arguments arrive as partial JSON string fragments across chunks; buffer them per tool call index until the stop reason arrives."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

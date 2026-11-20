@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>G01 Token optimization playbook</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="G01">
+<main>
+<header>
+  <div class="eyebrow"><b>G01</b><span>LLM application layer</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Token optimization playbook</h1>
+  <p class="lede">How do you cut an LLM bill by 80% to 95% without breaking quality? This page covers the full 8-lever engineering playbook (measure, send less, reuse, generate less, cheaper models, batch, fewer calls, self-host) and where each lever stops working.</p>
+  <div class="chips"><span><em>Before</em>D02 Tokenization</span><span><em>Before</em>K05 Prefill vs decode</span><span><em>After</em>G07 Prompt caching</span><span><em>After</em>G17 Model routing and cascades</span><span><em>After</em>G19 Cost modeling</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses (do not peek)</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, mechanism, numbers and tradeoffs</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the token ledger kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production incidents and 90-second interview drill</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and checklist</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Flashcards and Anki import</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In a 20-turn chat (1,400-token system prompt, 120-token user turn, 420-token reply), what share of the 133,000 total input tokens comes from re-sending old chat history?</summary><div class="a">77% (102,600 of 133,000 input tokens). Because stateless LLM APIs require resending the full history every turn, history tokens grow quadratically as T(T - 1) / 2, which is 190 re-sent turn-pairs over 20 turns.</div></details>
+  <details class="q"><summary>You turn on 90% prefix caching on that 20-turn chat ($168.33 per 1,000 chats). Next you add per-turn rolling summarization after turn 4, cutting total input tokens from 115,000 to 52,900. Does your bill go down or up?</summary><div class="a">It goes up 45%, from $168.33 to $244.47 per 1,000 chats. Rewriting the rolling summary every turn mutates the history prefix, busting the 90% cache and turning 112,100 discounted cached tokens into 38,000 full-price uncached tokens.</div></details>
+  <details class="q"><summary>Output tokens are only 5.9% of total tokens in our baseline 20-turn chat (8,400 of 141,400). Why does capping output from 420 to 140 tokens still slash the Stage 3 bill by 55% ($244.47 to $109.23)?</summary><div class="a">Two compounding multipliers: decode tokens cost 3x to 5x more than input tokens because decode is memory-bandwidth bound, and every output token generated on turn t gets re-read as input on subsequent turns.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Token optimization is not "write shorter prompts." Every LLM bill is the product of four measurable quantities: how many input tokens you send, what fraction hits a warm prefix cache, how many output tokens you decode, and which model tier and billing mode serves each call.</p>
+  <p>Engineers optimize tokens in strict order of leverage and risk. You measure a per-endpoint token ledger first, then strip waste and exploit KV prefix reuse before touching model quality, and only consider self-hosting GPUs once software levers are exhausted and steady utilization clears break-even.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The 8-lever token optimization funnel, end to end</div>
+    <svg viewBox="0 0 480 235" role="img" aria-label="Six-stage funnel of the eight token optimization levers from measure first through send less, reuse, generate less, cheaper models plus batch plus fewer calls, to self-host break-even.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="14" width="142" height="44" rx="4" class="c-accent" data-hi="1"/>
+          <text x="81" y="33" text-anchor="middle" font-weight="600">1. Measure</text>
+          <text x="81" y="49" text-anchor="middle" class="m">In, cache, out, retries</text>
+        </g>
+        <g data-step="2">
+          <path d="M152 36 H168" class="ink"/>
+          <rect x="168" y="14" width="142" height="44" rx="4" class="c-soft" data-hi="2"/>
+          <text x="239" y="33" text-anchor="middle" font-weight="600">2. Send less</text>
+          <text x="239" y="49" text-anchor="middle" class="m">Trim schemas, compact</text>
+        </g>
+        <g data-step="3">
+          <path d="M310 36 H326" class="ink"/>
+          <rect x="326" y="14" width="144" height="44" rx="4" class="c-good" data-hi="3"/>
+          <text x="398" y="33" text-anchor="middle" font-weight="600">3. Reuse</text>
+          <text x="398" y="49" text-anchor="middle" class="m">Prefix cache (50-90%)</text>
+        </g>
+        <g data-step="4">
+          <path d="M398 58 V88" class="ink"/>
+          <rect x="326" y="88" width="144" height="44" rx="4" class="c-warn" data-hi="4"/>
+          <text x="398" y="107" text-anchor="middle" font-weight="600">4. Generate less</text>
+          <text x="398" y="123" text-anchor="middle" class="m">Cap 3x-5x output</text>
+        </g>
+        <g data-step="5">
+          <path d="M326 110 H310" class="ink"/>
+          <rect x="168" y="88" width="142" height="44" rx="4" class="c-good" data-hi="5"/>
+          <text x="239" y="107" text-anchor="middle" font-weight="600">5-7. Route/Batch/Cut</text>
+          <text x="239" y="123" text-anchor="middle" class="m">Small, 50% batch, calls</text>
+        </g>
+        <g data-step="6">
+          <path d="M168 110 H152" class="ink"/>
+          <rect x="10" y="88" width="142" height="44" rx="4" class="c-muted" data-hi="6"/>
+          <text x="81" y="107" text-anchor="middle" font-weight="600">8. Self-host</text>
+          <text x="81" y="123" text-anchor="middle" class="m">High GPU utilization</text>
+        </g>
+        <g data-only="3">
+          <rect x="10" y="156" width="460" height="32" rx="4" class="c-paper"/>
+          <text x="240" y="176" text-anchor="middle" class="m">Rule: pin static prompt at byte 0; one dynamic timestamp busts 100% of prefix hits.</text>
+        </g>
+        <g data-only="6">
+          <rect x="10" y="156" width="460" height="58" rx="4" class="c-bad"/>
+          <text x="240" y="177" text-anchor="middle" font-weight="600">Two failure traps: naive compaction busts prefix caches (+45% bill)</text>
+          <text x="240" y="198" text-anchor="middle" class="m">and idle GPUs make self-hosting cost more than pay-per-token APIs.</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Measure first: log input, cached, output, and retry tokens per endpoint so you target the real cost driver instead of guessing.</li>
+      <li>Send less: prune bloated system prompts and unused tool schemas, and bound quadratic O(T^2) chat history.</li>
+      <li>Reuse: keep static prefixes byte-identical from token 0 to unlock 50% to 90% prefix cache discounts on repeated context.</li>
+      <li>Generate less: cap verbose replies with max_tokens and tight schemas because output costs 3x to 5x input and re-enters history.</li>
+      <li>Route, batch, and cut calls: send 70% to 80% of easy turns to small models, collapse agent loops, and move async jobs to 50% Batch API.</li>
+      <li>Self-host last: only move to owned GPUs when steady utilization beats API unit economics; naive compaction or idle GPUs erase savings.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Stack zero-risk waste removal and prefix reuse first, then cap outputs and route tiers, and self-host only after steady utilization clears break-even.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>M-S-R-G-C-B-F-S</strong> -> <em>"My Server Runs Great: Cut Bloat, Fast Savings."</em> <strong>M</strong>easure, <strong>S</strong>end less, <strong>R</strong>euse, <strong>G</strong>enerate less, <strong>C</strong>heaper models, <strong>B</strong>atch, <strong>F</strong>ewer calls, <strong>S</strong>elf-host.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Measure: the token accounting equation</h3>
+  <p>Before changing a single prompt, build a <strong>token ledger</strong>: a structured log recording uncached input tokens, cached input tokens, output tokens, retry count, and model tier for every request. Track <strong>cost per completed task</strong> rather than cost per 1M tokens, because a cheap model that fails and triggers three agent retries can cost more than one clean frontier call.</p>
+  <div class="codewrap"><pre>Cost = (N_in_uncached * P_in + N_in_cached * d_cache * P_in + N_out * P_out) / 1,000,000
+where d_cache is the cached-read multiplier (e.g., 0.10 for a 90% discount)</pre></div>
+  <p>From D02 Tokenization, remember that whitespace, verbose JSON keys, and Markdown boilerplate all become tokens. Auditing your P95 requests almost always reveals one endpoint or one bloated tool schema driving most of the bill.</p>
+
+  <h3>2. Send less: why multi-turn chat is quadratic</h3>
+  <p>LLM inference APIs are stateless. On turn <em>t</em> (0-indexed), you resend the system prompt <em>S</em>, all previous user messages <em>U</em> and model outputs <em>O</em>, plus the new user message. Summing across <em>T</em> turns gives an exact closed-form input token count:</p>
+  <div class="codewrap"><pre>N_in(T) = T * (S + U) + (U + O) * T * (T - 1) / 2</pre></div>
+  <p>The second term grows as <code>O(T^2)</code>. For 20 turns with <code>S = 1400</code>, <code>U = 120</code>, and <code>O = 420</code>, static overhead is <code>30,400</code> tokens while re-sent history is <code>540 * 190 = 102,600</code> tokens (77% of input). Cutting unused tool definitions (dynamic tool loading) shrinks <em>S</em>; bounding history with a sliding window plus summary shrinks the quadratic term to <code>O(T)</code>.</p>
+  <details class="q"><summary>Check: Why does a 20-turn chat resend 190 turn-pairs of history instead of 20?</summary><div class="a">Turn 0 sends 0 prior turns, turn 1 sends 1, turn 2 sends 2, up to turn 19 sending 19. The arithmetic sum 0 + 1 + ... + 19 equals T(T - 1) / 2 = 20 * 19 / 2 = 190 turn-pairs.</div></details>
+
+  <h3>3. Reuse: prefix caching vs semantic caching</h3>
+  <p>From K05 Prefill vs decode, causal self-attention means token <em>k</em> attends only to tokens <code>1..k</code>. If two requests share an identical token prefix from byte 0, the server can reuse the precomputed KV cache for that prefix and skip prefill compute. Providers pass this savings on as 50% to 90% off cached input reads (see G07 Prompt caching for TTL and write-premium mechanics).</p>
+  <p>The catch is strict prefix matching: putting a dynamic timestamp, request UUID, or unsorted JSON keys at byte 0 invalidates 100% of the cache. Always order prompts from most static to most dynamic (system prompt, sorted tool schemas, few-shot examples, history, then live user input). By contrast, <strong>semantic caching</strong> embeds the query and returns a stored answer when cosine similarity clears a threshold. It skips the entire LLM call for static FAQs, but risks serving stale or cross-tenant wrong answers if keys are not tightly scoped.</p>
+
+  <h3>4. Generate less: the double penalty of output tokens</h3>
+  <p>Decode generates one token per forward pass and reloads the entire model weights from HBM each step (K05), making it memory-bandwidth bound. That is why APIs price output tokens 3x to 5x higher than input tokens. In multi-turn chat or agent loops, every verbose output token pays a second tax: it is appended to history and re-read on every future turn.</p>
+  <p>Enforce tight output budgets with <code>max_tokens</code>, stop sequences, terse structured outputs (enums or compact JSON instead of prose), and turn off extended reasoning or chain-of-thought on classification and extraction calls where it adds zero accuracy.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: 20-turn chat bill across turns, caching, output cap, and routing</div>
+    <p class="ask">Predict first. At 20 turns with 90% prefix caching, which cuts the bill more: halving output from 420 to 210 tokens, or routing 75% of turns to a 0.10x cheap model?</p>
+    <div class="ctl">
+      <label><span>Turns (T)</span><input type="range" name="t" min="4" max="40" step="2" value="20"><output data-for="t" data-unit=" turns"></output></label>
+      <label><span>Prefix cache hit</span><input type="range" name="cache" min="0" max="90" step="10" value="90"><output data-for="cache" data-unit="%"></output></label>
+      <label><span>Output per turn</span><input type="range" name="out" min="80" max="500" step="20" value="420"><output data-for="out" data-unit=" tok"></output></label>
+      <label><span>Cheap route share</span><input type="range" name="route" min="0" max="90" step="5" value="0"><output data-for="route" data-unit="%"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Output caps and model routing multiply on top of prefix caching; prices use the illustrative $3/$15 per 1M in/out baseline with 500-tok trimmed system prompt and 5% router escalation.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var T=v.t, pIn=3, pOut=15, u=120, sBase=1400, sTrim=500, oBase=420;
+    var baseIn=T*(sBase+u)+(u+oBase)*T*(T-1)/2, baseCost=(baseIn*pIn+T*oBase*pOut)/1e3;
+    var curIn=T*(sTrim+u)+(u+v.out)*T*(T-1)/2, hit=(v.cache/100)*(T-1)/T;
+    var effIn=curIn*(1-hit)+curIn*hit*0.10, curCost=(effIn*pIn+T*v.out*pOut)/1e3;
+    var r=v.route/100, routed=curCost*((1-r)+r*(0.10+0.05));
+    var saved=(1-routed/baseCost)*100;
+    tl.bars(fig.querySelector("[data-chart]"),{pre:"$",digits:2,rows:[
+      {label:"Raw baseline ("+T+" turns)",value:baseCost,tone:"muted"},
+      {label:"Your settings",value:routed,tone:saved>50?"good":"warn"}
+    ]});
+    return {verdict:"Bill drops from $"+tl.fmt(baseCost,2)+" to $"+tl.fmt(routed,2)+" per 1,000 chats ("+tl.fmt(saved,1)+"% saved)."};
+  })});</script>
+  <details class="q"><summary>Check: Why can adding per-turn rolling summarization raise your API bill when prefix caching is already active?</summary><div class="a">Because rewriting the summary on every turn changes the early tokens of the conversation history, which busts the prefix cache on every call and forces you to pay 100% uncached input price instead of 10% cached read price.</div></details>
+
+  <h3>5. Cheaper models, batch, and fewer calls</h3>
+  <p><strong>Model routing and cascades</strong> (G17) send easy intents to a small model priced at roughly 0.10x of frontier, escalating to frontier only when confidence is low. If you route share <em>r</em> to a cheap model of relative cost <em>c</em> with escalation rate <em>e</em> (paying cheap plus frontier on retries), the effective cost multiplier is:</p>
+  <div class="codewrap"><pre>M_route = (1 - r) + r * (c + e)</pre></div>
+  <p>For <code>r = 0.75</code>, <code>c = 0.10</code>, and <code>e = 0.05</code>, <code>M_route = 0.3625</code> (a 63.8% cut). Next, move non-interactive jobs (offline evals, nightly summaries, voice-call post-processing) to an async <strong>Batch API</strong> for a flat 50% discount under a 24-hour SLA. Finally, make <strong>fewer calls</strong>: merge sequential prompt chains into one structured call, cap agent tool retries, and replace LLM parsing with plain regex or deterministic code.</p>
+
+  <h3>6. Self-host: the utilization break-even</h3>
+  <p>APIs bill per token; self-hosting bills per GPU-hour 24/7 even when traffic is zero (G19 Cost modeling). Your break-even throughput is <code>Hourly_GPU_Cost / (Blended_API_Cost_Per_Token * 3600)</code>. If traffic is spiky (for example, clinic voice calls during business hours and empty overnight), idle GPU hours quickly erase any per-token advantage unless you autoscale aggressively or reserve GPUs only for the steady baseload while bursting peaks to an API.</p>
+  <details class="q"><summary>Check: A router sends 75% of turns to a 0.10x cheap model, and 5% of those cheap turns escalate to the frontier model. What is the effective cost multiplier?</summary><div class="a">0.25 + 0.75 * (0.10 + 0.05) = 0.25 + 0.1125 = 0.3625, which is a 63.75% cost reduction compared to sending 100% of turns to the frontier model.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Multi-turn history re-sends over T turns</td><td class="n">T(T - 1) / 2 pairs (190 at T=20)</td><td>Derived</td></tr>
+    <tr><td>Output-to-input API price ratio</td><td class="n">3x to 5x</td><td>From memory, verify</td></tr>
+    <tr><td>Illustrative frontier baseline in kata</td><td class="n">$3.00 / $15.00 per 1M in / out</td><td>From memory, verify</td></tr>
+    <tr><td>Prefix cache read discount (Anthropic / OpenAI)</td><td class="n">90% (0.1x) / 50% (0.5x)</td><td>Checked 2026-11-19</td></tr>
+    <tr><td>Anthropic 5-min TTL cache write surcharge</td><td class="n">1.25x base input</td><td>Checked 2026-11-19</td></tr>
+    <tr><td>Async Batch API discount and SLA</td><td class="n">50% off, 24-hour SLA</td><td>Checked 2026-11-19</td></tr>
+    <tr><td>Small vs frontier model price ratio</td><td class="n">10x to 30x cheaper</td><td>From memory, verify</td></tr>
+    <tr><td>Kata 20-turn baseline vs 6-lever bill</td><td class="n">$525.00 -> $19.80 / 1k chats (96.2%)</td><td>Your own run</td></tr>
+    <tr><td>Kata cache-bust penalty from per-turn compaction</td><td class="n">$168.33 -> $244.47 (+45.2%)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Prompt and schema trimming</td><td>Zero latency penalty; cuts static overhead on every turn</td><td>Risk of dropping edge-case instructions or tool examples</td><td>Eval regression on rare tool calls</td></tr>
+    <tr><td>Prefix caching</td><td>50% to 90% off repeated input tokens; lower TTFT</td><td>Strict byte-0 stability; cache write surcharge (e.g. 1.25x) and TTL expiry</td><td>Hit rate dropping near 0% after a prompt refactor</td></tr>
+    <tr><td>Semantic caching</td><td>100% LLM cost and latency saved on hits</td><td>Embedding lookup latency; false-positive wrong or stale answers</td><td>Cross-tenant data leaks; loose similarity threshold</td></tr>
+    <tr><td>Rolling vs checkpoint compaction</td><td>Turns O(T^2) history into O(T); prevents context rot</td><td>Summary call cost; per-turn rolling busts prefix cache</td><td>Net bill rising after enabling summarization</td></tr>
+    <tr><td>Output token caps</td><td>Cuts 3x to 5x decode cost and shrinks future history</td><td>Truncated JSON or clipped reasoning if cap is too tight</td><td>Malformed JSON parse failures at max_tokens</td></tr>
+    <tr><td>Model routing / cascades</td><td>60% to 80% cost cut on mixed-difficulty traffic</td><td>Router latency; double-pay and higher P95 latency on escalations</td><td>Escalation rate creeping above 10% to 15%</td></tr>
+    <tr><td>Async Batch API</td><td>Flat 50% discount on both input and output</td><td>Up to 24-hour latency; unusable for interactive chat</td><td>Interactive workflows accidentally queued as batch</td></tr>
+    <tr><td>Self-hosting GPUs</td><td>Lower marginal cost at high steady utilization; data control</td><td>Fixed 24/7 GPU bill, serving ops, model upgrade toil</td><td>Average GPU utilization below 30% to 40%</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Token ledger</h2>
+  <p>Simulates a 20-turn multi-turn chat, exposes quadratic history growth, and stacks 6 optimization levers one by one to print the real bill per 1,000 chats.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Token ledger: simulate a 20-turn chat, apply 6 levers, print the bill."""
+
+TURNS = 20
+SYS_BASE, SYS_TRIM = 1400, 500
+USER_TOK = 120
+OUT_BASE, OUT_CAP = 420, 140
+WINDOW, SUMMARY_TOK = 4, 180
+
+# Illustrative frontier baseline ($ per 1M tokens, 5:1 output-to-input ratio)
+IN_PRICE, OUT_PRICE = 3.00, 15.00
+CACHE_MULT = 0.10     # 90% discount on cached prefix reads
+CHEAP_MULT = 0.10     # Small model at 10% of frontier price
+BATCH_MULT = 0.50     # 50% discount for async batch workloads
+
+# Break-it switches (flip one to True and re-run)
+BREAK_CACHE_BUST = False   # Dynamic timestamp at byte 0 of system prompt
+BREAK_VERBOSE_OUT = False  # Remove output cap (2x verbose replies)
+BREAK_BAD_ROUTER = False   # Weak router: 20% cheap share + 25% fallback retries
+
+
+def simulate(sys_tok, out_tok, use_cache=False, compact=False,
+             route=False, batch=False):
+    uncached_in = cached_in = total_out = 0
+    for t in range(TURNS):
+        turn_pair = USER_TOK + out_tok
+        if compact and t &gt; WINDOW:
+            hist = SUMMARY_TOK + WINDOW * turn_pair
+            prefix_cacheable = sys_tok  # rolling summary shifts history prefix
+        else:
+            hist = t * turn_pair
+            prefix_cacheable = sys_tok + hist
+
+        if use_cache and t &gt; 0 and not BREAK_CACHE_BUST:
+            c_in = prefix_cacheable
+            u_in = (sys_tok + hist + USER_TOK) - c_in
+        else:
+            c_in = 0
+            u_in = sys_tok + hist + USER_TOK
+
+        uncached_in += u_in
+        cached_in += c_in
+        total_out += out_tok
+
+    cost = (
+        uncached_in * IN_PRICE
+        + cached_in * IN_PRICE * CACHE_MULT
+        + total_out * OUT_PRICE
+    ) / 1_000_000
+
+    if route:
+        cheap_share = 0.20 if BREAK_BAD_ROUTER else 0.75
+        retry_rate = 0.25 if BREAK_BAD_ROUTER else 0.05
+        # Cheap turns pay cheap price; escalated ones also pay frontier
+        eff_mult = (1 - cheap_share) + cheap_share * (CHEAP_MULT + retry_rate)
+        cost *= eff_mult
+
+    if batch:
+        cost *= BATCH_MULT
+
+    return uncached_in, cached_in, total_out, cost
+
+
+def main():
+    out_cap = OUT_BASE * 2 if BREAK_VERBOSE_OUT else OUT_CAP
+    stages = [
+        ("0. Baseline (raw 20-turn)",   SYS_BASE, OUT_BASE, False, False, False, False),
+        ("1. Trim prompt + schemas",    SYS_TRIM, OUT_BASE, False, False, False, False),
+        ("2. + Prefix caching (90%)",   SYS_TRIM, OUT_BASE, True,  False, False, False),
+        ("3. + Rolling compaction",     SYS_TRIM, OUT_BASE, True,  True,  False, False),
+        ("4. + Output cap (140 tok)",   SYS_TRIM, out_cap,  True,  True,  False, False),
+        ("5. + Model routing (75/25)",  SYS_TRIM, out_cap,  True,  True,  True,  False),
+        ("6. + Batch API (async 50%)",  SYS_TRIM, out_cap,  True,  True,  True,  True),
+    ]
+
+    print(f"20-turn chat token ledger (illustrative ${IN_PRICE:.2f}/${OUT_PRICE:.2f} per 1M in/out)")
+    print(f"Flags: cache_bust={BREAK_CACHE_BUST} verbose_out={BREAK_VERBOSE_OUT} bad_router={BREAK_BAD_ROUTER}\n")
+    hdr = f"{'Stage':&lt;28} {'UncachIn':&gt;9} {'CachIn':&gt;9} {'OutTok':&gt;7} {'$/1k chats':&gt;11} {'Saved':&gt;7}"
+    print(hdr)
+    print("-" * len(hdr))
+
+    base_cost = None
+    for name, s_tok, o_tok, cache, comp, route, batch in stages:
+        u_in, c_in, o_all, cost = simulate(s_tok, o_tok, cache, comp, route, batch)
+        if base_cost is None:
+            base_cost = cost
+        saved = (1.0 - cost / base_cost) * 100.0
+        print(f"{name:&lt;28} {u_in:&gt;9,} {c_in:&gt;9,} {o_all:&gt;7,} ${cost*1000:&gt;10.2f} {saved:&gt;6.1f}%")
+
+
+if __name__ == "__main__":
+    main()</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿20-turn chat token ledger (illustrative $3.00/$15.00 per 1M in/out)
+Flags: cache_bust=False verbose_out=False bad_router=False
+
+Stage                         UncachIn    CachIn  OutTok  $/1k chats   Saved
+----------------------------------------------------------------------------
+0. Baseline (raw 20-turn)      133,000         0   8,400 $    525.00    0.0%
+1. Trim prompt + schemas       115,000         0   8,400 $    471.00   10.3%
+2. + Prefix caching (90%)        2,900   112,100   8,400 $    168.33   67.9%
+3. + Rolling compaction         38,000    14,900   8,400 $    244.47   53.4%
+4. + Output cap (140 tok)       21,200    12,100   2,800 $    109.23   79.2%
+5. + Model routing (75/25)      21,200    12,100   2,800 $     39.60   92.5%
+6. + Batch API (async 50%)      21,200    12,100   2,800 $     19.80   96.2%</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Cost per 1,000 20-turn chats across the 6 levers (real kata output)</div>
+    <div data-bars='{"pre":"$","unit":" / 1k chats","digits":2,"rows":[{"label":"0. Baseline (raw 20-turn)","value":525.00,"tone":"bad"},{"label":"1. Trim prompt + schemas","value":471.00,"tone":"muted"},{"label":"2. + Prefix caching (90%)","value":168.33,"tone":"good"},{"label":"3. + Rolling compaction","value":244.47,"tone":"warn"},{"label":"4. + Output cap (140 tok)","value":109.23,"tone":"good"},{"label":"5. + Model routing (75/25)","value":39.60,"tone":"good"},{"label":"6. + Batch API (async 50%)","value":19.80,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Prefix caching, output caps, and routing drive the deepest cuts ($525.00 down to $19.80), while naive per-turn compaction actually spikes the bill by 45%.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li>Trimming the system prompt by 64% (1,400 down to 500 tokens) only saves 10.3% ($525.00 to $471.00) because 102,600 of the 133,000 baseline input tokens are quadratic chat history.</li>
+    <li>Prefix caching alone drops the bill by 67.9% ($471.00 to $168.33) by moving 112,100 input tokens onto the 0.10x cached read rate.</li>
+    <li>Adding per-turn rolling compaction in Stage 3 cuts total input tokens by 54% (115,000 to 52,900) yet <strong>raises</strong> the bill from $168.33 to $244.47 because shifting the summary busts the history prefix cache.</li>
+    <li>Capping output at 140 tokens cuts Stage 3 in half ($244.47 to $109.23), routing 75% to a small model cuts another 63.7% ($39.60), and async batching halves that to $19.80 (96.2% total savings).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Cache-busting timestamp.</strong> Set <code>BREAK_CACHE_BUST = True</code> (simulating a live timestamp at byte 0 of the system prompt). Predict what happens to Stage 2 and whether Stage 3 now saves money instead of costing money, then run.</li>
+    <li><strong>Unbounded verbose output.</strong> Reset the first flag and set <code>BREAK_VERBOSE_OUT = True</code> (doubling output to 840 tokens/turn). Predict how much Stage 4 jumps when both decode cost and history re-reads expand, then run.</li>
+    <li><strong>Miscalibrated router.</strong> Reset and set <code>BREAK_BAD_ROUTER = True</code> (20% cheap share with 25% fallback retries). Predict the new Stage 5 bill compared to $39.60, then run.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Replace per-turn rolling compaction with <em>checkpoint compaction</em> (compact only on turns 8 and 16 so the prefix stays immutable and cacheable between checkpoints). Measure whether Stage 3 now beats Stage 2's $168.33.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Prefix cache hit rate near 0% despite long static prompts</td><td>Dynamic timestamp, user ID, or non-deterministic tool JSON key order placed at byte 0</td><td>Pin static instructions and sorted schemas first; move all dynamic metadata to the end of the prompt</td></tr>
+    <tr><td>Token bill grows much faster than daily active users</td><td>Unbounded O(T^2) chat history or runaway agent tool-retry loops</td><td>Add checkpoint history compaction, hard turn/step budgets, and circuit breakers on repeated tool errors</td></tr>
+    <tr><td>Model routing saves little while P95 latency worsens</td><td>Weak router sends hard queries to small model, triggering frequent frontier retries</td><td>Log escalation rate per intent; raise confidence threshold or route hard intents straight to frontier</td></tr>
+    <tr><td>Semantic cache returns wrong or cross-user answers</td><td>Cosine similarity threshold too low or cache key omits tenant and role</td><td>Namespace keys by tenant and role, tighten threshold, or restrict semantic cache to public FAQs</td></tr>
+    <tr><td>Self-hosted GPU cluster costs more than the API bill</td><td>Spiky daytime traffic leaves GPUs idle overnight (low average utilization)</td><td>Autoscale aggressively, or self-host steady baseload and burst traffic spikes to APIs</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> P50 and P95 uncached input, cached input, and output tokens per endpoint; prefix cache hit rate; agent retries per successful task; router escalation rate; and <strong>cost per completed task</strong>.</p>
+  <details class="q"><summary>Scenario: Your clinic voice-AI scheduling assistant handles 10,000 15-turn calls/day and the LLM bill tripled after a release. How do you diagnose and cut the bill by over 70% without hurting booking accuracy?</summary><div class="a"><ol>
+    <li><strong>Pull the token ledger first:</strong> compare pre-release vs post-release uncached input, cached input, output tokens, and retries per call to pinpoint what tripled.</li>
+    <li><strong>Check prefix cache hit rate:</strong> a common regression is injecting live caller ID or current time at the top of the system prompt. Move caller metadata to the end so the static clinic instructions and EHR tool schemas cache at byte 0.</li>
+    <li><strong>Trim unused schemas and cap spoken output:</strong> load only scheduling tools during booking (not billing tools) and enforce terse 1 to 2 sentence spoken replies via max_tokens and concise prompt rules.</li>
+    <li><strong>Route simple turns and batch post-call work:</strong> route greetings, confirmations, and slot readbacks to a small fast model (keeping frontier for complex rescheduling), and move post-call QA summaries and evals to the 50% Batch API.</li>
+    <li><strong>Verify on a golden call eval set:</strong> confirm booking accuracy and slot-extraction F1 hold steady while tracking cost per completed booking.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Token optimization is an 8-lever engineering playbook that cuts LLM spend by 80% to 95% without trading away task accuracy. Instead of guessing at shorter prompts, I work in strict leverage order: measure, send less, reuse, generate less, cheaper models, batch, fewer calls, and self-host last.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>First I build a per-endpoint token ledger tracking uncached input, cached input, output, retries, and cost per completed task. In multi-turn chat, input tokens grow quadratically as T(T minus 1) over 2 because stateless APIs resend history every turn. I prune unused tool schemas, pin static prefixes at byte 0 for 50% to 90% prefix cache discounts, and compact history at checkpoints rather than every turn. Next I cap output tokens with max_tokens and tight schemas, because decode is memory-bandwidth bound, priced 3x to 5x higher than input, and feeds back into future history. Finally I route 70% to 80% of easy turns to small models, cut redundant agent calls, and move async jobs to the 50% Batch API.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Three failure modes catch teams out. Putting a timestamp at byte 0 or rewriting a rolling summary every turn busts prefix caching and can raise the bill by 45%. A miscalibrated router with high fallback retries burns latency and pays twice. And self-hosting only beats APIs when steady GPU utilization clears break-even; spiky traffic leaves GPUs idle and costs more.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"We would optimize our prompts, tighten context, and switch to cheaper models to reduce AI spend and improve unit economics across the product."</p><p class="strong">"First I pull a per-endpoint token ledger for uncached input, cached input, output, and retries. Because 20-turn chat history grows as T(T - 1) / 2, trimming static prompts alone barely dents the bill. I pin static schemas at byte 0 for a 50% to 90% prefix cache hit, compact at checkpoints so we do not bust that cache, cap outputs because decode costs 3x to 5x input and re-enters history, and route 75% of easy turns to a small model while tracking escalation rate and cost per completed task. In an illustrative 20-turn simulation, stacking those levers cuts cost over 90%."</p><p>The strong answer leads with measurement, names the quadratic and causal-prefix mechanisms, cites real ratios and a concrete failure mode (cache-busting compaction), and avoids vague business buzzwords.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Cutting our system prompt in half will cut our multi-turn chat bill in half."</summary><div class="a">Wrong. In a 20-turn chat, quadratic history growth (T(T - 1) / 2) dominates total input tokens (77% in our kata). Cutting the system prompt by 64% only saved 10.3% of the bill.</div></details>
+  <details class="q"><summary>"Adding rolling summarization on every turn always lowers your token bill."</summary><div class="a">Wrong. If prefix caching is enabled, mutating a rolling summary on every turn invalidates the cached history prefix. In our kata, cutting input tokens by 54% this way raised the bill by 45% ($168.33 to $244.47).</div></details>
+  <details class="q"><summary>"Output tokens are under 10% of our token count, so optimize input tokens first and ignore output."</summary><div class="a">Wrong. Output tokens carry a 3x to 5x price multiplier (decode is memory-bandwidth bound) AND every output token gets re-read as input on every later turn. Capping output cut our Stage 3 bill by 55%.</div></details>
+  <details class="q"><summary>"Once your API bill hits $10k a month, self-hosting an open-weights model is always cheaper."</summary><div class="a">Wrong. Self-hosting charges 24/7 per GPU-hour regardless of traffic. If traffic is spiky and average GPU utilization sits below break-even (often 30% to 40%), plus engineering ops overhead, self-hosting costs more than pay-per-token APIs.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through the 8 token optimization levers in execution order and explain why you start with measurement.</summary><div class="a">Measure, send less, reuse, generate less, cheaper models, batch, fewer calls, self-host. You measure a per-endpoint token ledger first because without knowing whether input, cache misses, output, or retries dominate, you optimize the wrong slice.<div class="f"><b>Follow-up</b>Which lever gives the biggest zero-quality-risk win in a multi-turn chat? Prefix caching (50% to 90% off repeated input with identical model outputs).</div></div></details>
+  <details class="q"><summary>Why does multi-turn chat input token usage grow quadratically with turn count?</summary><div class="a">LLM APIs are stateless, so turn t resends all prior turns 0 through t - 1. Summing 0 + 1 + ... + (T - 1) yields T(T - 1) / 2 turn-pairs, which is O(T^2).<div class="f"><b>Follow-up</b>How many turn-pairs are re-sent in a 20-turn chat? 20 * 19 / 2 = 190 turn-pairs.</div></div></details>
+  <details class="q"><summary>Why does prefix caching stop working at the first differing token in a prompt?</summary><div class="a">Under causal self-attention, each token's key and value states depend on every token before it. One changed token at position k invalidates the KV cache for position k and every token after it.<div class="f"><b>Follow-up</b>What common coding mistake silently drops prefix cache hits to 0%? Putting a dynamic timestamp, request UUID, or unsorted dictionary keys at byte 0 of the system prompt.</div></div></details>
+  <details class="q"><summary>Why are output tokens typically 3x to 5x more expensive than input tokens, and what is their second hidden cost in chat?</summary><div class="a">Prefill processes input tokens in parallel (compute-bound), whereas decode generates one token per forward pass and reloads weights from HBM each step (memory-bandwidth bound). The second cost is that every output token is appended to history and re-read on all later turns.<div class="f"><b>Follow-up</b>Name three concrete ways to reduce output tokens without switching models. Set max_tokens, use concise JSON/enum schemas instead of prose, and disable chain-of-thought on simple extraction tasks.</div></div></details>
+  <details class="q"><summary>When does rolling history compaction actually increase your API bill, and how do you fix it?</summary><div class="a">When prefix caching is active, rewriting a rolling summary every turn busts the cached history prefix, swapping 0.10x cached tokens for 1.0x uncached tokens. Fix it with checkpoint compaction (compact every N turns so the prefix stays immutable between checkpoints).<div class="f"><b>Follow-up</b>Besides cost, what quality risk does aggressive compaction introduce? Loss of exact identifiers, constraints, or earlier user preferences needed later in the thread.</div></div></details>
+  <details class="q"><summary>How do you calculate whether a model router with fallback retries actually saves money?</summary><div class="a">Compute M_route = (1 - r) + r * (c + e), where r is cheap-model share, c is cheap-to-frontier price ratio, and e is escalation rate. If e is high, you pay both models and add latency, eroding savings.</div></details>
+  <details class="q"><summary>What workloads fit the async Batch API, and why can you not use it for live chat?</summary><div class="a">Offline evals, nightly summaries, bulk enrichment, and post-call QA fit Batch API (flat 50% discount). Live chat cannot use it because Batch API trades real-time latency for an asynchronous 24-hour SLA.</div></details>
+  <details class="q"><summary>Why should you measure cost per completed task instead of cost per 1M tokens?</summary><div class="a">A cheaper model or over-trimmed prompt can fail tool calls or hallucinate, triggering agent retries or user re-prompts. Lower price per token with 3x retries raises total cost per successful outcome.</div></details>
+  <details class="q"><summary>When does self-hosting beat pay-per-token APIs, and what breaks the math?</summary><div class="a">Self-hosting wins when steady, high GPU utilization pushes hourly GPU cost per token below API pricing (or when data residency requires it). Spiky traffic with idle overnight GPUs and engineering ops overhead break the math.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate all 6 stages, then write: the 8 levers in order (M-S-R-G-C-B-F-S), the quadratic chat input formula, the router cost multiplier formula, and the three failure traps.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>8 levers in order: Measure, Send less, Reuse, Generate less, Cheaper models, Batch, Fewer calls, Self-host.</li>
+    <li>Token accounting equation: uncached input + discounted cached input + 3x to 5x output, tracked as cost per completed task.</li>
+    <li>Quadratic history formula: N_in(T) = T(S + U) + (U + O) * T(T - 1) / 2 (190 pairs at T = 20).</li>
+    <li>Prefix caching rule: causal attention requires exact match from byte 0; dynamic timestamps or per-turn rolling summaries bust it.</li>
+    <li>Router multiplier: M_route = (1 - r) + r * (c + e); watch escalation rate e.</li>
+    <li>Batch API: 50% off, 24h async SLA only. Self-hosting: beats APIs only at high steady GPU utilization.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D02: Why do verbose JSON keys, repeated indentation, or UUIDs inflate token counts faster than plain prose?</summary><div class="a">Subword tokenizers (like BPE) split punctuation, whitespace runs, and high-entropy random strings (such as UUIDs) into many short subword tokens rather than single whole-word tokens.</div></details>
+  <details class="q"><summary>K05: Why is prefill compute-bound while decode is memory-bandwidth bound, and how does that show up on your LLM bill?</summary><div class="a">Prefill processes all prompt tokens in parallel matrix multiplies (high arithmetic intensity), while decode generates one token at a time and reloads model weights from HBM per token. APIs reflect that bottleneck by pricing output tokens 3x to 5x higher than input tokens.</div></details>
+  <details class="q"><summary>L03: When shipping a token optimization (like prompt trimming or model routing), why must you run a fixed golden eval set instead of checking five examples by eye?</summary><div class="a">Spot-checking hides tail regressions on rare tool schemas or edge cases; a fixed golden eval set quantifies quality delta alongside cost per completed task so you prove savings did not silently break accuracy.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Anthropic Docs: Prompt caching</a><small>Supports 90% cache read discount (0.1x), 1.25x 5-minute TTL write surcharge, and stacking with Batch API. Checked 2026-11-19.</small></li>
+    <li><a href="https://docs.anthropic.com/en/docs/build-with-claude/batch-processing">Anthropic Docs: Message Batches API</a><small>Supports flat 50% discount on input and output tokens under a 24-hour async SLA. Checked 2026-11-19.</small></li>
+    <li><a href="https://platform.openai.com/docs/guides/prompt-caching">OpenAI Docs: Prompt caching</a><small>Supports automatic prefix caching above 1,024 tokens in 128-token increments and 50% cached input discount. Checked 2026-11-19.</small></li>
+    <li><a href="https://platform.openai.com/docs/guides/batch">OpenAI Docs: Batch API</a><small>Supports 50% cost reduction for asynchronous batch jobs completed within 24 hours. Checked 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>1. Measure:</strong> Log uncached input, cached input, output, retries, and cost per completed task per endpoint before editing prompts.</li>
+    <li><strong>2. Send less:</strong> Multi-turn chat input grows as O(T^2) via T(T - 1) / 2; prune unused tool schemas and bound history with checkpoint compaction.</li>
+    <li><strong>3. Reuse:</strong> Causal attention lets prefix caching cut repeated input by 50% to 90% if byte 0 through prefix end stays identical; semantic caching skips calls for static FAQs.</li>
+    <li><strong>4. Generate less:</strong> Decode is memory-bandwidth bound (3x to 5x input price) and re-enters chat history; enforce max_tokens, terse schemas, and disable unnecessary CoT.</li>
+    <li><strong>5. Cheaper models:</strong> Route 70% to 80% of easy turns to small models (0.10x price); track effective multiplier (1 - r) + r * (c + e) and escalation rate e.</li>
+    <li><strong>6. Batch:</strong> Move non-interactive jobs (evals, nightly summaries) to async Batch API for a flat 50% discount under a 24-hour SLA.</li>
+    <li><strong>7. Fewer calls:</strong> Merge multi-step chains into one structured call, cap agent tool retries, and use deterministic code instead of LLMs for parsing.</li>
+    <li><strong>8. Self-host:</strong> Fixed 24/7 GPU-hour billing beats pay-per-token APIs only once software levers are maxed out and steady utilization clears break-even.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Spine (M-S-R-G-C-B-F-S):</strong> Measure, Send less, Reuse, Generate less, Cheaper models, Batch, Fewer calls, Self-host.</li>
+      <li><strong>Quadratic history math:</strong> N_in(T) = T(S + U) + (U + O) * T(T - 1) / 2. At T = 20, you resend 190 turn-pairs.</li>
+      <li><strong>Cache-busting trap:</strong> Putting a timestamp at byte 0 or rewriting a rolling summary every turn invalidates prefix caching and can raise the bill.</li>
+      <li><strong>Double output tax:</strong> Output tokens cost 3x to 5x input AND get re-read as input on every later turn.</li>
+      <li><strong>North-star metric:</strong> Optimize cost per completed task against a fixed golden eval set, never raw cost per 1M tokens.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::G LLM application layer: prompts, context, memory, cost, latency", "tags": "G01 T1 W01", "cards": [{"q": "What are the 8 token optimization levers in execution order?", "a": "Measure, send less, reuse, generate less, cheaper models, batch, fewer calls, self-host (M-S-R-G-C-B-F-S)."}, {"q": "Why does input token count grow quadratically in multi-turn chat, and what is the history term for T turns?", "a": "Stateless APIs resend all prior turns each call, summing to T(T - 1) / 2 turn-pairs (190 pairs over 20 turns)."}, {"q": "Why does prefix caching stop reusing KV states at the first differing token?", "a": "Causal self-attention makes each token's KV state depend on all prior tokens, so one change at byte 0 invalidates the entire prefix."}, {"q": "Why can per-turn rolling summarization raise your API bill when prefix caching is active?", "a": "Rewriting the summary each turn mutates the history prefix, busting the cache and turning cheap cached reads into full-price uncached input."}, {"q": "Why do verbose output tokens impose a double penalty in multi-turn chat?", "a": "Decode is memory-bandwidth bound (priced 3x to 5x higher than input), and every output token is re-read as input on later turns."}, {"q": "What formula gives the effective cost multiplier of a model router with cheap share r, price ratio c, and escalation rate e?", "a": "M_route = (1 - r) + r * (c + e), because escalated turns pay both the cheap model and the frontier fallback."}, {"q": "Why should you optimize cost per completed task instead of cost per 1M tokens?", "a": "A cheaper model or trimmed prompt that triggers agent retries or user re-prompts can raise total spend per successful outcome."}, {"q": "When does self-hosting an LLM beat pay-per-token APIs on cost?", "a": "Only after software levers are exhausted and steady GPU utilization is high enough that 24/7 GPU-hour costs drop below API token spend."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A16 Information theory</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A16">
+<main>
+<header>
+  <div class="eyebrow"><b>A16</b><span>Foundations and applied math</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Information theory</h1>
+  <p class="lede">How do entropy, cross-entropy, KL divergence, and perplexity turn probability distributions into LLM training losses, RLHF penalties, and evaluation metrics? This page covers the five-step information ladder used in pretraining and alignment; parameter estimation lives in A14 and sampling mechanics in D11.</p>
+  <div class="chips"><span><em>Before</em>D01 What an LLM is</span><span><em>Before</em>D11 Logits, logprobs, perplexity</span><span><em>After</em>A13 Probability essentials</span><span><em>After</em>A14 Estimation (MLE, MAP)</span><span><em>After</em>E07 PPO / E09 DPO</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, steppers, and explorable</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the bigram kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production failures and interview traps</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and redraw</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>90 s spoken drill and Anki import</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>An overconfident model assigns 0.95 to the top token (true probability 0.70) and starves the other three tokens to 0.03, 0.015, and 0.005. Is forward KL(P||Q) equal to reverse KL(Q||P)?</summary><div class="a">No. KL divergence is asymmetric. In our kata run, forward KL(P||Q) is 0.4722 bits while reverse KL(Q||P) is 0.2902 bits (1.63x smaller). Forward KL weights errors by true P, so starving the 0.20 and 0.08 tail tokens incurs a steep penalty; reverse KL weights by Q, which places 0.95 mass where P and Q are close.</div></details>
+  <details class="q"><summary>If you compute a language model's cross-entropy in natural logs (0.5119 nats) instead of base-2 logs (0.7386 bits), does its perplexity change?</summary><div class="a">No. Perplexity is base-invariant as long as you exponentiate with the matching base: 2^0.7386 = 1.6685 and e^0.5119 = 1.6685. Changing log base rescales cross-entropy by ln(2) = 0.6931, which cancels out upon exponentiation.</div></details>
+  <details class="q"><summary>An unsmoothed bigram model scores a 7-transition test sentence where 6 bigrams are common and just 1 bigram was never seen in training. What happens to the sentence's perplexity?</summary><div class="a">It explodes to infinity. A single zero-probability event has surprisal -log(0) = infinity, which makes the average cross-entropy infinite and perplexity infinite regardless of how well the model predicted the other 6 tokens.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Information theory measures uncertainty and mismatch in a single currency: the average number of bits needed to encode outcomes from a probability distribution. A rare event carries high surprisal because seeing it rules out many alternatives; a certain event carries zero surprisal because you already knew it would happen.</p>
+  <p>Every LLM training objective and evaluation metric sits on one five-rung ladder built from that single idea. Average surprisal under the true distribution P gives the irreducible floor, entropy H(P). Encoding outcomes from P using your model's predicted distribution Q costs cross-entropy H(P, Q). The extra bits you waste by using Q instead of P is KL divergence D_KL(P||Q). Exponentiating cross-entropy turns average bits back into perplexity, the effective number of equally likely tokens the model is choosing between at each step.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The five-rung information theory ladder</div>
+    <svg viewBox="0 0 460 235" role="img" aria-label="Five connected blocks showing the information theory ladder from surprisal to entropy, cross-entropy, KL divergence, and perplexity.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="16" width="130" height="44" rx="4" class="c-soft" data-hi="1"/>
+          <text x="75" y="34" text-anchor="middle" font-weight="600">1. Surprisal I(x)</text>
+          <text x="75" y="50" text-anchor="middle" class="m">-log p(x)</text>
+        </g>
+        <g data-step="2">
+          <path d="M140 38 H164" class="ink"/>
+          <rect x="164" y="16" width="132" height="44" rx="4" class="c-good" data-hi="2"/>
+          <text x="230" y="34" text-anchor="middle" font-weight="600">2. Entropy H(P)</text>
+          <text x="230" y="50" text-anchor="middle" class="m">E_P[-log P] = 1.23 b</text>
+        </g>
+        <g data-step="3">
+          <path d="M296 38 H320" class="ink"/>
+          <rect x="320" y="16" width="130" height="44" rx="4" class="c-accent" data-hi="3"/>
+          <text x="385" y="34" text-anchor="middle" font-weight="600">3. Cross-Ent H(P,Q)</text>
+          <text x="385" y="50" text-anchor="middle" class="m">E_P[-log Q] = 1.70 b</text>
+        </g>
+        <g data-step="4">
+          <path d="M230 60 V94 H164" class="ink" fill="none"/>
+          <path d="M385 60 V94 H296" class="ink" fill="none"/>
+          <rect x="115" y="94" width="230" height="46" rx="4" class="c-warn" data-hi="4"/>
+          <text x="230" y="113" text-anchor="middle" font-weight="600">4. KL Divergence D_KL(P||Q)</text>
+          <text x="230" y="130" text-anchor="middle" class="m">H(P,Q) - H(P) = 0.47 b (asymmetric)</text>
+        </g>
+        <g data-step="5">
+          <path d="M385 60 V172 H345" class="ink" fill="none"/>
+          <rect x="115" y="162" width="230" height="48" rx="4" class="c-bad" data-hi="5"/>
+          <text x="230" y="182" text-anchor="middle" font-weight="600">5. Perplexity PPL = b^H</text>
+          <text x="230" y="199" text-anchor="middle" class="m">2^1.70 = 3.25 choices (inf if q=0)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Surprisal I(x) = -log p(x) scores one outcome: a certain token (p=1) costs 0 bits, while a 0.02 event costs 5.64 bits.</li>
+      <li>Entropy H(P) averages surprisal under the true distribution P, setting the irreducible floor (1.23 bits for our 4-token P).</li>
+      <li>Cross-entropy H(P,Q) averages -log Q(x) over true outcomes P, so an overconfident Q raises the cost from 1.23 to 1.70 bits.</li>
+      <li>KL divergence D_KL(P||Q) = H(P,Q) - H(P) isolates the 0.47 extra bits wasted by Q; it is always non-negative and asymmetric.</li>
+      <li>Perplexity exponentiates cross-entropy (2^1.70 = 3.25) into an effective branching factor, and blows up to infinity if any true token gets q=0.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> One formula (-log p) builds the entire stack from single-token surprisal to LLM training loss and perplexity.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Walk the five rungs as <b>S-E-C-K-P</b>: <b>S</b>ingle event (-log p), <b>E</b>xpected under P (H(P) floor), <b>C</b>oded with wrong Q (H(P,Q) loss), <b>K</b>L is the gap (H(P,Q) - H(P)), <b>P</b>erplexity un-logs it back to a count (b^H).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Surprisal and Shannon entropy H(P)</h3>
+  <p>Why must information content use a logarithm? Two independent events x and y occur together with probability p(x)p(y), yet their information must add: I(x, y) = I(x) + I(y). The only continuous function that turns products into sums is the logarithm, with a minus sign so lower probability means higher surprise: I(x) = -log p(x). Base-2 logs measure bits (yes/no questions); natural logs measure nats, where 1 nat = 1 / ln(2) = 1.4427 bits.</p>
+  <p>Shannon entropy H(P) is the expected surprisal of a draw from P. For a vocabulary of size V, entropy is minimized at 0 when one token has probability 1, and maximized at log2(V) when all V tokens are uniform. That uniform bound is why a 50,257-token vocabulary has maximum entropy log2(50257) = 15.62 bits.</p>
+  <div class="codewrap"><pre>I(x) = -log_b p(x)
+H(P) = -sum_x P(x) log_b P(x)   with 0 * log(0) = 0</pre></div>
+
+  <h3>Cross-entropy H(P, Q) and why LLMs minimize it</h3>
+  <p>In machine learning, you never know the exact data distribution P; you only observe samples drawn from P and train a model Q to predict them. Cross-entropy H(P, Q) measures the average code length when true events come from P but you assign probabilities using Q. When the training label for the next token is a one-hot vector (probability 1 on the true token y*, 0 on all others), the sum collapses to a single term: -log Q(y*).</p>
+  <p>That single-term collapse is why PyTorch's <code>nn.CrossEntropyLoss</code> is identical to negative log-likelihood (NLL) over the softmax outputs. Minimizing average cross-entropy across a corpus is mathematically equivalent to maximum likelihood estimation (covered in A14).</p>
+  <div class="codewrap"><pre>H(P, Q) = -sum_x P(x) log_b Q(x)
+One-hot target y*:  H(P, Q) = -log Q(y*)</pre></div>
+  <details class="q"><summary>Check: Why does a one-hot training label turn cross-entropy into negative log-likelihood?</summary><div class="a">Because P(y*) = 1 and P(x) = 0 for every other token, so every term in -sum P(x) log Q(x) vanishes except -log Q(y*), which is the negative log-likelihood of the observed token.</div></details>
+
+  <h3>KL divergence: the excess-bits tax</h3>
+  <p>Subtracting entropy H(P) from cross-entropy H(P, Q) yields the Kullback-Leibler (KL) divergence D_KL(P||Q). Algebraically, H(P, Q) - H(P) = sum P(x) log(P(x) / Q(x)). By Gibbs' inequality (which follows from Jensen's inequality on the concave log function), D_KL(P||Q) is always greater than or equal to 0, and equals 0 if and only if P and Q are identical everywhere P has mass.</p>
+  <p>Notice what this implies for gradient descent: H(P) depends only on the true data distribution, not on model weights. Its gradient with respect to model parameters is zero. Therefore, minimizing cross-entropy H(P, Q) during LLM pretraining produces the exact same gradients as minimizing forward KL divergence D_KL(P||Q).</p>
+  <div class="codewrap"><pre>H(P, Q) = H(P) + D_KL(P || Q)
+D_KL(P || Q) = sum_x P(x) log_b (P(x) / Q(x)) >= 0</pre></div>
+
+  <h3>Forward KL (mean-seeking) vs Reverse KL (mode-seeking)</h3>
+  <p>Because the expectation weights by the first argument, swapping P and Q changes which errors are catastrophic. In forward KL, D_KL(P||Q), the weight is P(x). Whenever true data exists (P(x) &gt; 0) and the model assigns near-zero probability (Q(x) -&gt; 0), the ratio P(x)/Q(x) explodes to infinity. To avoid infinite loss, Q stretches across every mode of P, producing mean-seeking (mass-covering) behavior. Pretraining and supervised distillation use forward KL.</p>
+  <p>In reverse KL, D_KL(Q||P), the weight is Q(x). If Q puts zero mass on a mode of P, that term contributes 0 * log(0) = 0 with zero penalty. Instead, Q is heavily penalized if it puts mass where P is near zero. As a result, reverse KL pushes Q to lock onto a single high-probability mode (mode-seeking / zero-forcing). RLHF (PPO in E07, DPO in E09) penalizes reverse KL from the learned policy back to the reference model to prevent reward hacking without forcing the policy to hedge across low-reward modes.</p>
+  <figure class="viz stepper" id="viz-kl-dir">
+    <div class="vt">Stepper: Forward KL (mass-covering) vs Reverse KL (mode-seeking)</div>
+    <svg viewBox="0 0 460 210" role="img" aria-label="Bimodal true distribution P compared against a wide forward KL fit covering both peaks and a narrow reverse KL fit locked onto one peak.">
+      <g font-size="12">
+        <line x1="30" y1="168" x2="430" y2="168" class="ln"/>
+        <g data-step="1">
+          <path d="M50 168 Q95 168 120 70 Q145 168 230 168 Q315 168 340 70 Q365 168 410 168" fill="none" stroke-width="2.5" class="ink" data-hi="1"/>
+          <text x="120" y="56" text-anchor="middle" font-weight="600">True P (mode A)</text>
+          <text x="340" y="56" text-anchor="middle" font-weight="600">True P (mode B)</text>
+        </g>
+        <g data-step="2">
+          <path d="M60 168 Q230 58 400 168" fill="none" stroke-width="2.5" stroke-dasharray="6 4" class="c-accent" data-hi="2"/>
+          <rect x="165" y="76" width="130" height="24" rx="4" class="c-accent"/>
+          <text x="230" y="92" text-anchor="middle" font-weight="600">Forward KL(P||Q)</text>
+        </g>
+        <g data-step="3">
+          <path d="M285 168 Q340 42 395 168" fill="none" stroke-width="2.5" class="c-good" data-hi="3"/>
+          <rect x="295" y="116" width="130" height="24" rx="4" class="c-good"/>
+          <text x="360" y="132" text-anchor="middle" font-weight="600">Reverse KL(Q||P)</text>
+        </g>
+        <g data-only="4">
+          <rect x="45" y="176" width="370" height="26" rx="4" class="c-warn"/>
+          <text x="230" y="193" text-anchor="middle">Forward covers both modes (puts mass in valley); Reverse drops mode A</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Suppose true distribution P has two distinct modes (A and B) separated by a low-probability valley, and Q can only fit one peak.</li>
+      <li>Minimizing forward KL(P||Q) forbids Q=0 where P&gt;0, so Q spreads wide across both peaks and wastes mass in the empty valley.</li>
+      <li>Minimizing reverse KL(Q||P) forbids Q&gt;0 where P=0, so Q ignores mode A completely and sharpens tightly onto mode B.</li>
+      <li>Result: forward KL is mean-seeking (pretraining, distillation); reverse KL is mode-seeking (RLHF / variational inference).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Swapping P and Q flips which zero-probability error explodes, creating mean-seeking vs mode-seeking fits.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Overconfidence, KL asymmetry, and base-invariance</div>
+    <p class="ask">Predict first. At true P(w1) = 0.70, if you push model Q(w1) up to 0.95 (overconfident), does forward KL(P||Q) or reverse KL(Q||P) grow larger? Then flip the unit from Bits to Nats and predict whether Perplexity moves.</p>
+    <div class="ctl">
+      <label><span>True P(w1)</span><input type="range" name="p0" min="0.25" max="0.90" step="0.05" value="0.70"><output data-for="p0" data-unit=""></output></label>
+      <label><span>Model Q(w1)</span><input type="range" name="q0" min="0.25" max="0.95" step="0.05" value="0.95"><output data-for="q0" data-unit=""></output></label>
+      <label><span>Log unit</span><select name="base" data-num><option value="2">Bits (log2)</option><option value="2.718281828">Nats (ln)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Derived from the kata's exact 4-token formulas: overconfidence inflates forward KL faster than reverse KL, while perplexity stays identical in bits and nats.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var pRem=1-v.p0, qRem=1-v.q0;
+    var P=[v.p0, pRem*(20/30), pRem*(8/30), pRem*(2/30)];
+    var Q=[v.q0, qRem*0.60, qRem*0.30, qRem*0.10];
+    var lb=Math.log(v.base), u=v.base<2.5?" bits":" nats";
+    var hp=0, ce=0, fwd=0, rev=0;
+    for(var i=0;i<4;i++){
+      hp-=P[i]*Math.log(P[i])/lb;
+      ce-=P[i]*Math.log(Q[i])/lb;
+      fwd+=P[i]*Math.log(P[i]/Q[i])/lb;
+      rev+=Q[i]*Math.log(Q[i]/P[i])/lb;
+    }
+    var ppl=Math.pow(v.base, ce), pplMin=Math.pow(v.base, hp);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:u,digits:4,rows:[
+      {label:"Entropy H(P) floor",value:hp,tone:"good"},
+      {label:"Cross-entropy H(P,Q)",value:ce,tone:"muted"},
+      {label:"Forward KL(P||Q)",value:fwd,tone:fwd>rev?"bad":"warn"},
+      {label:"Reverse KL(Q||P)",value:rev,tone:"warn"}
+    ]});
+    return {verdict:"PPL = "+tl.fmt(ppl,2)+" (floor "+tl.fmt(pplMin,2)+"). Check: H(P) + KL(P||Q) = "+tl.fmt(hp+fwd,4)+u+" == H(P,Q). Forward/Reverse ratio = "+tl.fmt(rev>1e-9?fwd/rev:1,2)+"x."};
+  })});</script>
+  <details class="q"><summary>Check: If you train a model with forward KL on a bimodal target distribution, why can it generate invalid "in-between" outputs?</summary><div class="a">Forward KL penalizes Q=0 wherever P&gt;0, forcing a capacity-limited Q to stretch across both modes and place probability mass in the low-density valley between them.</div></details>
+
+  <h3>Perplexity: effective branching factor and tokenizer traps</h3>
+  <p>Perplexity (PPL) turns average cross-entropy back into an intuitive count by exponentiating with the log's base: PPL = 2^(H_bits) = e^(H_nats). Expanding the average reveals it is the geometric mean of the inverse token probabilities across a sequence of length N. A perplexity of 4.0 means the model is, on average, as uncertain as rolling a fair 4-sided die at every token.</p>
+  <p>Perplexity has one notorious interview and production trap: it is only comparable between models that share the exact same vocabulary and tokenizer. A 128k-token model packs more characters into each token than a 32k-token model, so each token prediction is harder and per-token PPL looks higher even if the model compresses text better. To compare across tokenizers, normalize total negative log-likelihood in bits by raw UTF-8 byte length: bits-per-byte (BPB) = total_bits / total_bytes.</p>
+  <div class="codewrap"><pre>PPL = 2^(H_bits) = exp(H_nats) = (prod_{i=1..N} 1 / Q(x_i))^(1/N)
+BPB = (sum_{i=1..N} -log2 Q(x_i)) / num_utf8_bytes</pre></div>
+
+  <h3>Smoothing, zero probabilities, and calibration</h3>
+  <p>In count-based n-gram models, any bigram absent from the training corpus gets MLE probability 0. One unseen bigram sends -log(0) to infinity and crashes evaluation perplexity. Add-k smoothing adds k pseudocounts to every vocabulary token: P_k(w2 | w1) = (count(w1, w2) + k) / (count(w1) + kV). Choosing k is a sharp bias-variance tradeoff: too small leaves rare events noisy; too large (like add-1 Laplace smoothing on a small corpus) steals massive probability mass from frequent bigrams and inflates in-domain perplexity.</p>
+  <p>Neural LLMs avoid exact zeros because softmax outputs are strictly positive (exp(z) &gt; 0), yet floating-point underflow or overconfident logits still cause exploding cross-entropy on outliers. Techniques like label smoothing (replacing 1.0 with 1 - eps) and temperature scaling calibrate Q so tail events are not starved.</p>
+  <details class="q"><summary>Check: Why does bits-per-byte (BPB) solve the cross-tokenizer perplexity comparison problem?</summary><div class="a">Because the denominator is raw UTF-8 bytes of the text, which is identical regardless of how each tokenizer slices the text into tokens, making total compression cost directly comparable.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Surprisal of a certain event (p = 1.0)</td><td class="n">0 bits</td><td>Derived</td></tr>
+    <tr><td>Surprisal of a fair coin (p = 0.5)</td><td class="n">1 bit (0.6931 nats)</td><td>Derived</td></tr>
+    <tr><td>Conversion: bits per nat (1 / ln 2)</td><td class="n">1.4427 bits</td><td>Derived</td></tr>
+    <tr><td>Max entropy and PPL of uniform vocab V</td><td class="n">log2(V) bits, PPL = V</td><td>Derived</td></tr>
+    <tr><td>Uniform 50,257-token vocab (GPT-2 scale)</td><td class="n">15.62 bits, PPL 50,257</td><td>Derived</td></tr>
+    <tr><td>Minimum KL divergence D_KL(P||Q)</td><td class="n">0 (iff P = Q)</td><td>Derived</td></tr>
+    <tr><td>Kata 4-token floor H(P) and PPL_min</td><td class="n">1.2290 bits, PPL 2.34</td><td>Your own run</td></tr>
+    <tr><td>Kata Overconf Q: forward vs reverse KL</td><td class="n">0.4722 vs 0.2902 bits (1.63x)</td><td>Your own run</td></tr>
+    <tr><td>Kata bigram base-invariance check</td><td class="n">2^0.7386 = e^0.5119 = 1.6685</td><td>Your own run</td></tr>
+    <tr><td>Kata seen bigram PPL: k=0.0 vs k=1.0</td><td class="n">1.67 vs 4.95 (2.96x)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Forward KL D_KL(P||Q)</td><td>Covers all modes of the data distribution; stable supervised training</td><td>Places probability mass in low-density valleys between modes</td><td>Blurry or hedged generations on multimodal tasks</td></tr>
+    <tr><td>Reverse KL D_KL(Q||P)</td><td>Sharp, high-precision outputs locked onto a strong mode</td><td>Mode collapse: silently drops valid alternative modes</td><td>Diversity collapse during RLHF or DPO tuning</td></tr>
+    <tr><td>Per-token Perplexity</td><td>Intuitive branching factor; instant from training loss exp(loss)</td><td>Invalid whenever tokenizer or vocabulary changes</td><td>False regressions after upgrading to a larger vocab</td></tr>
+    <tr><td>Bits-per-byte (BPB)</td><td>Tokenizer-agnostic comparison of true text compression</td><td>Less intuitive than branching factor; requires byte counts</td><td>Byte-level vs character-level confusion on non-ASCII text</td></tr>
+    <tr><td>Add-k smoothing (larger k)</td><td>Eliminates zero-probability infinite perplexity on unseen n-grams</td><td>Steals mass from seen events, hurting in-domain sharpness</td><td>k*V dwarfing small unigram counts (Laplace k=1)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Perplexity of a tiny bigram model by hand</h2>
+  <p>Computes entropy, cross-entropy, forward vs reverse KL divergence on a 4-token distribution, then builds a bigram language model from scratch to measure per-token surprisal, base-invariance, and add-k smoothing.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math
+from collections import Counter
+
+# --- Break-it flags ---
+UNSEEN_TEST = False   # 1) Set True to score unseen bigrams with k=0 -&gt; inf perplexity
+ADD_K = 0.1           # 2) Try 0.0, 0.1, 1.0, 5.0 to see smoothing vs sharpness
+SWAP_PQ = False       # 3) Set True to swap P and Q in KL divergence
+
+def entropy_bits(p):
+    return -sum(x * math.log2(x) for x in p if x &gt; 0)
+
+def cross_entropy_bits(p, q):
+    return -sum(px * math.log2(qx) for px, qx in zip(p, q) if px &gt; 0)
+
+def kl_bits(p, q):
+    return sum(px * math.log2(px / qx) for px, qx in zip(p, q) if px &gt; 0)
+
+# Part 1: Entropy, Cross-Entropy, and KL Asymmetry on a 4-token distribution
+P = [0.70, 0.20, 0.08, 0.02]
+models = {
+    "Good Q":        [0.65, 0.22, 0.10, 0.03],
+    "Overconf Q":    [0.95, 0.03, 0.015, 0.005],
+    "Uniform Q":     [0.25, 0.25, 0.25, 0.25],
+}
+
+h_p = entropy_bits(P)
+print(f"=== Part 1: Discrete Distribution (H(P) = {h_p:.4f} bits, PPL_min = {2**h_p:.2f}) ===")
+print(f"{'Model':&lt;14} {'H(P,Q) bits':&gt;11} {'KL(P||Q)':&gt;10} {'KL(Q||P)':&gt;10} {'PPL':&gt;8}")
+for name, Q in models.items():
+    a, b = (Q, P) if SWAP_PQ else (P, Q)
+    ce = cross_entropy_bits(P, Q)
+    fwd = kl_bits(a, b)
+    rev = kl_bits(b, a)
+    print(f"{name:&lt;14} {ce:11.4f} {fwd:10.4f} {rev:10.4f} {2**ce:8.2f}")
+print(f"Identity check (Good Q): H(P)+KL = {h_p + kl_bits(P, models['Good Q']):.4f} == H(P,Q) = {cross_entropy_bits(P, models['Good Q']):.4f}")
+
+# Part 2: Tiny Bigram Language Model by Hand
+corpus = (
+    "&lt;s&gt; the cat sat on the mat &lt;/s&gt; "
+    "&lt;s&gt; the dog sat on the rug &lt;/s&gt; "
+    "&lt;s&gt; the cat chased the dog &lt;/s&gt;"
+).split()
+vocab = sorted(set(corpus))
+V = len(vocab)
+unigrams = Counter(corpus)
+bigrams = Counter(zip(corpus, corpus[1:]))
+
+def eval_bigram(tokens, k):
+    bits_list, nats_list = [], []
+    for w1, w2 in zip(tokens, tokens[1:]):
+        prob = (bigrams[(w1, w2)] + k) / (unigrams[w1] + k * V)
+        if prob == 0.0:
+            return float("inf"), float("inf"), float("inf"), []
+        bits_list.append(-math.log2(prob) + 0.0)
+        nats_list.append(-math.log(prob) + 0.0)
+    h_b = sum(bits_list) / len(bits_list)
+    h_n = sum(nats_list) / len(nats_list)
+    return h_b, h_n, 2 ** h_b, list(zip(tokens, tokens[1:], bits_list))
+
+seen_sent = "&lt;s&gt; the cat sat on the rug &lt;/s&gt;".split()
+unseen_sent = "&lt;s&gt; the dog chased the mat &lt;/s&gt;".split()
+
+print(f"\n=== Part 2: Tiny Bigram LM (V={V} tokens, N={len(seen_sent)-1} transitions) ===")
+h_b0, h_n0, ppl0, details = eval_bigram(seen_sent, 0.0)
+print("Per-bigram surprisal on seen test (k=0.0):")
+for w1, w2, s in details:
+    print(f"  P({w2:&lt;4} | {w1:&lt;4}) = {2**(-s):.4f}  surprisal = {s:.4f} bits")
+print(f"Check: 2^H_bits = {2**h_b0:.4f} == e^H_nats = {math.exp(h_n0):.4f}")
+
+print("\nSmoothing comparison:")
+configs = [
+    ("Seen (k=0.0)",   seen_sent,   0.0),
+    (f"Seen (k={ADD_K})", seen_sent,   ADD_K),
+    ("Seen (k=1.0)",   seen_sent,   1.0),
+    (f"Unseen (k={ADD_K})", unseen_sent, ADD_K),
+    ("Unseen (k=1.0)", unseen_sent, 1.0),
+]
+if UNSEEN_TEST:
+    configs.insert(3, ("Unseen (k=0.0)", unseen_sent, 0.0))
+for label, sent, k in configs:
+    hb, hn, ppl, _ = eval_bigram(sent, k)
+    print(f"  {label:&lt;16} H={hb:6.4f} bits ({hn:6.4f} nats)  PPL={ppl:6.2f}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== Part 1: Discrete Distribution (H(P) = 1.2290 bits, PPL_min = 2.34) ===
+Model          H(P,Q) bits   KL(P||Q)   KL(Q||P)      PPL
+Good Q              1.2389     0.0099     0.0105     2.36
+Overconf Q          1.7012     0.4722     0.2902     3.25
+Uniform Q           2.0000     0.7710     1.0311     4.00
+Identity check (Good Q): H(P)+KL = 1.2389 == H(P,Q) = 1.2389
+
+=== Part 2: Tiny Bigram LM (V=10 tokens, N=7 transitions) ===
+Per-bigram surprisal on seen test (k=0.0):
+  P(the  | &lt;s&gt; ) = 1.0000  surprisal = 0.0000 bits
+  P(cat  | the ) = 0.3333  surprisal = 1.5850 bits
+  P(sat  | cat ) = 0.5000  surprisal = 1.0000 bits
+  P(on   | sat ) = 1.0000  surprisal = 0.0000 bits
+  P(the  | on  ) = 1.0000  surprisal = 0.0000 bits
+  P(rug  | the ) = 0.1667  surprisal = 2.5850 bits
+  P(&lt;/s&gt; | rug ) = 1.0000  surprisal = 0.0000 bits
+Check: 2^H_bits = 1.6685 == e^H_nats = 1.6685
+
+Smoothing comparison:
+  Seen (k=0.0)     H=0.7386 bits (0.5119 nats)  PPL=  1.67
+  Seen (k=0.1)     H=1.1591 bits (0.8034 nats)  PPL=  2.23
+  Seen (k=1.0)     H=2.3086 bits (1.6002 nats)  PPL=  4.95
+  Unseen (k=0.1)   H=1.9011 bits (1.3177 nats)  PPL=  3.73
+  Unseen (k=1.0)   H=2.6032 bits (1.8044 nats)  PPL=  6.08</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Perplexity across models and bigram smoothing (real kata output)</div>
+    <div data-bars='{"unit":" PPL","digits":2,"rows":[{"label":"4-tok floor H(P)","value":2.34,"tone":"good"},{"label":"4-tok Good Q","value":2.36,"tone":"good"},{"label":"4-tok Overconf Q","value":3.25,"tone":"warn"},{"label":"4-tok Uniform Q","value":4.00,"tone":"muted"},{"label":"Bigram seen k=0.0","value":1.67,"tone":"good"},{"label":"Bigram seen k=0.1","value":2.23,"tone":"warn"},{"label":"Bigram seen k=1.0","value":4.95,"tone":"bad"},{"label":"Bigram unseen k=0.1","value":3.73,"tone":"warn"},{"label":"Bigram unseen k=1.0","value":6.08,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> Overconfidence raises 4-token PPL from 2.34 to 3.25, while aggressive add-1 smoothing triples seen-bigram PPL from 1.67 to 4.95.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li><strong>Exact decomposition:</strong> For Good Q, <code>H(P) + KL(P||Q) = 1.2290 + 0.0099 = 1.2389 bits</code>, matching <code>H(P,Q)</code> to four decimal places.</li>
+    <li><strong>KL asymmetry in action:</strong> Overconf Q yields forward <code>KL(P||Q) = 0.4722</code> bits vs reverse <code>KL(Q||P) = 0.2902</code> bits (1.63x larger), because starving the 0.20 and 0.08 tokens is penalized under P.</li>
+    <li><strong>Exact base-invariance:</strong> On the seen bigram sentence, <code>2^0.7386 = 1.6685</code> equals <code>e^0.5119 = 1.6685</code>, confirming bits and nats produce the exact same perplexity.</li>
+    <li><strong>Smoothing steals sharpness:</strong> Raising <code>k</code> from <code>0.0</code> to <code>1.0</code> inflates seen-sentence PPL from <code>1.67</code> to <code>4.95</code> because <code>k*V = 10</code> swamps counts of 1 or 2, whereas <code>k = 0.1</code> keeps unseen PPL finite at <code>3.73</code> with a much smaller hit on seen text (<code>2.23</code>).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Zero-probability blow-up.</strong> Set <code>UNSEEN_TEST = True</code>. Predict what <code>Unseen (k=0.0)</code> prints before running, and identify which exact bigram triggers it.</li>
+    <li><strong>Over-smoothing collapse.</strong> Set <code>ADD_K = 5.0</code>. Predict what the bigram perplexity approaches as <code>k</code> grows large relative to corpus counts (hint: <code>V = 10</code>).</li>
+    <li><strong>Direction swap.</strong> Set <code>SWAP_PQ = True</code>. Predict which column swaps values and whether <code>H(P,Q)</code> or <code>PPL</code> changes at all.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a 3-line helper to compute bits-per-byte (BPB) for <code>seen_sent</code> by dividing total surprisal bits by <code>len(" ".join(seen_sent).encode("utf-8"))</code>, then split one word into two subwords and watch per-token PPL drop while BPB stays honest.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Training loss spikes to NaN or inf on rare batches</td><td>Logit overflow/underflow causing <code>log(0)</code> in naive softmax + NLL</td><td>Use fused log-sum-exp (<code>nn.CrossEntropyLoss</code> on raw logits) and gradient clipping</td></tr>
+    <tr><td>Eval perplexity worsens after upgrading to a larger tokenizer</td><td>Larger vocab packs more bytes per token, raising per-token entropy</td><td>Compare models with bits-per-byte (BPB) and downstream task evals, not raw PPL</td></tr>
+    <tr><td>RLHF model outputs repetitive boilerplate or hacks the reward model</td><td>KL penalty weight beta is too low (policy drifts far from reference) or reverse KL collapses diversity</td><td>Track per-token KL(policy||ref), tune beta dynamically, and monitor output entropy</td></tr>
+    <tr><td>Classifier accuracy looks fine (90%) but cross-entropy loss is terrible</td><td>Model is overconfident (assigns 0.999 to wrong predictions, huge <code>-log(0.001)</code> penalty)</td><td>Apply post-hoc temperature scaling on a validation set or train with label smoothing</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Training cross-entropy loss (nats), validation bits-per-byte (BPB), per-token policy-to-reference KL divergence during alignment, and token-level output entropy to catch mode collapse early.</p>
+  <details class="q"><summary>Scenario: Your team upgrades a clinic voice-AI LLM from a 32k tokenizer to a 128k tokenizer. Validation perplexity rises from 7.2 to 9.8, and a manager asks to roll back immediately. What do you do?</summary><div class="a"><ol>
+    <li><strong>Stop the rollback and explain the unit mismatch:</strong> Per-token perplexity depends on vocabulary size. A 128k tokenizer merges common medical phrases into fewer, longer tokens, so each token carries more information and higher per-token entropy.</li>
+    <li><strong>Compute bits-per-byte (BPB) on the exact same validation text:</strong> Sum total negative log-likelihood in bits (<code>total_nats / ln(2)</code>) and divide by the fixed UTF-8 byte count of the validation set.</li>
+    <li><strong>Check token efficiency and latency:</strong> A 128k tokenizer often reduces token count by 15% to 25%, cutting voice-AI decode latency even at equal BPB.</li>
+    <li><strong>Verify downstream clinical evals:</strong> Run intent extraction, entity accuracy, and calibration checks before making the ship or rollback call.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Information theory gives us the math behind LLM pretraining losses, alignment penalties, and language model evaluation. Entropy sets the irreducible uncertainty floor of data, cross-entropy is the loss we minimize during training, KL divergence measures how far two distributions drift apart, and perplexity turns loss into an intuitive branching factor.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Everything starts from surprisal, minus log p(x), which is additive for independent events and assigns zero bits to certain outcomes. Averaging surprisal under the true distribution P gives Shannon entropy H(P). When we score true outcomes from P using our model Q, we get cross-entropy H(P, Q), which decomposes cleanly into H(P) plus forward KL divergence D_KL(P||Q). Because H(P) does not depend on model weights, minimizing cross-entropy is identical to minimizing forward KL, and with one-hot token labels it reduces to negative log-likelihood. Exponentiating cross-entropy gives perplexity, 2 to the H in bits or e to the H in nats, representing the effective number of equally likely choices per token.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Two traps matter in production. First, KL is asymmetric: forward KL is mean-seeking and punishes missing a mode with infinite loss, while reverse KL is mode-seeking and used in RLHF to keep the policy near the reference model. Second, perplexity cannot be compared across different tokenizers; you must normalize to bits-per-byte, and a single zero probability explodes perplexity to infinity.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"Cross-entropy and perplexity measure how good an AI model is, and KL divergence is the distance between two models so we keep RLHF aligned and improve customer accuracy."</p><p class="strong">"Cross-entropy H(P, Q) equals data entropy H(P) plus forward KL(P||Q); because H(P) is fixed, minimizing one-hot cross-entropy is minimizing forward KL. KL is asymmetric, not a distance: forward KL is mass-covering for pretraining, while reverse KL is mode-seeking for RLHF regularization. Perplexity is exp(loss) in nats, but it breaks across tokenizers, so we compare different vocabularies with bits-per-byte and watch for log(0) blow-ups."</p><p>The strong answer names the exact decomposition, corrects the distance misconception, states the forward vs reverse KL tradeoff, and calls out the tokenizer failure mode.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"KL divergence is a distance metric between two probability distributions."</summary><div class="a">Wrong. A metric must be symmetric and obey the triangle inequality. KL fails both: D_KL(P||Q) != D_KL(Q||P). In our kata, Overconf Q had forward KL 0.4722 bits vs reverse KL 0.2902 bits.</div></details>
+  <details class="q"><summary>"If Model A has perplexity 8 and Model B has perplexity 12 on the same text, Model A is strictly better."</summary><div class="a">Wrong unless both models use the exact same tokenizer and vocabulary. A coarser tokenizer predicts more bytes per token, so per-token perplexity can be higher even when its bits-per-byte compression is better.</div></details>
+  <details class="q"><summary>"Minimizing cross-entropy loss during LLM pretraining is different from minimizing KL divergence to the data distribution."</summary><div class="a">Wrong. H(P, Q) = H(P) + D_KL(P||Q), and H(P) is constant with respect to model parameters. Their gradients with respect to weights are identical.</div></details>
+  <details class="q"><summary>"Computing perplexity from natural-log loss (nats) gives a different value than computing it from base-2 loss (bits)."</summary><div class="a">Wrong. Perplexity is base-invariant when exponentiated with the matching base: 2^(H_bits) = e^(H_nats). In our kata, 2^0.7386 = e^0.5119 = 1.6685.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Derive H(P, Q) = H(P) + D_KL(P||Q) and explain why pretraining only needs H(P, Q).</summary><div class="a">Write D_KL(P||Q) = sum P log(P/Q) = sum P log P - sum P log Q = -H(P) + H(P, Q), so H(P, Q) = H(P) + D_KL(P||Q). Because H(P) is fixed by the data and has zero gradient with respect to Q's parameters, minimizing H(P, Q) minimizes D_KL(P||Q).<div class="f"><b>Follow-up</b>Can cross-entropy ever be lower than H(P)? No, because Gibbs' inequality guarantees D_KL(P||Q) &gt;= 0.</div></div></details>
+  <details class="q"><summary>Why does forward KL cause mean-seeking behavior while reverse KL causes mode-seeking behavior?</summary><div class="a">Forward KL weights log(P/Q) by P, so Q -&gt; 0 where P &gt; 0 causes infinite loss, forcing Q to cover all modes. Reverse KL weights log(Q/P) by Q, so Q can set mass to 0 on extra modes for free and concentrate on one high-density mode.<div class="f"><b>Follow-up</b>Which direction is used in RLHF (PPO/DPO) to penalize drift from the reference model? Reverse KL, D_KL(policy || ref), so the policy stays inside the reference model's high-probability support.</div></div></details>
+  <details class="q"><summary>What does a perplexity of 10 mean intuitively, and what is the perplexity of a uniform model over a 50,257-token vocabulary?</summary><div class="a">Perplexity of 10 means the model's average uncertainty per token equals choosing uniformly among 10 equally likely tokens. A uniform model over 50,257 tokens has entropy log2(50257) = 15.62 bits and perplexity 50,257.</div></details>
+  <details class="q"><summary>Why does one zero probability on a test token send perplexity to infinity, and how do count models vs neural models prevent it?</summary><div class="a">One token with Q(x) = 0 gives surprisal -log(0) = infinity, making the mean cross-entropy and its exponential infinite. Count models use smoothing (add-k or Kneser-Ney); neural models use softmax (strictly positive) with fused log-sum-exp for numerical stability.<div class="f"><b>Follow-up</b>Why not just use add-1 (Laplace) smoothing everywhere? When k*V is large relative to small counts, it steals too much mass from seen tokens (in our kata, seen PPL jumped from 1.67 to 4.95).</div></div></details>
+  <details class="q"><summary>Why can you not compare perplexity between a 32k-vocab model and a 128k-vocab model, and what metric replaces it?</summary><div class="a">Perplexity is normalized per token, and different tokenizers produce different token counts for the same text. Use bits-per-byte (BPB), which divides total surprisal in bits by the fixed UTF-8 byte count.<div class="f"><b>Follow-up</b>How do you convert a model's average nat loss L and token count T on a B-byte text into BPB? BPB = (L * T / ln(2)) / B.</div></div></details>
+  <details class="q"><summary>How does PyTorch nn.CrossEntropyLoss relate to Shannon cross-entropy on next-token prediction?</summary><div class="a">It applies log-softmax to raw logits and takes the negative log probability of the true token ID. Because the target is one-hot (P = 1 on the true token, 0 elsewhere), this equals H(P, Q) = -log Q(y*) in nats.</div></details>
+  <details class="q"><summary>In RLHF, what breaks if the KL penalty coefficient beta is too small vs too large?</summary><div class="a">If beta is too small, the policy exploits reward-model blind spots (reward hacking) and loses fluency. If beta is too large, the policy stays frozen near the SFT reference model and fails to improve on the reward.<div class="f"><b>Follow-up</b>What metric should you graph alongside reward during RLHF training? Per-token KL(policy || ref) and output entropy to spot reward hacking or mode collapse early.</div></div></details>
+  <details class="q"><summary>A language model has a validation cross-entropy loss of 2.0 nats. What is its loss in bits and its perplexity?</summary><div class="a">In bits: 2.0 / ln(2) = 2.0 * 1.4427 = 2.8854 bits. Perplexity: e^2.0 = 7.39 (which also equals 2^2.8854 = 7.39).</div></details>
+  <details class="q"><summary>Why did add-1 smoothing raise seen-sentence perplexity from 1.67 to 4.95 in the kata while keeping unseen perplexity finite?</summary><div class="a">With V = 10, add-1 adds k*V = 10 to denominators that were only 1 to 6, flattening sharp seen bigrams toward uniform while giving unseen bigrams non-zero mass.</div></details>
+  <details class="q"><summary>Why can a classifier have 90% accuracy yet terrible cross-entropy loss?</summary><div class="a">Accuracy only checks the argmax, whereas cross-entropy penalizes confidence logarithmically. Assigning 0.999 to the wrong class (0.001 to the true class) costs -log2(0.001) = 9.97 bits on a single mistake.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: the five formulas (I, H(P), H(P,Q), D_KL, PPL), why forward KL is mean-seeking and reverse KL is mode-seeking, and why perplexity breaks across tokenizers.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Drew all 5 ladder steps in order: Surprisal -> Entropy -> Cross-entropy -> KL divergence -> Perplexity.</li>
+    <li>Wrote H(P, Q) = H(P) + D_KL(P||Q) and explained why H(P) drops out of training gradients.</li>
+    <li>Stated KL non-negativity (Gibbs' inequality) and asymmetry (forward = mass-covering, reverse = mode-seeking).</li>
+    <li>Wrote PPL = 2^(H_bits) = e^(H_nats) and noted base-invariance plus uniform PPL = V.</li>
+    <li>Named the two production traps: log(0) infinite perplexity and invalid cross-tokenizer PPL comparison (fix: BPB).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D01: Why can a decoder-only LLM process all prompt tokens in parallel during prefill, but must generate output tokens sequentially during decode?</summary><div class="a">During prefill, all prompt tokens are known upfront, so causal attention runs as one batched matrix multiplication. During decode, token t+1 cannot be computed until token t is sampled, making generation strictly sequential.</div></details>
+  <details class="q"><summary>D11: How does lowering softmax temperature T below 1.0 change the next-token probability distribution and its entropy?</summary><div class="a">Dividing logits by T &lt; 1 magnifies logit gaps, concentrating probability mass on the top tokens and lowering the distribution's Shannon entropy (approaching greedy argmax as T -&gt; 0).</div></details>
+  <details class="q"><summary>A08: Why does the final LM head projection (B, T, d) x (d, V) become a major memory and compute bottleneck when vocabulary size V grows from 32k to 128k?</summary><div class="a">Both FLOPs (2 B T d V) and the materialized logits tensor (B * T * V elements) scale linearly with V, quadrupling peak logit memory during cross-entropy loss computation unless chunked.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf">Claude E. Shannon (1948): A Mathematical Theory of Communication</a><small>Original derivation of surprisal (-log p) and Shannon entropy H(P). Checked 2026-11-19.</small></li>
+    <li><a href="https://onlinelibrary.wiley.com/doi/book/10.1002/047174882X">Cover &amp; Thomas (2006): Elements of Information Theory, 2nd ed.</a><small>Cross-entropy decomposition, Gibbs' inequality (D_KL &gt;= 0), and KL asymmetry. Checked 2026-11-19.</small></li>
+    <li><a href="https://web.stanford.edu/~jurafsky/slp3/3.pdf">Jurafsky &amp; Martin: Speech and Language Processing, Ch. 3 (N-gram LMs)</a><small>Perplexity as branching factor, add-k smoothing, and zero-probability blow-up. Checked 2026-11-19.</small></li>
+    <li><a href="https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html">PyTorch Documentation: torch.nn.CrossEntropyLoss</a><small>Fused log-softmax + negative log-likelihood in nats for numerical stability. Checked 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Surprisal I(x):</strong> <code>-log_b p(x)</code>; turns products of independent probabilities into additive costs; <code>p=1</code> gives 0 bits, <code>p=0.5</code> gives 1 bit, <code>p=0</code> gives infinity.</li>
+    <li><strong>Shannon entropy H(P):</strong> Expected surprisal <code>-sum P(x) log P(x)</code>; irreducible uncertainty floor; peaks at <code>log2(V)</code> bits for a uniform vocabulary of size V.</li>
+    <li><strong>Cross-entropy H(P, Q):</strong> Expected bits using model Q for true outcomes P: <code>-sum P(x) log Q(x)</code>; collapses to <code>-log Q(y*)</code> (NLL) for one-hot LLM labels.</li>
+    <li><strong>KL divergence D_KL(P||Q):</strong> Excess bits wasted by Q: <code>H(P, Q) - H(P) = sum P log(P/Q) &gt;= 0</code>; asymmetric (forward KL is mass-covering for pretraining, reverse KL is mode-seeking for RLHF).</li>
+    <li><strong>Perplexity and BPB:</strong> <code>PPL = 2^(H_bits) = e^(H_nats)</code> (effective branching factor, uniform gives <code>PPL = V</code>); base-invariant, but use bits-per-byte (<code>total_bits / bytes</code>) across different tokenizers.</li>
+    <li><strong>Smoothing and calibration:</strong> Any <code>Q(x) = 0</code> on a true token yields infinite PPL; add-k smoothing <code>(c+k)/(N+kV)</code> prevents zeros at the cost of stealing mass from seen events, while neural models use softmax + label smoothing or temperature scaling.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Core identity:</strong> <code>H(P, Q) = H(P) + D_KL(P||Q)</code>; since <code>H(P)</code> is constant in model weights, minimizing cross-entropy equals minimizing forward KL.</li>
+      <li><strong>Unit conversion:</strong> <code>1 nat = 1 / ln(2) = 1.4427 bits</code>; perplexity is identical in both bases (<code>2^H_bits == e^H_nats</code>).</li>
+      <li><strong>KL is not a metric:</strong> Asymmetric and fails triangle inequality; forward KL covers modes (pretraining), reverse KL locks onto one mode (RLHF/PPO/DPO).</li>
+      <li><strong>Tokenizer rule:</strong> Never compare raw perplexity across different vocabularies; always convert to bits-per-byte (BPB).</li>
+      <li><strong>Zero-prob rule:</strong> One unseen zero-probability token sends cross-entropy and perplexity to infinity.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A16 T1 W01", "cards": [{"q": "What are the five rungs of the information theory ladder in order (S-E-C-K-P)?", "a": "Surprisal (-log p), Entropy H(P), Cross-entropy H(P,Q), KL divergence H(P,Q) - H(P), and Perplexity b^H."}, {"q": "Why does minimizing cross-entropy H(P, Q) during LLM pretraining equal minimizing forward KL divergence D_KL(P||Q)?", "a": "H(P, Q) = H(P) + D_KL(P||Q), and data entropy H(P) has zero gradient with respect to model parameters."}, {"q": "Why does forward KL produce mean-seeking fits while reverse KL produces mode-seeking fits?", "a": "Forward KL weights by P, infinitely penalizing Q=0 where P>0; reverse KL weights by Q, allowing Q to drop modes for free."}, {"q": "Which KL direction does RLHF (PPO/DPO) use to constrain the policy to the reference model, and what breaks if beta is too small?", "a": "Reverse KL D_KL(policy || ref); if beta is too small, the policy reward-hacks and loses fluency."}, {"q": "Why does a single zero-probability token on a test set send language model perplexity to infinity?", "a": "Surprisal -log(0) is infinite, making average cross-entropy and its exponential perplexity infinite regardless of other tokens."}, {"q": "Why is comparing raw per-token perplexity invalid across models with different tokenizers, and what metric fixes it?", "a": "Different vocabularies slice text into different token counts; use bits-per-byte (total surprisal bits divided by UTF-8 bytes) instead."}, {"q": "How do bits, nats, and perplexity relate mathematically for a uniform vocabulary of size V?", "a": "1 nat = 1.4427 bits; perplexity is base-invariant (2^H_bits = e^H_nats), and a uniform vocab gives H = log2(V) bits and PPL = V."}, {"q": "What tradeoff does increasing add-k smoothing create in an n-gram language model?", "a": "Larger k eliminates zero-probability infinite perplexity on unseen n-grams, but steals probability mass from seen counts and inflates in-domain perplexity."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

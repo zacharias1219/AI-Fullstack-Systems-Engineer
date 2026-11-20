@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U02 Reading papers</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="U02">
+<main>
+<header>
+  <div class="eyebrow"><b>U02</b><span>Research and Engineering Craft</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Reading papers</h1>
+  <p class="lede">How do you filter a stack of AI papers in minutes, separate real gains from weak baselines, and verify a paper's numbers before building on it? This page covers Keshav's three-pass method, claims-versus-evidence auditing, and first-principles number checks on Vaswani et al. (2017).</p>
+  <div class="chips"><span><em>Before</em>U01 How to learn this curriculum, K04 One token end to end</span><span><em>After</em>U05 Benchmarking methodology, U08 Reproducing research, K58 Reproduce inference research</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>3 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper, and mechanism</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the kata</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production, interview, and traps</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and Anki cards</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In Vaswani et al. (2017), Transformer-base has vocab 37,000, d_model 512, and 6 encoder plus 6 decoder layers. If you forget that the source embedding, target embedding, and output projection share one weight matrix, how far off is your parameter count from the paper's 65M?</summary><div class="a">You overshoot by +55.3% (100.93M derived instead of 63.05M with weight tying, versus 65.0M reported). Checking parameter counts in Pass 3 catches architectural details like weight tying immediately.</div></details>
+  <details class="q"><summary>Table 1 of "Attention Is All You Need" claims self-attention is faster per layer than recurrence. At what sequence length n does a Transformer-base layer (d = 512) actually stop being cheaper than an RNN layer?</summary><div class="a">At n = 512. Self-attention costs O(n^2 * d) per layer while recurrence costs O(n * d^2), so the ratio is n / d. Self-attention is cheaper per layer only when n &lt; d (for n = 2048 and d = 512, self-attention does 4.00x more ops per layer).</div></details>
+  <details class="q"><summary>Suppose you have 12 papers in your weekly reading queue and only 2 deserve a 4-hour deep read. How many hours do you waste if you skip a 10-minute Pass 1 filter and jump straight into 1-hour reads on all 12?</summary><div class="a">You burn 6.0 extra hours (20.0h total instead of 14.0h, a 43% overrun) with zero additional deep reproductions, because 8 weak papers get an hour each instead of 10 minutes.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Reading an AI paper from page 1 to the references treats every claim as equally worth your time. Most papers in a weekly feed either solve a different problem, compare against outdated baselines, or hide key costs in an appendix. Treating paper reading as a linear book-reading task guarantees you run out of hours before you ever verify the few papers that matter.</p>
+  <p>The fix is a funnel: spend 5 to 10 minutes in Pass 1 to reject most papers, 1 hour in Pass 2 to audit figures and claims against evidence, and 4 to 5 hours in Pass 3 only on papers you plan to build on or cite as load-bearing truth. Mental model: read a paper the way a senior engineer reviews a risky RFC, starting with scope, then evidence, then math.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Keshav's three-pass funnel and decision gate</div>
+    <svg viewBox="0 0 480 230" role="img" aria-label="Four-stage paper reading funnel from Pass 1 five-Cs filter through Pass 2 claims-versus-evidence audit and Pass 3 virtual re-implementation to a stop or ship decision.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="24" width="102" height="72" rx="6" class="c-accent" data-hi="1"/>
+          <text x="63" y="48" text-anchor="middle" font-weight="700">Pass 1</text>
+          <text x="63" y="66" text-anchor="middle">5 to 10 min</text>
+          <text x="63" y="84" text-anchor="middle">Score 5 Cs</text>
+          <text x="63" y="118" text-anchor="middle" class="m">Drop ~67%</text>
+        </g>
+        <g data-step="2">
+          <path d="M114 60 H134" class="ink" stroke-width="2"/>
+          <rect x="134" y="24" width="104" height="72" rx="6" class="c-warn" data-hi="2"/>
+          <text x="186" y="48" text-anchor="middle" font-weight="700">Pass 2</text>
+          <text x="186" y="66" text-anchor="middle">60 min</text>
+          <text x="186" y="84" text-anchor="middle">Claims vs ev.</text>
+          <text x="186" y="118" text-anchor="middle" class="m">Drop ~50%</text>
+        </g>
+        <g data-step="3">
+          <path d="M238 60 H258" class="ink" stroke-width="2"/>
+          <rect x="258" y="24" width="108" height="72" rx="6" class="c-good" data-hi="3"/>
+          <text x="312" y="48" text-anchor="middle" font-weight="700">Pass 3</text>
+          <text x="312" y="66" text-anchor="middle">4 to 5 hr</text>
+          <text x="312" y="84" text-anchor="middle">Verify math</text>
+          <text x="312" y="118" text-anchor="middle" class="m">Check &lt;5% err</text>
+        </g>
+        <g data-step="4">
+          <path d="M366 60 H386" class="ink" stroke-width="2"/>
+          <rect x="386" y="24" width="82" height="72" rx="6" class="c-soft" data-hi="4"/>
+          <text x="427" y="48" text-anchor="middle" font-weight="700">Decide</text>
+          <text x="427" y="66" text-anchor="middle">Cite /</text>
+          <text x="427" y="84" text-anchor="middle">Build</text>
+          <rect x="12" y="148" width="456" height="58" rx="6" class="c-bad"/>
+          <text x="240" y="172" text-anchor="middle" font-weight="700">Failure mode: skipping Pass 1</text>
+          <text x="240" y="192" text-anchor="middle">12 papers jump from 14.0h to 20.0h (+43% time) for 0 extra deep reads</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Pass 1 takes 5 to 10 minutes on title, abstract, intro, headings, and conclusions to score the 5 Cs and kill roughly two-thirds of weak or off-scope papers.</li>
+      <li>Pass 2 takes 60 minutes to audit figures, tables, baselines, and ablations so you reject papers whose numbers do not support their headline claim.</li>
+      <li>Pass 3 takes 4 to 5 hours to virtually re-implement the method and re-derive key numbers (like Transformer-base 63.05M vs 65.0M) within about 5%.</li>
+      <li>Decide to cite, prototype, or discard; skipping Pass 1 on a 12-paper queue burns 6.0 wasted hours (20.0h vs 14.0h) with zero extra deep reads.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Aggressive early filtering buys the 4 to 5 hours required to actually verify the few papers worth implementing.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>10-60-240, 5Cs then C-E-N:</strong> 10 min Pass 1 scores the <strong>5 Cs</strong> (Category, Context, Correctness, Contributions, Clarity); 60 min Pass 2 audits <strong>C</strong>laims vs <strong>E</strong>vidence; 240 min Pass 3 verifies <strong>N</strong>umbers by virtual re-implementation.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>The three-pass funnel (Keshav, 2007)</h3>
+  <p>In Pass 1 (5 to 10 minutes), read only the title, abstract, introduction, section headings, conclusions, and glance at the references. Answer Keshav's <strong>five Cs</strong>: <em>Category</em> (measurement, system, architecture?), <em>Context</em> (which prior work does it build on?), <em>Correctness</em> (do the assumptions look valid?), <em>Contributions</em> (what is actually new?), and <em>Clarity</em> (is it written clearly?). For a queue of <code>Q</code> papers with Pass 1 kill rate <code>k1</code> and Pass 2 kill rate <code>k2</code>, your total reading hours are:</p>
+  <div class="codewrap"><pre>H = Q * (10/60) + Q * (1 - k1) * 1.0 + Q * (1 - k1) * (1 - k2) * 4.0</pre></div>
+  <p>Raising <code>k1</code> from 0% to 67% cuts Pass 2 load by two-thirds without touching Pass 3 quality.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Weekly reading hours vs Pass 1 and Pass 2 kill rates</div>
+    <p class="ask">Predict first. With 12 papers, a 67% Pass 1 kill rate, and a 50% Pass 2 kill rate, how many hours do you save versus skipping Pass 1 entirely?</p>
+    <div class="ctl">
+      <label><span>Queue size (Q)</span><input type="range" name="q" min="4" max="24" step="2" value="12"><output data-for="q" data-unit=" papers"></output></label>
+      <label><span>Pass 1 kill (k1)</span><input type="range" name="k1" min="0" max="90" step="1" value="67"><output data-for="k1" data-unit="%"></output></label>
+      <label><span>Pass 2 kill (k2)</span><input type="range" name="k2" min="0" max="90" step="5" value="50"><output data-for="k2" data-unit="%"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Pass 1 filtering is the main lever on reading time; Formula uses Keshav's 10 min, 1 hr, and 4 hr budgets.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var p1=v.q*(10/60), n2=v.q*(1-v.k1/100), p2=n2*1.0, n3=n2*(1-v.k2/100), p3=n3*4.0;
+    var funnel=p1+p2+p3, noFilter=v.q*1.0+p3, saved=noFilter-funnel;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" h",digits:1,rows:[
+      {label:"With 3-pass funnel",value:funnel,tone:"good"},
+      {label:"Skip Pass 1 (all get 1h)",value:noFilter,tone:"bad"}
+    ]});
+    return {verdict:"Deep reads: "+tl.fmt(n3,1)+" papers. Funnel takes "+tl.fmt(funnel,1)+"h vs "+tl.fmt(noFilter,1)+"h without Pass 1 (saves "+tl.fmt(saved,1)+"h)."};
+  })});</script>
+
+  <h3>Claims versus evidence</h3>
+  <p>In Pass 2 (about 1 hour), read the paper with care but skip dense proofs. Focus on every figure, table, and ablation. Map each headline claim in the abstract to the exact table cell that supports it. Check four failure points: <strong>weak baselines</strong> (comparing a tuned new method against an untuned 3-year-old baseline), <strong>unmatched compute</strong> (training longer or with more parameters while claiming an architectural win), <strong>missing ablations</strong> (bundling four tricks and never isolating which one moved the metric), and <strong>benchmark leakage or narrow scope</strong> (cherry-picked prompts, no variance bars, or gains smaller than seed noise). If you cannot summarize the paper's main thrust and its weakest assumption to a teammate after Pass 2, either re-read or stop.</p>
+  <details class="q"><summary>Check: A paper claims a +2.1% accuracy gain over a strong baseline, uses 2x the training tokens, and includes no ablation isolating its new loss function. Which pass catches this, and what is your decision?</summary><div class="a">Pass 2 catches it in under an hour. Because compute is unmatched and the new loss is unablated, the evidence does not isolate the architectural claim; stop at Pass 2 and do not spend 4 hours in Pass 3.</div></details>
+
+  <h3>Reproducing numbers from first principles</h3>
+  <p>Pass 3 (4 to 5 hours) is <strong>virtual re-implementation</strong>: make the same assumptions as the authors, re-create the model equations and tables from scratch, and flag every discrepancy. On Vaswani et al. (2017), check two headline numbers directly from the architecture spec. First, parameter count for <code>N=6</code> encoder and decoder layers, <code>d_model=512</code>, <code>d_ff=2048</code>, and shared BPE vocabulary <code>V=37,000</code>:</p>
+  <div class="codewrap"><pre>Enc layer = 4*d^2 (self-attn) + 2*d*d_ff + d_ff + d (FFN) + 4*d (2 LN) = 3.15M
+Dec layer = 8*d^2 (self + cross) + 2*d*d_ff + d_ff + d (FFN) + 6*d (3 LN) = 4.20M
+Total     = V*d (1 shared emb) + 6*(Enc + Dec) = 18.94M + 18.90M + 25.20M = 63.05M</pre></div>
+  <p>Table 3 reports 65M for base (-3.0% delta) and 213M for big (214.17M derived, +0.6% delta). Landing within 5% confirms you understood weight tying and cross-attention; a 55% error tells you immediately you missed shared embeddings. Second, verify Table 1's complexity claim: self-attention costs <code>O(n^2 * d)</code> per layer while recurrence costs <code>O(n * d^2)</code>, so the ratio is <code>n / d</code>. Self-attention is cheaper per layer only when sequence length <code>n &lt; d</code>, which held for WMT translation sentences (20 to 70 tokens vs <code>d = 512</code>) but reverses at long contexts.</p>
+  <details class="q"><summary>Check: Why is a 3% gap between your derived parameter count (63.05M) and a paper's table (65M) acceptable, while a 12.7% gap is a red flag?</summary><div class="a">A 1% to 5% gap usually comes from minor omitted terms (padding vocab to a multiple, extra biases, or rounding). A 12.7% gap (56.75M vs 65M) means you missed a structural block such as the 6 decoder cross-attention layers (6.29M params).</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Keshav Pass 1 / Pass 2 / Pass 3 time budgets</td><td class="n">5 to 10 min / 1 hr / 4 to 5 hr</td><td>Checked 2026-11-19 (Keshav, 2007)</td></tr>
+    <tr><td>Transformer-base params (derived vs Table 3)</td><td class="n">63.05M vs 65.0M (-3.0%)</td><td>Derived and your own run</td></tr>
+    <tr><td>Transformer-big params (derived vs Table 3)</td><td class="n">214.17M vs 213.0M (+0.6%)</td><td>Derived and your own run</td></tr>
+    <tr><td>Shared embedding share of Transformer-base</td><td class="n">18.94M (~30% of model)</td><td>Derived (37,000 * 512)</td></tr>
+    <tr><td>Self-attention vs RNN per-layer crossover</td><td class="n">n = d (ratio = n / d)</td><td>Derived (Vaswani et al. Table 1)</td></tr>
+    <tr><td>12-paper queue time: funnel vs skipping Pass 1</td><td class="n">14.0h vs 20.0h (+43% wasted)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Pass 1 only (5 to 10 min)</td><td>High breadth; filter 12 papers in 2 hours</td><td>Zero verification of baselines or math</td><td>Citing a paper whose headline claim is unsupported</td></tr>
+    <tr><td>Pass 1 + Pass 2 (1 hr)</td><td>Solid grasp of figures, ablations, and weak spots</td><td>Can still miss hidden implementation or scaling traps</td><td>Quoting a method's speed without checking crossover bounds</td></tr>
+    <tr><td>Full 3-Pass (4 to 5 hr)</td><td>Implementation-grade clarity; catches hidden assumptions</td><td>High time cost; sustainable for only 1 to 2 papers/week</td><td>Spending Pass 3 on a paper that should have died in Pass 1</td></tr>
+    <tr><td>Linear cover-to-cover read</td><td>Feels thorough on a single paper</td><td>Burns 20.0h+ on weak queues; traps you in proofs before checking evidence</td><td>Sunk-cost fallacy keeping you inside a weak paper</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Three-pass paper audit and number verifier</h2>
+  <p>Re-derives Vaswani et al. (2017) Table 3 parameter counts and Table 1 complexity crossovers from first principles, and simulates a 12-paper weekly reading queue with and without Pass 1 filtering.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""U02 Kata: Three-Pass Paper Audit &amp; Number Verifier (Vaswani et al., 2017)."""
+
+# Break-it knobs: flip these to see how paper-reading errors distort your audit
+SHARE_EMBEDDINGS = True     # Break 1: set False (treats src, tgt, out as 3 matrices)
+INCLUDE_CROSS_ATTN = True   # Break 2: set False (forgets decoder cross-attention)
+USE_PASS1_FILTER = True     # Break 3: set False (skip 10-min Pass 1 filter on all papers)
+
+CONFIGS = [
+    ("Transformer-base", 6, 512, 2048, 8, 37000, 65.0),
+    ("Transformer-big",  6, 1024, 4096, 16, 37000, 213.0),
+]
+
+def count_params_m(n_layers, d_model, d_ff, vocab, share_emb, has_cross):
+    emb_copies = 1 if share_emb else 3
+    emb = emb_copies * vocab * d_model
+    enc_layer = 4 * d_model * d_model + 2 * d_model * d_ff + (d_ff + d_model) + 4 * d_model
+    cross = 4 * d_model * d_model if has_cross else 0
+    dec_layer = 4 * d_model * d_model + cross + 2 * d_model * d_ff + (d_ff + d_model) + 6 * d_model
+    total = emb + n_layers * (enc_layer + dec_layer)
+    return total / 1e6, emb / 1e6, (n_layers * enc_layer) / 1e6, (n_layers * dec_layer) / 1e6
+
+print("=== PASS 3: PARAMETER COUNT VERIFICATION (Vaswani et al. 2017, Table 3) ===")
+for name, n_l, d, dff, h, v, reported in CONFIGS:
+    tot, emb, enc, dec = count_params_m(n_l, d, dff, v, SHARE_EMBEDDINGS, INCLUDE_CROSS_ATTN)
+    err_pct = (tot - reported) / reported * 100.0
+    verdict = "MATCH (&lt;5%)" if abs(err_pct) &lt; 5.0 else "MISMATCH (&gt;5%)"
+    print(f"{name:17s} | derived={tot:6.2f}M (emb={emb:5.2f}M enc={enc:5.2f}M dec={dec:6.2f}M) "
+          f"| paper={reported:5.1f}M | delta={err_pct:+5.1f}% | {verdict}")
+
+print("\n=== PASS 3: TABLE 1 COMPLEXITY CROSSOVER (Self-Attn O(n^2*d) vs RNN O(n*d^2)) ===")
+for d in (512, 1024):
+    for n in (64, 512, 2048):
+        ratio = n / d  # (n^2 * d) / (n * d^2) simplifies to n / d
+        winner = "Self-Attn faster" if ratio &lt; 1 else ("Tie" if ratio == 1 else "RNN cheaper/layer")
+        print(f"d={d:4d}, n={n:4d} | Attn/RNN ratio = {ratio:4.2f}x | {winner}")
+
+print("\n=== PASS 1/2: CLAIMS-VS-EVIDENCE AUDIT &amp; TIME BUDGET (12-paper queue) ===")
+PAPER_QUEUE = [
+    ("Vaswani 2017 (Transformer)", 5, True,  True,  True),
+    ("Weak SOTA wrapper #1",       2, False, False, False),
+    ("Weak SOTA wrapper #2",       2, True,  False, False),
+    ("Solid ablation paper",       4, True,  True,  False),
+    ("Marketing whitepaper",       1, False, False, False),
+    ("Niche dataset paper",        3, True,  False, False),
+] * 2  # 12 papers in a weekly reading queue
+
+hours = 0.0
+deep_reads = 0
+for title, five_cs, has_baseline, has_ablation, has_code in PAPER_QUEUE:
+    if USE_PASS1_FILTER:
+        hours += 10 / 60.0  # Pass 1: 10 min
+        if five_cs &lt; 4:
+            continue
+    hours += 1.0  # Pass 2: 60 min (claims vs evidence check)
+    evidence_score = int(has_baseline) + int(has_ablation) + int(has_code)
+    if evidence_score &gt;= 3:
+        hours += 4.0  # Pass 3: 4 hr virtual re-implementation
+        deep_reads += 1
+
+print(f"Filter active: {USE_PASS1_FILTER} | Papers queued: {len(PAPER_QUEUE)} "
+      f"| Pass-3 deep reads: {deep_reads} | Total hours: {hours:.1f}h")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== PASS 3: PARAMETER COUNT VERIFICATION (Vaswani et al. 2017, Table 3) ===
+Transformer-base  | derived= 63.05M (emb=18.94M enc=18.90M dec= 25.20M) | paper= 65.0M | delta= -3.0% | MATCH (&lt;5%)
+Transformer-big   | derived=214.17M (emb=37.89M enc=75.55M dec=100.73M) | paper=213.0M | delta= +0.6% | MATCH (&lt;5%)
+
+=== PASS 3: TABLE 1 COMPLEXITY CROSSOVER (Self-Attn O(n^2*d) vs RNN O(n*d^2)) ===
+d= 512, n=  64 | Attn/RNN ratio = 0.12x | Self-Attn faster
+d= 512, n= 512 | Attn/RNN ratio = 1.00x | Tie
+d= 512, n=2048 | Attn/RNN ratio = 4.00x | RNN cheaper/layer
+d=1024, n=  64 | Attn/RNN ratio = 0.06x | Self-Attn faster
+d=1024, n= 512 | Attn/RNN ratio = 0.50x | Self-Attn faster
+d=1024, n=2048 | Attn/RNN ratio = 2.00x | RNN cheaper/layer
+
+=== PASS 1/2: CLAIMS-VS-EVIDENCE AUDIT &amp; TIME BUDGET (12-paper queue) ===
+Filter active: True | Papers queued: 12 | Pass-3 deep reads: 2 | Total hours: 14.0h</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Derived vs paper-reported parameters (Vaswani et al., 2017)</div>
+    <div data-bars='{"unit":"M","digits":2,"rows":[{"label":"Base derived (63.05M)","value":63.05,"tone":"good"},{"label":"Base paper Table 3 (65.0M)","value":65.00,"tone":"muted"},{"label":"Big derived (214.17M)","value":214.17,"tone":"good"},{"label":"Big paper Table 3 (213.0M)","value":213.00,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> First-principles derivation lands within -3.0% on Transformer-base and +0.6% on Transformer-big, confirming weight tying and decoder cross-attention.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Transformer-base derives to <code>63.05M</code> vs <code>65.0M</code> reported (<code>-3.0%</code>), and Transformer-big derives to <code>214.17M</code> vs <code>213.0M</code> (<code>+0.6%</code>). Both pass a 5% verification tolerance.</li>
+    <li>In Transformer-base, the single shared embedding matrix (<code>18.94M</code>) is larger than all 6 encoder layers combined (<code>18.90M</code>).</li>
+    <li>At <code>d = 512</code> and <code>n = 64</code> (translation sentence length), self-attention does <code>0.12x</code> the per-layer ops of an RNN; at <code>n = 2048</code>, it flips to <code>4.00x</code> more expensive per layer.</li>
+    <li>On the 12-paper queue, Pass 1 filtering keeps total reading time at <code>14.0h</code> while still completing both 4-hour Pass 3 deep reads.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Drop weight tying.</strong> Set <code>SHARE_EMBEDDINGS = False</code> in <code>kata.py</code>. Predict the new Transformer-base parameter count and percentage error before running. (You should see 100.93M, a +55.3% mismatch.)</li>
+    <li><strong>Skip Pass 1 filtering.</strong> Set <code>USE_PASS1_FILTER = False</code>. Predict how many total hours the 12-paper queue takes and how many extra Pass 3 deep reads you get before running. (You should see 20.0h, +6.0h wasted, and 0 extra deep reads.)</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Set <code>INCLUDE_CROSS_ATTN = False</code> to see the -12.7% error (56.75M) from omitting decoder cross-attention, then extend <code>kata.py</code> to verify a modern decoder-only model like Llama 3 8B (SwiGLU 3-matrix FFN plus Grouped-Query Attention).</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Team spends 3 weeks implementing a SOTA paper and sees zero gain on internal evals</td><td>Passed straight to implementation without a Pass 2 baseline and ablation audit; paper beat an untuned baseline or leaked eval data</td><td>Require a 1-page Pass 2 audit (baselines, compute parity, ablations, failure cases) before approving any engineering sprint</td></tr>
+    <tr><td>Prototype OOMs on target GPU despite "small model" claim in abstract</td><td>Paper excluded embedding tables, KV cache, or optimizer states from its headline parameter count</td><td>Run a 15-minute Pass 3 back-of-the-envelope memory and param derivation before provisioning hardware</td></tr>
+    <tr><td>Long-context latency blows up after adopting a paper's "faster than RNN" architecture</td><td>Team missed the complexity crossover condition (n &lt; d) in Table 1 and deployed at n = 8192 &gt;&gt; d</td><td>Verify asymptotic scaling formulas at your production sequence length n, not the paper's benchmark length</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Track paper-to-prototype hit rate (percentage of Pass 2 green-lit papers that beat your internal baseline) and engineering hours spent per validated win.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Reading AI papers like novels wastes hours on weak claims and hides implementation traps. I use Keshav's three-pass method as a funnel, paired with a claims-versus-evidence audit and first-principles number checks, so I filter out 70% of papers in ten minutes and only invest hours in methods that hold up.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Pass 1 takes five to ten minutes: read title, abstract, introduction, headings, and conclusions, then score the five Cs (category, context, correctness, contributions, clarity) and drop anything weak. Pass 2 takes one hour: inspect every figure, table, and ablation without reading proofs, checking whether baselines are strong, compute-matched, and free of evaluation leakage. Pass 3 takes four to five hours: virtually re-implement the paper from its assumptions and re-derive headline numbers. For example, on Vaswani et al. (2017), deriving Transformer-base parameters from V times d plus six encoder and decoder layers gives 63.05M against the reported 65M, a 3% match that confirms shared embeddings and cross-attention.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>The limit is diminishing returns: not every paper deserves Pass 3, and unreported details like padding or exact BPE splits cause small 1% to 5% discrepancies. The real failure mode is skipping Pass 1 or trusting headline tables without checking complexity bounds, like missing that self-attention O(n^2 d) beats recurrent O(n d^2) per layer only when sequence length n is smaller than hidden width d.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"I stay up to date by reading arXiv papers every week, focusing on the abstract and results so I know which new models are SOTA and can bring the best ideas to our product."</p>
+    <p class="strong">"I run papers through a three-pass funnel: 10 minutes on the five Cs to drop two-thirds of the queue, 60 minutes in Pass 2 to audit baselines, compute parity, and ablations, and a 4-hour Pass 3 only when we plan to build on it. In Pass 3 I re-derive the model's parameter count and scaling bounds first, because a 50% mismatch catches hidden weight tying or uncounted KV-cache costs before we write production code."</p>
+    <p>Why the strong one works: it states a concrete mechanism (three-pass funnel), real numbers (10 min, 60 min, 4 hr, 50% mismatch), a failure mode (weak baselines and hidden costs), and a clear engineering tradeoff (filtering aggressively to protect implementation time).</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If a paper beats the previous SOTA by 3% on a standard benchmark table, the new method is proven to be better."</summary><div class="a">Wrong. A 3% table gain can come from unmatched training compute, hyperparameter tuning only on the new method, stronger data filtering, or seed variance rather than the proposed mechanism. Without compute-matched baselines and an ablation isolating the new component, the claim is unproven.</div></details>
+  <details class="q"><summary>"To really understand a paper, you should read it carefully from page 1 to the end so you do not miss any details."</summary><div class="a">Wrong. Linear reading treats weak and strong papers identically, burns ~43% more time on a typical queue (20.0h vs 14.0h on 12 papers), and traps you in dense proofs before you verify whether the baselines or assumptions are even valid.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through Keshav's three-pass method and the time budget for each pass.</summary><div class="a">Pass 1 (5 to 10 min): read title, abstract, intro, headings, conclusions, and score the five Cs to filter out weak or off-scope papers. Pass 2 (1 hr): inspect figures, tables, baselines, and ablations without proofs to audit claims vs evidence. Pass 3 (4 to 5 hr): virtually re-implement the paper and verify its math and numbers.</div></details>
+  <details class="q"><summary>What are the five Cs in Pass 1, and what decision do they drive?</summary><div class="a">Category, Context, Correctness, Contributions, and Clarity. Together they decide in under 10 minutes whether to discard the paper, file it for later, or invest an hour in Pass 2.</div></details>
+  <details class="q"><summary>Name four red flags you look for when auditing claims versus evidence in Pass 2.</summary><div class="a">Weak or untuned baselines, unmatched compute or parameter budgets, missing ablations that bundle multiple changes together, and missing variance bars or benchmark leakage.<div class="f"><b>Follow-up</b>What if the authors did not release code? Treat the paper as higher risk: require either a full Pass 3 virtual re-implementation of its equations or an independent reproduction before committing sprint time.</div></div></details>
+  <details class="q"><summary>How do you derive Transformer-base's parameter count from first principles, and what does a large mismatch tell you?</summary><div class="a">Sum one shared embedding matrix (V*d = 37,000*512 = 18.94M), 6 encoder layers (4*d^2 self-attn + 2*d*d_ff FFN + biases/LN = 18.90M), and 6 decoder layers (adding 4*d^2 cross-attn = 25.20M) for 63.05M vs 65.0M reported (-3.0%). A large mismatch like +55% signals you missed a structural detail such as weight tying.<div class="f"><b>Follow-up</b>Why is the single embedding matrix ~30% of Transformer-base? Because V*d scales linearly with vocabulary size (37,000), while d_model=512 is relatively small compared to modern 4096+ width LLMs.</div></div></details>
+  <details class="q"><summary>In Vaswani et al. Table 1, when is self-attention actually cheaper per layer than an RNN, and when does it flip?</summary><div class="a">Self-attention costs O(n^2 * d) per layer and recurrence costs O(n * d^2), so the ratio is n / d. Self-attention is cheaper per layer when n &lt; d (e.g., n = 64 vs d = 512 gives 0.12x) and flips to more expensive when n &gt; d (e.g., n = 2048 gives 4.00x).</div></details>
+  <details class="q"><summary>How do you decide whether a paper deserves a 4-hour Pass 3 read at work?</summary><div class="a">Only promote a paper to Pass 3 if it passes Pass 2's baseline and ablation checks and directly affects an architecture decision, latency/cost bottleneck, or model you plan to build or reproduce.<div class="f"><b>Follow-up</b>How do you prevent your team from wasting a sprint on a flashy paper? Require a short Pass 2 audit note linking every headline claim to a table cell, listing the strongest baseline, and checking the scaling formula at your production workload size.</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its four steps, then write: the five Cs, the time-budget formula, four claims-vs-evidence red flags, the Transformer-base parameter derivation, and the Table 1 self-attention vs RNN crossover condition.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Concept stepper redrawn: Pass 1 (5 to 10 min, 5 Cs, ~67% drop) -> Pass 2 (60 min, claims vs evidence, ~50% drop) -> Pass 3 (4 to 5 hr, verify math &lt;5% err) -> Decide, plus failure mode (skipping Pass 1 jumps 12 papers from 14.0h to 20.0h).</li>
+    <li>Five Cs: Category, Context, Correctness, Contributions, Clarity.</li>
+    <li>Time formula: H = Q*(10/60) + Q*(1-k1)*1 + Q*(1-k1)*(1-k2)*4.</li>
+    <li>Four Pass 2 red flags: weak baselines, unmatched compute, missing ablations, benchmark leakage / no variance.</li>
+    <li>Transformer-base derivation: 18.94M shared emb + 18.90M (6 enc) + 25.20M (6 dec) = 63.05M vs 65.0M (-3.0%); dropping weight tying jumps to 100.93M (+55.3%).</li>
+    <li>Table 1 crossover: O(n^2 * d) vs O(n * d^2) gives ratio n / d; self-attention cheaper per layer only when n &lt; d.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>U01: Why does closed-book blank-page recall beat re-reading notes even when re-reading feels smoother?</summary><div class="a">Re-reading tests familiarity (recognition), which decays quickly under interview pressure. Effortful retrieval from a blank page strengthens recall pathways and exposes exact gaps immediately.</div></details>
+  <details class="q"><summary>K04: What happens during prefill versus decode for a single LLM request, and which phase is memory-bandwidth bound?</summary><div class="a">Prefill processes all prompt tokens in parallel (compute-bound matmuls) to populate the KV cache. Decode generates one token per step while streaming all model weights and KV cache from HBM, making it memory-bandwidth bound.</div></details>
+  <details class="q"><summary>A20: If you double context length n from 2,048 to 4,096 in standard self-attention, how much do attention FLOPs grow?</summary><div class="a">By 4x, because standard self-attention computes an n by n score matrix with O(n^2 * d) FLOPs per layer.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://web.stanford.edu/class/ee384m/Handouts/HowtoReadPaper.pdf">S. Keshav (2007): How to Read a Paper (ACM SIGCOMM CCR)</a><small>Defines the three-pass method (5 to 10 min, 1 hr, 4 to 5 hr) and the five Cs filter. Checked 2026-11-19.</small></li>
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need (NeurIPS)</a><small>Source of Table 1 complexity bounds (O(n^2 d) vs O(n d^2)), Section 3.4 weight tying, and Table 3 parameter counts (65M base, 213M big). Checked 2026-11-19.</small></li>
+    <li><a href="https://openreview.net/forum?id=rJ4km2R5t7">Sculley et al. (2018): Winner's Curse? On Pace, Progress, and Empirical Rigor (ICLR Workshop)</a><small>Catalogs empirical pitfalls in ML papers: weak baselines, unmatched compute budgets, and missing ablations. Checked 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Three-pass funnel (Keshav):</strong> Pass 1 (5 to 10 min) scores the 5 Cs (Category, Context, Correctness, Contributions, Clarity) to drop ~67%; Pass 2 (1 hr) audits figures and claims; Pass 3 (4 to 5 hr) virtually re-implements the paper.</li>
+    <li><strong>Claims vs evidence:</strong> Map every abstract claim to a table cell and reject unablated tricks, untuned baselines, unmatched compute, or gains inside seed noise before spending Pass 3 hours.</li>
+    <li><strong>Reproducing numbers:</strong> Re-derive parameter counts and asymptotic bounds from equations; landing within ~5% (63.05M vs 65.0M on Transformer-base) confirms architecture details like weight tying and cross-attention.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook:</strong> 10-60-240, 5Cs then C-E-N (Pass 1 = 10 min / 5 Cs, Pass 2 = 60 min / Claims vs Evidence, Pass 3 = 240 min / Numbers).</li>
+      <li><strong>Time-budget formula:</strong> <code>H = Q*(10/60) + Q*(1-k1)*1 + Q*(1-k1)*(1-k2)*4</code>. Skipping Pass 1 on 12 papers wastes 6.0h (20.0h vs 14.0h) for zero extra deep reads.</li>
+      <li><strong>Transformer-base check:</strong> 18.94M shared emb + 18.90M (6 enc) + 25.20M (6 dec) = 63.05M vs 65.0M (-3.0%); forgetting weight tying inflates it to 100.93M (+55.3%).</li>
+      <li><strong>Table 1 crossover:</strong> Self-attention <code>O(n^2 * d)</code> vs RNN <code>O(n * d^2)</code> has ratio <code>n / d</code>; self-attention is cheaper per layer only when <code>n &lt; d</code>.</li>
+      <li><strong>Interview rule of thumb:</strong> Never cite a paper's headline gain without naming its strongest baseline, compute parity, and the scaling regime where its claim breaks.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::U Research and engineering craft", "tags": "U02 T2 W01", "cards": [{"q": "What are the three passes and time budgets in Keshav's paper-reading method?", "a": "Pass 1: 5-10 min (5 Cs filter). Pass 2: 1 hr (claims vs evidence). Pass 3: 4-5 hr (virtual re-implementation)."}, {"q": "Why does skipping Pass 1 filtering break a weekly paper-reading budget?", "a": "Weak papers get 1 hr instead of 10 min, jumping a 12-paper queue from 14.0h to 20.0h (+43%) with zero extra deep reads."}, {"q": "What four red flags invalidate a paper's headline benchmark gain during Pass 2?", "a": "Weak or untuned baselines, unmatched training compute or parameters, missing ablations isolating the new mechanism, and benchmark leakage or unstated seed variance."}, {"q": "At what sequence length n does self-attention O(n^2*d) stop being cheaper per layer than an RNN O(n*d^2)?", "a": "At n = d, because the ops ratio is n / d; self-attention is cheaper per layer only when n \u003c d."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

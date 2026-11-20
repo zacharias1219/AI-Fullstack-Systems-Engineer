@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K06 KV cache</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K06">
+<main>
+<header>
+  <div class="eyebrow"><b>K06</b><span>Inference engineering and hardware</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>KV cache</h1>
+  <p class="lede">Why autoregressive decoding recomputes the same past tokens without a cache, what exactly gets stored in GPU memory, and how caching trades compute for memory bandwidth.</p>
+  <div class="chips"><span><em>Before</em>K04 One token end to end</span><span><em>Before</em>K05 Prefill vs decode</span><span><em>After</em>K07 Memory math</span><span><em>After</em>K15 PagedAttention and KV memory management</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper, and mechanism</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Numbers, tradeoffs, and kata</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production and interview drill</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and Anki import</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our 2-layer, d=16 toy model generating 64 tokens after a 16-token prompt (80 tokens total), how much faster is KV-cached generation than uncached generation?</summary><div class="a"><strong>31.52x faster</strong> (20.2 ms vs 635.3 ms), cutting total operations by <strong>31.54x</strong> (330,240 vs 10,416,640 ops) with zero output difference (<code>max_abs_diff = 0.00e+00</code>).</div></details>
+  <details class="q"><summary>Why does the KV cache store K and V tensors, and not Q (Query) tensors?</summary><div class="a">In causal decode, only the <strong>newest token's</strong> query <code>q_t</code> attends over past tokens. Past queries <code>q_0 .. q_{t-1}</code> are never used again to predict future tokens, so caching them wastes memory with zero reuse.</div></details>
+  <details class="q"><summary>Does a KV cache make autoregressive decode O(1) constant work per token?</summary><div class="a">No. Projections become <code>O(1)</code> per step (one token instead of <code>t</code>), but attention still dots the new query against all <code>t</code> cached keys and sums <code>t</code> cached values, which is <strong>O(t) linear</strong> per step (and <code>O(N^2)</code> total across <code>N</code> generated tokens, down from <code>O(N^3)</code> uncached).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>An autoregressive LLM generates one token at a time, feeding the full sequence back in to predict the next token. Because of the causal attention mask, token <code>i</code> can only attend to tokens <code>0 .. i</code>. Adding token <code>t</code> at the end of the sequence never changes the hidden state, Key vector <code>k_i</code>, or Value vector <code>v_i</code> of any earlier token <code>i &lt; t</code>.</p>
+  <p>Without a cache, every decode step re-projects all <code>t</code> tokens through <code>W_q, W_k, W_v</code> and recomputes the entire <code>t x t</code> attention triangle, throwing away <code>t - 1</code> rows just to keep the last one. The <strong>KV cache</strong> stores each layer's past <code>K</code> and <code>V</code> matrices in GPU HBM so each decode step computes only the single new token's <code>q_t, k_t, v_t</code>, appends <code>k_t, v_t</code> to the cache, and attends <code>q_t</code> against the stored history. You trade redundant FLOPs for growing GPU memory and memory bandwidth.</p>
+
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Uncached recomputation vs KV-cached append-and-attend</div>
+    <svg viewBox="0 0 480 235" role="img" aria-label="Comparison of uncached decode recomputing all past tokens at every step versus KV-cached decode appending only the new token K and V vectors and attending one query over cached history, trading compute for growing HBM memory.">
+      <g font-size="12">
+        <g data-step="1">
+          <text x="12" y="18" font-weight="600">Prompt prefill (tokens 0..15)</text>
+          <rect x="12" y="26" width="175" height="32" rx="4" class="c-accent" data-hi="1"/>
+          <text x="99" y="46" text-anchor="middle">Compute Q, K, V (16 tokens)</text>
+        </g>
+        <g data-step="2">
+          <path d="M187 42 H222" class="ink"/>
+          <rect x="222" y="26" width="130" height="32" rx="4" class="c-good" data-hi="2"/>
+          <text x="287" y="46" text-anchor="middle">Store K, V in HBM</text>
+        </g>
+        <g data-step="3">
+          <rect x="12" y="84" width="210" height="58" rx="4" class="c-bad" data-hi="3"/>
+          <text x="117" y="104" text-anchor="middle" font-weight="600">Uncached step t</text>
+          <text x="117" y="122" text-anchor="middle">Recompute all t tokens: O(t^2)</text>
+          <text x="117" y="136" text-anchor="middle">Kata: 10.42M ops, 635.3 ms</text>
+        </g>
+        <g data-step="4">
+          <rect x="242" y="84" width="226" height="58" rx="4" class="c-soft" data-hi="4"/>
+          <text x="355" y="104" text-anchor="middle" font-weight="600">Cached step t: 1 new token</text>
+          <text x="355" y="122" text-anchor="middle">Project only q_t, k_t, v_t: O(1)</text>
+          <text x="355" y="136" text-anchor="middle">Append k_t, v_t to HBM cache</text>
+        </g>
+        <g data-step="5">
+          <path d="M355 142 V166" class="ink"/>
+          <rect x="242" y="166" width="226" height="54" rx="4" class="c-good" data-hi="5"/>
+          <text x="355" y="186" text-anchor="middle" font-weight="600">Attend q_t against K, V (0..t)</text>
+          <text x="355" y="204" text-anchor="middle">1 row only: O(t) per step</text>
+          <text x="355" y="216" text-anchor="middle">Kata: 0.33M ops, 20.2 ms (31.5x)</text>
+        </g>
+        <g data-step="6">
+          <rect x="12" y="166" width="210" height="54" rx="4" class="c-warn" data-hi="6"/>
+          <text x="117" y="186" text-anchor="middle" font-weight="600">The bill: HBM capacity + BW</text>
+          <text x="117" y="204" text-anchor="middle">Grows linearly with S and batch B</text>
+          <text x="117" y="216" text-anchor="middle">Read full KV every decode step</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Prefill processes all 16 prompt tokens in parallel, computing Q, K, and V matrices for every transformer layer.</li>
+      <li>Instead of discarding the prompt's K and V tensors after prefill, the engine saves them in GPU HBM as the initial KV cache.</li>
+      <li>Without a cache, decode step t re-projects all t tokens and recomputes the full t x t causal triangle, costing 10.42M ops in our kata.</li>
+      <li>With a KV cache, decode step t projects only the single new token into q_t, k_t, and v_t (O(1) work) and appends k_t and v_t to the cache.</li>
+      <li>Attention multiplies q_t against all t cached keys and sums t cached values, making each decode step O(t) and cutting kata runtime 31.5x.</li>
+      <li>The tradeoff is GPU memory and HBM bandwidth: the cache grows linearly with context length and batch size, and must be read on every decode token.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> KV caching turns per-step decode attention from O(t^2) to O(t) by storing immutable past K and V vectors, shifting the bottleneck from compute to HBM memory and bandwidth.</figcaption>
+  </figure>
+
+  <div class="box hook"><b>Memory hook</b><p><strong>"Q asks once; K and V stay."</strong> A new token's Query asks one question and is thrown away; its Key and Value join the shelf in HBM so every future Query can read them in O(t) without re-running past tokens.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>1. Why causal masking makes past K and V immutable</h3>
+  <p>In a decoder-only transformer, self-attention applies a lower-triangular causal mask so position <code>i</code> only attends to positions <code>0 .. i</code>. Therefore, every layer's residual stream vector <code>h_i</code> at position <code>i</code> is a pure function of tokens <code>0 .. i</code>. When token <code>t</code> is appended later, no attention weight or hidden state at position <code>i &lt; t</code> can change.</p>
+  <p>Because <code>k_i = W_k h_i</code> and <code>v_i = W_v h_i</code> depend only on <code>h_i</code> and fixed weights, they are immutable once computed. One crucial detail: models using Rotary Position Embeddings (RoPE) apply the position rotation to <code>q_i</code> and <code>k_i</code> before caching, so the cache stores <strong>post-RoPE</strong> keys alongside values. Storing raw hidden states <code>h_i</code> instead would force re-running <code>W_k</code> and <code>W_v</code> on all <code>t</code> tokens every step.</p>
+
+  <h3>2. Inside a single cached decode step</h3>
+  <p>During decode step <code>t</code>, the input tensor has sequence length <code>1</code> instead of <code>t</code>: shape <code>[B, 1, d_model]</code>. At each layer <code>l</code>, the model runs three small matrix-vector products to produce <code>q_t, k_t, v_t</code>, applies RoPE at offset <code>t</code> to <code>q_t</code> and <code>k_t</code>, and appends <code>k_t, v_t</code> to that layer's cache buffers <code>K_cache[l]</code> and <code>V_cache[l]</code>.</p>
+  <p>Attention then computes a single row of scores <code>softmax(q_t K_cache[l]^T / sqrt(d_head))</code> of length <code>t</code> and takes the weighted sum over <code>V_cache[l]</code>. The resulting vector passes through the output projection and MLP for just that one token, yielding identical logits to an uncached full-sequence pass.</p>
+
+  <figure class="viz stepper" id="viz-step-decode">
+    <div class="vt">Stepper: One cached decode step inside layer l at sequence length t</div>
+    <svg viewBox="0 0 460 190" role="img" aria-label="Four-step flow inside one transformer layer during cached decode: one new token enters, projects to q_t, k_t, v_t, appends k_t and v_t to the HBM KV cache, and computes single-query attention over all t cached entries.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="20" width="90" height="44" rx="4" class="c-accent" data-hi="1"/>
+          <text x="55" y="38" text-anchor="middle">Token x_t</text>
+          <text x="55" y="54" text-anchor="middle">[B, 1, d]</text>
+        </g>
+        <g data-step="2">
+          <path d="M100 42 H132" class="ink"/>
+          <rect x="132" y="14" width="110" height="56" rx="4" class="c-soft" data-hi="2"/>
+          <text x="187" y="34" text-anchor="middle">Project 1 token</text>
+          <text x="187" y="50" text-anchor="middle">q_t, k_t, v_t</text>
+          <text x="187" y="64" text-anchor="middle">+ RoPE(pos=t)</text>
+        </g>
+        <g data-step="3">
+          <path d="M242 42 H274" class="ink"/>
+          <rect x="274" y="14" width="174" height="56" rx="4" class="c-warn" data-hi="3"/>
+          <text x="361" y="34" text-anchor="middle">Append to HBM cache</text>
+          <text x="361" y="50" text-anchor="middle">K, V: [B, n_kv, t, d_h]</text>
+          <text x="361" y="64" text-anchor="middle">Read all t entries back</text>
+        </g>
+        <g data-step="4">
+          <path d="M187 70 V126 H274" class="ink"/>
+          <path d="M361 70 V106" class="ink"/>
+          <rect x="274" y="106" width="174" height="62" rx="4" class="c-good" data-hi="4"/>
+          <text x="361" y="126" text-anchor="middle" font-weight="600">Single-row attention</text>
+          <text x="361" y="143" text-anchor="middle">softmax(q_t K^T / sqrt(d)) V</text>
+          <text x="361" y="160" text-anchor="middle">Output: [B, 1, d] (O(t))</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Only the single newest token embedding x_t enters layer l with shape [B, 1, d], not the full history.</li>
+      <li>Linear projections W_q, W_k, W_v run on that one vector (O(d^2) constant work) and apply RoPE at position offset t.</li>
+      <li>The engine appends k_t and v_t to layer l's HBM cache, growing its sequence axis from t - 1 to t.</li>
+      <li>Query q_t dots against all t cached keys and weights all t cached values in O(t) work, producing the exact same output vector as an uncached pass.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every decode step runs projections on 1 token and attention on 1 query against t cached K, V vectors, keeping exact parity with uncached generation.</figcaption>
+  </figure>
+
+  <details class="q"><summary>Check: Why must RoPE be applied to k_t before writing it into the KV cache?</summary><div class="a">Because RoPE encodes token <code>t</code>'s absolute position into <code>k_t</code>. Caching post-RoPE keys avoids re-rotating all <code>t</code> past keys on every decode step; forgetting the position offset <code>t</code> corrupts attention scores immediately.</div></details>
+
+  <h3>3. Complexity derivation: why decode becomes linear</h3>
+  <p>Count the operations to generate <code>N</code> tokens starting from a prompt of length <code>P</code> (ignoring constants like layer count <code>L</code> and hidden dimension <code>d</code>). At step <code>t</code> (where sequence length is <code>t</code>):</p>
+  <div class="codewrap"><pre>Uncached step t:
+  Projections (W_q, W_k, W_v):  O(t * d^2)     -> Sum over N steps: O(N^2 * d^2)
+  Self-attention (t x t pairs): O(t^2 * d)     -> Sum over N steps: O(N^3 * d)
+
+KV-cached step t:
+  Projections (1 new token):    O(d^2)         -> Sum over N steps: O(N * d^2)
+  Self-attention (1 x t pairs): O(t * d)       -> Sum over N steps: O(N^2 * d)</pre></div>
+  <p>Caching saves a full factor of <code>t</code> at every single decode step. Projections drop from <code>O(t)</code> to <code>O(1)</code> per token, and attention drops from <code>O(t^2)</code> to <code>O(t)</code> per token. Across a long 2,000-token response, that is a thousand-fold reduction in redundant compute.</p>
+
+  <h3>4. Deriving the KV cache memory formula and the bandwidth wall</h3>
+  <p>Every token in every active request stores two tensors (<code>K</code> and <code>V</code>) at every layer <code>L</code> across <code>n_kv</code> key-value heads of width <code>d_head</code>, using <code>b</code> bytes per element (2 bytes for FP16/BF16, 1 byte for FP8):</p>
+  <div class="codewrap"><pre>KV_bytes = 2 * L * n_kv * d_head * S * B * b</pre></div>
+  <p>For a Llama-3-8B-class model (<code>L = 32</code>, <code>n_kv = 8</code> with GQA, <code>d_head = 128</code>, BF16 <code>b = 2</code>), one token costs <code>2 * 32 * 8 * 128 * 2 = 131,072 bytes</code> (128 KiB). At <code>S = 8,192</code> tokens, a single request needs 1.07 GB of KV cache; a batch of 32 concurrent requests needs 34.4 GB just for KV state, on top of ~16 GB of model weights. (Full GPU memory budgeting belongs to <strong>K07</strong>; paging and fragmentation belong to <strong>K15</strong>.)</p>
+  <p>Worse, every decode step must stream the entire active KV cache plus model weights from GPU HBM into SRAM just to do two FLOPs per loaded byte (low arithmetic intensity, covered in <strong>K05</strong>). That is why Grouped-Query Attention (GQA) shrinks <code>n_kv</code> by 4x to 8x: it cuts both KV memory capacity and HBM decode traffic by the same factor.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: KV cache size across context length, batch size, and attention layout</div>
+    <p class="ask">Predict first. For a 32-layer, d_head=128 BF16 model at S=4,096 and batch B=8, how many GB of KV cache does GQA (8 KV heads) use compared to MHA (32 KV heads)?</p>
+    <div class="ctl">
+      <label><span>Context length (S)</span><input type="range" name="s" min="512" max="32768" step="512" value="4096"><output data-for="s" data-unit=" tok"></output></label>
+      <label><span>Batch size (B)</span><input type="range" name="b" min="1" max="64" step="1" value="8"><output data-for="b" data-unit=" req"></output></label>
+      <label><span>Precision</span><select name="bytes" data-num><option value="2">BF16 / FP16 (2 B)</option><option value="1">FP8 / INT8 (1 B)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> KV cache bytes scale linearly with S, B, and n_kv (formula: 2 * 32 * n_kv * 128 * S * B * bytes); GQA (8 KV heads) cuts both HBM footprint and KV bandwidth 4x vs MHA (32 KV heads).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var base=2*32*128*v.s*v.b*v.bytes/1e9;
+    var mha=base*32, gqa=base*8, mqa=base*1;
+    var tone=function(g){return g>64?"bad":(g>24?"warn":"good")};
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GB",digits:2,rows:[
+      {label:"MHA (32 KV heads)",value:mha,tone:tone(mha)},
+      {label:"GQA (8 KV heads)",value:gqa,tone:tone(gqa)},
+      {label:"MQA (1 KV head)",value:mqa,tone:tone(mqa)}
+    ]});
+    var perTokKB=2*32*8*128*v.bytes/1024;
+    return {verdict:"At S="+tl.fmt(v.s,0)+" and B="+v.b+", GQA uses "+tl.fmt(gqa,2)+" GB ("+tl.fmt(perTokKB,0)+" KiB/token) vs "+tl.fmt(mha,2)+" GB for MHA (4x larger). Fits 80 GB H100 with 16 GB weights: "+(gqa+16<=80?"Yes":"No, OOM")+"."};
+  })});</script>
+
+  <details class="q"><summary>Check: If you double batch size B and halve context length S at the same time, what happens to total KV cache bytes and per-step KV HBM reads?</summary><div class="a">Both stay <strong>unchanged</strong>. Because <code>KV_bytes = 2 * L * n_kv * d_head * S * B * b</code> is linear in the product <code>S * B</code> (total active tokens in flight), doubling <code>B</code> and halving <code>S</code> keeps total cached tokens constant.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>KV cache memory formula</td><td class="n">2 * L * n_kv * d_head * S * B * b</td><td>Derived</td></tr>
+    <tr><td>Per-step decode complexity (cached vs uncached)</td><td class="n">O(t) vs O(t^2)</td><td>Derived</td></tr>
+    <tr><td>Total generation complexity over N tokens (cached vs uncached)</td><td class="n">O(N^2) vs O(N^3)</td><td>Derived</td></tr>
+    <tr><td>Llama-3-8B (L=32, n_kv=8, d_h=128, BF16) KV per token</td><td class="n">128 KiB / token (1.07 GB at 8k)</td><td>Derived</td></tr>
+    <tr><td>Llama-3-70B (L=80, n_kv=8, d_h=128, BF16) KV per token</td><td class="n">320 KiB / token (2.62 GB at 8k)</td><td>Derived</td></tr>
+    <tr><td>GQA (8 KV heads) vs MHA (32 KV heads) KV memory reduction</td><td class="n">4x smaller cache &amp; KV reads</td><td>Derived</td></tr>
+    <tr><td>Kata speedup (L=2, d=16, prompt=16, gen=64)</td><td class="n">31.52x faster, 31.54x fewer ops</td><td>Your own run</td></tr>
+    <tr><td>Kata output parity (cached vs uncached)</td><td class="n">max_abs_diff = 0.00e+00</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Uncached recomputation</td><td>Zero KV memory footprint; higher max theoretical memory headroom</td><td>O(t^2) per step, O(N^3) total; unusable latency past a few dozen tokens</td><td>Time-per-output-token (TPOT) exploding quadratically with length</td></tr>
+    <tr><td>Full FP16/BF16 KV cache (MHA)</td><td>Exact mathematical parity; linear O(t) decode per step</td><td>Huge HBM footprint (e.g. 512 KiB/token at 32 heads) capping batch size</td><td>KV cache OOM before GPU compute is even 10% utilized</td></tr>
+    <tr><td>GQA / MQA architecture (fewer n_kv)</td><td>4x to 32x smaller KV cache and proportional decode bandwidth savings</td><td>Must be trained into the model; slight quality risk with extreme MQA (1 head)</td><td>Quality regressions on long-context needle-in-a-haystack evals</td></tr>
+    <tr><td>FP8 / INT8 KV cache quantization</td><td>2x more concurrent tokens/requests in the same HBM budget</td><td>Small quantization error in attention logits; dequant overhead in kernels</td><td>Subtle drift on long reasoning chains or structured JSON outputs</td></tr>
+    <tr><td>Sliding-window / eviction cache</td><td>Fixed O(W) memory cap regardless of conversation length</td><td>Model permanently loses exact recall of tokens evicted past window W</td><td>Clinic voice agent or long chat forgetting facts stated at turn 1</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Uncached vs KV-cached decoder</h2>
+  <p>A 94-line pure-Python causal self-attention decoder that generates 64 tokens from a 16-token prompt both ways, verifying exact numerical parity while measuring wall-clock time, projection ops, attention ops, and KV cache bytes.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Tiny causal decoder: uncached vs KV-cached generation (pure Python)."""
+import math, random, time
+
+LAYERS, D, PROMPT, GEN = 2, 16, 16, 64
+BYTES_PER_ELEM = 2          # fp16 / bf16 accounting for KV cache bytes
+USE_POS = True              # Break-it 2: set False to drop decode pos offset
+MAX_CACHE_BYTES = 0         # Break-it 3: set 4096 to hit a KV-cache OOM
+
+random.seed(7)
+def rand_mat(r, c): return [[random.gauss(0, 0.25) for _ in range(c)] for _ in range(r)]
+def dot(a, b): return sum(x * y for x, y in zip(a, b))
+def matvec(W, x): return [dot(row, x) for row in W]
+def pos_vec(t): return [math.sin(t / (10.0 ** (i / D))) * 0.2 for i in range(D)]
+
+def softmax(xs):
+    m = max(xs)
+    ex = [math.exp(x - m) for x in xs]
+    s = sum(ex)
+    return [e / s for e in ex]
+
+WEIGHTS = [(rand_mat(D, D), rand_mat(D, D), rand_mat(D, D)) for _ in range(LAYERS)]
+OPS = {"proj": 0, "attn": 0}
+
+def attend_one(q, ks, vs):
+    scale = 1.0 / math.sqrt(D)
+    scores = [dot(q, k) * scale for k in ks]
+    probs = softmax(scores)
+    OPS["attn"] += 2 * len(ks) * D
+    return [sum(p * v[j] for p, v in zip(probs, vs)) for j in range(D)]
+
+def step_uncached(seq):
+    hs = [list(x) for x in seq]
+    for Wq, Wk, Wv in WEIGHTS:
+        qs = [matvec(Wq, h) for h in hs]
+        ks = [matvec(Wk, h) for h in hs]
+        vs = [matvec(Wv, h) for h in hs]
+        OPS["proj"] += 3 * len(hs) * D * D
+        hs = [attend_one(qs[i], ks[: i + 1], vs[: i + 1]) for i in range(len(hs))]
+    return hs[-1]
+
+def prefill_cached(seq):
+    hs = [list(x) for x in seq]
+    cache = []
+    for Wq, Wk, Wv in WEIGHTS:
+        qs = [matvec(Wq, h) for h in hs]
+        ks = [matvec(Wk, h) for h in hs]
+        vs = [matvec(Wv, h) for h in hs]
+        OPS["proj"] += 3 * len(hs) * D * D
+        cache.append((ks, vs))
+        hs = [attend_one(qs[i], ks[: i + 1], vs[: i + 1]) for i in range(len(hs))]
+    return hs[-1], cache
+
+def decode_cached(token_vec, cache):
+    h = list(token_vec)
+    for (Wq, Wk, Wv), (ks, vs) in zip(WEIGHTS, cache):
+        q, k, v = matvec(Wq, h), matvec(Wk, h), matvec(Wv, h)
+        OPS["proj"] += 3 * D * D
+        ks.append(k)
+        vs.append(v)
+        h = attend_one(q, ks, vs)
+    return h
+
+def make_token(prev, t, with_pos=True):
+    p = pos_vec(t) if with_pos else [0.0] * D
+    return [math.tanh(x) + pi for x, pi in zip(prev, p)]
+
+def run(mode):
+    OPS["proj"] = OPS["attn"] = 0
+    seq = [pos_vec(t) for t in range(PROMPT)]
+    t0 = time.perf_counter()
+    if mode == "uncached":
+        out = step_uncached(seq)
+        for step in range(GEN):
+            seq.append(make_token(out, PROMPT + step, True))
+            out = step_uncached(seq)
+        cache_bytes = 0
+    else:
+        out, cache = prefill_cached(seq)
+        for step in range(GEN):
+            tok = make_token(out, PROMPT + step, USE_POS)
+            out = decode_cached(tok, cache)
+            cache_bytes = 2 * LAYERS * len(cache[0][0]) * D * BYTES_PER_ELEM
+            if MAX_CACHE_BYTES and cache_bytes &gt; MAX_CACHE_BYTES:
+                raise MemoryError(f"KV cache OOM at token {PROMPT + step + 1}: {cache_bytes} B &gt; {MAX_CACHE_BYTES} B")
+    dt_ms = (time.perf_counter() - t0) * 1000.0
+    return out, dt_ms, OPS["proj"], OPS["attn"], cache_bytes
+
+u_out, u_ms, u_proj, u_attn, _ = run("uncached")
+c_out, c_ms, c_proj, c_attn, c_bytes = run("cached")
+max_diff = max(abs(a - b) for a, b in zip(u_out, c_out))
+print(f"config: layers={LAYERS} d={D} prompt={PROMPT} gen={GEN} total_len={PROMPT + GEN}")
+print(f"uncached: {u_ms:7.1f} ms | proj_ops={u_proj:10,d} | attn_ops={u_attn:10,d} | total_ops={u_proj + u_attn:10,d} | cache=     0 B")
+print(f"cached:   {c_ms:7.1f} ms | proj_ops={c_proj:10,d} | attn_ops={c_attn:10,d} | total_ops={c_proj + c_attn:10,d} | cache={c_bytes:6,d} B")
+print(f"speedup:  {u_ms / c_ms:7.2f}x | ops_ratio={(u_proj + u_attn) / (c_proj + c_attn):6.2f}x | max_abs_diff={max_diff:.2e}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">config: layers=2 d=16 prompt=16 gen=64 total_len=80
+uncached:   635.3 ms | proj_ops= 4,792,320 | attn_ops= 5,624,320 | total_ops=10,416,640 | cache=     0 B
+cached:      20.2 ms | proj_ops=   122,880 | attn_ops=   207,360 | total_ops=   330,240 | cache=10,240 B
+speedup:    31.52x | ops_ratio= 31.54x | max_abs_diff=0.00e+00</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata generation time (L=2, d=16, prompt=16, gen=64)</div>
+    <div data-bars='{"unit":" ms","digits":1,"rows":[{"label":"Uncached (10.42M ops)","value":635.3,"tone":"bad"},{"label":"KV cached (0.33M ops)","value":20.2,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Even at 80 total tokens, KV caching cuts generation time by 31.52x (635.3 ms to 20.2 ms) at a cost of 10,240 bytes of cache.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Exact parity:</strong> <code>max_abs_diff=0.00e+00</code> proves the KV cache is a lossless memoization of causal attention, not an approximation.</li>
+    <li><strong>Projection ops drop 39.00x:</strong> <code>proj_ops</code> falls from <code>4,792,320</code> to <code>122,880</code> because each of the 80 tokens is projected through <code>W_q, W_k, W_v</code> once instead of being re-projected at every subsequent step.</li>
+    <li><strong>Attention ops drop 27.12x:</strong> <code>attn_ops</code> falls from <code>5,624,320</code> to <code>207,360</code> because cached decode computes only the final row of the causal attention matrix.</li>
+    <li><strong>Memory is the explicit price:</strong> The <code>31.52x</code> speedup costs <code>10,240 B</code> (<code>2 * 2 layers * 80 tokens * 16 dims * 2 bytes = 10,240 B</code>), which grows linearly with every new token.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Double generation length (cubic vs quadratic scaling).</strong> Change <code>GEN = 64</code> to <code>GEN = 128</code> (total length 144). Predict how much the speedup ratio widens before running: uncached attention grows roughly as <code>(144/80)^3</code> (~5.8x), while cached grows roughly as <code>(144/80)^2</code> (~3.2x).</li>
+    <li><strong>Drop the decode position offset (RoPE offset bug).</strong> Set <code>USE_POS = False</code>. Predict what happens to <code>max_abs_diff</code> and runtime: runtime stays identical, but output parity breaks completely because cached decode tokens lose their sequence position.</li>
+    <li><strong>Hit a KV cache OOM mid-generation.</strong> Set <code>MAX_CACHE_BYTES = 4096</code>. Predict the exact token number where generation crashes before running: each token takes <code>2 * 2 * 16 * 2 = 128 B</code>, so 32 tokens fit (<code>4096 B</code>) and token 33 triggers <code>MemoryError</code>.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a <code>KV_HEADS = 1</code> multi-query mode (4 query heads sharing 1 KV head) and verify that <code>cache_bytes</code> drops 4x while decode attention ops stay unchanged.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>CUDA OOM during traffic spikes even though GPU compute utilization is low</td><td>Unbounded concurrent long contexts exhausting KV cache HBM</td><td>Cap <code>max_num_batched_tokens</code> / <code>max_model_len</code>, enable PagedAttention (K15), or switch to FP8 KV cache</td></tr>
+    <tr><td>Time-per-output-token (TPOT) degrades linearly as a voice or chat session gets longer</td><td>Decode is HBM bandwidth-bound reading a growing KV cache every step</td><td>Use a GQA model, enable FP8 KV cache, summarize/trim old turns, or scale tensor parallelism for more HBM bandwidth</td></tr>
+    <tr><td>Garbled or repetitive output after resuming a cached prefix or multi-turn session</td><td>Wrong position_ids / RoPE offset applied to newly decoded tokens against cached keys</td><td>Pass explicit monotonically increasing position offsets matching cache length and add a cached-vs-uncached parity test in CI</td></tr>
+    <tr><td>High preemption / request recomputation rate in vLLM or TGI</td><td>KV cache pool hits 100% block utilization, forcing scheduler to evict and recompute requests</td><td>Lower max concurrency, allocate more GPU memory fraction to KV blocks, or enable prefix caching for shared system prompts</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> KV cache utilization % (GPU blocks used), preemption/swap count, TPOT p95 bucketed by context length, prefix cache hit rate, and active batch size.</p>
+  <details class="q"><summary>Scenario: You serve a Llama-3-8B (L=32, n_kv=8, d_h=128, BF16) clinic voice assistant on one 24 GB GPU (~16 GB weights, ~6 GB free for KV cache). Average call length grows from 2,000 to 6,000 tokens. What breaks first and how do you fix it?</summary><div class="a"><ol>
+    <li><strong>Compute per-token KV cost:</strong> <code>2 * 32 * 8 * 128 * 2 = 128 KiB/token</code>.</li>
+    <li><strong>Calculate concurrency drop:</strong> At 2,000 tokens, one call uses ~256 MB, so 6 GB holds ~23 concurrent calls. At 6,000 tokens, one call uses ~768 MB, cutting max concurrency to ~7 calls.</li>
+    <li><strong>What breaks first:</strong> KV cache capacity saturates, causing request queueing, preemptions, or OOMs long before GPU FLOPs saturate; TPOT also rises 3x on the KV-read portion.</li>
+    <li><strong>Fix order:</strong> (1) Enable FP8 KV cache to immediately double capacity to ~15 calls; (2) enable prefix caching if all calls share a large clinic system prompt; (3) summarize older dialogue turns outside a rolling window; (4) move to a higher-VRAM/bandwidth GPU or add replicas.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A KV cache memoizes past Key and Value tensors across decode steps so the model never recomputes the prompt and history for every new token. That cuts per-step decode attention from quadratic to linear, enabling real-time streaming with mathematically identical outputs.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Because causal self-attention masks future tokens, token i's hidden state, Key, and Value depend only on tokens zero through i and never change later. During prefill, we compute K and V for the prompt and store them in GPU HBM per layer, after RoPE is applied to K. On each decode step, we feed only the new token, run O(1) projections for q_t, k_t, and v_t, append k_t and v_t to the cache, and attend q_t over all t cached entries. Past queries are never cached because only the newest token asks a question.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Cache size is 2 times layers times KV heads times head dim times sequence length times batch size times element bytes. For an 8B GQA model in BF16, that is 128 KiB per token, or 1.07 GB at 8k context. Because decode streams the full cache from HBM every token, capacity caps batch size and HBM bandwidth caps speed, which is why GQA, FP8 KV quantization, and PagedAttention matter.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"KV caching saves previous LLM calculations in memory so responses come back much faster and cheaper for users, especially in long conversations."</p>
+    <p class="strong">"Causal masking makes past K and V vectors immutable, so caching them cuts per-step decode from O(t^2) to O(t) and projections to O(1). The price is 2 * L * n_kv * d_head * S * B * b bytes in HBM, which for an 8B GQA model in BF16 is 128 KiB per token. In production, that shifts the bottleneck from compute to HBM capacity and bandwidth, capping batch size until you apply GQA, FP8 KV quantization, or PagedAttention."</p>
+    <p>The strong answer names the exact causal mechanism, gives the complexity shift, derives the real byte cost (128 KiB/token), and states the production failure mode and tradeoffs.</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"KV caching makes LLM decode O(1) constant time per token."</summary><div class="a">Wrong. Linear projections drop to <code>O(1)</code> per token, but attention still dots <code>q_t</code> against all <code>t</code> cached keys and sums <code>t</code> cached values, which is <strong>O(t) linear</strong> in both FLOPs and HBM bytes read per token.</div></details>
+  <details class="q"><summary>"We should cache Q, K, and V together so attention does zero recomputation."</summary><div class="a">Wrong. Past queries <code>q_0 .. q_{t-1}</code> are never reused during autoregressive decode; only the newest token's <code>q_t</code> attends to past keys. Caching <code>Q</code> increases HBM usage by 50% for zero benefit.</div></details>
+  <details class="q"><summary>"KV cache memory is small compared to model weights, so it rarely causes OOMs."</summary><div class="a">Wrong. Model weights are fixed regardless of traffic, while KV cache scales linearly with <code>S * B</code>. On an 8B GQA model (~16 GB weights), 32 concurrent 8k-token requests consume <strong>34.4 GB</strong> of KV cache, more than 2x the model weights.</div></details>
+  <details class="q"><summary>"Caching raw hidden states h_i is better than caching K and V because it saves 50% memory."</summary><div class="a">Wrong for two reasons: first, with GQA (e.g. 8 KV heads vs 32 query heads), K+V combined is actually <strong>smaller</strong> than <code>h_i</code> (<code>2 * 1024 = 2048</code> vs <code>4096</code> dims); second, caching <code>h_i</code> forces re-running <code>W_k</code> and <code>W_v</code> across all <code>t</code> tokens every decode step, destroying the projection speedup.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Why does causal attention allow reusing past K and V tensors, whereas bidirectional encoder attention (like BERT) cannot reuse them the same way?</summary><div class="a">In causal attention, token <code>i</code> only sees tokens <code>0 .. i</code>, so appending token <code>t</code> leaves <code>k_i, v_i</code> unchanged. In bidirectional attention, adding a new token changes every earlier token's attention weights and hidden states, invalidating all prior <code>K</code> and <code>V</code>.</div></details>
+  <details class="q"><summary>Write the exact formula for KV cache size in bytes and name every variable.</summary><div class="a"><code>2 * L * n_kv * d_head * S * B * b</code>: 2 for K and V, <code>L</code> layers, <code>n_kv</code> KV heads, <code>d_head</code> head dimension, <code>S</code> sequence length, <code>B</code> batch size, and <code>b</code> bytes per element.<div class="f"><b>Follow-up</b>What is the KV cache size per token for Llama-3-8B (L=32, n_kv=8, d_head=128) in BF16? <code>2 * 32 * 8 * 128 * 2 = 131,072 bytes</code> (128 KiB/token).</div></div></details>
+  <details class="q"><summary>Why does KV caching change total generation complexity over N tokens from O(N^3) to O(N^2)?</summary><div class="a">Uncached attention recomputes a <code>t x t</code> matrix at every step <code>t = 1..N</code>, summing to <code>O(N^3)</code>. Cached attention computes only the single new row of length <code>t</code> at each step, summing <code>1 + 2 + ... + N = O(N^2)</code>.</div></details>
+  <details class="q"><summary>Why is KV-cached decode memory-bandwidth bound instead of compute bound on modern GPUs?</summary><div class="a">Each decode step reads the entire model weights and active KV cache from HBM to perform a tiny matrix-vector product (1 query per request), giving very low arithmetic intensity (FLOPs per byte loaded), so tensor cores sit idle waiting on HBM.<div class="f"><b>Follow-up</b>What happens to arithmetic intensity as you increase batch size B? Weight-read intensity rises proportionally with B (weights are shared across requests), but KV-cache reads still scale with B because each request has its own distinct KV history.</div></div></details>
+  <details class="q"><summary>How does Grouped-Query Attention (GQA) reduce KV cache pressure without shrinking d_model?</summary><div class="a">GQA shares one Key/Value head across a group of Query heads (e.g. 32 Q heads sharing 8 KV heads). That cuts <code>n_kv</code> by 4x, shrinking both KV HBM capacity and per-step KV memory reads by 4x.<div class="f"><b>Follow-up</b>Does GQA reduce attention FLOPs during decode? No, all 32 query heads still dot against their assigned KV head, so compute FLOPs stay the same; the speedup comes from 4x less KV memory traffic and 4x larger max batch size.</div></div></details>
+  <details class="q"><summary>In a RoPE-based transformer, what breaks if you cache pre-RoPE keys versus post-RoPE keys without tracking position offsets?</summary><div class="a">If you cache post-RoPE keys, each key already encodes its position, so new decode tokens must be rotated by the exact current offset <code>t</code>; forgetting the offset causes attention scores to compare misaligned positions and corrupts generation. Caching pre-RoPE keys avoids offset coupling at write time but forces re-rotating all <code>t</code> keys every step.</div></details>
+  <details class="q"><summary>Why does KV caching NOT speed up the prefill phase?</summary><div class="a">Prefill processes all prompt tokens at once from scratch; there is no prior KV history to reuse yet. Prefill only <em>populates</em> the KV cache so that subsequent decode steps can reuse it.<div class="f"><b>Follow-up</b>When CAN prefill reuse a KV cache? Across requests that share an identical prompt prefix (prefix caching / RadixAttention), because causal masking means the shared prefix produces identical K and V tensors.</div></div></details>
+  <details class="q"><summary>Suppose you double a model's context window from 4k to 8k while keeping GPU memory fixed. What happens to maximum batch size?</summary><div class="a">Maximum batch size drops roughly in half (for the KV-bound portion of VRAM), because KV memory is proportional to <code>S * B</code>.</div></details>
+  <details class="q"><summary>What is the tradeoff of quantizing the KV cache from BF16 to FP8?</summary><div class="a">You cut KV cache HBM footprint and KV bandwidth traffic by 2x (doubling max concurrency or context length), at the cost of minor quantization noise in attention scores and dequantization logic in the attention kernel.<div class="f"><b>Follow-up</b>Which is usually more sensitive to aggressive quantization: K or V? Keys are often more sensitive because errors in K get amplified exponentially through softmax, especially when attention outlier channels exist.</div></div></details>
+  <details class="q"><summary>Why do naive contiguous KV cache allocations waste huge amounts of GPU memory even before requests finish?</summary><div class="a">Because output length is unknown upfront, naive engines pre-allocate a contiguous buffer for <code>max_model_len</code> per request, leaving most of it unused (internal fragmentation). PagedAttention (<strong>K15</strong>) fixes this by allocating KV cache in small non-contiguous blocks on demand.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) why past K and V are immutable, (2) why Q is not cached, (3) the complexity shift per step and total, (4) the exact KV memory formula and the 8B GQA KiB/token number, and (5) two production failure modes and fixes.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Drew prefill populating K, V in HBM, uncached recomputing O(t^2), cached projecting 1 token O(1) + appending + attending O(t), and the HBM capacity/BW tradeoff.</li>
+    <li>Stated causal masking makes past K, V immutable (and post-RoPE keys are cached), while past Q is never reused.</li>
+    <li>Complexity: per step O(t^2) to O(t) (projections O(t) to O(1)); total over N tokens O(N^3) to O(N^2).</li>
+    <li>Formula: <code>2 * L * n_kv * d_head * S * B * b</code>; Llama-3-8B GQA BF16 = 128 KiB/token (~1.07 GB at 8k).</li>
+    <li>Named HBM capacity OOM / batch cap, HBM bandwidth TPOT degradation, and position/RoPE offset bug, with concrete fixes (GQA, FP8 KV, PagedAttention, prefix caching).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K05: Why is prefill compute-bound while decode is memory-bandwidth-bound on the same GPU?</summary><div class="a">Prefill processes all prompt tokens in parallel as large matrix-matrix multiplications (high arithmetic intensity, saturating tensor cores). Decode processes 1 token per request as matrix-vector products (low arithmetic intensity), spending most of its time streaming weights and KV cache from HBM.</div></details>
+  <details class="q"><summary>K04: Trace one token end to end from raw text to the next sampled token ID.</summary><div class="a">Tokenizer splits text into IDs -&gt; embedding table lookup -&gt; L transformer blocks (RMSNorm, self-attention with residual, RMSNorm, MLP with residual) -&gt; final norm -&gt; LM head projection to vocab logits -&gt; softmax + sampling (temperature/top-p) picks next token ID.</div></details>
+  <details class="q"><summary>A09: If Q has shape [B, H, 1, d_h] and cached K has shape [B, H, S, d_h], what is the output shape of Q @ K^T?</summary><div class="a"><code>[B, H, 1, S]</code>: the last two dimensions multiply <code>(1, d_h) @ (d_h, S) -&gt; (1, S)</code>, producing one attention score per cached key position for each head and batch item.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need</a><small>Scaled dot-product causal self-attention formulation and O(t^2) sequence complexity. Checked 2026-11-19.</small></li>
+    <li><a href="https://arxiv.org/abs/2211.05102">Pope et al. (2022): Efficiently Scaling Transformer Inference</a><small>KV cache memory footprint, decode memory-bandwidth bottleneck, and multi-query attention analysis. Checked 2026-11-19.</small></li>
+    <li><a href="https://arxiv.org/abs/2305.13245">Ainslie et al. (2023): GQA: Training Generalized Multi-Query Transformer Models</a><small>Grouped-Query Attention reducing KV heads (n_kv) to cut KV cache size and decode HBM traffic. Checked 2026-11-19.</small></li>
+    <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al. (2023): Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Why contiguous KV cache allocation fragments HBM and how paged KV blocks increase serving batch size. Checked 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>What is cached:</strong> Per-layer past <code>K</code> (post-RoPE) and <code>V</code> tensors in GPU HBM; never past <code>Q</code> (only <code>q_t</code> is needed) and never raw hidden states.</li>
+    <li><strong>Why reuse is exact:</strong> Causal masking means token <code>i</code>'s <code>k_i</code> and <code>v_i</code> depend only on tokens <code>0..i</code>, giving <code>0.00e+00</code> numerical drift when position offsets match.</li>
+    <li><strong>Why decode becomes linear:</strong> Caching cuts projections from <code>O(t)</code> to <code>O(1)</code> and attention from <code>O(t^2)</code> to <code>O(t)</code> per step (<code>O(N^3)</code> to <code>O(N^2)</code> total over <code>N</code> tokens; 31.52x speedup in our 80-token kata).</li>
+    <li><strong>Memory and bandwidth bill:</strong> <code>KV_bytes = 2 * L * n_kv * d_head * S * B * b</code>; every decode step streams the whole active cache from HBM, making decode bandwidth-bound and batch-capped.</li>
+    <li><strong>Production failure modes and levers:</strong> Watch for KV OOMs, TPOT scaling with context length, and RoPE offset bugs; mitigate with GQA, FP8 KV quantization, prefix caching, and PagedAttention (K15).</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook:</strong> "Q asks once; K and V stay."</li>
+      <li><strong>Exact KV formula:</strong> <code>2 * L * n_kv * d_head * S * B * b</code>.</li>
+      <li><strong>Anchor number:</strong> Llama-3-8B (32 layers, 8 KV heads, d_h=128, BF16) = <strong>128 KiB/token</strong> (~1.07 GB at 8k context).</li>
+      <li><strong>Complexity trap:</strong> KV-cached decode is <strong>O(t) linear</strong> per token, NOT O(1), because <code>q_t</code> still attends over all <code>t</code> cached keys.</li>
+      <li><strong>Interview rule of thumb:</strong> Always pair the compute win (O(t^2) -&gt; O(t)) with the HBM bill (capacity caps batch size, bandwidth caps TPOT).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K06 T1 W01", "cards": [{"q": "Why does causal attention allow reusing past K and V vectors during autoregressive decode?", "a": "Causal masking restricts token i to tokens 0..i, so appending future tokens never changes earlier hidden states, Keys, or Values."}, {"q": "Why does a KV cache store K and V tensors instead of Q tensors?", "a": "Only the newest token's query attends to history; past queries are never reused in decode, so caching them wastes HBM."}, {"q": "How does KV caching change per-step and total decode attention complexity over N tokens?", "a": "Per-step attention drops from O(t^2) to O(t) linear, and total attention over N tokens drops from O(N^3) to O(N^2)."}, {"q": "What is the exact formula for KV cache size in bytes?", "a": "2*L*n_kv*d_head*S*B*b: K and V, layers, KV heads, head dim, sequence length, batch size, and bytes per element."}, {"q": "How many KiB per token does a Llama-3-8B GQA model (L=32, n_kv=8, d_h=128) use in BF16 KV cache?", "a": "128 KiB per token (2*32*8*128*2 bytes), or about 1.07 GB for a single 8,192-token request."}, {"q": "Why does KV caching shift decode from compute-bound to memory-bandwidth-bound?", "a": "Every decode step streams the entire active KV cache and weights from HBM to compute tiny matrix-vector products with low arithmetic intensity."}, {"q": "How does Grouped-Query Attention (GQA) ease KV cache pressure without reducing model width?", "a": "Multiple query heads share fewer KV heads (smaller n_kv), cutting both KV cache HBM footprint and per-step KV bandwidth traffic proportionally."}, {"q": "What breaks during cached decode if the engine forgets to advance the RoPE position offset?", "a": "New queries and keys get rotated at the wrong position relative to cached post-RoPE keys, corrupting attention scores and breaking uncached parity."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

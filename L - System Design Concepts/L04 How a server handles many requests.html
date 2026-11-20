@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L04 How a server handles many requests</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L04">
+<main>
+<header>
+  <div class="eyebrow"><b>L04</b><span>System design concepts</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>How a server handles many requests</h1>
+  <p class="lede">How one server multiplexes thousands of concurrent I/O-bound connections with thread pools, thread-per-request, or an event loop, and where OS connection limits stop it. Horizontal scaling lives in L05, concurrency primitives in M03, and OS internals in R25.</p>
+  <div class="chips"><span><em>Before</em>A02 Async Python</span><span><em>Before</em>L03 Capacity planning</span><span><em>After</em>L05 Scaling out</span><span><em>After</em>M03 Concurrency models</span><span><em>After</em>R25 OS essentials</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read core idea and explore sliders</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the kata</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production, traps and question bank</span><small>9 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and 90-second drill</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Flashcards and Anki import</span><small>4 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>1,000 clients hit your API at once, and each request waits 50 ms on an upstream LLM. Roughly how long does a 50-thread pool take versus a single-threaded asyncio event loop?</summary><div class="a">The 50-thread pool runs 20 waves of 50 requests, taking 1,028.2 ms in our kata. The single-threaded event loop overlaps all 1,000 waits and finishes in 72.6 ms (14.2x faster).</div></details>
+  <details class="q"><summary>If you spawn 1,000 OS threads (one per request) instead of using a 50-thread pool, why does it still finish slower than 1 event-loop thread even though all 1,000 threads run in parallel?</summary><div class="a">Creating 1,000 OS threads, allocating their stacks, and context-switching them adds 123.4 ms of overhead on top of the 50 ms wait (173.4 ms total vs 72.6 ms for asyncio).</div></details>
+  <details class="q"><summary>Your single-threaded FastAPI server handles 10,000 idle streaming clients with 5% CPU, then suddenly rejects new connections with "Too many open files". What limit did you hit?</summary><div class="a">The per-process file descriptor limit (ulimit -n, often 1,024 by default on Linux). Every open TCP socket consumes one file descriptor even when the event loop is idle.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A modern AI backend spends most of its wall-clock time waiting: waiting on LLM token streams, vector database queries, or downstream webhooks. The server's concurrency model decides what happens to a CPU core and RAM while a request sits idle waiting for network bytes.</p>
+  <p>A thread-per-request server parks an entire OS thread (and its multi-megabyte stack) on every waiting socket. An event-loop server puts every socket in non-blocking mode, registers them with the OS kernel (<code>epoll</code> on Linux, <code>kqueue</code> on macOS, IOCP on Windows), and uses one thread to wake only when a socket actually has bytes ready.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: How one server handles 1,000 slow clients</div>
+    <svg viewBox="0 0 480 235" role="img" aria-label="Comparison of 1,000 concurrent client sockets handled by OS threads with heavy stacks versus a single event loop watching sockets through epoll, capped by OS file descriptor limits.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="75" width="90" height="70" rx="6" class="c-accent" data-hi="1"/>
+          <text x="55" y="105" text-anchor="middle" font-weight="600">1,000 Clients</text>
+          <text x="55" y="125" text-anchor="middle" class="m">50 ms I/O wait</text>
+        </g>
+        <g data-step="2">
+          <path d="M100 95 L145 45" class="ink" fill="none"/>
+          <rect x="145" y="15" width="160" height="62" rx="6" class="c-warn" data-hi="2"/>
+          <text x="225" y="38" text-anchor="middle" font-weight="600">Thread Pool (50)</text>
+          <text x="225" y="56" text-anchor="middle">20 waves = 1,028 ms</text>
+        </g>
+        <g data-step="3">
+          <path d="M100 110 L145 110" class="ink" fill="none"/>
+          <rect x="145" y="88" width="160" height="54" rx="6" class="c-bad" data-hi="3"/>
+          <text x="225" y="110" text-anchor="middle" font-weight="600">1,000 OS Threads</text>
+          <text x="225" y="128" text-anchor="middle">1-8 MB stack each</text>
+        </g>
+        <g data-step="4">
+          <path d="M100 125 L145 182" class="ink" fill="none"/>
+          <rect x="145" y="154" width="160" height="62" rx="6" class="c-good" data-hi="4"/>
+          <text x="225" y="177" text-anchor="middle" font-weight="600">Event Loop (1 Thread)</text>
+          <text x="225" y="195" text-anchor="middle">epoll + ~2 KB/task</text>
+        </g>
+        <g data-step="5">
+          <path d="M305 46 L345 110 M305 115 L345 115 M305 185 L345 120" class="ln" fill="none"/>
+          <rect x="345" y="75" width="125" height="78" rx="6" class="c-soft" data-hi="5"/>
+          <text x="407" y="98" text-anchor="middle" font-weight="600">OS Limits</text>
+          <text x="407" y="118" text-anchor="middle">FD cap (ulimit -n)</text>
+          <text x="407" y="136" text-anchor="middle">somaxconn / ports</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>1,000 clients open TCP sockets that each stall 50 ms waiting on an upstream LLM or database.</li>
+      <li>A bounded 50-thread pool protects RAM, but queues 950 clients into 20 sequential waves (1,028 ms total).</li>
+      <li>Spawning 1,000 OS threads removes queueing, but reserves 1 to 8 GB of virtual stacks and burns 123 ms on thread churn.</li>
+      <li>One event loop thread registers all 1,000 non-blocking sockets with epoll, overlapping every wait in 72.6 ms with ~2 KB per task.</li>
+      <li>Even an idle event loop hits hard OS walls: per-process file descriptors (default 1,024), listen backlog, and ephemeral ports.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Event loops decouple concurrency from OS thread count, shifting the bottleneck from thread stacks to kernel FD limits and blocking code.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>T-E-C</strong> rebuilds the three layers: <strong>T</strong>hreads burn stacks (1-8 MB each) or queue when bounded; <strong>E</strong>vent loops park sockets in <code>epoll</code> (~2 KB each) until a blocking call freezes the single thread; <strong>C</strong>aps stop both at file descriptors, listen backlog, and ephemeral ports.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Thread-per-request and bounded thread pools</h3>
+  <p>In a thread-per-request server, the OS kernel assigns each connection a kernel thread with its own call stack (8 MB virtual default on Linux, 1 MB on Windows). When a thread calls a blocking <code>read()</code>, the kernel puts it to sleep and context-switches another runnable thread onto the CPU, flushing CPU cache lines. To prevent out-of-memory crashes under traffic spikes, servers like Gunicorn sync or Tomcat cap concurrency with a fixed pool of <code>W</code> worker threads. Once active requests exceed <code>W</code>, extra clients wait in a queue, so total drain time for <code>N</code> slow clients scales as:</p>
+  <div class="codewrap"><pre>drain_time = ceil(N / W) * T_io   (e.g., ceil(1000 / 50) * 50 ms = 1000 ms)</pre></div>
+
+  <h3>2. Event loops and non-blocking I/O</h3>
+  <p>An event loop (Node.js, Nginx, Python <code>asyncio</code>/<code>uvicorn</code>) flips sockets to non-blocking mode and hands the full list of socket file descriptors to the kernel via <code>epoll_wait()</code> (Linux) or <code>kqueue()</code> (macOS). Instead of scanning all <code>N</code> sockets every tick (O(N) like legacy <code>select()</code>), <code>epoll</code> returns only the ready sockets in O(1) per event. Each in-flight request lives as a tiny heap object (a coroutine frame, roughly 1.6 to 4 KB) rather than a megabyte stack. The catch is cooperative multitasking: if one handler runs CPU work or a synchronous library call for 50 ms without yielding, all 999 other clients freeze for 50 ms.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Thread stacks vs event-loop state and pool queueing</div>
+    <p class="ask">Predict first. At 5,000 concurrent clients with an 8 MB Linux thread stack, how much virtual stack RAM do 5,000 threads reserve compared to an event loop, and how long does a 50-thread pool take to drain 50 ms waits?</p>
+    <div class="ctl">
+      <label><span>Concurrent clients (N)</span><input type="range" name="n" min="100" max="10000" step="100" value="5000"><output data-for="n" data-unit=" clients"></output></label>
+      <label><span>OS stack size</span><select name="stack" data-num><option value="8">8 MB (Linux default)</option><option value="1">1 MB (Windows default)</option></select></label>
+      <label><span>Upstream I/O wait</span><input type="range" name="wait" min="20" max="500" step="10" value="50"><output data-for="wait" data-unit=" ms"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Virtual stack memory grows linearly in megabytes per thread, while an event loop holds thousands of idle connections in a few megabytes of heap (using 4 KB/task conservative state).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var threadMb=v.n*v.stack, loopMb=v.n*0.004;
+    var poolMs=Math.ceil(v.n/50)*v.wait;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" MB",digits:1,rows:[
+      {label:"Thread-per-request virtual stacks",value:threadMb,tone:"bad"},
+      {label:"Event loop coroutine heap (~4 KB/conn)",value:loopMb,tone:"good"}
+    ]});
+    var fdWarn=v.n>1024?" Exceeds default Linux ulimit -n (1,024): raise FD cap first.":" Fits under default ulimit -n (1,024).";
+    return {verdict:"Threads reserve "+tl.fmt(threadMb,0)+" MB vs "+tl.fmt(loopMb,1)+" MB for the event loop. A 50-thread pool needs "+tl.fmt(poolMs,0)+" ms to drain (vs ~"+v.wait+" ms ideal loop)."+fdWarn};
+  })});</script>
+
+  <details class="q"><summary>Check: Why does adding more threads to a bounded pool eventually hurt throughput instead of helping?</summary><div class="a">Past a few hundred to a few thousand threads, stack memory exhausts RAM and the OS scheduler spends more CPU time context-switching and thrashing L1/L2 caches than running application code.</div></details>
+
+  <h3>3. Connection limits and OS caps</h3>
+  <p>Replacing threads with an event loop solves the C10K concurrency wall, but every active TCP connection still consumes kernel resources. First, every socket is a <strong>file descriptor (FD)</strong>; Linux defaults to a soft limit of 1,024 FDs per process (<code>ulimit -n</code>), throwing <code>EMFILE</code> once exceeded. Second, incoming TCP handshakes sit in the kernel accept queue capped by <code>somaxconn</code> (often 128 to 4,096); if the app accepts too slowly, new SYNs drop. Third, outbound proxy calls to one upstream IP:port share the <strong>ephemeral port range</strong> (roughly 28,000 ports by default on Linux), which exhausts under high churn unless you pool keep-alive connections.</p>
+  <details class="q"><summary>Check: An event loop server opens a fresh TCP connection to an LLM gateway on every request at 5,000 RPS. What OS resource runs out first?</summary><div class="a">Outbound ephemeral ports (roughly 28,000 on Linux). Closed sockets linger in TIME_WAIT for ~60 seconds, so 5,000 new connections per second exhausts the port table in under 6 seconds unless you reuse keep-alive pools.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Default OS thread stack (virtual)</td><td class="n">8 MB Linux / 1 MB Windows</td><td>Checked 2026-11-20</td></tr>
+    <tr><td>Asyncio coroutine / task heap overhead</td><td class="n">~1.6 to 4 KB per connection</td><td>Your own run (1,605 KB / 1,000)</td></tr>
+    <tr><td>Default Linux per-process FD limit (ulimit -n)</td><td class="n">1,024 soft limit</td><td>Checked 2026-11-20</td></tr>
+    <tr><td>Linux default ephemeral port range</td><td class="n">32,768 to 60,999 (~28,232 ports)</td><td>Checked 2026-11-20</td></tr>
+    <tr><td>1,000 x 50 ms I/O: 50-thread pool vs asyncio</td><td class="n">1,028.2 ms vs 72.6 ms (14.2x)</td><td>Your own run</td></tr>
+    <tr><td>1,000 OS threads creation + switch overhead</td><td class="n">123.4 ms above 50 ms wait</td><td>Your own run (173.4 - 50 ms)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Bounded thread pool (e.g. Gunicorn sync)</td><td>Simple sequential code; one slow CPU call only blocks one worker</td><td>Max concurrency capped at worker count W; queues under slow LLM streams</td><td>Worker saturation at 100% while CPU stays under 15%</td></tr>
+    <tr><td>Thread-per-request (unbounded)</td><td>No artificial queue cap; simple blocking I/O code</td><td>1 to 8 MB virtual stack per client; context-switch thrashing and OOM under spikes</td><td>RSS climbing linearly with open sockets; rising sys CPU</td></tr>
+    <tr><td>Single-threaded event loop (asyncio, Node, Nginx)</td><td>10,000+ concurrent I/O connections on 1 thread with ~2 KB per task</td><td>One synchronous call or CPU loop freezes every client; async viral coloring</td><td>Event loop lag spiking above 50 ms; p99 latency cliff</td></tr>
+    <tr><td>Hybrid (N event-loop workers + CPU thread/process pool)</td><td>High I/O concurrency across all CPU cores plus safe offload for blocking work</td><td>More moving parts: pool sizing, serialization cost, and backpressure tuning</td><td>Offload queue growth or forgotten sync calls inside async routes</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 1,000 slow clients across three concurrency models</h2>
+  <p>Benchmarks 1,000 concurrent clients each waiting 50 ms on simulated upstream I/O across a 50-thread pool, 1,000 OS threads, and a single-threaded asyncio event loop.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import asyncio, concurrent.futures, sys, threading, time, tracemalloc
+
+CLIENTS = 1000
+WAIT_S = 0.05        # 50 ms simulated upstream I/O (e.g. LLM token or DB wait)
+POOL_WORKERS = 50    # typical WSGI/thread-pool worker count
+BLOCK_CALLS = 0      # Break-it 1: set to 10 (or pass --block) to stall the loop
+MAX_FDS = 1024       # Break-it 2: set to 256 (or pass --fd-cap) to hit EMFILE
+
+
+def slow_io():
+    time.sleep(WAIT_S)
+
+
+def bench_thread_pool():
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=POOL_WORKERS) as ex:
+        list(ex.map(lambda _: slow_io(), range(CLIENTS)))
+    dt = time.perf_counter() - t0
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return dt, peak / 1024
+
+
+def bench_thread_per_req():
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    threads = [threading.Thread(target=slow_io) for _ in range(CLIENTS)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    dt = time.perf_counter() - t0
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return dt, peak / 1024
+
+
+async def handle_async(idx, active, stats):
+    if active[0] &gt;= MAX_FDS:
+        stats["rejected"] += 1
+        return
+    active[0] += 1
+    try:
+        if idx &lt; BLOCK_CALLS:
+            time.sleep(WAIT_S)          # accidental blocking call on event loop
+        else:
+            await asyncio.sleep(WAIT_S) # non-blocking yield back to event loop
+        stats["ok"] += 1
+    finally:
+        active[0] -= 1
+
+
+def bench_event_loop():
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    active, stats = [0], {"ok": 0, "rejected": 0}
+    async def runner():
+        await asyncio.gather(*(handle_async(i, active, stats) for i in range(CLIENTS)))
+    asyncio.run(runner())
+    dt = time.perf_counter() - t0
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return dt, peak / 1024, stats
+
+
+if __name__ == "__main__":
+    if "--block" in sys.argv:
+        BLOCK_CALLS = 10
+    if "--fd-cap" in sys.argv:
+        MAX_FDS = 256
+
+    t_pool, m_pool = bench_thread_pool()
+    t_tpr, m_tpr = bench_thread_per_req()
+    t_loop, m_loop, stats = bench_event_loop()
+
+    print(f"Clients: {CLIENTS} | Simulated I/O wait: {WAIT_S*1000:.0f} ms | FD cap: {MAX_FDS}")
+    print(f"1) Bounded thread pool ({POOL_WORKERS} threads): {t_pool*1000:7.1f} ms | py heap: {m_pool:6.0f} KB | OS threads: {POOL_WORKERS}")
+    print(f"2) Thread-per-request ({CLIENTS} threads): {t_tpr*1000:7.1f} ms | py heap: {m_tpr:6.0f} KB | OS threads: {CLIENTS}")
+    print(f"3) Asyncio event loop  (1 thread):     {t_loop*1000:7.1f} ms | py heap: {m_loop:6.0f} KB | OS threads: 1")
+    print(f"   Event loop status: ok={stats['ok']}, rejected(EMFILE)={stats['rejected']}, blocking_calls={BLOCK_CALLS}")
+    print(f"Speedup (event loop vs {POOL_WORKERS}-thread pool): {t_pool / t_loop:.1f}x")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">Clients: 1000 | Simulated I/O wait: 50 ms | FD cap: 1024
+1) Bounded thread pool (50 threads):  1028.2 ms | py heap:   2082 KB | OS threads: 50
+2) Thread-per-request (1000 threads):   173.4 ms | py heap:   2765 KB | OS threads: 1000
+3) Asyncio event loop  (1 thread):        72.6 ms | py heap:   1605 KB | OS threads: 1
+   Event loop status: ok=1000, rejected(EMFILE)=0, blocking_calls=0
+Speedup (event loop vs 50-thread pool): 14.2x</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Wall-clock time for 1,000 clients waiting 50 ms</div>
+    <div data-bars='{"unit":" ms","digits":1,"rows":[{"label":"Bounded thread pool (50 threads)","value":1028.2,"tone":"bad"},{"label":"Thread-per-request (1,000 threads)","value":173.4,"tone":"warn"},{"label":"Asyncio event loop (1 thread)","value":72.6,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> One event-loop thread finishes 1,000 slow I/O requests 14.2x faster than a 50-thread pool and 2.4x faster than 1,000 OS threads.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li>The 50-thread pool takes <strong>1,028.2 ms</strong>, matching Little's Law queueing: <code>1000 / 50 * 50 ms = 1,000 ms</code> plus 28.2 ms of scheduling overhead.</li>
+    <li>Spawning 1,000 OS threads cuts queueing, yet still takes <strong>173.4 ms</strong> (123.4 ms of pure thread creation and switching overhead) and allocates 1,000 OS thread stacks outside Python's heap.</li>
+    <li>The single-threaded event loop finishes in <strong>72.6 ms</strong> using <strong>1 OS thread</strong> and <strong>1,605 KB</strong> of traced Python heap (~1.6 KB per concurrent client).</li>
+    <li>Python's <code>tracemalloc</code> only tracks Python heap objects, not native OS thread stacks, which is why native RSS explodes faster than Python heap numbers suggest when spawning thousands of threads.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Event loop stall.</strong> Run <code>python kata.py --block</code> (10 of the 1,000 async handlers call blocking <code>time.sleep(0.05)</code> instead of <code>await asyncio.sleep(0.05)</code>). Before running, predict the new event-loop wall time. (Answer: ~550 to 580 ms, because 10 sequential 50 ms blocks freeze the entire loop for 500 ms before the remaining 990 coroutines can resume.)</li>
+    <li><strong>FD cap exhaustion.</strong> Run <code>python kata.py --fd-cap</code> (lowers <code>MAX_FDS</code> to 256, simulating a tight <code>ulimit -n</code>). Predict how many of the 1,000 simultaneous clients fail with simulated <code>EMFILE</code>. (Answer: 744 rejected, 256 ok.)</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Wrap the 10 blocking calls in <code>await asyncio.to_thread(time.sleep, WAIT_S)</code> and confirm that the event loop drops back near 75 ms even with blocking work present.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>FastAPI/Node p99 latency spikes to seconds while CPU is at 100% on one core</td><td>A synchronous call (e.g. <code>requests.post</code>, heavy JSON parse, or tokenizer) is blocking the event loop</td><td>Replace with an async client or offload CPU/sync work to a bounded thread or process pool</td></tr>
+    <tr><td><code>OSError: [Errno 24] Too many open files</code> under sudden traffic burst</td><td>Active sockets plus open files hit the process <code>ulimit -n</code> soft limit (often 1,024)</td><td>Raise <code>LimitNOFILE</code> in systemd/container config (e.g. 65,536) and enforce an app-level connection cap</td></tr>
+    <tr><td>502/504 timeouts on a Gunicorn sync API when an upstream LLM slows down, yet CPU is 10%</td><td>All sync worker threads are parked waiting on slow upstream sockets (head-of-line pool starvation)</td><td>Switch I/O-bound gateway routes to an async worker (Uvicorn/ASGI) and set strict upstream timeouts</td></tr>
+    <tr><td>Outbound upstream calls fail with <code>EADDRNOTAVAIL</code> during high RPS</td><td>Ephemeral ports exhausted by opening a fresh TCP socket per request and leaving sockets in <code>TIME_WAIT</code></td><td>Enable HTTP keep-alive connection pooling (e.g. shared <code>httpx.AsyncClient</code>)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> event loop lag (ms), open file descriptors vs <code>ulimit -n</code>, active worker pool utilization, TCP listen queue drops (<code>ListenOverflows</code>), and outbound sockets in <code>TIME_WAIT</code>.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A server handles thousands of concurrent requests by matching its concurrency model to the workload. For I/O-bound services like LLM gateways or voice AI clinics where requests mostly wait on network sockets, an event loop multiplexes thousands of connections on one thread, avoiding the memory bloat and queueing of thread-per-request servers.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>In a thread-per-request model, every open socket pins an OS thread with a 1 to 8 MB virtual stack. To avoid out-of-memory crashes, servers cap threads in a pool, say 50 workers, which means 1,000 clients waiting 50 ms must drain in 20 waves and take over a second. An event loop flips sockets to non-blocking mode and registers them with the kernel via epoll or kqueue. One thread sleeps in epoll_wait and wakes only for sockets that have bytes ready, storing each in-flight request as a tiny 2 to 4 KB coroutine state instead of a megabyte stack.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Event loops still break in two places. First, because one thread drives every request, a single synchronous call or 50 ms CPU task stalls all other clients, so heavy work must be offloaded to a worker pool. Second, every socket consumes a kernel file descriptor, so you must raise ulimit -n above the default 1,024, size somaxconn, and pool outbound keep-alive connections to avoid exhausting ephemeral ports.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We switched from threads to async because async is much faster and scales better for high traffic."</p>
+    <p class="strong">"Our voice-agent gateway holds 2,000 open streaming sockets waiting on LLM tokens. A 50-worker sync pool queued requests behind slow streams, while 2,000 OS threads would reserve gigabytes of stack. Moving to an epoll-backed asyncio loop cut per-connection state to a few kilobytes, and we raised ulimit -n to 65,536 while offloading audio resampling to a process pool so it cannot stall the loop."</p>
+    <p>The strong answer names the workload (I/O wait), the mechanism (epoll, coroutine state vs thread stacks), concrete numbers, the OS limit (ulimit -n), and the failure mode (blocking the loop).</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Event loops are faster than threads for every workload because they avoid context switching."</summary><div class="a">Wrong for CPU-bound work. A single-threaded event loop uses only one CPU core and executes CPU work serially, stalling every other request. CPU-heavy tasks need multiple OS threads (in non-GIL runtimes) or multiple processes to use all cores.</div></details>
+  <details class="q"><summary>"With asyncio or Node.js, one server can handle unlimited concurrent connections as long as CPU stays below 100%."</summary><div class="a">Wrong. Even at 5% CPU, every open TCP connection consumes a kernel file descriptor (default ulimit -n is 1,024), kernel socket buffers (~few KB each), and for outbound calls, ephemeral ports (~28,000 per target IP:port).</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Why does a 50-thread pool collapse under slow upstream LLM responses even when server CPU is almost idle?</summary><div class="a">Each waiting request holds a thread hostage until the upstream replies. Once 50 slow requests are in flight, the 51st client queues even though CPU utilization is near zero.<div class="f"><b>Follow-up</b>How do you calculate the drain time for N simultaneous clients each waiting T ms? Answer: ceil(N / W) * T.</div></div></details>
+  <details class="q"><summary>What does epoll (Linux) or kqueue (macOS) actually do inside an event-loop server?</summary><div class="a">It lets one thread monitor thousands of non-blocking file descriptors inside the kernel and returns only the subset that became readable or writable, in O(1) time per ready event instead of scanning all N sockets.</div></details>
+  <details class="q"><summary>How can one buggy endpoint in an async server ruin p99 latency for every other endpoint?</summary><div class="a">Because an event loop is cooperatively multitasked on one thread. A synchronous network call or heavy CPU loop never yields control back to the loop, delaying every other ready socket until that call finishes.<div class="f"><b>Follow-up</b>How do you detect this in production? Answer: measure event-loop lag (schedule a periodic 10 ms timer and alert when actual delay exceeds e.g. 50 ms).</div></div></details>
+  <details class="q"><summary>How do you use all 8 CPU cores with a single-threaded event loop like Node.js or Python Uvicorn?</summary><div class="a">Run one event-loop worker process per CPU core (e.g. 8 Uvicorn workers behind a load balancer or SO_REUSEPORT) and offload any blocking CPU tasks to a bounded thread or process pool.</div></details>
+  <details class="q"><summary>What are the three OS-level connection limits you must check before serving 10,000 concurrent clients on one box?</summary><div class="a">Per-process file descriptors (ulimit -n, default 1,024), the kernel TCP accept backlog (somaxconn), and outbound ephemeral ports (~28,000 per destination IP:port) plus kernel socket buffer memory.<div class="f"><b>Follow-up</b>What error code appears when you hit ulimit -n? Answer: EMFILE (Errno 24, Too many open files).</div></div></details>
+  <details class="q"><summary>When would you deliberately choose a bounded thread pool over an event loop?</summary><div class="a">When concurrency is modest (tens of clients), requests are CPU-heavy or rely on mature synchronous libraries (e.g. blocking DB drivers), and you want simpler debugging without async viral coloring.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: the T-E-C memory hook, the bounded-pool drain formula, the default Linux thread stack size and ulimit -n value, and the two ways an event loop breaks.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Drew all 5 stages: 1,000 slow clients -> bounded pool (queueing waves), 1,000 OS threads (stack RAM + switch overhead), 1 event-loop thread (epoll + tiny state), and OS limits (FD cap, somaxconn, ephemeral ports).</li>
+    <li>Recalled T-E-C: Threads burn stacks, Event loops watch FDs, Caps stop both.</li>
+    <li>Wrote drain_time = ceil(N / W) * T_io.</li>
+    <li>Quoted key numbers: 8 MB Linux / 1 MB Windows virtual stack, ~2 to 4 KB coroutine state, 1,024 default ulimit -n, ~28,000 ephemeral ports.</li>
+    <li>Named both event-loop limits: blocking/CPU code stalling the single thread, and OS FD/port/backlog caps.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A02: Why does calling time.sleep(1) inside a Python async def function break concurrency, whereas await asyncio.sleep(1) does not?</summary><div class="a">time.sleep blocks the OS thread running the event loop so no other coroutine can execute; await asyncio.sleep registers a timer and yields control back to the loop immediately.</div></details>
+  <details class="q"><summary>L02: Why does reusing an HTTP keep-alive connection cut latency compared to opening a fresh connection per request?</summary><div class="a">It avoids paying a new TCP 3-way handshake (1 RTT) and TLS handshake (1 to 2 RTTs) plus TCP slow start on every request.</div></details>
+  <details class="q"><summary>L03: Using Little's Law, how many concurrent connections are open if your API receives 200 RPS and each LLM response streams for 3 seconds?</summary><div class="a">L = lambda * W = 200 req/s * 3 s = 600 concurrent open connections.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://man7.org/linux/man-pages/man7/epoll.7.html">Linux man-pages: epoll(7)</a><small>Kernel I/O event notification mechanism for scalable non-blocking socket multiplexing. Checked 2026-11-20.</small></li>
+    <li><a href="https://docs.python.org/3/library/asyncio-dev.html">Python 3 Documentation: Developing with asyncio</a><small>Single-threaded cooperative scheduling, blocking-call hazards, and offloading with asyncio.to_thread. Checked 2026-11-20.</small></li>
+    <li><a href="https://man7.org/linux/man-pages/man2/getrlimit.2.html">Linux man-pages: getrlimit(2) / RLIMIT_NOFILE</a><small>Per-process file descriptor limits (ulimit -n) and EMFILE behavior. Checked 2026-11-20.</small></li>
+    <li><a href="http://www.kegel.com/c10k.html">Dan Kegel: The C10K problem</a><small>Classic analysis of why thread-per-connection fails at 10,000+ sockets and how readiness APIs solve it. Checked 2026-11-20.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Bounded thread pools:</strong> Cap RAM by fixing worker count W, but queue requests when concurrent I/O exceeds W (drain time = ceil(N / W) * T_io; 50 threads took 1,028.2 ms for 1,000 x 50 ms waits).</li>
+    <li><strong>Thread-per-request:</strong> Removes pool queueing, but reserves 1 to 8 MB virtual stack per OS thread and pays heavy creation and context-switch overhead (173.4 ms for 1,000 threads).</li>
+    <li><strong>Event loop (epoll / kqueue):</strong> Multiplexes thousands of non-blocking sockets on 1 OS thread using O(1) kernel readiness events and ~1.6 to 4 KB per task (72.6 ms in kata, 14.2x faster than the 50-thread pool).</li>
+    <li><strong>OS connection limits:</strong> Every open TCP socket consumes 1 file descriptor (default Linux ulimit -n is 1,024 -> EMFILE), plus TCP accept backlog (somaxconn) and outbound ephemeral ports (~28,000 per target).</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (T-E-C):</strong> Threads burn stacks, Event loops watch FDs, Caps stop both.</li>
+      <li><strong>Numbers to know cold:</strong> 8 MB Linux / 1 MB Windows default thread stack; ~2 to 4 KB coroutine state; 1,024 default ulimit -n; ~28,000 Linux ephemeral ports.</li>
+      <li><strong>Golden rule of async servers:</strong> Never run blocking I/O or heavy CPU directly on the event loop; offload to a thread or process pool and monitor event-loop lag.</li>
+      <li><strong>Multi-core pattern:</strong> Run 1 event-loop worker process per CPU core, raise LimitNOFILE, and reuse outbound HTTP keep-alive connection pools.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L04 T2 W01", "cards": [{"q": "Why does a 50-thread pool stall under 1,000 slow LLM clients even when CPU is nearly idle?", "a": "Waiting requests hold all 50 threads hostage, queuing the other 950 clients into ceil(1000 / 50) = 20 sequential waves."}, {"q": "How much memory does a thread-per-request server reserve per client versus an asyncio event loop?", "a": "An OS thread reserves 8 MB virtual stack on Linux (1 MB Windows), versus roughly 2 to 4 KB per asyncio coroutine."}, {"q": "What breaks when one endpoint runs a 50 ms blocking call inside a single-threaded event loop?", "a": "Cooperative multitasking stalls: the single loop thread cannot poll epoll or resume other coroutines, adding 50 ms latency to every active client."}, {"q": "Which three OS limits still cap an idle event-loop server at high concurrency?", "a": "Per-process file descriptors (default ulimit -n 1,024 causing EMFILE), TCP listen backlog (somaxconn), and outbound ephemeral ports (~28,000 per target)."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

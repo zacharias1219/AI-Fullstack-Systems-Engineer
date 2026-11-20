@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X02 The question log</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="X02">
+<main>
+<header>
+  <div class="eyebrow"><b>X02</b><span>X Interview craft</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>The question log</h1>
+  <p class="lede">How do you turn every missed interview or drill question into a permanent, engineer-voiced answer instead of repeating the same blank-out two weeks later? This page covers the 7-column capture schema, engineer-voice model answers, and the 7-day to 30-day retest loop.</p>
+  <div class="chips"><span><em>Before</em>U01 How to learn this curriculum</span><span><em>Before</em>V01 Engineer voice vs business voice</span><span><em>Before</em>X01 Three-level answers</span><span><em>After</em>X03 Thinking aloud and handling I don't know</span><span><em>After</em>X05 ML and LLM deep-dive rounds</span><span><em>After</em>X13 Full mock loop and retro</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up predictions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper and mechanism</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production triage and 90-second drill</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and mixed review</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Record answer and import Anki cards</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You miss "How do you optimize tokens?" in a drill, write down a strong model answer that evening, and never retest it. In the kata's 28-day cold-recall simulation, roughly what percentage of that answer survives compared to running a single 7-day cold retest?</summary><div class="a">Only 17.4% survives without a retest, compared to 74.7% with a 7-day cold retest (and 9.7% if you only re-read notes). Capturing a miss fixes the encoding for today, not retrieval a month from now.</div></details>
+  <details class="q"><summary>Why does waiting 48 hours after an interview to log missed questions cut the log's usefulness almost in half, even if you still remember the general topic?</summary><div class="a">Because after 24 hours you remember the topic label ("token optimization") but forget the exact wording of the prompt and the exact boundary where your explanation stalled. Without the exact prompt and missing mechanism, you end up studying what you already know.</div></details>
+  <details class="q"><summary>If you log 6 new misses per week and pass 70% of your 7-day retests on the first try, how many total retest items per week do you have to run in steady state?</summary><div class="a">About 14.6 items per week: 8.6 seven-day attempts (6 divided by 0.70) plus 6 thirty-day checks. At 2.5 minutes per cold answer, that is roughly 36 minutes per week to hold an entire curriculum cold.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Most candidates treat a bad interview question like a bruise: they feel annoyed, read a blog post about the topic, nod along, and forget the exact mechanism ten days later. Reading creates familiarity, not cold recall. When the same question returns in a real loop with a slightly different framing, you stall at the exact same spot.</p>
+  <p>The question log turns every stumble into a tracked bug with a regression test. You capture the exact prompt and the exact missing piece on the same day, write a tight engineer-voiced model answer (mechanism, number, failure mode), and force yourself to speak it cold at day 7 and day 30 before marking the gap closed.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The Question Log closed loop from stumble to Solid</div>
+    <svg viewBox="0 0 480 230" role="img" aria-label="Five-stage closed loop showing a cold stumble captured within 24 hours, rewritten into a three-level engineer-voiced model answer, tested cold at day 7, and either graduated to Solid at day 30 or looped back to Shaky.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="24" width="84" height="54" rx="6" class="c-bad" data-hi="1"/>
+          <text x="54" y="47" text-anchor="middle" font-weight="600">1 Stumble</text>
+          <text x="54" y="64" text-anchor="middle" class="m">L1 or blank</text>
+        </g>
+        <g data-step="2">
+          <path d="M96 51 H122" class="ink" stroke-width="1.5"/>
+          <rect x="122" y="24" width="96" height="54" rx="6" class="c-warn" data-hi="2"/>
+          <text x="170" y="47" text-anchor="middle" font-weight="600">2 Capture</text>
+          <text x="170" y="64" text-anchor="middle" class="m">&lt;24h exact gap</text>
+        </g>
+        <g data-step="3">
+          <path d="M218 51 H244" class="ink" stroke-width="1.5"/>
+          <rect x="244" y="24" width="106" height="54" rx="6" class="c-accent" data-hi="3"/>
+          <text x="297" y="47" text-anchor="middle" font-weight="600">3 Model fix</text>
+          <text x="297" y="64" text-anchor="middle" class="m">Mech+Num+Fail</text>
+        </g>
+        <g data-step="4">
+          <path d="M350 51 H376" class="ink" stroke-width="1.5"/>
+          <rect x="376" y="24" width="92" height="54" rx="6" class="c-soft" data-hi="4"/>
+          <text x="422" y="47" text-anchor="middle" font-weight="600">4 Day-7</text>
+          <text x="422" y="64" text-anchor="middle" class="m">90s cold test</text>
+        </g>
+        <g data-step="5">
+          <path d="M422 78 V138" class="ink" stroke-width="1.5"/>
+          <rect x="356" y="138" width="112" height="54" rx="6" class="c-good" data-hi="5"/>
+          <text x="412" y="161" text-anchor="middle" font-weight="600">5 Day-30 Solid</text>
+          <text x="412" y="178" text-anchor="middle" class="m">Pass L2+ cold</text>
+          <path d="M356 165 H170 V78" fill="none" class="ln" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <rect x="196" y="144" width="130" height="40" rx="6" class="c-paper"/>
+          <text x="261" y="162" text-anchor="middle" font-weight="600">Fail: Shaky loop</text>
+          <text x="261" y="176" text-anchor="middle" class="m">Reset +7d gate</text>
+        </g>
+        <g data-only="4">
+          <text x="16" y="114" class="m">Day-7 retrieval lifts 28-day recall from 17.4% to 74.7% in the kata.</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>A live interview or drill exposes a stall (Level 1 or blank), giving you a real failure signal instead of guessed study priorities.</li>
+      <li>Within 24 hours, log the exact question, Topic ID, Level reached, and What was missing while the failure boundary is still sharp.</li>
+      <li>Write a concise model answer in engineer voice (mechanism, concrete number, failure mode) so you have a grading target to test against.</li>
+      <li>Seven days later, hide the answer and speak it cold in 90 seconds; this single retrieval jump lifts 28-day recall from 17.4% to 74.7% in the kata.</li>
+      <li>Pass the 30-day cold retest at Level 2 or higher to mark the topic Solid; fail either gate and loop back to Shaky with a new 7-day due date.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> A logged miss only becomes permanent interview fluency when it survives both the 7-day and 30-day cold retrieval gates.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>C-M-R-G (Catch, Model, Retest, Graduate):</strong> Catch the exact prompt and missing piece in under 24h (columns 1 to 5), write the Model answer with Mechanism + Number + Failure mode (column 6), Retest cold at 7 days (column 7), and Graduate to Solid only after passing day 30.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. The 7-column schema and why every column pulls weight</h3>
+  <p>Your tracker's Question log tab has seven tab-separated columns: <code>Date</code>, <code>Question</code>, <code>Topic</code>, <code>Level reached</code>, <code>What was missing</code>, <code>Model answer</code>, and <code>Retest due</code>. Each column prevents a specific study failure. <code>Question</code> stores the exact cold prompt (not a chapter title) so you can retest yourself without rereading notes. <code>Topic</code> links the miss to one master-index ID like <code>G01</code> or <code>K06</code> so weak domains surface automatically. <code>Level reached</code> (0, 1, or 2) forces honest grading against the three-level rubric from X01, and <code>What was missing</code> pins down the single gap you actually dropped.</p>
+  <figure class="viz" id="viz-anatomy">
+    <div class="vt">Diagram: Three functional zones of one 7-column Question Log row</div>
+    <svg viewBox="0 0 480 155" role="img" aria-label="One seven-column Question Log row divided into three functional zones: Trigger columns (Date, Question, Topic), Diagnosis and Fix columns (Level reached, What was missing, Model answer), and the Gate column (Retest due at plus 7 or plus 30 days).">
+      <g font-size="12">
+        <rect x="8" y="14" width="144" height="122" rx="6" class="c-soft"/>
+        <text x="80" y="34" text-anchor="middle" font-weight="600">Zone 1: Trigger</text>
+        <text x="18" y="58">1. Date (YYYY-MM-DD)</text>
+        <text x="18" y="80">2. Exact Question</text>
+        <text x="18" y="102">3. Topic ID (e.g. G01)</text>
+        <text x="18" y="124" class="m">Replays the cold cue</text>
+
+        <rect x="164" y="14" width="186" height="122" rx="6" class="c-accent"/>
+        <text x="257" y="34" text-anchor="middle" font-weight="600">Zone 2: Diagnosis + Fix</text>
+        <text x="174" y="58">4. Level reached (0 to 2)</text>
+        <text x="174" y="80">5. What was missing</text>
+        <text x="174" y="102">6. Model answer (M+N+F)</text>
+        <text x="174" y="124" class="m">Sets the grading target</text>
+
+        <rect x="362" y="14" width="110" height="122" rx="6" class="c-good"/>
+        <text x="417" y="34" text-anchor="middle" font-weight="600">Zone 3: Gate</text>
+        <text x="372" y="64">7. Retest due</text>
+        <text x="372" y="86">+7d first gate</text>
+        <text x="372" y="106">+30d Solid gate</text>
+        <text x="372" y="124" class="m">Forces retrieval</text>
+      </g>
+    </svg>
+    <figcaption><b>Takeaway.</b> Drop any of the three zones and the log degrades into either a diary (no gate), a vague to-do list (no cold cue), or a business-voiced summary (no grading target).</figcaption>
+  </figure>
+
+  <h3>2. The 24-hour capture rule and cue fidelity</h3>
+  <p>After an interview or mock, memory of what you failed to say decays faster than memory of the general subject. Within 24 hours, you can still name the exact follow-up that broke your flow, such as forgetting why causal attention limits prompt caching to a prefix. Two days later, your brain smooths the stumble into "review token optimization." That vague entry breaks retrieval practice because it gives you no cold prompt to answer and no falsifiable gap to check. Same-day capture takes two minutes per row and preserves the exact failure boundary.</p>
+
+  <details class="q"><summary>Check: Why is logging "Studied KV cache (K06)" worse than logging "Why does KV cache memory grow with batch size?" even if you spend 30 minutes reading notes on K06?</summary><div class="a">A topic label triggers passive recognition ("I recognize those words") instead of active recall. Without a specific question and a named gap, you cannot test whether you can actually produce the mechanism and formula aloud under pressure.</div></details>
+
+  <h3>3. Auditing model answers for engineer voice</h3>
+  <p>A model answer in column 6 is not an essay; it is a 2 to 4 sentence spoken target you can check in 10 seconds. Every row must pass the three-part engineer-voice audit from V01: one concrete <strong>mechanism</strong> (how it works), one <strong>number</strong> (a ratio, latency, memory size, or limit), and one <strong>failure mode</strong> (where it breaks). If a draft says "PagedAttention improves GPU efficiency by 60% and lowers spend," it scores 0.33 (number only, zero mechanism, zero failure mode). Rewriting that row before you close the session stops you from memorizing polished business fluff.</p>
+
+  <h3>4. The 7-day and 30-day spacing mechanics</h3>
+  <p>Forgetting follows an exponential decay curve: <code>R(t) = exp(-t / S)</code>, where <code>t</code> is days elapsed and <code>S</code> is memory stability in days. Passive re-reading leaves <code>S</code> small (about 12 days in our model, leaving 9.7% cold recall at day 28). Writing a model answer once raises initial stability slightly (about 18 days, or 17.4% at day 28). Running one effortful cold retrieval at day 7 triggers the testing effect and multiplies stability (to roughly 70 to 95 days when the answer is well-structured), holding 74.7% cold recall at day 28.</p>
+  <div class="codewrap"><pre>R(t) = exp(-t / S)
+Steady-state weekly retest items = M * (1 / p + 1)
+Weekly retest minutes = M * (1 / p + 1) * T
+where M = new misses/week, p = 7-day pass rate, T = minutes/item</pre></div>
+  <p>Why does the workload stay bounded instead of growing forever? Because every miss passes through two finite gates: an average of <code>1 / p</code> attempts to clear the 7-day gate, plus <code>1</code> check at day 30. Once it clears day 30 at Level 2 or higher, it leaves the active queue and moves to Solid. Use the explorable below to test where the weekly queue tips over a 30-minute budget.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Weekly retest load and 30-day cold-recall rate</div>
+    <p class="ask">Predict first. If you log 8 new misses per week and your 7-day pass rate drops from 80% to 40%, does your weekly retest time double or increase by less than double?</p>
+    <div class="ctl">
+      <label><span>New misses per week (M)</span><input type="range" name="misses" min="2" max="20" step="1" value="6"><output data-for="misses" data-unit=" /wk"></output></label>
+      <label><span>7-day pass rate (p)</span><input type="range" name="pass7" min="30" max="95" step="5" value="70"><output data-for="pass7" data-unit="%"></output></label>
+      <label><span>Minutes per retest (T)</span><input type="range" name="mins" min="1" max="6" step="0.5" value="2.5"><output data-for="mins" data-unit=" min"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Keeping your 7-day pass rate above 70% keeps weekly retest time bounded even at 6 to 8 new misses per week, while poor model answers cause repeat 7-day failures that bloat the queue.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var p=v.pass7/100;
+    var items7=v.misses/p, items30=v.misses, totalItems=items7+items30;
+    var mins7=items7*v.mins, mins30=items30*v.mins, totalMins=totalItems*v.mins;
+    var cold30=p*Math.exp(-21/80)*100+(1-p)*Math.exp(-28/20)*100;
+    var tone=totalMins<=30?"good":(totalMins<=45?"warn":"bad");
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" min/wk",digits:1,rows:[
+      {label:"7-day gate load",value:mins7,tone:"muted"},
+      {label:"30-day gate load",value:mins30,tone:"muted"},
+      {label:"Total weekly load",value:totalMins,tone:tone}
+    ]});
+    return {verdict:tl.fmt(totalItems,1)+" retests/wk ("+tl.fmt(totalMins,1)+" min/wk) | Expected 30-day cold recall: "+tl.fmt(cold30,1)+"%."};
+  })});</script>
+
+  <h3>5. Turning the log into a weak-domain heatmap</h3>
+  <p>Once your log holds 15 or more rows, stop scanning it top to bottom. Group rows by the first letter of the Topic ID (for example <code>G:2, K:2, X:1</code>) and sort due items with overdue rows first. That turns a flat spreadsheet into a priority scheduler: if domain <code>K</code> (inference hardware) or <code>G</code> (prompting and tokens) holds 40% of your Level 1 misses, your next mock round targets those two domains instead of re-drilling topics you already pass.</p>
+
+  <details class="q"><summary>Check: In the steady-state formula M * (1/p + 1), what happens to your weekly queue when you write weak model answers that drop your 7-day pass rate p from 0.80 to 0.40?</summary><div class="a">The multiplier (1/p + 1) jumps from 2.25 to 3.50, a 56% jump in weekly workload for the exact same number of new misses. Bad model answers create a retry storm in your own study queue.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Question Log column count</td><td class="n">7 columns</td><td>Derived (curriculum schema)</td></tr>
+    <tr><td>Capture window for full gap fidelity</td><td class="n">&lt; 24 hours</td><td>Derived (curriculum rule)</td></tr>
+    <tr><td>First and graduation retest gates</td><td class="n">7 days and 30 days</td><td>Derived (curriculum rule)</td></tr>
+    <tr><td>Passing bar on a cold retest</td><td class="n">Level 2+ with numbers right</td><td>Derived (X01 / Topic Lab rule)</td></tr>
+    <tr><td>28-day cold recall: re-read notes only</td><td class="n">9.7%</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>28-day cold recall: capture without retest</td><td class="n">17.4%</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>28-day cold recall: log + 7d spaced retest</td><td class="n">74.7%</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>Steady-state weekly retest multiplier</td><td class="n">1 / p + 1</td><td>Derived</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>7-column Question Log + 7d/30d retest</td><td>Exact prompt replay, weak-domain counts, high 30-day cold recall (74.7% in kata)</td><td>2 min/row capture cost and ~25 to 40 min/wk cold retesting</td><td>Overdue queue > 15 items signaling too many low-quality captures</td></tr>
+    <tr><td>Capture misses without scheduling retests</td><td>Fast post-interview dump, zero recurring calendar load</td><td>Rapid decay (17.4% at day 28 in kata); repeats same interview stalls</td><td>"Write-only" spreadsheet you never open again</td></tr>
+    <tr><td>Anki flashcards only (no Question Log)</td><td>Automated daily spacing for atomic facts and numbers</td><td>Loses 90-second spoken synthesis, Level reached history, and interview follow-ups</td><td>Passing 10-word cards while still freezing on open-ended prompts</td></tr>
+    <tr><td>Full audio/video review of every mock</td><td>Catches filler words, pacing, and tone issues</td><td>30 to 60 min review per mock; low recall density per minute</td><td>Watching yourself talk instead of speaking the fixed answer cold</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Question Log auditor and retest scheduler</h2>
+  <p>Audits 6 realistic 7-column Question Log rows for engineer-voice completeness (mechanism, number, failure mode), builds the due-today queue, ranks weak domains, and simulates 28-day cold recall across three study strategies.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math
+from datetime import date, timedelta
+from collections import Counter
+
+# --- Break-it flags (flip one at a time, predict, then run) ---
+DELAYED_CAPTURE_HOURS = 0   # &gt;24h blurs the exact gap you missed
+GENERIC_NOTES_MODE = False  # True logs "studied X" with no cold prompt or model answer
+SKIP_7D_GATE = False        # True jumps straight to day 30 with no day-7 retrieval
+
+TODAY = date(2026, 11, 27)  # 7 days after logging Week 1 misses on 2026-11-20
+MECH_KWS = ("prefix", "kv", "cache", "causal", "attention", "linear", "batch", "level", "budget", "hash")
+NUM_KWS = ("%", "ms", "gb", "2x", "4x", "7d", "30d", "90", "20", "45", "25", "8", "5s", "50", "4096")
+FAIL_KWS = ("miss", "breaks", "fails", "oom", "stale", "drop", "stall", "leak", "cap", "cost", "latency")
+
+# 7-column Question Log: Date, Question, Topic, Level, What was missing, Model answer, Retest due
+RAW_LOG = [
+    ("2026-11-20", "How do you optimize tokens?", "G01", 1,
+     "Prefix caching causal constraint and output-token 4x cost ratio",
+     "Keep static prefix first so KV cache hits cut input cost 50%+; cap output tokens since decode is 4x input price; breaks if timestamps sit in system prompt.", "2026-11-27"),
+    ("2026-11-20", "Why does prompt caching only work on a prefix?", "G02", 1,
+     "Causal attention mask dependency",
+     "Causal attention computes each token KV state from all prior tokens; one changed byte at index 10 invalidates 100% of the suffix cache and causes a full prefill miss.", "2026-11-27"),
+    ("2026-11-20", "Why does KV cache memory grow with batch size?", "K06", 1,
+     "Linear scaling with batch*seq and OOM threshold",
+     "Each token stores K and V tensors across layers, scaling linearly with batch*seq; at 4096 ctx and batch 32, fp16 cache hits GBs and causes OOM.", "2026-11-27"),
+    ("2026-11-20", "How does PagedAttention cut memory waste?", "K07", 1,
+     "No mechanism or failure mode (business-voiced draft)",
+     "It improves GPU efficiency by 60% and lowers serving spend for enterprise customers.", "2026-11-27"),
+    ("2026-11-20", "How do you structure a 90-second system answer?", "X01", 2,
+     "Missed failure mode in Level 3 internals",
+     "Split into Level 1 outcome (20s), Level 2 mechanism (45s), Level 3 internals and limits (25s); fails when business ROI replaces mechanism.", "2026-11-27"),
+    ("2026-11-13", "How do you prevent an agent tool loop?", "F02", 1,
+     "Step budget cap and idempotency hash",
+     "Enforce a max step budget (8 steps), tool timeout (5s), and state hash check; without a cap, repeated errors stall latency and leak token spend.", "2026-11-20"),
+]
+
+def audit_row(row):
+    q, ans = row[1], row[5]
+    if GENERIC_NOTES_MODE:
+        q, ans = f"Studied {row[2]}", f"Reviewed notes on {row[2]} and understood it"
+    low = ans.lower()
+    has_mech = any(k in low for k in MECH_KWS)
+    has_num = any(k in low for k in NUM_KWS)
+    has_fail = any(k in low for k in FAIL_KWS)
+    fidelity = 0.55 if DELAYED_CAPTURE_HOURS &gt; 24 else 1.0
+    score = (has_mech + has_num + has_fail) / 3.0 * fidelity
+    return score, (has_mech, has_num, has_fail)
+
+def simulate_4w_retention(avg_audit):
+    # Exponential forgetting R(t) = exp(-t / S) with stability S in days
+    reread = math.exp(-28 / 12.0) * 100
+    capture_only = math.exp(-28 / (18.0 * avg_audit)) * 100 if avg_audit &gt; 0 else 0.0
+    if SKIP_7D_GATE:
+        spaced = math.exp(-28 / (20.0 * max(avg_audit, 0.01))) * 100
+    else:
+        r7 = math.exp(-7 / (20.0 * max(avg_audit, 0.01)))
+        s_after_7 = 95.0 * avg_audit * (0.55 + 0.45 * r7)
+        spaced = math.exp(-21 / max(s_after_7, 0.01)) * 100
+    return round(reread, 1), round(capture_only, 1), round(spaced, 1)
+
+def main():
+    print(f"Question Log Audit | Today: {TODAY} | Flags: delay={DELAYED_CAPTURE_HOURS}h generic={GENERIC_NOTES_MODE} skip7d={SKIP_7D_GATE}")
+    print("-" * 78)
+    scores, due_queue, domains = [], [], Counter()
+    for row in RAW_LOG:
+        logged, due = date.fromisoformat(row[0]), date.fromisoformat(row[6])
+        if SKIP_7D_GATE:
+            due = logged + timedelta(days=30)
+        sc, flags = audit_row(row)
+        scores.append(sc)
+        domains[row[2][0]] += 1
+        status = "PASS" if sc &gt;= 0.9 else "WEAK"
+        if due &lt;= TODAY:
+            due_queue.append((due, row[2], row[1], row[3], status))
+        print(f"{row[2]} | L{row[3]} | audit={sc:.2f} (M={int(flags[0])} N={int(flags[1])} F={int(flags[2])}) | due={due} | {row[1][:38]}")
+    avg_audit = sum(scores) / len(scores)
+    reread, cap_only, spaced = simulate_4w_retention(avg_audit)
+    print("-" * 78)
+    print(f"Average engineer-voice audit score: {avg_audit:.2f} / 1.00")
+    print(f"Due today ({TODAY}) or overdue: {len(due_queue)} items")
+    for due, tid, q, lvl, st in sorted(due_queue):
+        tag = "OVERDUE" if due &lt; TODAY else "DUE-7D"
+        print(f"  [{tag}] {tid} (L{lvl}, {st}): {q}")
+    print(f"Top weak domains: {', '.join(f'{k}:{v}' for k, v in domains.most_common(3))}")
+    print("4-Week (Day 28) Cold Recall Simulation:")
+    print(f"  Re-read notes only:     {reread:5.1f}%")
+    print(f"  Capture without retest: {cap_only:5.1f}%")
+    print(f"  Log + spaced retest:    {spaced:5.1f}%")
+
+if __name__ == "__main__":
+    main()</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">Question Log Audit | Today: 2026-11-27 | Flags: delay=0h generic=False skip7d=False
+------------------------------------------------------------------------------
+G01 | L1 | audit=1.00 (M=1 N=1 F=1) | due=2026-11-27 | How do you optimize tokens?
+G02 | L1 | audit=1.00 (M=1 N=1 F=1) | due=2026-11-27 | Why does prompt caching only work on a
+K06 | L1 | audit=1.00 (M=1 N=1 F=1) | due=2026-11-27 | Why does KV cache memory grow with bat
+K07 | L1 | audit=0.33 (M=0 N=1 F=0) | due=2026-11-27 | How does PagedAttention cut memory was
+X01 | L2 | audit=1.00 (M=1 N=1 F=1) | due=2026-11-27 | How do you structure a 90-second syste
+F02 | L1 | audit=1.00 (M=1 N=1 F=1) | due=2026-11-20 | How do you prevent an agent tool loop?
+------------------------------------------------------------------------------
+Average engineer-voice audit score: 0.89 / 1.00
+Due today (2026-11-27) or overdue: 6 items
+  [OVERDUE] F02 (L1, PASS): How do you prevent an agent tool loop?
+  [DUE-7D] G01 (L1, PASS): How do you optimize tokens?
+  [DUE-7D] G02 (L1, PASS): Why does prompt caching only work on a prefix?
+  [DUE-7D] K06 (L1, PASS): Why does KV cache memory grow with batch size?
+  [DUE-7D] K07 (L1, WEAK): How does PagedAttention cut memory waste?
+  [DUE-7D] X01 (L2, PASS): How do you structure a 90-second system answer?
+Top weak domains: G:2, K:2, X:1
+4-Week (Day 28) Cold Recall Simulation:
+  Re-read notes only:       9.7%
+  Capture without retest:  17.4%
+  Log + spaced retest:     74.7%</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Simulated 28-day cold recall by logging strategy (kata.py real run)</div>
+    <div data-bars='{"unit":"%","digits":1,"max":100,"rows":[{"label":"Re-read notes only","value":9.7,"tone":"bad"},{"label":"Capture without retest","value":17.4,"tone":"warn"},{"label":"Log + spaced retest","value":74.7,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Logging a miss without running the 7-day cold retest (17.4%) leaves you nearly as exposed at day 28 as passive re-reading (9.7%), whereas one spaced retrieval gate lifts retention to 74.7%.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li>The auditor catches <code>K07</code> immediately with an engineer-voice score of <code>0.33</code> (<code>M=0 N=1 F=0</code>): it quoted a 60% business metric with zero mechanism and zero failure mode, pulling the log average down to <code>0.89 / 1.00</code>.</li>
+    <li>The scheduler puts the overdue item <code>F02</code> (due <code>2026-11-20</code>) at the top of the 6-item queue ahead of the five <code>DUE-7D</code> rows from <code>2026-11-27</code>.</li>
+    <li>Domain grouping surfaces <code>G:2, K:2, X:1</code> right away, showing that token/caching and inference hardware account for two-thirds of active misses.</li>
+    <li>Adding the single 7-day retrieval gate jumps 28-day cold recall from <code>17.4%</code> (capture only) to <code>74.7%</code> (a 4.3x gain).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Delayed capture.</strong> Set <code>DELAYED_CAPTURE_HOURS = 36</code>. Predict how much the average audit score and 28-day spaced recall drop when you wait past 24 hours to log what was missing, then run.</li>
+    <li><strong>Generic notes.</strong> Reset delay to <code>0</code> and set <code>GENERIC_NOTES_MODE = True</code> (replacing exact prompts and model answers with "Studied G01"). Predict what happens to the audit score and both capture-based retention curves, then run.</li>
+    <li><strong>Skip the 7-day gate.</strong> Reset generic mode to <code>False</code> and set <code>SKIP_7D_GATE = True</code> (jumping straight to a 30-day due date). Predict both the due-today queue count and the 28-day spaced recall percentage, then run.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Replace <code>RAW_LOG</code> with a CSV/TSV loader that reads your actual exported Question Log tab, adds a <code>--pass TID</code> command that bumps a passed 7-day row to <code>TODAY + 30d</code>, and rewrites <code>K07</code> until the average audit score hits <code>1.00</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>You freeze on a question you already logged two weeks ago</td><td>Write-only log: you captured the miss but skipped the 7-day cold retest</td><td>Block 15 minutes at the start of every study session to clear <code>Retest due &lt;= today</code> before learning new topics</td></tr>
+    <tr><td>Retest queue swells past 20 overdue rows</td><td>Logging every minor slip or writing essays in column 6 that fail 7-day recall</td><td>Cap daily new captures at 3 to 5 high-signal misses; tighten column 6 to 3 sentences (mechanism, number, failure mode)</td></tr>
+    <tr><td>You pass self-retests at home but fail live mocks</td><td>Reading column 6 before answering, or accepting business-voiced answers as Level 2</td><td>Use Retest mode (answers hidden), speak aloud against the 90-second timer, and fail any answer missing a number or failure mode</td></tr>
+    <tr><td>Model answers go stale as APIs or pricing shift</td><td>Hardcoded numbers with no check date</td><td>Tag volatile numbers (API token prices, context limits) with a check date and refresh them during your 30-day review</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Overdue queue length (keep under 5 items), 7-day first-try pass rate (target 70%+), and top weak domain share (no single domain holding more than 35% of active Level 1 rows for two consecutive weeks).</p>
+  <details class="q"><summary>Scenario: You have a Staff AI Engineer loop in 10 days. Your Question Log has 24 overdue rows across 5 domains (A, D, G, K, X), and you only have 45 minutes per evening. How do you triage and execute?</summary><div class="a"><ol>
+    <li><strong>Filter by round weight and tier first:</strong> Sort the 24 rows by Topic tier (T1 first) and match against the scheduled loop rounds (for example ML/LLM deep dive maps to G and K; system design maps to D and X). Park T3 rows for after the loop.</li>
+    <li><strong>Audit model answers in 5 minutes:</strong> Flag any row missing a mechanism, number, or failure mode (like <code>K07</code> in the kata) and fix those 3 to 4 rows first so you are not drilling weak scripts.</li>
+    <li><strong>Run cold 90-second sprints:</strong> At 2.5 minutes per item (90s spoken + 60s honest check), 45 minutes clears 15 to 18 items in one evening. Clear all Level 0 and Level 1 rows on days 1 and 2.</li>
+    <li><strong>Re-schedule only the misses:</strong> Anything you pass cold at Level 2+ with numbers right moves out of the urgent queue; anything you stumble on gets a 3-day compressed retest (day 4 and day 8) instead of waiting 7 days past your interview date.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A question log is a closed-loop spaced-retrieval system that converts interview and drill misses into permanent, engineer-voiced answers. Instead of passively rereading notes after a stumble, you treat every missed question like a bug with a 7-day and 30-day regression test so the same gap never blindsides you twice.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>The log uses a 7-column schema: Date, exact Question, Topic ID, Level reached, What was missing, Model answer, and Retest due. Within 24 hours of a stumble, you record the exact prompt and the exact boundary where your answer stalled, because gap fidelity drops sharply after a day. You then write a concise model answer audited for three elements: a mechanism, a concrete number, and a failure mode. Seven days later, you hide the answer and speak it cold against a 90-second timer. Passing at Level 2 or higher with numbers right advances the row to a 30-day graduation check; failing loops it back to Shaky with a fresh 7-day due date.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Under exponential forgetting, capture alone holds roughly 17% at four weeks while one day-7 retrieval lifts retention above 70%. Steady-state weekly load scales as M times (1/p + 1), where M is weekly misses and p is your 7-day pass rate. If p drops below 50%, retries bloat the queue, so strict model-answer quality and a 3 to 5 daily capture cap keep the loop sustainable.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"After every mock interview I take thorough notes on the areas I need to improve and review my Notion doc before the next round so I feel confident."</p>
+    <p class="strong">"I log every Level 1 miss within 24 hours in a 7-column sheet: exact prompt, missing mechanism, and a 3-sentence model answer with a number and failure mode. Then I run cold 90-second retests at 7 and 30 days. With illustrative numbers of 6 misses a week and a 70% 7-day pass rate, the queue stays around 15 items or 36 minutes a week and stops repeat stalls."</p>
+    <p>The strong answer names the exact schema, the 24-hour constraint, the three-part engineer-voice audit, the 7d/30d retrieval gates, and the bounded workload math (with illustrative numbers clearly labeled).</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Writing a great model answer right after a mock is enough; I will just skim my log the night before the real interview."</summary><div class="a">Skimming the night before is passive recognition, not cold retrieval. In the kata simulation, capture without a 7-day retest drops to 17.4% cold recall by day 28, and cramming 40 rows the night before collapses under follow-up pressure.</div></details>
+  <details class="q"><summary>"Logging the topic name like 'KV cache' is faster than writing out the full interview question, and it keeps the spreadsheet clean."</summary><div class="a">A topic label removes the retrieval cue. You cannot test yourself cold on "KV cache" the way you can on "Why does KV cache memory grow linearly with batch size?" Logging generic labels dropped the kata's audit score to 0.00.</div></details>
+  <details class="q"><summary>"Every single question I hesitate on should go into the Question Log so nothing slips through the cracks."</summary><div class="a">Unbounded capture floods the steady-state queue <code>M * (1/p + 1)</code>. Logging 20 low-signal slips a week at 70% pass rate creates 49 weekly retests (over 2 hours/week), causing backlog abandonment. Log real Level 0 to Level 2 gaps only.</div></details>
+  <details class="q"><summary>"If I pass the 7-day retest, I can mark the topic Solid right away and skip the 30-day check."</summary><div class="a">Day 7 tests short-term consolidation; day 30 tests long-term cold recall when the topic is no longer fresh in your week's study context. Skipping day 30 lets brittle answers look Solid until they fail in a real loop a month later.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Name all 7 columns of the Question Log in order and the role of the three zones they form.</summary><div class="a">Date, Question, Topic, Level reached, What was missing, Model answer, Retest due. Zone 1 (1 to 3) stores the cold trigger; Zone 2 (4 to 6) records the diagnosis and engineer-voiced grading target; Zone 3 (7) enforces the 7-day and 30-day retrieval gates.</div></details>
+  <details class="q"><summary>Why does the Question Log require same-day capture (under 24 hours) instead of a weekly Sunday roundup?</summary><div class="a">Memory of the exact prompt wording and the exact point where your explanation stalled decays within 24 hours. A Sunday roundup produces vague topic summaries instead of sharp, testable failure boundaries.<div class="f"><b>Follow-up</b>What if you finish an onsite loop exhausted at 6 PM? Capture just columns 2, 3, and 5 as raw bullets in 3 minutes that evening, then polish column 6 (Model answer) the next morning while the gap is still anchored.</div></div></details>
+  <details class="q"><summary>What three elements must every Model answer in column 6 contain before you close a study session?</summary><div class="a">A concrete mechanism (how it works), a number (ratio, latency, memory size, or cap), and a failure mode (where it breaks). Business outcomes may follow in one sentence but never replace those three.</div></details>
+  <details class="q"><summary>How does the 7-day retest change 28-day cold recall under the exponential forgetting model R(t) = exp(-t / S)?</summary><div class="a">Effortful cold retrieval at day 7 triggers the testing effect and multiplies memory stability S (from ~18 days to ~75+ days in the kata), lifting 28-day cold recall from 17.4% (capture only) to 74.7%.<div class="f"><b>Follow-up</b>What happens if you look at the Model answer first and then recite it? You trigger recognition instead of retrieval, so S barely increases and the day-30 test fails.</div></div></details>
+  <details class="q"><summary>Derive the steady-state weekly retest count for M new misses per week and a 7-day pass rate p.</summary><div class="a">Clearing the 7-day gate takes 1/p attempts on average per miss, and each miss then takes 1 attempt at the 30-day gate. Total weekly retests equal M * (1/p + 1). At M = 6 and p = 0.70, that is 14.6 items/week.<div class="f"><b>Follow-up</b>Which lever shrinks an overloaded queue faster: cutting M in half or raising p from 0.40 to 0.80? Cutting M cuts load 50%; raising p from 0.40 to 0.80 cuts the multiplier from 3.50 to 2.25 (a 36% reduction) while also raising 30-day recall.</div></div></details>
+  <details class="q"><summary>What is the exact passing bar for a 7-day or 30-day retest, and what happens when you fail?</summary><div class="a">Passing requires Level 2 or higher spoken cold with the key numbers right. Passing day 7 advances Retest due to +30 days; passing day 30 sets Status to Solid. Failing sets Status to Shaky and resets Retest due to +7 days.</div></details>
+  <details class="q"><summary>Why should you keep both a Question Log and an Anki deck instead of replacing the log with Anki?</summary><div class="a">Anki optimizes atomic recall (one fact or formula in under 25 words). The Question Log tests 90-second spoken synthesis, tracks Level reached, and preserves real interview phrasing and follow-ups.<div class="f"><b>Follow-up</b>How do the two feed each other? Any atomic number or failure mode you drop in column 5 ("What was missing") becomes 1 or 2 new Anki cards.</div></div></details>
+  <details class="q"><summary>How do you use the Question Log to decide what to practice before a mock round?</summary><div class="a">Filter for Level 0 and Level 1 rows, sort overdue items first, and aggregate counts by domain prefix (for example G:2, K:2, X:1). Drill the top two weak domains instead of reviewing topics you already pass.<div class="f"><b>Follow-up</b>What signal tells you a domain is ready for a live mock? Zero overdue Level 1 rows in that domain and a 7-day first-try pass rate of 70% or higher.</div></div></details>
+  <details class="q"><summary>Why did row K07 fail the kata's engineer-voice audit even though it included a 60% number?</summary><div class="a">It stated a business outcome ("improves GPU efficiency by 60% and lowers serving spend") with zero mechanism (virtual memory block tables for KV cache) and zero failure mode, scoring 0.33 (M=0, N=1, F=0).</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture (the 5-stage Question Log closed loop with the Shaky feedback edge) and narrate its steps, then write: the 7 column names in order, the 3 engineer-voice audit criteria, the steady-state weekly workload formula, and the 28-day recall numbers from the kata.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>5-stage loop: Stumble -&gt; Capture (&lt;24h) -&gt; Model fix (M+N+F) -&gt; Day-7 cold retest -&gt; Day-30 Solid (with fail loop back to Shaky +7d).</li>
+    <li>7 columns: Date, Question, Topic, Level reached, What was missing, Model answer, Retest due.</li>
+    <li>Engineer-voice audit: mechanism + number + failure mode.</li>
+    <li>Steady-state weekly retest load: <code>M * (1/p + 1)</code> items/week.</li>
+    <li>Kata 28-day recall: 9.7% (re-read), 17.4% (capture only), 74.7% (log + 7d spaced retest).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>U01: Why does the curriculum schedule retests at 7 and 30 days instead of reviewing every topic again the very next day?</summary><div class="a">Next-day review tests short-term working memory where retrieval feels easy and barely increases stability. Spacing to 7 and 30 days forces effortful retrieval right as decay sets in, which produces durable long-term retention.</div></details>
+  <details class="q"><summary>V01: What four elements separate an engineer-voiced answer from a business-voiced answer?</summary><div class="a">A concrete mechanism (how it works), a number (limit, cost, or latency), a failure mode (where it breaks), and a tradeoff (what you pay for the gain). Business framing may follow in one sentence, never replace them.</div></details>
+  <details class="q"><summary>X01: How should you budget a 90-second three-level answer across Outcome, Mechanism, and Internals and limits?</summary><div class="a">About 20 seconds on Level 1 (Outcome: what it does and why it matters), 45 seconds on Level 2 (Mechanism: step-by-step how it works), and 25 seconds on Level 3 (Internals and limits: numbers, failure modes, and boundaries).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://doi.org/10.1111/j.1467-9280.2006.01693.x">Roediger and Karpicke (2006), Psychological Science: Test-Enhanced Learning</a><small>Primary evidence that active cold retrieval beats repeated restudying on delayed retention tests. Checked from canonical citation, 2026-11-19.</small></li>
+    <li><a href="https://doi.org/10.1037/0033-2909.132.3.354">Cepeda et al. (2006), Psychological Bulletin: Distributed Practice in Verbal Recall Tasks</a><small>Meta-analysis quantifying how spaced retrieval intervals outperform massed study over multi-week retention windows. Checked from canonical citation, 2026-11-19.</small></li>
+    <li><span>AI Mastery Curriculum Specification (00-core-brief.md and Topic Lab v4)</span><small>Defines Richard's 7-column Question Log schema, 7d/30d retest gates, Level 2+ passing bar, and Shaky/Solid status transitions. Checked locally, 2026-11-19.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>7-column schema:</strong> Log <code>Date, Question, Topic, Level reached, What was missing, Model answer, Retest due</code> so every row carries a cold cue, a grading target, and a retrieval gate.</li>
+    <li><strong>Same-day capture (&lt;24h):</strong> Record exact prompt wording and the exact missing mechanism within 24 hours; waiting blurs the gap into a useless topic label.</li>
+    <li><strong>Engineer-voice model answer:</strong> Audit column 6 for mechanism + number + failure mode in 2 to 4 sentences before closing the session.</li>
+    <li><strong>7d and 30d retest scheduler:</strong> Speak cold against a 90-second clock; day-7 retrieval lifts 28-day recall from 17.4% to 74.7% in the kata, and steady-state load is <code>M * (1/p + 1)</code> items/week.</li>
+    <li><strong>Weak-domain triage:</strong> Sort overdue rows first and aggregate misses by domain prefix (e.g. <code>G:2, K:2, X:1</code>) to pick your next mock focus.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (C-M-R-G):</strong> Catch (&lt;24h exact gap), Model (Mech + Num + Fail), Retest (7d cold), Graduate (30d Solid or Shaky loop).</li>
+      <li><strong>Workload formula:</strong> Weekly retest items = <code>M * (1/p + 1)</code>; keep 7-day pass rate <code>p &gt;= 70%</code> and daily new captures to 3 to 5 so weekly load stays under ~35 minutes.</li>
+      <li><strong>Passing bar:</strong> Level 2 or higher spoken cold with numbers right; if you read the model answer first, the retest does not count.</li>
+      <li><strong>Primary failure modes:</strong> Write-only logs (no 7d gate), generic labels ("Studied KV cache"), and business-voiced model answers (like <code>K07</code> scoring 0.33).</li>
+      <li><strong>Anki vs Question Log:</strong> Anki drills atomic facts (&lt;25 words); Question Log drills 90-second spoken synthesis and real follow-up pressure.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::X Interview craft", "tags": "X02 T1 W01", "cards": [{"q": "What are the 7 columns of the Question Log in order?", "a": "Date, Question, Topic, Level reached, What was missing, Model answer, and Retest due."}, {"q": "Why must you capture a missed interview question within 24 hours instead of at the end of the week?", "a": "After 24 hours you remember the topic label but forget the exact prompt wording and the exact mechanism where your explanation stalled."}, {"q": "What three elements must every Model answer in the Question Log contain to pass an engineer-voice audit?", "a": "One concrete mechanism (how it works), one specific number (ratio, latency, or limit), and one failure mode (where it breaks)."}, {"q": "Why does logging 'Studied KV cache' break the Question Log's retrieval loop?", "a": "A topic label triggers passive recognition instead of active recall; without an exact cold prompt and named gap, you cannot test spoken fluency."}, {"q": "What is the steady-state weekly retest item formula for M new misses per week and a 7-day pass rate p?", "a": "M * (1/p + 1): on average 1/p attempts to clear the 7-day gate plus 1 check at the 30-day graduation gate."}, {"q": "What happens to a Question Log row when you pass vs fail the 7-day and 30-day cold retests?", "a": "Pass at Level 2+ with numbers right: 7d advances to +30d, 30d graduates to Solid. Fail either gate: mark Shaky and reset +7d."}, {"q": "How much did adding a 7-day cold retest lift 28-day recall over capture-only in the X02 kata simulation?", "a": "From 17.4% (capture without retest) to 74.7% (log plus 7-day spaced retest), compared to 9.7% for passive re-reading."}, {"q": "Why should you maintain both a Question Log and an Anki deck instead of using Anki alone?", "a": "Anki drills atomic facts under 25 words; the Question Log trains 90-second spoken synthesis, tracks Level reached, and preserves real interview follow-ups."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
