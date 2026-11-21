@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A21 DSA kata 1</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A21">
+<main>
+<header>
+  <div class="eyebrow"><b>A21</b><span>Foundations and applied math</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>DSA kata 1</h1>
+  <p class="lede">How do prefix sums, hash maps, two pointers, and sliding windows collapse quadratic O(n^2) sequence scans into linear O(n) single-pass pipelines? This page covers the four linear array-scan invariants and three timed problems; binary search, heaps, and sorting live in A22.</p>
+  <div class="chips"><span><em>Before</em>A20 Complexity for AI systems</span><span><em>After</em>A22 DSA kata 2</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Four linear invariants, steppers, and explorable</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Solve 3 timed problems (solutions closed)</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Run and break the benchmark kata</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production failures and 90 s interview drill</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and Anki import</span><small>7 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A sliding window function has an outer <code>for r in range(n)</code> loop and an inner <code>while sum &gt; cap: l += 1</code> loop. With nested loops over n = 5,000 turns in our kata, how many total inner+outer loop operations does it execute: roughly 12.5 million (n^2 / 2) or under 10,000 (2n)?</summary><div class="a">Under 10,000. In our kata run on n = 5,000 turns, the optimal sliding window executes 9,962 operations (0.60 ms) vs 201,062 for early-stopped brute force and 12,502,500 for full quadratic scan. Neither <code>r</code> nor <code>l</code> ever decrements, so the inner <code>while</code> loop can execute at most n times across the entire run, bounding work at 2n = O(n).</div></details>
+  <details class="q"><summary>You use a sliding window to find the longest contiguous turn slice with total score &lt;= K, but a penalty turn can have a negative score (-15). Does the O(n) sliding window still find the exact optimum?</summary><div class="a">No. Negative numbers break monotonicity. When the window sum exceeds K and you advance <code>l</code>, you might miss a future negative element at <code>r + 1</code> that would bring the wider window back below K. In our kata's first break-it, enabling negative values makes the sliding window miss valid longer windows.</div></details>
+  <details class="q"><summary>When counting contiguous subarrays summing to K = 130 with a prefix-sum hash map, what breaks if you initialize <code>counts = {}</code> instead of <code>counts = {0: 1}</code>?</summary><div class="a">You silently undercount every valid subarray that starts at index 0. When a prefix <code>arr[0..r]</code> sums to exactly K = 130, the complement check looks up <code>pref - K = 0</code>. Without <code>counts[0] = 1</code> representing the empty prefix before index 0, our kata drops from 162 matches to 161.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A naive nested scan over n items inspects n(n + 1)/2 pairs or ranges because it throws away everything it learned when advancing the outer index. Every O(n) array pattern replaces that repeated inner scan with a single state invariant that updates in O(1) time per step.</p>
+  <p>Four invariants cover almost every linear array problem in systems and coding interviews. A <strong>prefix sum</strong> turns any range sum into a subtraction of two cumulative checkpoints: <code>sum(l..r) = P[r+1] - P[l]</code>. A <strong>hash map</strong> remembers previously seen values or prefix sums so a backward search becomes an O(1) complement lookup. <strong>Two pointers</strong> exploit sorted order so each comparison eliminates an entire row or column of pairs in O(1) auxiliary space. A <strong>sliding window</strong> maintains a valid contiguous range <code>[l..r]</code> over monotonic data, advancing <code>r</code> to expand and <code>l</code> to repair in at most 2n pointer moves.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Why a monotonic sliding window runs in 2n steps, not n^2</div>
+    <svg viewBox="0 0 500 220" role="img" aria-label="Five-step trace of a sliding window expanding right and shrinking left over five token turn sizes with cap 80, showing 8 total pointer moves instead of 15.">
+      <g font-size="12">
+        <text x="15" y="24" font-weight="600">Turns [30, 40, 25, 15, 35]  |  Budget Cap W = 80</text>
+        <rect x="15" y="38" width="84" height="38" rx="4" class="c-soft"/>
+        <text x="57" y="61" text-anchor="middle">[0] = 30</text>
+        <rect x="109" y="38" width="84" height="38" rx="4" class="c-soft"/>
+        <text x="151" y="61" text-anchor="middle">[1] = 40</text>
+        <rect x="203" y="38" width="84" height="38" rx="4" class="c-soft"/>
+        <text x="245" y="61" text-anchor="middle">[2] = 25</text>
+        <rect x="297" y="38" width="84" height="38" rx="4" class="c-soft"/>
+        <text x="339" y="61" text-anchor="middle">[3] = 15</text>
+        <rect x="391" y="38" width="84" height="38" rx="4" class="c-soft"/>
+        <text x="433" y="61" text-anchor="middle">[4] = 35</text>
+
+        <g data-only="1">
+          <rect x="15" y="38" width="178" height="38" rx="4" class="c-good" data-hi="1"/>
+          <text x="57" y="61" text-anchor="middle" font-weight="600">[0] = 30</text>
+          <text x="151" y="61" text-anchor="middle" font-weight="600">[1] = 40</text>
+          <text x="104" y="102" text-anchor="middle" font-weight="600">Step 1: Expand r to 1 -> Window [0..1], sum = 70 &lt;= 80 (valid, len 2)</text>
+        </g>
+
+        <g data-only="2">
+          <rect x="15" y="38" width="272" height="38" rx="4" class="c-bad" data-hi="2"/>
+          <text x="57" y="61" text-anchor="middle">[0] = 30</text>
+          <text x="151" y="61" text-anchor="middle">[1] = 40</text>
+          <text x="245" y="61" text-anchor="middle" font-weight="600">[2] = 25</text>
+          <text x="151" y="102" text-anchor="middle" font-weight="600">Step 2: Expand r to 2 -> sum = 95 &gt; 80 (violation triggers while loop)</text>
+        </g>
+
+        <g data-only="3">
+          <rect x="109" y="38" width="178" height="38" rx="4" class="c-good" data-hi="3"/>
+          <text x="151" y="61" text-anchor="middle" font-weight="600">[1] = 40</text>
+          <text x="245" y="61" text-anchor="middle" font-weight="600">[2] = 25</text>
+          <text x="198" y="102" text-anchor="middle" font-weight="600">Step 3: Advance l to 1 (drop 30) -> sum = 65 &lt;= 80 (repaired, no restart!)</text>
+        </g>
+
+        <g data-only="4">
+          <rect x="109" y="38" width="272" height="38" rx="4" class="c-good" data-hi="4"/>
+          <text x="151" y="61" text-anchor="middle" font-weight="600">[1] = 40</text>
+          <text x="245" y="61" text-anchor="middle" font-weight="600">[2] = 25</text>
+          <text x="339" y="61" text-anchor="middle" font-weight="600">[3] = 15</text>
+          <text x="245" y="102" text-anchor="middle" font-weight="600">Step 4: Expand r to 3 -> Window [1..3], sum = 80 &lt;= 80 (best len = 3)</text>
+        </g>
+
+        <g data-step="5">
+          <rect x="203" y="38" width="272" height="38" rx="4" class="c-accent" data-hi="5"/>
+          <text x="245" y="61" text-anchor="middle" font-weight="600">[2] = 25</text>
+          <text x="339" y="61" text-anchor="middle" font-weight="600">[3] = 15</text>
+          <text x="433" y="61" text-anchor="middle" font-weight="600">[4] = 35</text>
+          <text x="339" y="102" text-anchor="middle" font-weight="600">Step 5: r=4 (+35->115), l=2 (-40->75 &lt;= 80). Total: 5 r-moves + 2 l-moves</text>
+        </g>
+
+        <rect x="15" y="125" width="225" height="75" rx="6" class="c-warn"/>
+        <text x="127" y="149" text-anchor="middle" font-weight="600">Brute Force Resets r to l</text>
+        <text x="127" y="169" text-anchor="middle">n(n+1)/2 = 15 checks (n=5)</text>
+        <text x="127" y="187" text-anchor="middle">12,502,500 ops at n=5,000</text>
+
+        <rect x="260" y="125" width="225" height="75" rx="6" class="c-good"/>
+        <text x="372" y="149" text-anchor="middle" font-weight="600">Monotonic Pointers (l, r &gt;= 0)</text>
+        <text x="372" y="169" text-anchor="middle">At most 2n = 10 moves (n=5)</text>
+        <text x="372" y="187" text-anchor="middle">9,962 ops at n=5,000</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Right pointer r expands across [0..1] to reach sum = 70 &lt;= 80, keeping window [0..1] valid without re-summing from scratch.</li>
+      <li>Advancing r to index 2 adds 25 and pushes the running sum to 95 &gt; 80, violating the budget invariant.</li>
+      <li>Instead of resetting r back to l+1, the inner while loop advances l from 0 to 1, subtracting 30 to repair sum = 65 in O(1).</li>
+      <li>Advancing r to index 3 adds 15 for sum = 80 &lt;= 80, discovering the 3-turn window [1..3] in a single forward step.</li>
+      <li>At r=4 (+35 -> 115), l advances once to 2 (-40 -> 75): across the whole array, r moved 5 times and l moved 2 times (7 &lt;= 2n).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Because all turn sizes are positive, neither pointer ever moves backward, bounding total work across both nested loops to at most 2n operations.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember the four linear scan weapons by <b>P-H-T-S</b> ("<b>P</b>refix <b>H</b>ashes <b>T</b>ame <b>S</b>cans"): <b>P</b>refix difference (<code>P[r+1] - P[l]</code>), <b>H</b>ash complement (<code>seen[pref - K]</code> in O(n) space), <b>T</b>wo pointers on sorted data (O(1) space pruning), <b>S</b>liding window on monotonic data (expand <code>r</code>, shrink <code>l</code> in &lt;= 2n moves).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Pattern 1: Prefix sums and hash-complement lookup</h3>
+  <p>Define the prefix sum array <code>P</code> where <code>P[0] = 0</code> and <code>P[i] = arr[0] + ... + arr[i-1]</code>. Any contiguous subarray <code>arr[l..r]</code> has sum <code>P[r+1] - P[l]</code>. Once precomputed in O(n) time, any fixed range sum query takes O(1) subtraction.</p>
+  <p>When you need to count or locate subarrays whose sum equals a target token budget <code>K</code>, rewrite the condition <code>P[r+1] - P[l] = K</code> as <code>P[l] = P[r+1] - K</code>. As you iterate <code>r</code> from 0 to <code>n - 1</code> maintaining the running prefix sum <code>pref = P[r+1]</code>, a hash map storing prior prefix sums answers "how many earlier indices <code>l</code> had <code>P[l] == pref - K</code>?" in O(1) expected time. Always seed the map with <code>{0: 1}</code> (or <code>{0: -1}</code> when tracking earliest index for max length) to account for the empty prefix <code>P[0] = 0</code>.</p>
+  <div class="codewrap"><pre>sum(arr[l..r]) = P[r+1] - P[l] == K  &lt;=&gt;  P[l] == P[r+1] - K
+Base case: counts = {0: 1}  (or first_idx = {0: -1} for longest subarray)</pre></div>
+
+  <h3>Pattern 2: Opposite-direction and same-direction two pointers</h3>
+  <p>Two pointers eliminate the O(n) memory table of a hash map by exploiting order or in-place partitioning. In <strong>opposite-direction</strong> two pointers on a sorted array (<code>l = 0</code>, <code>r = n - 1</code>), you evaluate <code>s = arr[l] + arr[r]</code> against a target <code>T</code>. If <code>s &lt; T</code>, pairing <code>arr[l]</code> with any index below <code>r</code> gives an even smaller sum, so <code>l</code> is dead and you increment <code>l += 1</code>. If <code>s &gt; T</code>, pairing <code>arr[r]</code> with any index above <code>l</code> gives an even larger sum, so you decrement <code>r -= 1</code>. Each comparison eliminates an entire row or column of the n-by-n pair matrix in O(1) time and O(1) space.</p>
+  <p>In <strong>same-direction</strong> (read/write or fast/slow) two pointers, <code>write</code> marks the boundary of kept deduplicated tokens while <code>read</code> scans ahead, compacting arrays like sorted vocabulary lists or stream buffers in-place without allocating a second buffer.</p>
+  <div class="codewrap"><pre>Sorted invariant (arr[l] &lt;= arr[r]):
+  arr[l] + arr[r] &lt; T  =&gt;  l += 1   (rules out all pairs (l, j) for j &lt;= r)
+  arr[l] + arr[r] &gt; T  =&gt;  r -= 1   (rules out all pairs (i, r) for i &gt;= l)</pre></div>
+  <details class="q"><summary>Check: Why does opposite-direction two-sum fail on an unsorted array unless you pay O(n log n) to sort first?</summary><div class="a">Because the pruning step relies on sorted monotonicity: knowing <code>arr[l] + arr[r] &gt; T</code> only rules out other partners for <code>arr[r]</code> if every element to the right of <code>l</code> is at least <code>arr[l]</code>.</div></details>
+
+  <h3>Pattern 3: Monotonic sliding window (expand and shrink)</h3>
+  <p>A variable-size sliding window finds the longest or shortest contiguous subarray satisfying a monotonic constraint, such as total tokens <code>&lt;= W</code> or distinct token IDs <code>&lt;= M</code>. For each step of the outer loop, <code>r</code> advances by 1 and adds <code>arr[r]</code> to the window state. An inner <code>while</code> loop advances <code>l</code> and removes <code>arr[l]</code> until the invariant is restored.</p>
+  <p>The crucial condition is <strong>monotonicity</strong>: expanding the window (<code>r += 1</code>) must never make an invalid window valid, and shrinking the window (<code>l += 1</code>) must monotonically move toward validity. That holds for sums of non-negative numbers and for unique-element counts. By amortized accounting, each element enters the window once when <code>r</code> visits it and leaves at most once when <code>l</code> passes it, costing at most <code>2n</code> state updates.</p>
+  <div class="codewrap"><pre>for r in range(n):
+    add(arr[r])                  # entered once: n times total
+    while violated(window):
+        remove(arr[l]); l += 1   # exited at most once: &lt;= n times total
+    best = max(best, r - l + 1)</pre></div>
+
+  <figure class="viz stepper" id="viz-prefix-vs-window">
+    <div class="vt">Stepper: Why negative numbers break sliding window but prefix-hash survives</div>
+    <svg viewBox="0 0 480 205" role="img" aria-label="Comparison on array [40, 50, -30, 20] with target 80 showing sliding window dropping index 0 prematurely at sum 90 while prefix sum hash map records P=[0, 40, 90, 60, 80] and finds [0..3].">
+      <g font-size="12">
+        <text x="15" y="22" font-weight="600">Array: [40, 50, -30, 20]  |  Goal: Longest subarray with sum &lt;= 80 (or == 80)</text>
+        <g data-step="1">
+          <rect x="15" y="34" width="215" height="44" rx="4" class="c-warn" data-hi="1"/>
+          <text x="122" y="53" text-anchor="middle" font-weight="600">Sliding Window at r=1: [40, 50]</text>
+          <text x="122" y="70" text-anchor="middle">sum = 90 &gt; 80 -&gt; drops l=0 (40)!</text>
+        </g>
+        <g data-step="2">
+          <rect x="250" y="34" width="215" height="44" rx="4" class="c-bad" data-hi="2"/>
+          <text x="357" y="53" text-anchor="middle" font-weight="600">Window at r=3: [50, -30, 20]</text>
+          <text x="357" y="70" text-anchor="middle">Forever missed [0..3] (sum = 80, len 4)</text>
+        </g>
+        <g data-step="3">
+          <rect x="15" y="96" width="450" height="44" rx="4" class="c-accent" data-hi="3"/>
+          <text x="240" y="115" text-anchor="middle" font-weight="600">Prefix Map first_idx: P[0]=0@-1, P[1]=40@0, P[2]=90@1, P[3]=60@2</text>
+          <text x="240" y="132" text-anchor="middle">Stores every cumulative checkpoint without discarding index 0</text>
+        </g>
+        <g data-step="4">
+          <rect x="15" y="152" width="450" height="42" rx="4" class="c-good" data-hi="4"/>
+          <text x="240" y="171" text-anchor="middle" font-weight="600">At r=3: P[4] = 80 -&gt; lookup P[4] - 80 = 0 -&gt; hits index -1 (len 4!)</text>
+          <text x="240" y="187" text-anchor="middle">Rule: Non-negative -&gt; Sliding Window O(1) space; Negatives -&gt; Prefix Hash O(n) space</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>At r=1 on [40, 50, -30, 20], the window sum reaches 90 &gt; 80, so a greedy sliding window advances l past index 0.</li>
+      <li>When r reaches -30 and 20, the full 4-element array sums to 80, but l cannot back up to index 0, returning length 3 instead of 4.</li>
+      <li>A prefix-sum hash map never discards early prefixes: it logs each earliest cumulative sum P = [0, 40, 90, 60, 80] in O(n) space.</li>
+      <li>At r=3 (P[4]=80), looking up P[4] - 80 = 0 hits first_idx[0] = -1 and recovers the full 4-element subarray [0..3].</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Use a sliding window only when advancing r and l changes the metric monotonically; when negative values exist, switch to a prefix-sum hash map.</figcaption>
+  </figure>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Quadratic O(n^2) vs Linear O(n) operation count and memory tradeoff</div>
+    <p class="ask">Predict first. If you double sequence length N from 2,500 to 5,000 turns, by what factor do Brute Force O(n^2) operations grow versus Prefix-Hash and Sliding Window operations? Then switch the pattern selector to see which linear pattern uses 0 KB of auxiliary hash table RAM.</p>
+    <div class="ctl">
+      <label><span>Sequence length N</span><input type="range" name="n" min="1000" max="10000" step="500" value="5000"><output data-for="n" data-unit=" items"></output></label>
+      <label><span>Linear pattern</span><select name="pat" data-num><option value="1">1. Prefix-Sum Hash Map (O(n) time, O(n) RAM)</option><option value="2">2. Sorted Two Pointers (O(n) time, O(1) RAM)</option><option value="3">3. Monotonic Sliding Window (2n ops, O(1) RAM)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Exact operation formulas from the kata: doubling N quadruples O(n^2) brute-force work (to 12.5M ops at N=5,000) while linear scans stay at N to 2N ops.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var n=v.n, brute=n*(n+1)/2;
+    var optOps=v.pat===1?n:(v.pat===2?Math.round(0.88*n):2*n);
+    var ramKB=v.pat===1?Math.round((n*48)/1024):0;
+    var ratio=brute/optOps;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" ops",digits:0,rows:[
+      {label:"Brute force n(n+1)/2",value:brute,tone:"bad"},
+      {label:"Optimal linear scan",value:optOps,tone:"good"},
+      {label:"Aux hash memory (Bytes)",value:ramKB*1024,tone:ramKB>0?"warn":"good"}
+    ]});
+    return {verdict:"At N = "+tl.fmt(n,0)+", brute force takes "+tl.fmt(brute,0)+" ops vs "+tl.fmt(optOps,0)+" linear ops ("+tl.fmt(ratio,1)+"x reduction) with "+tl.fmt(ramKB,0)+" KB auxiliary hash memory."};
+  })});</script>
+
+  <h3>3 Timed Kata Problems (attempt before opening)</h3>
+  <p>Set a 15-minute timer for all three problems. Write your invariant, algorithm, and exact time and space complexity aloud or on scratch paper before opening each solution.</p>
+  <details class="q"><summary>Problem 1 (Prefix Sum + Hash Map, 5 min): Given an array <code>turns[0..n-1]</code> of integer token deltas (which may be positive, zero, or negative) and an exact budget target <code>K</code>, return both (a) the total number of contiguous turn ranges summing to <code>K</code>, and (b) the maximum length of any contiguous turn range summing to <code>K</code>.</summary><div class="a"><p><strong>Invariant &amp; Algorithm:</strong> Maintain running prefix sum <code>pref += turns[r]</code>. For part (a), store a frequency table <code>counts = {0: 1}</code>; at each step add <code>counts.get(pref - K, 0)</code> to <code>total_ranges</code> and increment <code>counts[pref]</code>. For part (b), store <code>first_idx = {0: -1}</code>; if <code>pref - K</code> is in <code>first_idx</code>, update <code>max_len = max(max_len, r - first_idx[pref - K])</code>, and only insert <code>first_idx[pref] = r</code> if <code>pref</code> is not already present (to keep the leftmost index).</p><div class="codewrap"><pre>def budget_ranges(turns, k):
+    counts, first_idx = {0: 1}, {0: -1}
+    pref = total = max_len = 0
+    for r, x in enumerate(turns):
+        pref += x
+        total += counts.get(pref - k, 0)
+        counts[pref] = counts.get(pref, 0) + 1
+        if pref - k in first_idx:
+            max_len = max(max_len, r - first_idx[pref - k])
+        if pref not in first_idx:
+            first_idx[pref] = r
+    return total, max_len</pre></div><p><strong>Complexity:</strong> Time <code>O(n)</code> expected (one hash lookup and insert per index). Auxiliary space <code>O(n)</code> to store up to <code>n + 1</code> distinct prefix sums.</p></div></details>
+
+  <details class="q"><summary>Problem 2 (Two Pointers, 5 min): Given a sorted array <code>ids[0..n-1]</code> of strictly increasing embedding token IDs and a target sum <code>T</code>, count all index pairs <code>(l, r)</code> with <code>l &lt; r</code> such that <code>ids[l] + ids[r] == T</code> using <code>O(1)</code> auxiliary memory. Then explain how to modify it if <code>ids</code> contains duplicates and you must skip duplicate value pairs.</summary><div class="a"><p><strong>Invariant &amp; Algorithm:</strong> Place <code>l = 0</code> and <code>r = len(ids) - 1</code>. While <code>l &lt; r</code>, compute <code>s = ids[l] + ids[r]</code>. If <code>s == T</code>, increment <code>pairs += 1</code>, <code>l += 1</code>, <code>r -= 1</code> (and if skipping duplicate values, advance <code>while l &lt; r and ids[l] == ids[l-1]: l += 1</code> and similarly for <code>r</code>). If <code>s &lt; T</code>, increment <code>l += 1</code>; if <code>s &gt; T</code>, decrement <code>r -= 1</code>.</p><div class="codewrap"><pre>def count_sorted_pairs(ids, target):
+    l, r, pairs = 0, len(ids) - 1, 0
+    while l &lt; r:
+        s = ids[l] + ids[r]
+        if s == target:
+            pairs += 1; l += 1; r -= 1
+            while l &lt; r and ids[l] == ids[l - 1]: l += 1
+            while l &lt; r and ids[r] == ids[r + 1]: r -= 1
+        elif s &lt; target: l += 1
+        else: r -= 1
+    return pairs</pre></div><p><strong>Complexity:</strong> Time <code>O(n)</code> because each comparison narrows the distance <code>r - l</code> by at least 1 (at most <code>n - 1</code> steps). Auxiliary space <code>O(1)</code> (three scalar integers).</p></div></details>
+
+  <details class="q"><summary>Problem 3 (Sliding Window, 5 min): Given a stream <code>tokens[0..n-1]</code> of positive turn token counts and a context window capacity <code>W</code> (plus a variant with at most <code>M</code> unique token IDs), find the length of the longest contiguous window whose token sum is <code>&lt;= W</code>.</summary><div class="a"><p><strong>Invariant &amp; Algorithm:</strong> Maintain a valid window <code>[l..r]</code> with running sum <code>s</code>. Advance <code>r</code> across <code>0..n-1</code>, adding <code>tokens[r]</code> to <code>s</code>. While <code>s &gt; W</code>, subtract <code>tokens[l]</code> and advance <code>l += 1</code>. After the <code>while</code> loop, <code>s &lt;= W</code> is guaranteed, so update <code>best = max(best, r - l + 1)</code>. For the <code>&lt;= M</code> unique token IDs variant, replace <code>s</code> with a frequency dict <code>freq</code> and shrink while <code>len(freq) &gt; M</code>, deleting keys when their count hits 0.</p><div class="codewrap"><pre>def longest_prompt_window(tokens, cap):
+    l = s = best = 0
+    for r, x in enumerate(tokens):
+        s += x
+        while s &gt; cap:
+            s -= tokens[l]; l += 1
+        if r - l + 1 &gt; best: best = r - l + 1
+    return best</pre></div><p><strong>Complexity:</strong> Time <code>O(n)</code> amortized (at most <code>2n</code> pointer increments across outer and inner loops). Auxiliary space <code>O(1)</code> for the sum variant, or <code>O(M)</code> for the unique-token frequency map.</p></div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Pairs / subarrays inspected by quadratic scan of length n</td><td class="n">n(n + 1) / 2</td><td>Derived</td></tr>
+    <tr><td>Maximum pointer moves in a monotonic sliding window</td><td class="n">2n (r moves n, l moves &lt;= n)</td><td>Derived</td></tr>
+    <tr><td>Auxiliary space: sorted two pointers vs prefix-sum hash map</td><td class="n">O(1) vs O(n)</td><td>Derived</td></tr>
+    <tr><td>Kata Problem 1 (n=5,000) prefix-hash vs brute operations</td><td class="n">5,000 vs 12,502,500 (128.9x faster)</td><td>Your own run</td></tr>
+    <tr><td>Kata Problem 1 runtime on n=5,000 (K=130, 162 matches)</td><td class="n">4.17 ms vs 537.38 ms</td><td>Your own run</td></tr>
+    <tr><td>Kata Problem 2 (n=5,000) two-pointer vs brute operations</td><td class="n">4,381 vs 12,497,500 (1,186.2x faster)</td><td>Your own run</td></tr>
+    <tr><td>Kata Problem 2 runtime on n=5,000 (T=5,000, 618 pairs)</td><td class="n">0.47 ms vs 557.76 ms</td><td>Your own run</td></tr>
+    <tr><td>Kata Problem 3 (n=5,000) sliding window ops and runtime</td><td class="n">9,962 ops (&lt; 2n=10,000), 0.60 ms</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Prefix-sum hash map</td><td>O(n) exact subarray sum counting even with negative numbers</td><td>O(n) auxiliary memory and hash-table constant factor (~48-64 B/entry in Python)</td><td>Forgetting <code>counts[0] = 1</code> or overwriting earliest index in max-length queries</td></tr>
+    <tr><td>Opposite-direction two pointers</td><td>O(n) time with O(1) auxiliary memory and fast sequential cache access</td><td>Requires sorted input; sorting an unsorted array first costs O(n log n) and loses original indices</td><td>Infinite loop if neither pointer moves in an equality branch</td></tr>
+    <tr><td>Monotonic sliding window</td><td>O(n) time (&lt;= 2n steps) and O(1) or O(U) space for longest/shortest valid range</td><td>Strictly requires monotonic window metric (non-negative weights or set cardinality)</td><td>Silent wrong answers when negative token weights or discounts appear</td></tr>
+    <tr><td>Static prefix array <code>P[0..n]</code></td><td>O(1) range sum queries <code>P[r+1] - P[l]</code> after O(n) build</td><td>O(n) update cost if an element mutates later (use Fenwick / segment tree if dynamic)</td><td>Off-by-one indexing between <code>P[r+1] - P[l]</code> and inclusive <code>[l..r]</code></td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 3 timed problems benchmarked against brute force</h2>
+  <p>Runs all three problems on n = 5,000 synthetic LLM conversation turns and sorted token IDs, verifying exact output parity between O(n^2) brute force and O(n) invariants while measuring operation counts and wall-clock speedup.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import random, time
+
+# --- Break-it flags ---
+ALLOW_NEGATIVE_TOKENS = False   # 1) Set True: negative weights break sliding-window monotonicity
+DROP_PREFIX_BASE_CASE = False   # 2) Set True: omit prefix_counts[0]=1 and miss ranges starting at index 0
+COLLIDE_HASH_KEYS     = False   # 3) Set True: force mod-4 hash collisions -&gt; O(n^2) bucket scans
+
+class Key(int):
+    def __hash__(self):
+        return int(self) % 4 if COLLIDE_HASH_KEYS else super().__hash__()
+
+random.seed(42)
+N = 5000
+TARGET_PAIR = 5000
+WINDOW_CAP = 1200
+
+turns = [random.randint(-15 if ALLOW_NEGATIVE_TOKENS else 10, 50) for _ in range(N)]
+BUDGET_K = sum(turns[:5])       # Guarantees prefix turns[0..4] sums to exact BUDGET_K (130)
+sorted_ids = sorted(random.sample(range(1, 10000), N))
+
+# --- Problem 1: Subarray Token Budget Match (Count ranges summing to exact K) ---
+def p1_brute(arr, k):
+    ops, hits = 0, 0
+    for i in range(len(arr)):
+        s = 0
+        for j in range(i, len(arr)):
+            s += arr[j]; ops += 1
+            if s == k: hits += 1
+    return hits, ops
+
+def p1_optimal(arr, k):
+    counts = {} if DROP_PREFIX_BASE_CASE else {Key(0): 1}
+    pref, hits, ops = 0, 0, 0
+    for x in arr:
+        pref += x; ops += 1
+        hits += counts.get(Key(pref - k), 0)
+        key = Key(pref)
+        counts[key] = counts.get(key, 0) + 1
+    return hits, ops
+
+# --- Problem 2: Sorted Embedding ID Pair Match (Count pairs a[l] + a[r] == T) ---
+def p2_brute(arr, target):
+    ops, pairs = 0, 0
+    for i in range(len(arr)):
+        for j in range(i + 1, len(arr)):
+            ops += 1
+            if arr[i] + arr[j] == target: pairs += 1
+    return pairs, ops
+
+def p2_optimal(arr, target):
+    l, r, ops, pairs = 0, len(arr) - 1, 0, 0
+    while l &lt; r:
+        ops += 1
+        s = arr[l] + arr[r]
+        if s == target:
+            pairs += 1; l += 1; r -= 1
+        elif s &lt; target:
+            l += 1
+        else:
+            r -= 1
+    return pairs, ops
+
+# --- Problem 3: Longest Prompt Window Under Token Budget Cap (sum &lt;= W) ---
+def p3_brute(arr, cap):
+    ops, best = 0, 0
+    for i in range(len(arr)):
+        s = 0
+        for j in range(i, len(arr)):
+            s += arr[j]; ops += 1
+            if s &lt;= cap:
+                if j - i + 1 &gt; best: best = j - i + 1
+            elif not ALLOW_NEGATIVE_TOKENS:
+                break
+    return best, ops
+
+def p3_optimal(arr, cap):
+    l, s, best, ops = 0, 0, 0, 0
+    for r, x in enumerate(arr):
+        s += x; ops += 1
+        while s &gt; cap and l &lt;= r:
+            s -= arr[l]; l += 1; ops += 1
+        if r - l + 1 &gt; best: best = r - l + 1
+    return best, ops
+
+print(f"=== A21 DSA Kata 1 Benchmark (N = {N} tokens/turns, K = {BUDGET_K}) ===")
+print(f"{'Problem':&lt;28} {'Brute ms':&gt;10} {'Opt ms':&gt;9} {'Brute Ops':&gt;12} {'Opt Ops':&gt;9} {'Speedup':&gt;9} {'Match':&gt;6}")
+for name, fn_b, fn_o in [
+    (f"1. Prefix-Hash Budget(K={BUDGET_K})", lambda: p1_brute(turns, BUDGET_K), lambda: p1_optimal(turns, BUDGET_K)),
+    ("2. Two-Ptr Sorted PairSum",            lambda: p2_brute(sorted_ids, TARGET_PAIR), lambda: p2_optimal(sorted_ids, TARGET_PAIR)),
+    ("3. Sliding Window Cap&lt;=1200",          lambda: p3_brute(turns, WINDOW_CAP), lambda: p3_optimal(turns, WINDOW_CAP)),
+]:
+    t0 = time.perf_counter(); res_b, ops_b = fn_b(); tb = (time.perf_counter() - t0) * 1000
+    t0 = time.perf_counter(); res_o, ops_o = fn_o(); to = (time.perf_counter() - t0) * 1000
+    print(f"{name:&lt;28} {tb:10.2f} {to:9.2f} {ops_b:12,d} {ops_o:9,d} {tb/max(to,0.01):8.1f}x {str(res_b==res_o):&gt;6} (ans={res_o})")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== A21 DSA Kata 1 Benchmark (N = 5000 tokens/turns, K = 130) ===
+Problem                        Brute ms    Opt ms    Brute Ops   Opt Ops   Speedup  Match
+1. Prefix-Hash Budget(K=130)     537.38      4.17   12,502,500     5,000    128.9x   True (ans=162)
+2. Two-Ptr Sorted PairSum        557.76      0.47   12,497,500     4,381   1186.2x   True (ans=618)
+3. Sliding Window Cap&lt;=1200       12.61      0.60      201,062     9,962     20.9x   True (ans=48)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Measured wall-clock runtime (ms) on N = 5,000 tokens (real kata output)</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"P1 Brute O(n^2) (12.5M ops)","value":537.38,"tone":"bad"},{"label":"P1 Prefix-Hash O(n) (5k ops)","value":4.17,"tone":"good"},{"label":"P2 Brute O(n^2) (12.5M ops)","value":557.76,"tone":"bad"},{"label":"P2 Two-Ptr O(n) (4,381 ops)","value":0.47,"tone":"good"},{"label":"P3 Brute early-stop (201k ops)","value":12.61,"tone":"warn"},{"label":"P3 Sliding Window (9,962 ops)","value":0.60,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> On N = 5,000 items, O(n) invariants cut runtime from ~550 ms to 0.47-4.17 ms (129x to 1,186x faster) with exact answer parity.</figcaption>
+  </figure>
+  <h3>What to notice</h3><ol>
+    <li><strong>Exact 2,500x operation drop:</strong> In Problem 1, brute force executes <code>n(n+1)/2 = 12,502,500</code> inner-loop steps in <code>537.38 ms</code>, while the prefix-sum hash map does exactly <code>5,000</code> steps in <code>4.17 ms</code> (<code>128.9x</code> speedup, finding all <code>162</code> matching ranges).</li>
+    <li><strong>Cache-friendly O(1) space wins on constant factor:</strong> Problem 2's sorted two pointers run in <code>4,381</code> steps and <code>0.47 ms</code> (<code>1,186.2x</code> speedup over <code>557.76 ms</code>), nearly 9x faster than Problem 1's hash map because sequential array reads avoid hash bucket allocation.</li>
+    <li><strong>The 2n sliding-window ceiling holds:</strong> In Problem 3, the outer and inner loops together execute <code>9,962</code> operations on <code>N = 5,000</code> turns (strictly under <code>2N = 10,000</code>), finishing in <code>0.60 ms</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Negative token weights break sliding window.</strong> Set <code>ALLOW_NEGATIVE_TOKENS = True</code>. Predict which problem's <code>Match</code> column flips to <code>False</code> and why Problem 1's prefix-hash still prints <code>True</code>.</li>
+    <li><strong>Missing empty-prefix base case.</strong> Set <code>DROP_PREFIX_BASE_CASE = True</code>. Predict the exact answer difference on Problem 1 (hint: <code>BUDGET_K = sum(turns[:5]) = 130</code> starts at index 0).</li>
+    <li><strong>Hash collision degradation to O(n^2).</strong> Set <code>COLLIDE_HASH_KEYS = True</code> so every prefix key hashes modulo 4. Predict what happens to Problem 1's optimal runtime when O(1) dict lookups degrade into O(n) collision-chain scans.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Extend <code>p1_optimal</code> to also return the longest subarray length summing to <code>BUDGET_K</code> using a second dictionary <code>first_idx = {0: -1}</code> that only records a prefix sum the first time it appears.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Context-window batch packer drops valid turns or under-packs prompts after adding negative priority credits</td><td>Sliding-window packer assumes monotonic positive token weights</td><td>Separate token count (strictly positive, sliding-window safe) from signed priority scores, or use prefix sums + monotonic queue</td></tr>
+    <tr><td>Rate-limiter or streaming token counter leaks memory over multi-hour voice-AI sessions</td><td>Unbounded prefix-sum dictionary or sliding window frequency map where 0-count keys are never deleted</td><td>Evict expired timestamps from the left pointer and <code>del freq[k]</code> whenever a token's count drops to 0</td></tr>
+    <tr><td>P99 latency spikes 100x on long 128k-token documents during chunk deduplication</td><td>Naive <code>while window_sum &gt; cap: window.pop(0)</code> on a Python <code>list</code> shifting O(n) elements per pop</td><td>Maintain an index pointer <code>l += 1</code> over the array or use <code>collections.deque.popleft()</code> for true O(1) eviction</td></tr>
+    <tr><td>Prefix sums overflow 32-bit integers on large token corpora</td><td>Cumulative sum of millions of token counts exceeds <code>2^31 - 1</code> (2.14B) in C++/Rust/NumPy</td><td>Always accumulate prefix sums in 64-bit integers (<code>int64_t</code> / <code>np.int64</code>)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Per-request pointer iterations divided by input length (<code>ops / n</code> should stay <code>&lt;= 2.0</code>), hash map key cardinality and memory footprint, and P99 chunking latency versus prompt token length.</p>
+  <details class="q"><summary>Scenario: Your clinic voice-AI gateway packs variable-length transcript turns into an 8,192-token prompt budget. At 5,000 turns per long audit log, P99 latency spikes to 600 ms and CPU saturates. Profiling shows a nested loop slicing <code>sum(turns[i:j])</code> on every candidate window. How do you fix it?</summary><div class="a"><ol>
+    <li><strong>Diagnose the hidden O(n^3) / O(n^2) trap:</strong> Recomputing <code>sum(turns[i:j])</code> inside a nested loop over <code>i</code> and <code>j</code> does O(n) work per pair, or O(n^2) even with incremental summation.</li>
+    <li><strong>Verify monotonicity:</strong> Transcript turn token counts are strictly positive integers (<code>tokens &gt;= 1</code>), so window token sum grows monotonically as <code>r</code> expands and shrinks monotonically as <code>l</code> advances.</li>
+    <li><strong>Replace with a single-pass sliding window (or prefix array + binary search):</strong> Maintain running sum <code>s</code> with indices <code>l</code> and <code>r</code>. Advance <code>r</code> once per turn and advance <code>l</code> while <code>s &gt; 8192</code>, using index arithmetic instead of list slicing.</li>
+    <li><strong>Verify impact:</strong> Pointer moves drop from 12.5M to under 10,000 (<code>&lt;= 2n</code>), cutting CPU time on 5,000 turns from ~540 ms to under 1 ms with zero extra allocations.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Prefix sums, hash maps, two pointers, and sliding windows are the four invariants that collapse quadratic O(n^2) array scans into single-pass O(n) pipelines. In our 5,000-turn benchmark, they cut operation counts from 12.5 million down to 5,000 to 10,000 operations and reduce runtime from over 530 milliseconds to under 5 milliseconds.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Each pattern eliminates the inner loop differently. Prefix sums define P[i] as the cumulative total up to index i, turning any range sum into O(1) subtraction P[r+1] minus P[l]; pairing that with a hash map seeded with counts[0] = 1 finds exact subarray sums K by looking up P[r+1] minus K in O(1) expected time and O(n) space. When data is sorted, opposite-direction two pointers compare endpoints and prune an entire row or column of pairs per step in O(1) space. When the window metric is monotonic, a sliding window expands right and shrinks left so neither pointer moves backward, bounding total work at 2n operations.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Two failure modes trip candidates up. First, negative numbers break sliding-window monotonicity because shrinking left can increase the sum, forcing a switch to a prefix-sum hash map. Second, omitting counts[0] = 1 misses every valid prefix starting at index 0, while calling list.pop(0) inside a window silently puts O(n^2) memory shifts back into an O(n) loop.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"I would optimize the array search by using a sliding window or a hash map so it runs in linear time instead of slow nested loops, which scales much better for production users."</p><p class="strong">"A nested subarray scan costs n(n+1)/2 operations (12.5 million checks at n = 5,000). If turn weights are non-negative, a monotonic sliding window maintains [l..r] in at most 2n pointer moves and O(1) space because l and r never decrement. If weights can be negative, monotonicity fails, so I switch to a prefix-sum hash map seeded with {0: 1} to look up P[r+1] - K in O(n) time and O(n) space."</p><p>The strong answer names the exact operation counts, proves the 2n amortized bound, contrasts the space complexity, and states the negative-number boundary condition.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"A sliding window has a while loop inside a for loop, so its worst-case time complexity is O(n^2)."</summary><div class="a">Wrong. A single outer iteration can advance <code>l</code> up to <code>n</code> times, but <code>l</code> starts at 0, only increments, and never exceeds <code>n</code>. Across the entire <code>for</code> loop, the inner body executes at most <code>n</code> times total, giving <code>n + n = 2n = O(n)</code> amortized time.</div></details>
+  <details class="q"><summary>"You can use a variable-size sliding window to find the longest subarray with sum &lt;= K or sum == K even when the array has negative numbers."</summary><div class="a">Wrong. Negative numbers destroy monotonicity: advancing <code>l</code> past a negative number increases the window sum, and stopping expansion early misses later negative numbers that would pull the sum back down to K. Use a prefix-sum hash map (for <code>== K</code>) or prefix sums with a monotonic deque (for shortest <code>&gt;= K</code>).</div></details>
+  <details class="q"><summary>"Two-pointer pair sum is always faster than hash-map two-sum."</summary><div class="a">Wrong on unsorted inputs. Opposite-direction two pointers require sorted order; if the array is unsorted, sorting first costs <code>O(n log n)</code> time, whereas a hash map solves unsorted two-sum in <code>O(n)</code> expected time (at the cost of <code>O(n)</code> space).</div></details>
+  <details class="q"><summary>"When finding the longest subarray summing to K with a prefix-sum hash map, you should always update index_map[pref] = r on every step."</summary><div class="a">Wrong. Overwriting <code>index_map[pref]</code> with a later index <code>r</code> shrinks future distances <code>r_new - l</code>. To maximize subarray length, you must keep the earliest index where <code>pref</code> first appeared (<code>if pref not in index_map: index_map[pref] = r</code>).</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Prove using amortized accounting why a monotonic sliding window takes at most 2n operations.</summary><div class="a">Assign 2 credits to each of the n array elements: 1 credit pays for the outer loop when <code>r</code> enters the element into the window, and 1 credit pays for the inner <code>while</code> loop when <code>l</code> removes it. Because <code>l</code> never decrements, each element is removed at most once, bounding total operations at <code>2n</code>.<div class="f"><b>Follow-up</b>What is the worst-case time of a single outer iteration, and why does that not contradict O(n) total time? A single step can do O(n) shrinks if l catches all the way up to r, which uses up all previously unspent shrink credits in one batch.</div></div></details>
+  <details class="q"><summary>Why does prefix-sum subarray counting require initializing counts = {0: 1} before the loop?</summary><div class="a">Because <code>P[0] = 0</code> represents the empty prefix before index 0. When a subarray starting at index 0 (<code>arr[0..r]</code>) has sum <code>K</code>, its running prefix is <code>P[r+1] = K</code> and the lookup searches for <code>P[r+1] - K = 0</code>.<div class="f"><b>Follow-up</b>What initial dictionary do you use instead if the problem asks for the longest subarray summing to K? Use <code>first_idx = {0: -1}</code> so a prefix match at index r computes length <code>r - (-1) = r + 1</code>.</div></div></details>
+  <details class="q"><summary>How do you choose between a hash map, two pointers, and a sliding window on a new array problem?</summary><div class="a">Ask two questions: (1) Am I pairing arbitrary indices or scanning a contiguous range? For pairs, use two pointers if sorted (O(1) space) or a hash map if unsorted (O(n) space). (2) For contiguous ranges, is the constraint monotonic (non-negative weights / unique counts)? If yes, use a sliding window (O(1) or O(U) space); if negative numbers exist, use a prefix-sum hash map.</div></details>
+  <details class="q"><summary>In sorted two-sum, prove that advancing l when arr[l] + arr[r] &lt; T cannot skip a valid pair.</summary><div class="a">At state <code>(l, r)</code>, every index <code>j &gt; r</code> was already eliminated in earlier steps because <code>arr[i] + arr[j] &gt; T</code> for all <code>i &gt;= l</code>. And for any remaining <code>j &lt; r</code>, sorted order guarantees <code>arr[l] + arr[j] &lt;= arr[l] + arr[r] &lt; T</code>. Thus index <code>l</code> has no valid partner and can be safely discarded.<div class="f"><b>Follow-up</b>What changes if you need 3Sum (three elements summing to T)? Sort in O(n log n), fix index i in an outer loop, and run opposite-direction two pointers on i+1..n-1 in O(n^2) time and O(1) auxiliary space.</div></div></details>
+  <details class="q"><summary>When maintaining a sliding window of at most M distinct token IDs, why must you delete a token key from the frequency map when its count drops to 0?</summary><div class="a">Because Python's <code>len(freq)</code> counts dictionary keys regardless of whether their value is 0. Leaving zero-count keys in the map makes <code>len(freq)</code> overestimate distinct tokens in the active window and shrink prematurely.<div class="f"><b>Follow-up</b>What is the space complexity of the frequency map if you delete zero-count keys vs if you keep them? Deleting zero-count keys bounds space at O(M); keeping them grows to O(min(n, V)) over the whole stream.</div></div></details>
+  <details class="q"><summary>Why does calling window.pop(0) on a Python list inside a sliding window turn an O(n) algorithm into O(n^2)?</summary><div class="a">A Python <code>list</code> is a contiguous dynamic array, so <code>pop(0)</code> shifts all remaining elements left by one memory slot in O(w) time. Instead, increment an integer index <code>l += 1</code> over the original array or use <code>collections.deque.popleft()</code>.</div></details>
+  <details class="q"><summary>How can you answer Q range-sum queries on a static array of length n in O(n + Q) total time?</summary><div class="a">Build a prefix array <code>P</code> of length <code>n + 1</code> where <code>P[0] = 0</code> and <code>P[i+1] = P[i] + arr[i]</code> in O(n) time, then answer each query <code>sum(l..r)</code> as <code>P[r+1] - P[l]</code> in O(1) time.</div></details>
+  <details class="q"><summary>What happens to a Python dict-based O(n) scan if keys have pathological hash collisions, and how does CPython mitigate it?</summary><div class="a">If all n keys collide into the same bucket/probe chain, each lookup scans O(n) existing keys, degrading total runtime to O(n^2) (as shown in our kata's third break-it). CPython mitigates this for strings and bytes via per-process random SipHash seeding (<code>PYTHONHASHSEED</code>).<div class="f"><b>Follow-up</b>Can a Python list be used as a dict key for prefix or frequency grouping? No, lists are mutable and unhashable; convert to a tuple or fixed integer state first.</div></div></details>
+  <details class="q"><summary>How do you deduplicate a sorted token ID array in-place in O(n) time and O(1) space?</summary><div class="a">Use same-direction read/write pointers: set <code>write = 1</code> and scan <code>read</code> from <code>1</code> to <code>n - 1</code>. Whenever <code>arr[read] != arr[write - 1]</code>, copy <code>arr[write] = arr[read]</code> and increment <code>write += 1</code>. The deduplicated prefix has length <code>write</code>.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: the four P-H-T-S invariants with their time and space complexities, why <code>counts[0] = 1</code> is required, why negative numbers break sliding windows, and the 2n amortized proof.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 5-turn sliding-window trace showing <code>r</code> expanding, <code>l</code> shrinking without resetting <code>r</code>, and total moves bounded by <code>2n</code> vs <code>n(n+1)/2</code>.</li>
+    <li>Wrote the prefix-sum identity <code>sum(l..r) = P[r+1] - P[l]</code> and the hash lookup <code>P[l] = P[r+1] - K</code> with base case <code>counts = {0: 1}</code> (or <code>first_idx = {0: -1}</code>).</li>
+    <li>Explained opposite-direction two-pointer pruning on sorted arrays in <code>O(n)</code> time and <code>O(1)</code> auxiliary space.</li>
+    <li>Proved the sliding-window <code>2n</code> amortized bound and explained why negative numbers break monotonicity.</li>
+    <li>Cited the kata benchmark scale: at <code>n = 5,000</code>, <code>12.5M</code> brute-force ops drop to <code>5,000-9,962</code> linear ops (<code>129x-1,186x</code> speedup).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A01: Why does a standard Python dataclass with <code>field: int</code> still accept a string at runtime, and why do you use Pydantic at external API boundaries instead?</summary><div class="a">Standard Python type hints and <code>@dataclass</code> annotations are not enforced at runtime by default; Pydantic parses, coerces, and validates untrusted input payloads at runtime and raises structured validation errors on schema mismatches.</div></details>
+  <details class="q"><summary>A02: Why does <code>asyncio.gather</code> speed up 50 concurrent LLM API calls by ~30x despite Python's Global Interpreter Lock (GIL), yet gives zero speedup on 50 CPU-bound matrix multiplications?</summary><div class="a">Network socket waits release the GIL and yield control to the event loop so 50 I/O requests overlap concurrently; pure Python CPU loops hold the GIL continuously on one OS thread and block the event loop.</div></details>
+  <details class="q"><summary>A07: When profiling a slow Python data pipeline, what is the difference between <code>cProfile</code> and <code>py-spy</code>, and when do you reach for each?</summary><div class="a"><code>cProfile</code> is a deterministic tracing profiler that hooks every function call (adding 2x-5x overhead), while <code>py-spy</code> is a low-overhead sampling profiler that reads stack frames out-of-process and can attach to a live production PID without code changes.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/">Cormen, Leiserson, Rivest, Stein (CLRS): Introduction to Algorithms, 4th ed.</a><small>Amortized analysis (aggregate and accounting methods) and hash table expected O(1) vs worst-case O(n) collision behavior. Checked 2026-11-20.</small></li>
+    <li><a href="https://docs.python.org/3/faq/design.html#how-are-dictionaries-implemented">Python Software Foundation: Dictionary &amp; TimeComplexity Reference</a><small>CPython open-addressing hash table implementation, load-factor resizing, and list pop(0) O(n) vs deque popleft() O(1) costs. Checked 2026-11-20.</small></li>
+    <li><a href="https://cses.fi/book/book.pdf">Antti Laaksonen: Competitive Programmer's Handbook (Ch. 8: Amortized Analysis &amp; Prefix Sums)</a><small>Two pointers, sliding window monotonicity invariants, and prefix-sum range queries. Checked 2026-11-20.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Prefix sums P[0..n]:</strong> <code>P[0] = 0, P[i+1] = P[i] + arr[i]</code>; answers any range sum <code>sum(l..r) = P[r+1] - P[l]</code> in <code>O(1)</code> time after <code>O(n)</code> build.</li>
+    <li><strong>Prefix-sum + hash map:</strong> Rewrites <code>P[r+1] - P[l] == K</code> as <code>P[l] == P[r+1] - K</code>; counts or finds longest exact-sum subarrays in <code>O(n)</code> time and <code>O(n)</code> space even when negative numbers exist.</li>
+    <li><strong>Opposite-direction two pointers:</strong> Starts at <code>l = 0, r = n - 1</code> on sorted input; each comparison prunes a full row or column of pairs in <code>O(n)</code> time and <code>O(1)</code> auxiliary space.</li>
+    <li><strong>Same-direction two pointers:</strong> Uses <code>read</code> and <code>write</code> indices to compact or deduplicate arrays in-place in <code>O(n)</code> time and <code>O(1)</code> space.</li>
+    <li><strong>Monotonic sliding window:</strong> Expands <code>r</code> every step and shrinks <code>l</code> in a <code>while</code> loop while violated; runs in at most <code>2n</code> pointer moves and <code>O(1)</code> (or <code>O(U)</code>) space when weights are non-negative.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Base case rule:</strong> Always seed <code>counts = {0: 1}</code> for subarray counting and <code>first_idx = {0: -1}</code> for longest subarray length, or you miss every range starting at index 0.</li>
+      <li><strong>First-seen rule:</strong> For longest subarray summing to <code>K</code>, only set <code>first_idx[pref] = r</code> if <code>pref</code> is not already in the map.</li>
+      <li><strong>Negative-number boundary:</strong> Never use a variable-size sliding window for subarray sums when elements can be negative; switch to a prefix-sum hash map.</li>
+      <li><strong>Amortized 2n proof:</strong> A sliding window's nested <code>while</code> loop is <code>O(n)</code> total because <code>l</code> starts at 0, only increments, and cannot exceed <code>n</code>.</li>
+      <li><strong>Python implementation traps:</strong> Delete zero-count keys from window frequency dicts so <code>len(freq)</code> stays accurate, and advance an index <code>l += 1</code> instead of calling <code>O(n)</code> <code>list.pop(0)</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A21 T1 W01", "cards": [{"q": "What are the four core array-scan invariants in A21 (P-H-T-S)?", "a": "Prefix difference (P[r+1] - P[l]), Hash complement lookup, Two-pointer sorted pruning, and Sliding-window monotonic expand-and-shrink."}, {"q": "Why must a prefix-sum hash map initialize counts[0] = 1 before scanning the array?", "a": "So any prefix [0..r] whose running sum equals K matches P[r+1] - K = 0 without a separate branch."}, {"q": "Why does a nested while-loop sliding window run in O(n) time instead of O(n^2)?", "a": "Both right and left pointers only move forward from 0 to n, executing at most 2n pointer increments total across the entire scan."}, {"q": "Why do negative numbers break a variable-size sliding window for subarray sums?", "a": "Negative values destroy monotonicity: advancing left can increase the window sum instead of shrinking it, requiring a prefix-sum hash map or monotonic deque."}, {"q": "When should you choose two pointers over a hash map for pair-sum problems?", "a": "When the input is already sorted or O(1) auxiliary space is required; hashing takes O(n) time on unsorted data but pays O(n) memory."}, {"q": "How does advancing one pointer in opposite-direction two-sum eliminate O(n) pairs in O(1) time?", "a": "If a[l] + a[r] > T in a sorted array, every a[k] + a[r] for k > l also exceeds T, ruling out column r immediately."}, {"q": "Why must you store the earliest index when finding the longest subarray summing to K, but frequencies when counting subarrays?", "a": "Counting adds all prior matching prefixes, whereas maximizing length r - l + 1 requires keeping the smallest index l where P[l] first appeared."}, {"q": "What causes an O(n) hash-map scan to degrade to O(n^2) in production?", "a": "Pathological hash collisions or adversarial keys that map into the same bucket, forcing linear O(n) equality probes on every lookup."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

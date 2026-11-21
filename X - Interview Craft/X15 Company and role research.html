@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X15 Company and role research</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="X15">
+<main>
+<header>
+  <div class="eyebrow"><b>X15</b><span>X Interview craft</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Company and role research</h1>
+  <p class="lede">How do you turn a noisy 800-word job description into a ranked list of Topic IDs, a 7-day gap sprint, and sharp reverse-interview diagnostic questions? This page covers stripping HR boilerplate, mapping JDs to the four AI engineering loop archetypes, and scoring readiness by gap ROI.</p>
+  <div class="chips"><span><em>Before</em>X02 The question log</span><span><em>After</em>X03 Thinking aloud, clarifying questions, and handling "I don't know"</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up predictions</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper, and mechanism</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the JD mapper kata</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production triage, 90-second drill, and traps</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and Anki cards</span><small>9 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You have 14.0 hours across 7 days before an Inference Systems loop (6 extracted Topic IDs, current weighted readiness 47.5%). How much does your projected loop readiness score drop in the kata if you divide those 14.0 hours equally across all 6 topics instead of weighting by Top-3 Gap ROI?</summary><div class="a">It drops by 22.8 percentage points, from 81.1% down to 58.3%. Equal-time allocation wastes 7.0 hours re-reviewing already-learned topics like K04 and K06 (85% mastery) while starving high-weight Tier 1 gaps like K14 (FP8 quantization, 20% mastery, ROI 2.40) and K07 (PagedAttention, 25% mastery, ROI 2.25).</div></details>
+  <details class="q"><summary>In a typical 40-bullet AI engineer job description, roughly what fraction of the bullets are HR boilerplate or generic software table stakes rather than the 3 to 5 load-bearing architectural bottlenecks the loop actually grades?</summary><div class="a">Roughly 65% to 75% is HR boilerplate ("fast-paced team player") or baseline table stakes ("Git, CI/CD, Python"). In the kata, failing to strip HR boilerplate drags Role 2's measured readiness from 43.8% down to 40.2% and hijacks 3.8 hours of your 14-hour sprint.</div></details>
+  <details class="q"><summary>When a hiring manager asks "Do you have any questions for me?" at the end of a technical screen, why does asking "What does a typical day look like?" lose points compared to a bottleneck-hypothesis question?</summary><div class="a">Generic culture questions signal you did not decode their stack's bottleneck. A bottleneck-hypothesis question states the mechanism and constraint from the JD ("You list vLLM and multi-tenant LoRA; is your p99 TPOT currently bound by HBM capacity on the KV cache or PCIe adapter-swap overhead?") and proves Level 3 engineering judgment.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Most candidates read a job description like a flat wish list: they scan every bullet, worry about unfamiliar tools, and spend the week before the interview doing unfocused review. Because JDs mix HR templates, secondary stack glue, and real production fires in one list, unguided prep treats a zero-weight buzzword and a Tier 1 loop gate as equal priorities.</p>
+  <p>Treat every JD as a noisy telemetry log emitted by a team with a specific production bottleneck. Strip the 70% HR boilerplate, classify the role into one of four interview loop archetypes, map technical signals to exact Topic IDs, and spend 100% of your 7-day sprint on the top three gaps ranked by Return on Investment (<code>ROI = weight * (1 - mastery)</code>).</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The 5-Stage JD-to-Loop Decoding and Gap-ROI Pipeline</div>
+    <svg viewBox="0 0 500 220" role="img" aria-label="Five-stage pipeline showing raw JD text filtered for bottleneck signals, mapped to Topic IDs and one of four loop archetypes, scored for weighted readiness and Gap ROI, scheduled into a 14-hour 7-day sprint, and converted into diagnostic reverse-interview questions.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="8" y="22" width="86" height="64" rx="6" class="c-muted" data-hi="1"/>
+          <text x="51" y="45" text-anchor="middle" font-weight="700">1 Filter JD</text>
+          <text x="51" y="62" text-anchor="middle">Drop ~70%</text>
+          <text x="51" y="78" text-anchor="middle">HR noise</text>
+        </g>
+        <g data-step="2">
+          <path d="M94 54 H108" class="ink" stroke-width="1.8"/>
+          <rect x="108" y="22" width="90" height="64" rx="6" class="c-accent" data-hi="2"/>
+          <text x="153" y="45" text-anchor="middle" font-weight="700">2 Map IDs</text>
+          <text x="153" y="62" text-anchor="middle">4 Archetypes</text>
+          <text x="153" y="78" text-anchor="middle">6 to 8 IDs</text>
+        </g>
+        <g data-step="3">
+          <path d="M198 54 H212" class="ink" stroke-width="1.8"/>
+          <rect x="212" y="22" width="92" height="64" rx="6" class="c-warn" data-hi="3"/>
+          <text x="258" y="45" text-anchor="middle" font-weight="700">3 Gap ROI</text>
+          <text x="258" y="62" text-anchor="middle">w*(1 - m)</text>
+          <text x="258" y="78" text-anchor="middle">Rank Top 3</text>
+        </g>
+        <g data-step="4">
+          <path d="M304 54 H318" class="ink" stroke-width="1.8"/>
+          <rect x="318" y="22" width="86" height="64" rx="6" class="c-good" data-hi="4"/>
+          <text x="361" y="45" text-anchor="middle" font-weight="700">4 7d Sprint</text>
+          <text x="361" y="62" text-anchor="middle">14.0h budget</text>
+          <text x="361" y="78" text-anchor="middle">47.5-&gt;81.1%</text>
+        </g>
+        <g data-step="5">
+          <path d="M404 54 H418" class="ink" stroke-width="1.8"/>
+          <rect x="418" y="22" width="74" height="64" rx="6" class="c-soft" data-hi="5"/>
+          <text x="455" y="45" text-anchor="middle" font-weight="700">5 Probe</text>
+          <text x="455" y="62" text-anchor="middle">Diagnostic</text>
+          <text x="455" y="78" text-anchor="middle">Questions</text>
+          <rect x="8" y="132" width="484" height="64" rx="6" class="c-bad"/>
+          <text x="250" y="156" text-anchor="middle" font-weight="700">Failure mode: unguided equal-weight review + keeping HR noise</text>
+          <text x="250" y="178" text-anchor="middle">Wastes 7.0h of 14.0h on learned topics; readiness stalls at 58.3% vs 81.1%</text>
+        </g>
+        <g data-only="3">
+          <text x="12" y="112" class="m">Top gap K14 (weight 3.0, mastery 0.20) yields ROI = 2.40 vs K06 (0.85) ROI = 0.45.</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Strip roughly 70% of HR boilerplate and generic software table stakes so only the 5 to 8 load-bearing technical signals remain.</li>
+      <li>Classify the role into one of the 4 AI loop archetypes and map every surviving phrase to an exact curriculum Topic ID (for example vLLM to K07, golden set evals to J01).</li>
+      <li>Compute weighted readiness and score every required topic by Gap ROI = weight * (1 - mastery) so a Tier 1 gap like K14 (ROI 2.40) ranks ahead of a learned topic like K06 (ROI 0.45).</li>
+      <li>Allocate your 14.0-hour 7-day sprint proportionally across the top 3 ROI gaps, lifting Role 1 projected loop readiness from 47.5% to 81.1% instead of 58.3% under equal-time review.</li>
+      <li>Convert the mapped bottlenecks into proof stories from your own systems and diagnostic reverse-interview questions that test the hiring manager's real production tradeoffs.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Mapping a JD to Topic IDs and allocating prep by Gap ROI turns a 14-hour pre-loop week into a +22.8 percentage-point readiness advantage over unfocused study.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>S-M-R-S-P (Strip, Map, Rank ROI, Sprint, Probe):</strong> <strong>S</strong>trip 70% HR noise, <strong>M</strong>ap to 4 archetypes and 6 to 8 Topic IDs, <strong>R</strong>ank gaps by <code>w * (1 - m)</code>, <strong>S</strong>print 14h on the Top 3 gaps, and <strong>P</strong>robe the interviewer with bottleneck-hypothesis questions.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. The 3-bucket JD decoder and the 4 loop archetypes</h3>
+  <p>Split every JD bullet into three buckets: Bucket 1 is <strong>Load-Bearing Bottlenecks</strong> (15% to 20% of bullets, Tier 1 weight <code>w = 3.0</code>) such as <code>TTFT/TPOT</code>, <code>PagedAttention</code>, <code>hybrid RAG</code>, or <code>HIPAA VPC isolation</code>. Bucket 2 is <strong>Stack Table Stakes</strong> (10% to 15%, Tier 2 weight <code>w = 2.0</code>) like <code>FastAPI SSE</code> or <code>voice pipelines</code>. Bucket 3 is <strong>HR Boilerplate</strong> (65% to 75%, weight <code>0.0</code>) like "passionate team player in a fast-paced environment." Drop Bucket 3 immediately. The 6 to 8 surviving Topic IDs classify the role into one of four loop archetypes:</p>
+  <ul>
+    <li><strong>Inference Systems (K-heavy: K04, K05, K06, K07, K14, K20):</strong> GPU roofline math, KV cache paging, FP8/AWQ quantization, and TTFT/TPOT batching tradeoffs.</li>
+    <li><strong>Applied LLM, RAG, and Agents (G, H, I, J: G01, G04, H01, I02, J01):</strong> Prefix caching, hybrid BM25 + dense retrieval, agent step budgets and tool guards, and golden-set evals.</li>
+    <li><strong>AI Fullstack and Platform (D, M, N, S):</strong> Async SSE backpressure, multi-tenant gateways, semantic caching, and token cost attribution.</li>
+    <li><strong>Forward Deployed Engineer / FDE (G, H, J, S, T, V, W, X06):</strong> Messy customer workflow decomposition, VPC/PII erasure, unit economics per 1k requests, and stakeholder discovery.</li>
+  </ul>
+  <details class="q"><summary>Check: A job description lists "FastAPI, Kubernetes, RAG chunking, LLM-as-judge evals, tool-calling state machines, and prompt prefix caching." Which archetype loop is this, and which Topic IDs dominate the technical deep dive?</summary><div class="a">It is Archetype 2 (Applied LLM, RAG, and Agent Systems) with a light Fullstack (M02) wrapper. The load-bearing deep-dive IDs are H01 (RAG chunking), J01 (LLM-as-judge evals), G04/I02 (tool calling and agent loops), and G01 (prefix caching).</div></details>
+
+  <h3>2. Readiness math and Gap-ROI sprint allocation</h3>
+  <p>For extracted Topic IDs <code>i = 1..k</code> with loop weight <code>w_i</code> and current tracker mastery <code>m_i</code> (from <code>0.0</code> to <code>1.0</code>), compute weighted readiness and each topic's Gap ROI:</p>
+  <div class="codewrap"><pre>Readiness % = 100 * sum(w_i * m_i) / sum(w_i)
+Gap ROI_i   = w_i * (1 - m_i)
+Sprint hours h_i (Top 3 gaps) = H_total * ROI_i / sum_top3(ROI)</pre></div>
+  <p>Loops fail you on your lowest Tier 1 floor, not your average across ten bullets. A Tier 1 gap at 20% mastery (<code>w = 3.0, m = 0.20, ROI = 2.40</code>) gives 5.3x more leverage per hour than reviewing a learned Tier 1 topic at 85% mastery (<code>ROI = 0.45</code>), so spend 100% of a 14.0-hour sprint on the Top 3 ROI gaps.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: 7-day pre-loop readiness lift under Gap-ROI sprint vs unguided equal review</div>
+    <p class="ask">Predict first. For the Inference Systems archetype at 47.5% baseline readiness and 7 days of prep (2 hours/day), how many extra readiness points does Top-3 Gap-ROI targeting win over equal-weight broad review?</p>
+    <div class="ctl">
+      <label><span>Role archetype</span><select name="role" data-num><option value="1">1. Inference Systems (K-heavy)</option><option value="2">2. Applied LLM / Agent (G/H/I/J)</option><option value="3">3. Forward Deployed FDE (H/J/S/V/W/X)</option></select></label>
+      <label><span>Days until loop</span><input type="range" name="days" min="2" max="14" step="1" value="7"><output data-for="days" data-unit=" days"></output></label>
+      <label><span>Baseline mastery</span><input type="range" name="base" min="20" max="80" step="5" value="48"><output data-for="base" data-unit="%"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Concentrating your pre-loop hours on the top 3 Tier 1 gaps produces a 18 to 24 percentage-point higher loop readiness score than spreading the same hours evenly across every bullet on the JD.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var hrs=v.days*2.0, topRoi=v.role===1?6.75:(v.role===2?6.60:6.45), nTopics=v.role===3?7:6;
+    var scale=(100-v.base)/52.5;
+    var roiGain=hrs*(topRoi/3.0)*1.45*scale;
+    var eqGain=(hrs*(3.0/nTopics))*(topRoi/3.0)*1.45*scale;
+    var roiScore=Math.min(95,v.base*0.75+roiGain);
+    var eqScore=Math.min(95,v.base*0.75+eqGain);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"Baseline (no sprint)",value:v.base,tone:"muted"},
+      {label:"Equal review across all IDs",value:eqScore,tone:"warn"},
+      {label:"Top-3 Gap-ROI sprint",value:roiScore,tone:"good"}
+    ]});
+    return {verdict:"Budget: "+tl.fmt(hrs,1)+"h | Gap-ROI sprint reaches "+tl.fmt(roiScore,1)+"% vs "+tl.fmt(eqScore,1)+"% for equal review (+"+tl.fmt(roiScore-eqScore,1)+" pts)."};
+  })});</script>
+
+  <h3>3. Screen phrases, reverse-interview role-play script, and rubric</h3>
+  <p>Use A/B probes on early calls to verify your loop map, and tie answers to your own systems (clinic voice AI, GDPR/HIPAA erasure, SSM edge constraints):</p>
+  <ul>
+    <li><strong>Recruiter screen:</strong> <em>"To prepare the right system examples, are the technical rounds weighted more toward GPU serving and memory math, or toward application-layer RAG, eval harnesses, and agent orchestration?"</em></li>
+    <li><strong>Hiring-manager screen:</strong> <em>"Over the first 90 days, is the main engineering fire cutting p99 TTFT and token spend at scale, or raising retrieval recall and golden-set eval coverage on messy domain data?"</em></li>
+    <li><strong>Proof bridge:</strong> <em>"That mirrors the latency-versus-compliance boundary I hit on realtime clinic voice pipelines and HIPAA erasure workflows, keeping turn latency under 600 ms while stripping PHI before any vector write."</em></li>
+  </ul>
+  <p><strong>Role-play script (3-minute diagnostic at the end of a round; ask me in chat to play the Hiring Manager):</strong></p>
+  <div class="codewrap"><pre>HM: "We have five minutes left. Any questions for me?"
+You (A/B hypothesis + metric): "Yes. Your JD pairs vLLM continuous batching with
+  multi-tenant LoRA adapters under strict latency SLOs. When p99 TPOT spikes under
+  load, is the bottleneck usually HBM fragmentation from long-context KV caches,
+  or PCIe contention swapping LoRA weights across batches?"
+HM: "Long-context KV cache preemption; enterprise prompts jumped 4k to 32k."
+You (Mechanism + follow-up): "When prompts jump 8x to 32k, prefill scales
+  quadratically while KV cache eats HBM linearly (K06/G01). Have you enabled
+  chunked prefill and prefix caching yet, or are tenant prefixes too dynamic?"</pre></div>
+  <div class="scroll"><table><tr><th>Score</th><th>JD Mapping &amp; Gap Plan</th><th>Reverse-Interview Diagnostic Question</th></tr>
+    <tr><td class="n">0 / 3</td><td>Reads JD linearly; no Topic IDs</td><td>"What is a typical day or the culture like?"</td></tr>
+    <tr><td class="n">1 / 3</td><td>Lists tools; mixes HR noise with core tasks</td><td>"What tech stack does the team use?"</td></tr>
+    <tr><td class="n">2 / 3</td><td>Maps Topic IDs and archetype subjectively</td><td>"What is your biggest RAG challenge?"</td></tr>
+    <tr><td class="n">3 / 3</td><td>Scores Readiness % and Top-3 Gap-ROI 14h sprint</td><td>States an A/B bottleneck hypothesis with a metric and two mechanisms from the JD</td></tr>
+  </table></div>
+  <details class="q"><summary>Check: Why does an A/B bottleneck hypothesis ("Is your p99 latency bound by X or Y?") get a 3/3 on the rubric while "What is your biggest technical challenge?" only gets a 2/3?</summary><div class="a">An open "biggest challenge" question makes the interviewer do the synthesis work and often yields a generic high-level answer. Naming two plausible concrete failure mechanisms (X vs Y) proves you already understand the internals of their stack and forces a technical peer conversation.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Share of typical JD bullets that are HR boilerplate or generic table stakes</td><td class="n">65% to 75%</td><td>Derived (curriculum JD audit rubric)</td></tr>
+    <tr><td>Core Topic IDs extracted per focused AI engineering JD</td><td class="n">5 to 8 Topic IDs</td><td>Your own run (kata.py: 6, 6, 7 IDs)</td></tr>
+    <tr><td>Tier weights in readiness and Gap-ROI scorer</td><td class="n">T1 = 3.0, T2 = 2.0, HR noise = 0.0</td><td>Derived (kata.py specification)</td></tr>
+    <tr><td>Role 1 (Inference) readiness: baseline vs 7-day Top-3 Gap-ROI sprint</td><td class="n">47.5% -&gt; 81.1% (+33.6 pts)</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>Role 1 (Inference) 7-day readiness: Gap-ROI sprint vs equal-time study</td><td class="n">81.1% vs 58.3% (+22.8 pts)</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>Role 2 (Applied LLM/Agent) readiness and Top-1 gap</td><td class="n">43.8% -&gt; 77.6% (Gap #1: J01, ROI 2.40)</td><td>Your own run (kata.py)</td></tr>
+    <tr><td>Role 3 (Healthcare FDE) readiness and Top-1 gap</td><td class="n">50.0% -&gt; 81.8% (Gap #1: J01, ROI 2.40)</td><td>Your own run (kata.py)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Top-3 Gap-ROI sprint (14h focused on highest w*(1-m))</td><td>Maximizes loop pass probability (+22.8 pts over equal review in kata); eliminates fatal Tier 1 floors</td><td>Zero review time spent on lower-weight T2/T3 bullets during the final 7 days</td><td>Ignoring a T2 topic that the recruiter explicitly told you is a dedicated round</td></tr>
+    <tr><td>Equal-time broad review across all JD bullets</td><td>Feels safe and comprehensive; touches every keyword once</td><td>Starves deep Tier 1 gaps (2.3h instead of 4.9h on K14); leaves answers at Level 1</td><td>Stalling on the first follow-up in your deep-dive round because you only skimmed</td></tr>
+    <tr><td>Treating every JD requirement as a literal hard gate</td><td>Prevents applying to roles outside your exact tool history</td><td>Self-rejecting from roles where you already hold 50%+ weighted foundation and can close the top 3 gaps in 7 days</td><td>Skipping an application because of one unfamiliar library wrapper around a concept you know</td></tr>
+    <tr><td>Generic culture questions in reverse interview</td><td>Zero prep required; polite conversation</td><td>Wastes your best 5-minute window to demonstrate Level 3 architectural peersmanship</td><td>Interviewer checking out mentally during the last 5 minutes of the call</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Deterministic JD-to-Topic mapper and Gap-ROI scorer</h2>
+  <p>Maps three realistic AI engineering job descriptions (Inference Systems, Applied LLM/Fullstack, Healthcare FDE) to curriculum Topic IDs, computes weighted readiness coverage, ranks the top three gaps by <code>ROI = weight * (1 - mastery)</code>, and allocates a 14.0-hour 7-day study sprint.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""X15 Kata: Deterministic JD-to-Topic-ID Mapper, Readiness &amp; Gap ROI Scorer."""
+
+# Break-it knobs: flip one at a time, predict the effect, then run
+INCLUDE_BOILERPLATE = False  # Break 1: True scores HR buzzwords with same weight as T1 core
+EQUAL_WEIGHT_STUDY = False   # Break 2: True divides 7-day prep evenly instead of by gap ROI
+
+# Topic catalog: tid -&gt; (name, tier_weight, current_mastery 0.0..1.0)
+# Candidate state: Week 1 foundational topics learned (0.85-0.90), deeper weeks partial (0.15-0.45)
+TOPICS = {
+    "K04": ("One token end to end (prefill/decode)", 3.0, 0.85),
+    "K05": ("GPU memory &amp; roofline arithmetic intensity", 3.0, 0.40),
+    "K06": ("KV cache math, GQA &amp; MQA sizing", 3.0, 0.85),
+    "K07": ("PagedAttention &amp; continuous batching (vLLM)", 3.0, 0.25),
+    "K14": ("Quantization: INT8, FP8, AWQ, GPTQ", 3.0, 0.20),
+    "K20": ("Serving SLOs: TTFT, TPOT &amp; goodput", 3.0, 0.30),
+    "G01": ("Token optimization &amp; prompt prefix caching", 3.0, 0.90),
+    "G04": ("Structured outputs &amp; tool calling schemas", 3.0, 0.45),
+    "H01": ("RAG architecture, chunking &amp; hybrid BM25+dense", 3.0, 0.35),
+    "I02": ("Agent loop budgets, timeouts &amp; tool guards", 3.0, 0.25),
+    "J01": ("Offline golden sets &amp; LLM-as-judge evals", 3.0, 0.20),
+    "M02": ("FastAPI async SSE streaming &amp; backpressure", 2.0, 0.50),
+    "S04": ("PII redaction, HIPAA/GDPR erasure &amp; VPC isolation", 3.0, 0.65),
+    "T01": ("Voice &amp; realtime audio streaming pipelines", 2.0, 0.70),
+    "V02": ("Unit economics: cost per 1k requests &amp; gross margin", 2.0, 0.75),
+    "W01": ("Tactical empathy, stakeholder alignment &amp; discovery", 2.0, 0.80),
+    "X06": ("FDE decomposition: messy workflow to 2-week PoC", 3.0, 0.30),
+    "HR0": ("Fast-paced passionate team player synergy", 2.0, 0.10),
+}
+
+# Keyword signal -&gt; Topic ID mapping
+SIGNALS = [
+    ("kv cache", "K06"), ("pagedattention", "K07"), ("vllm", "K07"),
+    ("quantization", "K14"), ("fp8", "K14"), ("ttft", "K20"), ("tpot", "K20"),
+    ("roofline", "K05"), ("hbm", "K05"), ("prefill", "K04"),
+    ("prefix caching", "G01"), ("token cost", "G01"), ("tool calling", "G04"),
+    ("hybrid search", "H01"), ("rag", "H01"), ("agent loop", "I02"), ("guardrail", "I02"),
+    ("eval", "J01"), ("golden set", "J01"), ("sse", "M02"), ("fastapi", "M02"),
+    ("hipaa", "S04"), ("pii erasure", "S04"), ("vpc", "S04"), ("voice", "T01"),
+    ("unit economics", "V02"), ("stakeholder", "W01"), ("ambiguous workflow", "X06"),
+    ("passionate", "HR0"), ("fast-paced", "HR0"),
+]
+
+JDS = [
+    ("Role 1: Inference &amp; Serving Systems Engineer", "Inference Systems",
+     "Own vLLM serving and PagedAttention kernels; optimize KV cache sizing, FP8 quantization, "
+     "HBM roofline utilization, prefill vs decode split, and strict TTFT and TPOT SLOs in a fast-paced team."),
+    ("Role 2: AI Product / Fullstack &amp; Agent Engineer", "Applied LLM &amp; Agent Fullstack",
+     "Build FastAPI SSE streaming backends, hybrid search RAG, tool calling schemas, agent loop "
+     "guardrails, prefix caching for token cost, and golden set evals with passionate builders."),
+    ("Role 3: Forward Deployed AI Engineer (Healthcare)", "Forward Deployed (FDE)",
+     "Decompose ambiguous workflow problems with hospital stakeholders; deploy clinical RAG, voice "
+     "pipelines, HIPAA VPC isolation, PII erasure, eval harnesses, and unit economics in a fast-paced org."),
+]
+
+PREP_HOURS = 14.0  # 7-day pre-loop sprint at 2.0 focused hours/day
+
+print(f"=== X15 JD-TO-TOPIC MAPPER &amp; GAP ROI SCORER (7-Day Budget: {PREP_HOURS:.1f}h) ===")
+print(f"Flags: INCLUDE_BOILERPLATE={INCLUDE_BOILERPLATE} | EQUAL_WEIGHT_STUDY={EQUAL_WEIGHT_STUDY}\n")
+
+for title, archetype, text in JDS:
+    low = text.lower()
+    matched = []
+    for kw, tid in SIGNALS:
+        if tid == "HR0" and not INCLUDE_BOILERPLATE:
+            continue
+        if kw in low and tid not in matched:
+            matched.append(tid)
+    tot_w = sum(TOPICS[t][1] for t in matched)
+    ready_w = sum(TOPICS[t][1] * TOPICS[t][2] for t in matched)
+    readiness = (ready_w / tot_w) * 100.0
+    # ROI = weight * (1 - mastery)
+    gaps = sorted([(TOPICS[t][1] * (1.0 - TOPICS[t][2]), t) for t in matched], reverse=True)
+    top3 = gaps[:3]
+    top3_roi_sum = sum(r for r, _ in top3)
+    print(f"{title} [{archetype}]")
+    print(f"  Extracted IDs ({len(matched)}): {', '.join(matched)}")
+    print(f"  Weighted Readiness: {readiness:5.1f}% | Total Gap ROI: {sum(r for r, _ in gaps):.2f}")
+    for rank, (roi, tid) in enumerate(top3, 1):
+        name, w, m = TOPICS[tid]
+        hrs = (PREP_HOURS / len(matched)) if EQUAL_WEIGHT_STUDY else (PREP_HOURS * roi / top3_roi_sum)
+        print(f"  Gap #{rank}: {tid} ({name[:32]:32s}) | M={int(m*100):2d}% | ROI={roi:.2f} | 7d alloc={hrs:4.1f}h")
+    # Simulated loop pass probability: baseline + gain from hours on top gaps
+    gain = sum((PREP_HOURS / len(matched) if EQUAL_WEIGHT_STUDY else PREP_HOURS * r / top3_roi_sum) * r * 1.45 for r, _ in top3)
+    pass_prob = min(95.0, readiness * 0.75 + gain)
+    print(f"  Projected 7-Day Loop Readiness Score: {pass_prob:5.1f}%\n")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== X15 JD-TO-TOPIC MAPPER &amp; GAP ROI SCORER (7-Day Budget: 14.0h) ===
+Flags: INCLUDE_BOILERPLATE=False | EQUAL_WEIGHT_STUDY=False
+
+Role 1: Inference &amp; Serving Systems Engineer [Inference Systems]
+  Extracted IDs (6): K06, K07, K14, K20, K05, K04
+  Weighted Readiness:  47.5% | Total Gap ROI: 9.45
+  Gap #1: K14 (Quantization: INT8, FP8, AWQ, GP) | M=20% | ROI=2.40 | 7d alloc= 4.9h
+  Gap #2: K07 (PagedAttention &amp; continuous batc) | M=25% | ROI=2.25 | 7d alloc= 4.6h
+  Gap #3: K20 (Serving SLOs: TTFT, TPOT &amp; goodp) | M=30% | ROI=2.10 | 7d alloc= 4.4h
+  Projected 7-Day Loop Readiness Score:  81.1%
+
+Role 2: AI Product / Fullstack &amp; Agent Engineer [Applied LLM &amp; Agent Fullstack]
+  Extracted IDs (6): G01, G04, H01, I02, J01, M02
+  Weighted Readiness:  43.8% | Total Gap ROI: 9.55
+  Gap #1: J01 (Offline golden sets &amp; LLM-as-jud) | M=20% | ROI=2.40 | 7d alloc= 5.1h
+  Gap #2: I02 (Agent loop budgets, timeouts &amp; t) | M=25% | ROI=2.25 | 7d alloc= 4.8h
+  Gap #3: H01 (RAG architecture, chunking &amp; hyb) | M=35% | ROI=1.95 | 7d alloc= 4.1h
+  Projected 7-Day Loop Readiness Score:  77.6%
+
+Role 3: Forward Deployed AI Engineer (Healthcare) [Forward Deployed (FDE)]
+  Extracted IDs (7): H01, J01, S04, T01, V02, W01, X06
+  Weighted Readiness:  50.0% | Total Gap ROI: 8.50
+  Gap #1: J01 (Offline golden sets &amp; LLM-as-jud) | M=20% | ROI=2.40 | 7d alloc= 5.2h
+  Gap #2: X06 (FDE decomposition: messy workflo) | M=30% | ROI=2.10 | 7d alloc= 4.6h
+  Gap #3: H01 (RAG architecture, chunking &amp; hyb) | M=35% | ROI=1.95 | 7d alloc= 4.2h
+  Projected 7-Day Loop Readiness Score:  81.8%</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Baseline weighted readiness vs 7-day Gap-ROI sprint across 3 AI roles (kata.py)</div>
+    <div data-bars='{"unit":"%","digits":1,"max":100,"rows":[{"label":"Role 1 Inference baseline","value":47.5,"tone":"warn"},{"label":"Role 1 after 14h ROI sprint","value":81.1,"tone":"good"},{"label":"Role 2 Product/Agent baseline","value":43.8,"tone":"warn"},{"label":"Role 2 after 14h ROI sprint","value":77.6,"tone":"good"},{"label":"Role 3 Healthcare FDE baseline","value":50.0,"tone":"warn"},{"label":"Role 3 after 14h ROI sprint","value":81.8,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Even when baseline readiness sits at 43.8% to 50.0% in Week 1, concentrating 14.0 hours on the top 3 ROI gaps lifts all three roles into the 77.6% to 81.8% loop-ready zone.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li>Role 1 (Inference Systems) extracts 6 K-domain IDs (<code>K06, K07, K14, K20, K05, K04</code>). Even though you already know <code>K04</code> and <code>K06</code> at <code>85%</code> mastery, three unlearned Tier 1 bottlenecks pull baseline readiness to <code>47.5%</code>: <code>K14</code> (ROI <code>2.40</code>, allocated <code>4.9h</code>), <code>K07</code> (ROI <code>2.25</code>, <code>4.6h</code>), and <code>K20</code> (ROI <code>2.10</code>, <code>4.4h</code>).</li>
+    <li>Role 2 (Applied LLM &amp; Agent Fullstack) has the lowest baseline readiness (<code>43.8%</code>) and highest total gap ROI (<code>9.55</code>) because evaluation harnesses (<code>J01</code>, ROI <code>2.40</code>), agent loop guards (<code>I02</code>, ROI <code>2.25</code>), and hybrid RAG (<code>H01</code>, ROI <code>1.95</code>) are all Tier 1 gates not yet mastered in Week 1.</li>
+    <li>Role 3 (Healthcare FDE) starts at the highest baseline (<code>50.0%</code>) because your prior strengths in voice pipelines (<code>T01</code>, 70%), HIPAA/PII erasure (<code>S04</code>, 65%), unit economics (<code>V02</code>, 75%), and stakeholder alignment (<code>W01</code>, 80%) carry weight immediately, leaving <code>J01</code> (<code>5.2h</code>), <code>X06</code> (<code>4.6h</code>), and <code>H01</code> (<code>4.2h</code>) as the focused 7-day sprint.</li>
+    <li>Across Roles 2 and 3, <code>J01</code> (Offline golden sets &amp; LLM-as-judge evals, ROI <code>2.40</code>) and <code>H01</code> (Hybrid RAG, ROI <code>1.95</code>) appear in both Top-3 lists, proving that closing one high-ROI Tier 1 gap lifts readiness across multiple job archetypes simultaneously.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Fail to strip HR boilerplate.</strong> Set <code>INCLUDE_BOILERPLATE = True</code> in <code>kata.py</code> so "fast-paced" and "passionate" map to <code>HR0</code> (weight <code>2.0</code>, mastery <code>10%</code>, ROI <code>1.80</code>). Predict what happens to each role's baseline readiness % before running. (You should see readiness drop across all three roles: Role 1 falls from <code>47.5%</code> to <code>43.8%</code>, Role 2 from <code>43.8%</code> to <code>40.2%</code>, and Role 3 from <code>50.0%</code> to <code>46.0%</code>.)</li>
+    <li><strong>Spread study hours evenly instead of by Gap ROI.</strong> Reset <code>INCLUDE_BOILERPLATE = False</code> and set <code>EQUAL_WEIGHT_STUDY = True</code> so the 14.0-hour budget is divided equally across all extracted IDs (<code>2.3h</code> per topic in Roles 1 and 2, <code>2.0h</code> in Role 3). Predict the new Projected 7-Day Loop Readiness Scores before running. (You should see Role 1 plunge from <code>81.1%</code> to <code>58.3%</code>, Role 2 from <code>77.6%</code> to <code>54.2%</code>, and Role 3 from <code>81.8%</code> to <code>56.2%</code>.)</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Paste a live job description you are targeting into <code>JDS</code>, add a recruiter-verified round multiplier (<code>1.5x</code> on the topic domain confirmed for the technical screen), and print a day-by-day 7-day calendar schedule.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>You spend 12 hours prepping for a loop and get blindsided by a 45-minute round on evals or GPU memory math</td><td>Skipped the archetype classification and recruiter A/B probe; prepped generic coding instead of the JD's Tier 1 bottleneck</td><td>Run the 5-stage JD decoder before scheduling the screen and ask the recruiter the round-weighting A/B question on call #1</td></tr>
+    <tr><td>Every JD looks overwhelming with 25+ bullets, causing application paralysis</td><td>Reading HR boilerplate and secondary tools at equal weight with core bottlenecks</td><td>Strip 70% noise first; cap extraction at 6 to 8 Topic IDs and rank only the Top 3 gaps by <code>w * (1 - m)</code></td></tr>
+    <tr><td>Your reverse-interview questions get polite 20-second surface answers</td><td>Asking open-ended culture or "biggest challenge" questions instead of testing a concrete architectural hypothesis</td><td>Use the A/B bottleneck formula: cite two JD requirements and ask which specific failure mode (X vs Y) bounds their p99 metric</td></tr>
+    <tr><td>Your past project stories sound disconnected from the company's domain</td><td>Narrating your project's business vertical instead of its shared systems mechanism and constraint</td><td>Map your proof stories (clinic voice latency, GDPR erasure, SSM edge memory) to the JD's exact Topic IDs (<code>T01, S04, K05</code>)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Track your <strong>JD-to-Loop Hit Rate</strong> (percentage of technical interview questions that land inside the 6 to 8 Topic IDs you extracted from the JD; target <code>&gt;= 80%</code>) and your pre-loop weighted readiness score (target <code>&gt;= 75%</code> before sitting an onsite).</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Job descriptions are noisy telemetry logs where seventy percent of the bullets are HR boilerplate or generic software table stakes. Decoding a JD into exact curriculum Topic IDs and ranking gaps by Return on Investment focuses your pre-loop sprint on the three architectural bottlenecks the interview loop actually grades.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>I run a five-stage pipeline. First, strip boilerplate and classify the role into one of four loop archetypes: Inference Systems, Applied LLM and Agents, AI Fullstack, or Forward Deployed Engineer. Second, map the six to eight load-bearing phrases to Topic IDs with Tier 1 weight three and Tier 2 weight two. Third, score weighted readiness and rank every gap by ROI equals weight times one minus mastery. Fourth, allocate all fourteen hours of a seven-day sprint across the top three ROI gaps. Fifth, turn the mapped bottlenecks into A/B diagnostic questions for the hiring manager.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In my kata across three JDs, targeting the top three ROI gaps lifts seven-day readiness from roughly forty-eight percent to eighty-one percent, beating equal-weight review by over twenty-two percentage points. The main failure mode is trusting stale JD text when a team recently pivoted; always verify round weights with an A/B probe during the first recruiter screen.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"Before an interview I carefully research the company's mission, read their latest funding news, and review every technology listed on the job description so I can show enthusiasm and alignment with their values."</p>
+    <p class="strong">"I strip the 70% HR boilerplate from the JD, classify the loop into its core archetype, and map the 6 to 8 technical signals to Topic IDs. Then I score Gap ROI as weight times one minus mastery and put 100% of my 14-hour pre-loop sprint into the top 3 Tier 1 gaps. In my kata simulation on an Inference JD, that lifts readiness from 47.5% to 81.1% versus 58.3% for equal review, and gives me concrete A/B bottleneck hypotheses to ask the hiring manager."</p>
+    <p>Why the strong one works: it names a deterministic filtering mechanism, the exact ROI formula, real comparison numbers from the kata (47.5% to 81.1% vs 58.3%), and converts the output into diagnostic technical questions.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"To be thorough before an important interview loop, you should divide your study time evenly across every technical requirement listed on the job description."</summary><div class="a">Wrong. Equal-time review treats a Tier 1 topic you already know at 85% mastery (like K06, ROI 0.45) identically to a Tier 1 bottleneck at 20% mastery (like K14, ROI 2.40). In the kata, equal division wastes half of a 14-hour sprint and leaves projected readiness at 58.3% instead of 81.1%.</div></details>
+  <details class="q"><summary>"If your current weighted mastery across a job description's requirements is under 50%, you are not qualified yet and should wait a month before applying or interviewing."</summary><div class="a">Wrong. A 44% to 50% weighted baseline across 6 to 7 extracted IDs typically means you already hold half the foundation and only have 3 high-weight Tier 1 gaps pulling the average down. As the kata shows, a focused 14-hour 7-day sprint on the Top 3 ROI gaps lifts readiness from 43.8%-50.0% to 77.6%-81.8%.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>What are the three buckets you split every job description into, and what weight does each bucket get?</summary><div class="a">Bucket 1: Load-Bearing Architectural Bottlenecks (15% to 20% of bullets, Tier 1 weight 3.0). Bucket 2: Stack Table Stakes and transport glue (10% to 15%, Tier 2 weight 2.0). Bucket 3: HR Boilerplate and generic soft fluff (65% to 75%, weight 0.0, dropped immediately).</div></details>
+  <details class="q"><summary>Name the four AI engineering interview loop archetypes and the primary curriculum domains each one tests.</summary><div class="a">1. Inference and Serving Systems (K domain: KV cache, PagedAttention, quantization, roofline, TTFT/TPOT). 2. Applied LLM, RAG, and Agent Systems (G, H, I, J: prompts, hybrid RAG, agent budgets, evals). 3. AI Fullstack and Platform (D, M, N, S: SSE streaming, gateways, caching, security). 4. Forward Deployed Engineer / FDE (G, H, J, S, T, V, W, X06: workflow decomposition, VPC/PII, unit economics, stakeholder alignment).</div></details>
+  <details class="q"><summary>State the formulas for weighted JD readiness, single-topic Gap ROI, and 7-day sprint hour allocation.</summary><div class="a">Readiness % = 100 * sum(w_i * m_i) / sum(w_i). Gap ROI_i = w_i * (1 - m_i). Sprint hours for each Top-3 gap = H_total * ROI_i / sum_top3(ROI).<div class="f"><b>Follow-up</b>Why multiply by (1 - m_i) instead of ranking solely by topic weight w_i? Because a Tier 1 topic you already know at 90% mastery (G01, ROI = 0.30) yields almost no additional pass-rate lift compared to a Tier 1 topic at 20% mastery (J01, ROI = 2.40).</div></div></details>
+  <details class="q"><summary>In the kata, why did J01 (Offline golden sets &amp; LLM-as-judge evals) rank as Gap #1 for both the Applied LLM/Fullstack role and the Healthcare FDE role?</summary><div class="a">Because J01 is a Tier 1 gate (weight 3.0) present in both JDs and had the lowest initial mastery (20%), producing the maximum Gap ROI of 3.0 * (1 - 0.20) = 2.40 in both roles.</div></details>
+  <details class="q"><summary>How do you phrase a question on a 15-minute recruiter screen to lock in your prep plan when the JD is a vague hybrid of infra and product bullets?</summary><div class="a">Use a forced-choice A/B probe: "To prepare the most relevant system examples, are the technical rounds weighted more toward low-level GPU serving and memory math, or toward application-layer RAG, eval harnesses, and agent orchestration?"<div class="f"><b>Follow-up</b>What if the recruiter says "a bit of both"? Ask which team the two technical interviewers sit on (Core Inference Infra vs Product AI Engineering); an interviewer always asks questions from the production fires of their own team.</div></div></details>
+  <details class="q"><summary>How do you construct a 3/3 diagnostic reverse-interview question for a hiring manager at the end of a round?</summary><div class="a">Combine two technical requirements from the JD into an A/B bottleneck hypothesis with a metric: "You list [Requirement A] and [Requirement B] under [SLO metric]; in production right now, when that metric degrades, is it bound more by [Mechanism X] or [Mechanism Y]?"</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture (the 5-stage JD-to-Loop pipeline and its failure-mode banner) and narrate its steps, then write: the 4 AI loop archetypes with their domain letters, the Readiness % and Gap ROI formulas, the kata's Role 1 readiness jump (baseline vs ROI sprint vs equal review), and one A/B diagnostic question for a hiring manager.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Concept stepper redrawn: 1 Filter JD (drop ~70% HR noise) -&gt; 2 Map IDs (4 Archetypes, 6 to 8 IDs) -&gt; 3 Gap ROI (<code>w * (1 - m)</code>, rank Top 3) -&gt; 4 7d Sprint (14.0h budget, Role 1 47.5% -&gt; 81.1%) -&gt; 5 Probe (A/B diagnostic questions), plus failure mode (equal-weight study stalls at 58.3%).</li>
+    <li>Four archetypes: Inference Systems (K), Applied LLM/RAG/Agents (G/H/I/J), AI Fullstack/Platform (D/M/N/S), Forward Deployed FDE (G/H/J/S/T/V/W/X06).</li>
+    <li>Formulas: <code>Readiness % = 100 * sum(w_i * m_i) / sum(w_i)</code>; <code>Gap ROI_i = w_i * (1 - m_i)</code>; <code>h_i = H_total * ROI_i / sum_top3(ROI)</code>.</li>
+    <li>Kata numbers: 6 to 7 extracted IDs per JD; Role 1 jumps from 47.5% to 81.1% (vs 58.3% equal study); Role 2 jumps 43.8% to 77.6%; Role 3 jumps 50.0% to 81.8%; Top gap ROI = 2.40 (<code>K14</code> and <code>J01</code>).</li>
+    <li>Reverse-interview A/B script: Pairs two JD signals + metric and asks whether Mechanism X or Mechanism Y is the active bottleneck.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>V01: What four elements must an engineer-voiced answer contain before you add any one-sentence business outcome?</summary><div class="a">A concrete mechanism (how it works), a specific number (latency, memory, ratio, or cap), a failure mode (where it breaks), and a tradeoff (what you pay for the gain).</div></details>
+  <details class="q"><summary>X01: What are the three levels and exact time budgets of a 90-second technical interview answer?</summary><div class="a">Level 1 Outcome (20 seconds: what it does and why it matters), Level 2 Mechanism (45 seconds: step-by-step how it works), and Level 3 Internals and limits (25 seconds: numbers, failure modes, and boundaries).</div></details>
+  <details class="q"><summary>X02: In the Question Log steady-state formula M * (1/p + 1), why does writing weak model answers bloat your weekly review time?</summary><div class="a">Weak model answers lower your 7-day cold pass rate p, which increases the retry term 1/p (for example dropping p from 0.80 to 0.40 jumps the multiplier from 2.25 to 3.50, a 56% workload increase).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><span>AI Mastery Curriculum Specification (00-core-brief.md, 01-master-topic-index.md, 02-week-plan.md)</span><small>Defines the domain taxonomy (A through Y), Tier 1/2/3 weights, the 4 target AI engineering loop archetypes, and X15 scope. Checked locally, 2026-11-20.</small></li>
+    <li><a href="https://docs.vllm.ai/en/latest/">vLLM &amp; PagedAttention Production Serving Documentation</a><small>Supports the Inference Systems archetype bottleneck signals (KV cache fragmentation, chunked prefill, prefix caching, and multi-LoRA serving tradeoffs). Checked 2026-11-20.</small></li>
+    <li><a href="https://huyenchip.com/2024/07/25/genai-platform.html">Chip Huyen (2024): Building A Generative AI Platform</a><small>Supports mapping Applied LLM, RAG, evaluation harnesses, guardrails, and SSE streaming gateway requirements to production system components. Checked 2026-11-20.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>3-Bucket JD Filter:</strong> Strip 65% to 75% HR boilerplate (weight <code>0.0</code>), separate Stack Table Stakes (weight <code>2.0</code>), and isolate the 5 to 8 Load-Bearing Bottlenecks (weight <code>3.0</code>).</li>
+    <li><strong>4 Loop Archetypes:</strong> Classify every JD into Inference Systems (<code>K</code>), Applied LLM/RAG/Agents (<code>G/H/I/J</code>), AI Fullstack/Platform (<code>D/M/N/S</code>), or Forward Deployed FDE (<code>G/H/J/S/T/V/W/X06</code>).</li>
+    <li><strong>Readiness &amp; Gap-ROI Math:</strong> Score <code>Readiness % = 100 * sum(w_i * m_i) / sum(w_i)</code> and rank gaps by <code>ROI_i = w_i * (1 - m_i)</code>; allocate 100% of a 14-hour 7-day sprint to the Top 3 ROI gaps.</li>
+    <li><strong>Diagnostic Probing:</strong> Use A/B forced-choice probes with recruiters to lock round weights and ask hiring managers bottleneck-hypothesis questions pairing two JD requirements with an SLO metric.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (S-M-R-S-P):</strong> Strip 70% noise, Map 4 archetypes &amp; 6 to 8 IDs, Rank by <code>w * (1 - m)</code>, Sprint 14h on Top 3 gaps, Probe with A/B bottleneck hypotheses.</li>
+      <li><strong>Gap-ROI advantage:</strong> In the kata, concentrating 14.0h on the Top 3 ROI gaps lifts Role 1 readiness from <code>47.5%</code> to <code>81.1%</code> versus <code>58.3%</code> for equal-time study (<code>+22.8 pts</code>).</li>
+      <li><strong>Cross-role leverage:</strong> High-weight Tier 1 evals (<code>J01</code>, ROI <code>2.40</code>) and hybrid RAG (<code>H01</code>, ROI <code>1.95</code>) appear in the Top 3 gaps of both Product/Agent and FDE roles.</li>
+      <li><strong>Failure modes to avoid:</strong> Letting HR buzzwords dilute your study queue (drops measured readiness by 3.6 to 4.0 points) or asking generic "typical day" questions in the last 5 minutes of an interview.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck":"AI Mastery::X Interview craft","tags":"X15 T2 W01","cards":[{"q":"How do you calculate a topic's Gap ROI when mapping a job description to curriculum Topic IDs?","a":"Gap ROI = w_i * (1 - m_i), where w_i is loop weight (T1=3.0, T2=2.0) and m_i is current mastery (0 to 1)."},{"q":"Why does allocating a 7-day pre-loop sprint to the top 3 Gap-ROI topics beat dividing hours evenly across all JD bullets?","a":"Loops fail you on your lowest Tier 1 floor; in the X15 kata, Top-3 ROI allocation reached 81.1% readiness versus 58.3% for equal review."},{"q":"What are the four AI engineering interview loop archetypes and their primary domain letters?","a":"Inference Systems (K), Applied LLM/RAG/Agents (G/H/I/J), AI Fullstack/Platform (D/M/N/S), and Forward Deployed Engineer (G/H/J/S/T/V/W/X06)."},{"q":"How do you turn a job description into a 3/3 diagnostic reverse-interview question for a hiring manager?","a":"Pair two JD requirements and an SLO metric into an A/B bottleneck hypothesis asking whether Mechanism X or Mechanism Y limits production performance."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

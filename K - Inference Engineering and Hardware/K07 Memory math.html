@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K07 Memory math</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K07">
+<main>
+<header>
+  <div class="eyebrow"><b>K07</b><span>Inference engineering and hardware</span><span>Tier 1</span><span>Week 1</span><span>70 min</span></div>
+  <h1>Memory math</h1>
+  <p class="lede">How to calculate exact GPU VRAM usage across model weights, CUDA runtime and prefill activations, and KV cache per token to predict maximum context length and concurrency before deployment.</p>
+  <div class="chips"><span><em>Before</em>K06 KV cache</span><span><em>After</em>K08 Inference metrics</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, stepper, and mechanism</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Numbers, tradeoffs, and kata</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production and interview drill</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and Anki import</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You deploy Llama-3-8B (8.03B parameters) in BF16 on a single 24 GB L4 GPU. Model weights take 16.06 GB and runtime/activation overhead takes 1.74 GB. At an 8,192-token context window, how many concurrent requests fit before CUDA OOM?</summary><div class="a">Only <strong>5 concurrent requests</strong> (<code>B_max = 5</code>). Subtracting <code>16.06 + 1.74 = 17.80 GB</code> from 24 GB leaves just <strong>6.20 GB</strong> of KV headroom. Because each 8,192-token request consumes <code>1.074 GB</code> of BF16 KV cache (<code>131,072 B/token</code>), a batch of 8 needs <code>8.59 GB</code> of KV cache (<code>26.39 GB</code> total) and crashes with OOM.</div></details>
+  <details class="q"><summary>Why does quantizing Llama-3-8B weights from BF16 (2 B) to INT4 (0.5 B) plus KV cache from BF16 to FP8 (1 B) raise max 8k concurrency on a 24 GB GPU from 5 to 33 (a 6.6x jump instead of 2x or 4x)?</summary><div class="a">Because KV headroom depends on the <strong>difference</strong> <code>VRAM - (W + Ovh)</code>, not a simple ratio. Shrinking weights from <code>16.06 GB</code> to <code>4.01 GB</code> expands free KV headroom nearly <strong>3x</strong> (from <code>6.20 GB</code> to <code>18.25 GB</code>), and halving KV bytes per token from <code>128 KiB</code> to <code>64 KiB</code> doubles the tokens that fit inside each free gigabyte (<code>3x * 2x = ~6.6x</code>).</div></details>
+  <details class="q"><summary>If you only ever serve batch size B = 1 at a tiny 512-token context, why does a 7B BF16 model (~14 GB weights) still crash with OOM on a 16 GB GPU during prefill of a long prompt?</summary><div class="a">Two non-weight, non-KV consumers eat the remaining 2 GB: the <strong>CUDA runtime context</strong> (cuBLAS/cuDNN workspaces, driver, allocator fragmentation: ~1.0 to 1.5 GB) and the <strong>transient prefill activation buffer</strong> (intermediate QKV and MLP gate/up tensors proportional to prefill chunk tokens), which spikes before being freed.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every byte of GPU High Bandwidth Memory (HBM) during LLM inference goes into one of three buckets: <strong>static model weights</strong>, <strong>runtime and transient activation overhead</strong>, and the <strong>dynamic KV cache</strong>. Engineers who only check whether model weights are smaller than GPU capacity get surprised in production when a 16 GB model crashes a 24 GB card under moderate traffic. Weights are the entry fee; the remaining headroom after weights and runtime overhead is the entire budget for serving concurrent tokens.</p>
+  <p>Once weights and runtime buffers are allocated at startup, your serving capacity reduces to a single hardware limit: total active tokens in flight (<code>S * B</code>). Every active request holds <code>S</code> tokens of KV state across all layers. Whether you run one 32,768-token document analysis job or sixteen 2,048-token clinic voice calls, both consume the exact same 32,768-token KV pool. Memory math lets you compute on the back of an envelope whether a checkpoint fits, where the prefill activation spike peaks, and the exact context-versus-concurrency boundary.</p>
+
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: How a 24 GB GPU fills from cold start to the concurrency wall</div>
+    <svg viewBox="0 0 500 235" role="img" aria-label="Six-step VRAM allocation bar for Llama-3-8B on a 24 GB GPU showing 16.06 GB static weights, 1.50 GB CUDA runtime, 0.24 GB prefill activation scratchpad, 6.20 GB available KV pool, 5 concurrent 8k requests fitting at 23.17 GB, and an 8-request batch overflowing at 26.39 GB.">
+      <g font-size="12">
+        <rect x="14" y="28" width="432" height="44" rx="4" class="c-paper ln"/>
+        <text x="14" y="20" font-weight="600">24.00 GB GPU HBM budget (18 px = 1 GB)</text>
+        <line x1="446" y1="22" x2="446" y2="80" class="ink" stroke-dasharray="3 3"/>
+        <text x="446" y="94" text-anchor="middle" font-weight="600">24 GB limit</text>
+
+        <g data-step="1">
+          <rect x="14" y="28" width="289" height="44" rx="4" class="c-accent" data-hi="1"/>
+          <text x="158" y="47" text-anchor="middle" font-weight="600">1. Weights: P * b_w</text>
+          <text x="158" y="63" text-anchor="middle">8.03B * 2 B = 16.06 GB</text>
+        </g>
+
+        <g data-step="2">
+          <rect x="303" y="28" width="27" height="44" class="c-muted" data-hi="2"/>
+          <text x="316" y="94" text-anchor="middle">1.50G CUDA</text>
+        </g>
+
+        <g data-step="3">
+          <rect x="330" y="28" width="5" height="44" class="c-warn" data-hi="3"/>
+          <text x="365" y="112" text-anchor="middle">+0.24G Act = 17.80G base</text>
+        </g>
+
+        <g data-step="4">
+          <rect x="335" y="28" width="111" height="44" class="c-soft" data-hi="4"/>
+          <text x="390" y="54" text-anchor="middle" font-weight="600">6.20 GB KV pool</text>
+        </g>
+
+        <g data-step="5">
+          <rect x="14" y="132" width="321" height="36" rx="4" class="c-muted"/>
+          <text x="174" y="154" text-anchor="middle">Fixed base: 17.80 GB</text>
+          <rect x="335" y="132" width="97" height="36" rx="4" class="c-good" data-hi="5"/>
+          <text x="383" y="154" text-anchor="middle">KV B=5: 5.37G</text>
+          <text x="440" y="154" font-weight="600">23.17G FIT</text>
+        </g>
+
+        <g data-step="6">
+          <rect x="14" y="180" width="321" height="36" rx="4" class="c-muted"/>
+          <text x="174" y="202" text-anchor="middle">Fixed base: 17.80 GB</text>
+          <rect x="335" y="180" width="154" height="36" rx="4" class="c-bad" data-hi="6"/>
+          <text x="412" y="202" text-anchor="middle">KV B=8 at 8k: 8.59G (26.39G OOM)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Startup loads static model weights into HBM: for Llama-3-8B in BF16 (2 bytes/param), 8.03B parameters lock 16.06 GB before any request arrives.</li>
+      <li>Initializing the CUDA context, cuBLAS workspaces, and custom kernels reserves another ~1.50 GB of non-negotiable runtime overhead.</li>
+      <li>During prefill, a 2,048-token chunk allocates ~0.24 GB of transient layer activation buffers, bringing the fixed baseline to 17.80 GB.</li>
+      <li>Subtracting the 17.80 GB baseline from 24.00 GB leaves exactly 6.20 GB of usable HBM headroom for the entire KV cache block pool.</li>
+      <li>At 128 KiB per token (1.074 GB per 8,192-token request), B_max = 5 concurrent requests consume 5.37 GB of KV cache and fit safely at 23.17 GB.</li>
+      <li>Raising concurrency to B = 8 at 8,192 tokens demands 8.59 GB of KV cache (26.39 GB total), breaching the 24 GB wall and triggering CUDA OOM.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Total inference VRAM is Weights + Runtime/Activations + KV(S, B); because weights and runtime take a fixed cut first, every gigabyte saved on weights directly expands the dynamic KV pool that governs max context and concurrency.</figcaption>
+  </figure>
+
+  <div class="box hook"><b>Memory hook</b><p><strong>"W-O-K fills the pot: Weights static, Overhead fixed, KV scales with S times B."</strong> First subtract <code>W + O</code> from GPU VRAM to find your usable KV pot, then divide that pot by <code>kv_per_token</code> to get your hard ceiling on total active tokens <code>S * B</code>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>1. The master VRAM budget equation</h3>
+  <p>To know whether a model deployment fits on one or more GPUs, write total HBM consumption <code>M_total</code> as the sum of four physical allocations:</p>
+  <div class="codewrap"><pre>M_total = M_weights + M_runtime + M_act(T_prefill) + M_kv(S, B)   &lt;=   N_gpu * VRAM_per_gpu</pre></div>
+  <p>Here <code>M_weights</code> is static checkpoint storage, <code>M_runtime</code> is the CUDA driver and kernel workspace reservation, <code>M_act(T_prefill)</code> is the peak working activation scratchpad for a prefill batch of <code>T_prefill</code> tokens, and <code>M_kv(S, B)</code> is the KV cache holding <code>B</code> active sequences of length <code>S</code>. Notice the separation of timescales: the first two terms are allocated at process boot; the third spikes briefly on each forward pass; the fourth lives across the entire multi-second lifespan of every active request.</p>
+
+  <h3>2. Model weights and quantization overhead</h3>
+  <p>A transformer with <code>P</code> parameters stored at <code>b_w</code> bytes per parameter occupies <code>M_weights = P * b_w</code> bytes. In FP32 (<code>b_w = 4</code>), 1 billion parameters take 4 GB. Standard serving uses BF16 or FP16 (<code>b_w = 2</code>), giving the universal rule of thumb: <strong>2 GB per billion parameters</strong> (so an 8B model takes ~16 GB and a 70B model takes ~140 GB).</p>
+  <p>Weight-only quantization reduces <code>b_w</code> to 1 byte (FP8/INT8, ~1 GB per billion parameters) or 0.5 bytes (INT4/AWQ/GPTQ, ~0.5 GB per billion parameters). In practice, group-wise quantization (such as group size 128) stores one FP16 scale and zero-point per 128 weights, adding roughly <code>0.03 to 0.05 bytes</code> per parameter (~6% to 10% overhead on top of raw INT4). Always keep unquantized norms and embeddings in mind when capacity is tight.</p>
+
+  <h3>3. Runtime overhead and the prefill activation spike</h3>
+  <p>Even with zero requests in flight, PyTorch and the CUDA runtime claim <strong>1.0 to 2.0 GB per GPU</strong> for the CUDA context, cuBLAS handle workspaces, compiled FlashAttention kernels, and NCCL communication ring buffers (when running Tensor Parallelism across multiple GPUs). Inference servers like vLLM also configure a safety margin (<code>gpu_memory_utilization = 0.90</code> by default, reserving 10% of total VRAM).</p>
+  <p>During a forward pass, the engine only needs to hold intermediate activations for <strong>one transformer layer at a time</strong> because layer <code>l + 1</code> overwrites layer <code>l</code>'s scratchpad (unlike training, which stores all <code>L</code> layers for backpropagation). With FlashAttention, attention never materializes the quadratic <code>S x S</code> score matrix in HBM; instead, peak activation memory comes from the single-layer QKV and SwiGLU MLP buffers (<code>gate_proj</code>, <code>up_proj</code>, intermediate activation) across the <code>T_prefill</code> tokens processed in one prefill chunk:</p>
+  <div class="codewrap"><pre>M_act_layer ~= T_prefill * (4 * d_model + 3 * d_ff) * b_act</pre></div>
+  <p>For Llama-3-8B (<code>d_model = 4096</code>, <code>d_ff = 14336</code>, BF16 <code>b_act = 2</code>) with chunked prefill capping <code>T_prefill = 2048</code> tokens, peak layer scratchpad is only <code>2048 * (16384 + 43008) * 2 ~= 0.24 GB</code>. Without chunked prefill, feeding a 65,536-token prompt all at once spikes that single layer scratchpad to <code>~7.78 GB</code> (plus vocabulary logit buffers if all prompt logits are materialized), crashing a GPU that appeared to have plenty of KV space.</p>
+
+  <details class="q"><summary>Check: Why does inference activation memory scale with the dimensions of a single layer rather than multiplying by all L layers like training does?</summary><div class="a">Inference runs a forward pass only with <code>torch.no_grad()</code>. Once layer <code>l</code> finishes computing its output residual vector (and writes its K, V slices into the persistent KV cache), its temporary Q, MLP gate, and MLP up activation buffers are immediately reused by layer <code>l + 1</code>.</div></details>
+
+  <h3>4. KV cache per token: GQA vs MHA</h3>
+  <p>From <strong>K06</strong>, each token stores two vectors (Key and Value) at every layer <code>L</code> across <code>n_kv</code> key-value heads of dimension <code>d_head</code> at precision <code>b_kv</code> bytes:</p>
+  <div class="codewrap"><pre>kv_per_token = 2 * L * n_kv * d_head * b_kv
+M_kv(S, B)   = (kv_per_token * S * B) / eff_frag</pre></div>
+  <p>Here <code>eff_frag</code> is your memory allocation efficiency: nearly <code>0.96 to 1.00</code> with PagedAttention (<strong>K15</strong>), but only <code>0.40 to 0.65</code> with naive contiguous pre-allocation. Notice how Grouped-Query Attention (GQA) dominates the per-token cost: Llama-3-8B has 32 query heads but only <code>n_kv = 8</code> KV heads of width <code>d_head = 128</code> across <code>L = 32</code> layers. In BF16 (<code>b_kv = 2</code>), that is <code>2 * 32 * 8 * 128 * 2 = 131,072 B</code> (<strong>128 KiB/token</strong>). An older MHA 7B model like Llama-2-7B (<code>n_kv = 32</code>) costs <strong>512 KiB/token</strong>, 4x larger. Llama-3-70B (<code>L = 80</code>, <code>n_kv = 8</code>, <code>d_head = 128</code>) costs <code>2 * 80 * 8 * 128 * 2 = 327,680 B</code> (<strong>320 KiB/token</strong>) in BF16, or <strong>160 KiB/token</strong> with FP8 KV cache.</p>
+
+  <h3>5. Deriving context and concurrency limits</h3>
+  <p>Once you subtract weights and runtime/activation overhead from usable GPU VRAM, the remaining memory is your <strong>KV cache budget</strong> <code>M_kv_budget</code>:</p>
+  <div class="codewrap"><pre>M_kv_budget  = VRAM_usable - (M_weights + M_runtime + M_act)
+Tokens_max   = floor( (M_kv_budget * eff_frag) / kv_per_token )
+B_max(at S)  = floor( Tokens_max / S )
+S_max(at B)  = floor( Tokens_max / B )</pre></div>
+  <p>This equation governs capacity planning. Your GPU holds a fixed pool of <code>Tokens_max</code> token slots. Context length <code>S</code> and concurrency <code>B</code> trade off along a hyperbola <code>S * B &lt;= Tokens_max</code>: doubling average conversation length cuts maximum concurrency in half. Even more important is the <strong>leverage effect of weight quantization</strong>: when weights consume 70% of VRAM (like 16.06 GB on a 24 GB GPU), cutting weights by 4x (to 4.01 GB) does not just add a small buffer. It triples <code>M_kv_budget</code> from 6.20 GB to 18.25 GB, multiplying <code>Tokens_max</code> by nearly 3x before you even touch KV precision.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Will-it-fit VRAM calculator and context-vs-concurrency budget</div>
+    <p class="ask">Predict first. On a 24 GB GPU running Llama-3-8B at S = 8,192 and B = 8, switching weights from BF16 (2 B) to INT4 (0.5 B) while keeping BF16 KV cache changes the deployment from OOM (26.39 GB) to what total VRAM and max concurrency B_max?</p>
+    <div class="ctl">
+      <label><span>GPU VRAM</span><select name="gpu" data-num><option value="24">24 GB (L4 / RTX 4090)</option><option value="48">48 GB (L40S / A6000)</option><option value="80">80 GB (A100 / H100)</option></select></label>
+      <label><span>Weight bytes (b_w)</span><select name="bw" data-num><option value="2">BF16 / FP16 (2.0 B)</option><option value="1">FP8 / INT8 (1.0 B)</option><option value="0.5">INT4 / AWQ (0.5 B)</option></select></label>
+      <label><span>KV bytes (b_kv)</span><select name="bkv" data-num><option value="2">BF16 / FP16 (2 B)</option><option value="1">FP8 / INT8 (1 B)</option></select></label>
+      <label><span>Context length (S)</span><input type="range" name="s" min="1024" max="32768" step="1024" value="8192"><output data-for="s" data-unit=" tok"></output></label>
+      <label><span>Batch size (B)</span><input type="range" name="b" min="1" max="64" step="1" value="8"><output data-for="b" data-unit=" req"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Calculated for Llama-3-8B (P=8.03B, L=32, n_kv=8, d_head=128) with 1.74 GB runtime + chunked-prefill activation overhead; shrinking weights expands the KV pool non-linearly, while S and B trade off directly inside that pool.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var w=8.03*v.bw, ovh=1.74, kvTok=2*32*8*128*v.bkv;
+    var kv=(kvTok*v.s*v.b)/1e9, tot=w+ovh+kv;
+    var head=Math.max(0,v.gpu-(w+ovh));
+    var maxTok=Math.floor((head*1e9)/kvTok);
+    var bmax=Math.floor(maxTok/v.s), smax=Math.floor(maxTok/v.b);
+    var fit=tot<=v.gpu;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GB",digits:2,max:Math.max(v.gpu,tot),rows:[
+      {label:"Weights ("+v.bw+" B/param)",value:w,tone:"muted"},
+      {label:"Runtime + prefill act",value:ovh,tone:"warn"},
+      {label:"KV cache ("+(kvTok/1024)+" KiB/tok)",value:kv,tone:fit?"good":"bad"},
+      {label:"Total vs "+v.gpu+" GB GPU",value:tot,tone:fit?"good":"bad"}
+    ]});
+    return {verdict:(fit?"FIT: ":"OOM: ")+tl.fmt(tot,2)+" GB / "+v.gpu+" GB (KV headroom "+tl.fmt(head,2)+" GB = "+tl.fmt(maxTok,0)+" max tokens). At S="+tl.fmt(v.s,0)+", B_max = "+bmax+" reqs; at B="+v.b+", S_max = "+tl.fmt(smax,0)+" tokens."};
+  })});</script>
+
+  <details class="q"><summary>Check: On a 24 GB GPU with 17.80 GB consumed by weights and overhead (6.20 GB left for KV cache), how many total active tokens can exist across all requests if kv_per_token is 131,072 bytes?</summary><div class="a"><code>floor(6,200,000,000 / 131,072) = 47,301 tokens</code> total across all concurrent sequences. That single token pool can be sliced into <code>B = 1</code> request of 47,301 tokens, <code>B = 5</code> requests of 8,192 tokens, or <code>B = 23</code> requests of 2,048 tokens.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Model weights rule of thumb (BF16 / FP8 / INT4)</td><td class="n">2.0 / 1.0 / 0.5 GB per 1B params</td><td>Derived</td></tr>
+    <tr><td>KV cache bytes per token formula</td><td class="n">2 * L * n_kv * d_head * b_kv</td><td>Derived</td></tr>
+    <tr><td>Llama-3-8B (L=32, n_kv=8, d_h=128) KV per token (BF16 / FP8)</td><td class="n">128 KiB / 64 KiB per token</td><td>Derived</td></tr>
+    <tr><td>Llama-2-7B MHA (L=32, n_kv=32, d_h=128) KV per token (BF16)</td><td class="n">512 KiB per token (4x GQA)</td><td>Derived</td></tr>
+    <tr><td>Llama-3-70B (L=80, n_kv=8, d_h=128) KV per token (BF16 / FP8)</td><td class="n">320 KiB / 160 KiB per token</td><td>Derived</td></tr>
+    <tr><td>Typical CUDA runtime + workspace reserve per GPU</td><td class="n">1.0 to 2.0 GB (1.50 GB in kata)</td><td>Derived</td></tr>
+    <tr><td>Llama-3-8B BF16 on 24 GB GPU: weights + overhead / KV headroom</td><td class="n">17.80 GB used / 6.20 GB KV pool</td><td>Your own run</td></tr>
+    <tr><td>Llama-3-8B on 24 GB at S=8,192: B_max (BF16 vs INT4w+FP8kv)</td><td class="n">5 reqs vs 33 reqs (6.6x gain)</td><td>Your own run</td></tr>
+    <tr><td>Llama-3-70B on 80 GB at S=8,192: BF16 weights vs INT4w+FP8kv</td><td class="n">141.2 GB (OOM) vs 58.8 GB (B_max=31)</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Weight quantization (BF16 to INT4/AWQ)</td><td>4x smaller weights; huge multiplier on leftover KV headroom on single GPUs</td><td>Small perplexity dip; dequantization kernel overhead at large batch sizes</td><td>Accuracy drops on hard math, coding, or strict schema extraction</td></tr>
+    <tr><td>KV cache quantization (BF16 to FP8)</td><td>2x more active tokens (<code>S * B</code>) in the same KV pool; 2x less decode KV bandwidth</td><td>Minor quantization noise on attention scores; requires FP8 kernel support</td><td>Drift on needle-in-a-haystack retrieval past 32k tokens</td></tr>
+    <tr><td>Chunked prefill (cap <code>T_prefill</code> to 2048)</td><td>Caps peak layer activation scratchpad to ~0.24 GB regardless of prompt length</td><td>Slightly lower prefill compute efficiency on very long prompts</td><td>TTFT rising if chunk size is set too small (&lt; 512 tokens)</td></tr>
+    <tr><td>PagedAttention block allocator (K15)</td><td>Raises KV allocation efficiency <code>eff_frag</code> from ~0.55 to &gt;0.96</td><td>Block-table indirection in attention kernels</td><td>Block size tuned poorly when using prefix caching</td></tr>
+    <tr><td>Tensor Parallelism across N GPUs (K12)</td><td>Splits weights and KV heads <code>1/N</code> per GPU; aggregates HBM capacity and bandwidth</td><td><code>N</code> copies of CUDA runtime overhead (~1.5 GB each) plus all-reduce latency every layer</td><td>PCIe inter-GPU bottleneck when running TP without NVLink</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Will-it-fit VRAM calculator and buffer verifier</h2>
+  <p>A 71-line Python script that empirically allocates a real layer KV byte buffer to verify exact byte parity against the formula, then computes weights, runtime + prefill activation overhead, KV cache GB, max concurrency <code>B_max</code>, and max context <code>S_max</code> across six production Llama-3-8B and 70B scenarios.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""Will-it-fit GPU VRAM calculator &amp; buffer allocator for LLM inference."""
+import array
+
+MODELS = {
+    "Llama-3-8B":  dict(P=8.03e9,  L=32, n_q=32, n_kv=8, d_h=128, d_ff=14336),
+    "Llama-3-70B": dict(P=70.6e9,  L=80, n_q=64, n_kv=8, d_h=128, d_ff=28672),
+}
+RUNTIME_GB = 1.50           # CUDA context, kernels, NCCL/allocator reserve
+FRAG_EFF = 1.00             # Break-it 2: set 0.65 for naive contiguous KV fragmentation
+MHA_OVERRIDE = False        # Break-it 1: set True to force MHA (n_kv = n_q)
+PREFILL_CHUNK = 2048        # Break-it 3: set 32768 to trigger prefill activation OOM
+
+def kv_per_token_bytes(m, b_kv=2):
+    n_kv = m["n_q"] if MHA_OVERRIDE else m["n_kv"]
+    return 2 * m["L"] * n_kv * m["d_h"] * b_kv
+
+def activation_gb(m, tokens=PREFILL_CHUNK, b_act=2):
+    d_model = m["n_q"] * m["d_h"]
+    # Peak single-layer scratchpad: QKV + MLP gate/up/act buffers during prefill chunk
+    elems = tokens * (4 * d_model + 3 * m["d_ff"])
+    return (elems * b_act) / 1e9
+
+def vram_report(model_name, b_w, b_kv, vram_gb, S, B):
+    m = MODELS[model_name]
+    w_gb = (m["P"] * b_w) / 1e9
+    act_gb = activation_gb(m)
+    ovh_gb = RUNTIME_GB + act_gb
+    kv_tok = kv_per_token_bytes(m, b_kv)
+    kv_gb = (kv_tok * S * B) / (1e9 * FRAG_EFF)
+    tot_gb = w_gb + ovh_gb + kv_gb
+    headroom = vram_gb - (w_gb + ovh_gb)
+    if headroom &lt;= 0:
+        b_max, s_max = 0, 0
+    else:
+        max_tokens = int((headroom * 1e9 * FRAG_EFF) // kv_tok)
+        b_max = max_tokens // S
+        s_max = max_tokens // B
+    status = "FIT" if tot_gb &lt;= vram_gb else "OOM"
+    return w_gb, ovh_gb, kv_tok, kv_gb, tot_gb, b_max, s_max, status
+
+def verify_layer_buffer(m, S, B, b_kv=2):
+    """Allocate 1 layer of actual byte buffers to verify exact byte math."""
+    n_kv = m["n_q"] if MHA_OVERRIDE else m["n_kv"]
+    elems_per_layer = 2 * n_kv * m["d_h"] * S * B
+    buf = array.array("h" if b_kv == 2 else "b", [0]) * elems_per_layer
+    measured_layer_b = buf.buffer_info()[1] * buf.itemsize
+    return measured_layer_b * m["L"]
+
+print("=== 1. Empirical Buffer Allocation Check (Llama-3-8B, BF16, S=2048, B=4) ===")
+m8 = MODELS["Llama-3-8B"]
+formula_b = kv_per_token_bytes(m8, 2) * 2048 * 4
+measured_b = verify_layer_buffer(m8, 2048, 4, 2)
+print(f"kv_per_token = {kv_per_token_bytes(m8, 2):,d} B ({kv_per_token_bytes(m8, 2)//1024} KiB/tok)")
+print(f"formula_kv   = {formula_b:,d} B ({formula_b/1e9:.3f} GB) | measured_kv = {measured_b:,d} B | diff = {abs(formula_b - measured_b)} B\n")
+
+print("=== 2. Will-It-Fit Scenarios (VRAM Breakdown &amp; Concurrency Limits) ===")
+hdr = f"{'Scenario':&lt;26} | {'GPU':&gt;5} | {'W(GB)':&gt;6} | {'Ovh':&gt;5} | {'KV/tok':&gt;7} | {'KV(GB)':&gt;6} | {'Total':&gt;6} | {'B_max':&gt;5} | {'S_max':&gt;7} | {'Verdict'}"
+print(hdr)
+print("-" * len(hdr))
+cases = [
+    ("8B BF16  (S=4096, B=8)",   "Llama-3-8B",  2.0, 2, 24.0, 4096, 8),
+    ("8B BF16  (S=8192, B=8)",   "Llama-3-8B",  2.0, 2, 24.0, 8192, 8),
+    ("8B INT4w/FP8kv (S=8k,B=8)","Llama-3-8B",  0.5, 1, 24.0, 8192, 8),
+    ("70B BF16 (S=4096, B=1)",   "Llama-3-70B", 2.0, 2, 80.0, 4096, 1),
+    ("70B INT4w/BF16kv(S=8k,B=8)","Llama-3-70B",0.5, 2, 80.0, 8192, 8),
+    ("70B INT4w/FP8kv (S=8k,B=16)","Llama-3-70B",0.5,1, 80.0, 8192, 16),
+]
+for label, name, bw, bkv, gpu, s, b in cases:
+    w, ovh, kvt, kv, tot, bmax, smax, st = vram_report(name, bw, bkv, gpu, s, b)
+    print(f"{label:&lt;26} | {gpu:4.0f}G | {w:6.2f} | {ovh:5.2f} | {kvt//1024:4d}KiB | {kv:6.2f} | {tot:6.2f} | {bmax:5d} | {smax:7,d} | {st}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== 1. Empirical Buffer Allocation Check (Llama-3-8B, BF16, S=2048, B=4) ===
+kv_per_token = 131,072 B (128 KiB/tok)
+formula_kv   = 1,073,741,824 B (1.074 GB) | measured_kv = 1,073,741,824 B | diff = 0 B
+
+=== 2. Will-It-Fit Scenarios (VRAM Breakdown &amp; Concurrency Limits) ===
+Scenario                   |   GPU |  W(GB) |   Ovh |  KV/tok | KV(GB) |  Total | B_max |   S_max | Verdict
+-----------------------------------------------------------------------------------------------------------
+8B BF16  (S=4096, B=8)     |   24G |  16.06 |  1.74 |  128KiB |   4.29 |  22.10 |    11 |   5,909 | FIT
+8B BF16  (S=8192, B=8)     |   24G |  16.06 |  1.74 |  128KiB |   8.59 |  26.39 |     5 |   5,909 | OOM
+8B INT4w/FP8kv (S=8k,B=8)  |   24G |   4.01 |  1.74 |   64KiB |   4.29 |  10.05 |    33 |  34,793 | FIT
+70B BF16 (S=4096, B=1)     |   80G | 141.20 |  1.99 |  320KiB |   1.34 | 144.53 |     0 |       0 | OOM
+70B INT4w/BF16kv(S=8k,B=8) |   80G |  35.30 |  1.99 |  320KiB |  21.47 |  58.76 |    15 |  16,293 | FIT
+70B INT4w/FP8kv (S=8k,B=16) |   80G |  35.30 |  1.99 |  160KiB |  21.47 |  58.76 |    31 |  16,293 | FIT</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Max concurrent 8,192-token requests (B_max) from the kata run</div>
+    <div data-bars='{"unit":" reqs","digits":0,"rows":[{"label":"8B BF16 on 24 GB (16.06G W)","value":5,"tone":"warn"},{"label":"8B INT4w + FP8kv on 24 GB (4.01G W)","value":33,"tone":"good"},{"label":"70B BF16 on 80 GB (141.2G W, OOM)","value":0,"tone":"bad"},{"label":"70B INT4w + BF16kv on 80 GB (35.3G W)","value":15,"tone":"warn"},{"label":"70B INT4w + FP8kv on 80 GB (35.3G W)","value":31,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Quantizing 8B from BF16 to INT4 weights + FP8 KV boosts 8k concurrency on a 24 GB GPU 6.6x (from 5 to 33 requests), and enables 70B on a single 80 GB GPU to serve 31 concurrent 8k requests where BF16 cannot even load.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Exact byte parity:</strong> Allocating the real 16-bit buffer for Llama-3-8B at <code>S = 2048, B = 4</code> measures exactly <code>1,073,741,824 B</code> (<code>1.074 GB</code>, or <code>1.000 GiB</code>), matching <code>131,072 B/tok * 8,192 tokens</code> with <code>diff = 0 B</code>.</li>
+    <li><strong>Why 8B BF16 OOMs at B = 8, S = 8,192 on 24 GB:</strong> Weights (<code>16.06 GB</code>) plus runtime and prefill activations (<code>1.74 GB</code>) leave only <code>6.20 GB</code> for KV cache. At <code>S = 4096</code>, <code>B = 8</code> uses <code>4.29 GB</code> and fits (<code>22.10 GB</code>); doubling context to <code>8192</code> doubles KV to <code>8.59 GB</code> (<code>26.39 GB</code> total), capping <code>B_max = 5</code>.</li>
+    <li><strong>The 6.6x quantization leverage on 24 GB:</strong> Dropping 8B weights to INT4 (<code>4.01 GB</code>) expands the free KV pool from <code>6.20 GB</code> to <code>18.25 GB</code> (2.94x), and FP8 KV halves per-token cost from <code>128 KiB</code> to <code>64 KiB</code> (2x), lifting <code>B_max</code> at 8k from <code>5</code> to <code>33</code> (and single-stream <code>S_max</code> at <code>B = 8</code> from <code>5,909</code> to <code>34,793</code> tokens).</li>
+    <li><strong>70B single-GPU viability:</strong> In BF16, Llama-3-70B weights alone require <code>141.20 GB</code>, failing immediately on an 80 GB H100 (<code>B_max = 0</code>). INT4 weights shrink the checkpoint to <code>35.30 GB</code>, leaving <code>42.71 GB</code> for KV cache: enough for <code>B_max = 15</code> in BF16 KV or <code>B_max = 31</code> in FP8 KV at 8k context.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Replace GQA with MHA (4x KV explosion).</strong> Set <code>MHA_OVERRIDE = True</code> so <code>n_kv = n_q</code> (32 heads on 8B, 64 heads on 70B). Predict what happens to <code>KV/tok</code> and whether <code>8B BF16 (S=4096, B=8)</code> still fits on 24 GB: 8B KV jumps from <code>128 KiB</code> to <code>512 KiB/tok</code>, turning the <code>4.29 GB</code> KV cache into <code>17.18 GB</code> (<code>34.98 GB</code> total, instant OOM, <code>B_max = 2</code>).</li>
+    <li><strong>Disable PagedAttention (contiguous fragmentation tax).</strong> Set <code>FRAG_EFF = 0.65</code> to simulate 35% memory waste from contiguous KV pre-allocation. Predict how much <code>B_max</code> drops on <code>8B BF16 (S=8192)</code>: usable token capacity shrinks by 35%, dropping <code>B_max</code> from <code>5</code> down to <code>3</code>.</li>
+    <li><strong>Unchunked 32k prefill activation spike.</strong> Set <code>PREFILL_CHUNK = 32768</code> to simulate prefilling a 32k prompt without chunking. Predict how large the <code>Ovh</code> column becomes on 8B and 70B: single-layer activation scratchpad jumps from <code>0.24 GB</code> to <code>3.89 GB</code> on 8B (<code>Ovh = 5.39 GB</code>, slashing 24 GB KV headroom to <code>2.55 GB</code>) and to <code>7.78 GB</code> on 70B (<code>Ovh = 9.28 GB</code>).</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a <code>TP_DEGREE = 2</code> parameter that divides <code>M_weights</code> and <code>n_kv</code> by <code>TP_DEGREE</code> per GPU while keeping <code>RUNTIME_GB = 1.50</code> fixed per GPU, and verify that <code>70B BF16</code> fits on <code>2 x 80 GB</code> GPUs with <code>B_max = 34</code> at <code>S = 4,096</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <figure class="viz stepper" id="viz-oom-modes">
+    <div class="vt">Stepper: The three distinct ways LLM inference runs out of GPU memory</div>
+    <svg viewBox="0 0 480 190" role="img" aria-label="Three production OOM failure modes: Mode 1 fails at boot when model weights plus CUDA context exceed VRAM; Mode 2 fails during a long unchunked prompt when transient prefill activations spike past the limit; Mode 3 fails under traffic when concurrent KV cache blocks fill the pool.">
+      <g font-size="12">
+        <line x1="420" y1="12" x2="420" y2="178" class="ink" stroke-dasharray="3 3"/>
+        <text x="420" y="12" text-anchor="middle" font-weight="600">VRAM limit</text>
+
+        <g data-step="1">
+          <text x="12" y="34" font-weight="600">1. Boot OOM (weights + runtime &gt; VRAM)</text>
+          <rect x="12" y="40" width="445" height="26" rx="4" class="c-bad" data-hi="1"/>
+          <text x="234" y="57" text-anchor="middle">70B BF16 weights (141.2 GB) on 80 GB GPU -&gt; Crashes at load</text>
+        </g>
+
+        <g data-step="2">
+          <text x="12" y="92" font-weight="600">2. Prefill spike OOM (unchunked prompt activation burst)</text>
+          <rect x="12" y="98" width="260" height="26" rx="4" class="c-muted"/>
+          <text x="142" y="115" text-anchor="middle">Weights + Runtime + KV</text>
+          <rect x="272" y="98" width="185" height="26" rx="4" class="c-warn" data-hi="2"/>
+          <text x="364" y="115" text-anchor="middle">+64k Prefill Act Spike -&gt; OOM</text>
+        </g>
+
+        <g data-step="3">
+          <text x="12" y="150" font-weight="600">3. Concurrency KV OOM / Preemption (S * B exceeds KV pool)</text>
+          <rect x="12" y="156" width="240" height="26" rx="4" class="c-muted"/>
+          <text x="132" y="173" text-anchor="middle">Weights + Runtime (17.8G)</text>
+          <rect x="252" y="156" width="205" height="26" rx="4" class="c-bad" data-hi="3"/>
+          <text x="354" y="173" text-anchor="middle">KV grows with B * S -&gt; Evict / OOM</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Boot OOM happens before serving a single token when static weights plus CUDA runtime exceed GPU VRAM (such as 141.2 GB for 70B BF16 on an 80 GB card).</li>
+      <li>Prefill spike OOM happens on a single long prompt when unchunked prefill activations (or full-prompt vocab logits) temporarily exceed the reserved scratchpad margin.</li>
+      <li>Concurrency KV saturation happens during steady decoding when active tokens (S * B) exhaust the KV block pool, causing vLLM preemptions or hard OOMs.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Diagnose an OOM by when it strikes: at startup (weights/TP issue), on a single long prompt arrival (prefill activation/chunking issue), or during peak concurrent decoding (KV pool capacity issue).</figcaption>
+  </figure>
+
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Process crashes during startup warmup / KV profiling step</td><td><code>M_weights + M_runtime</code> leaves near-zero room inside <code>gpu_memory_utilization</code></td><td>Quantize weights (FP8/INT4), increase Tensor Parallelism (<code>tp_size</code>), or lower <code>max_model_len</code></td></tr>
+    <tr><td>CUDA OOM occurs specifically when one 32k+ token prompt arrives, even at batch size 1</td><td>Unchunked prefill activation scratchpad (or full-prompt vocabulary logit tensor) exceeds non-KV reserve</td><td>Enable chunked prefill, lower <code>max_num_batched_tokens</code> (e.g. 2048), and compute logits only for the last token</td></tr>
+    <tr><td>vLLM logs <code>Sequence group is preempted by PreemptionMode.RECOMPUTE</code> under high traffic</td><td>Active tokens <code>S * B</code> reached 100% of allocated KV cache blocks</td><td>Enable FP8 KV cache (<code>kv_cache_dtype="fp8"</code>), cap <code>max_num_seqs</code>, or enable prefix caching</td></tr>
+    <tr><td>Adding Tensor Parallelism from 1 to 2 GPUs gives more than 2x KV capacity increase</td><td>Expected leverage effect: splitting weights across 2 GPUs frees a much larger fraction of each GPU for KV blocks</td><td>Use TP=2 when single-GPU weight footprint consumes &gt;75% of VRAM and starves KV concurrency</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> <code>vllm:gpu_cache_usage_perc</code> (alert above 85%), preemption rate per minute, peak allocated vs reserved CUDA bytes during warmup, active tokens in flight (<code>sum(S_i)</code>), and queuing delay.</p>
+  <details class="q"><summary>Scenario: You need to serve Llama-3-70B (P=70.6B, L=80, n_kv=8, d_head=128) for an enterprise RAG pipeline with S = 16,384 tokens per request and a target concurrency of B = 16 active requests. You have two hardware options: (A) 1x H100 80 GB with AWQ INT4 weights, or (B) 2x H100 80 GB (160 GB total) with FP8 weights. Walk through the exact memory math for both and pick the configuration that meets the SLA.</summary><div class="a"><ol>
+    <li><strong>Calculate total active tokens and KV cost:</strong> <code>S * B = 16,384 * 16 = 262,144 tokens</code>. For Llama-3-70B, BF16 KV costs <code>2 * 80 * 8 * 128 * 2 = 327,680 B</code> (320 KiB/tok), so 262,144 tokens need <strong>85.90 GB</strong> of KV cache. With FP8 KV (<code>b_kv = 1</code>, 160 KiB/tok), 262,144 tokens need <strong>42.95 GB</strong> of KV cache.</li>
+    <li><strong>Evaluate Option A (1x 80 GB H100, INT4 weights):</strong> INT4 weights take <code>70.6B * 0.5 B = 35.30 GB</code> (plus ~2 GB group scales and ~2 GB runtime/activation overhead = <strong>~39.3 GB</strong> non-KV base). Leftover KV headroom on one 80 GB card is <code>80 - 39.3 = 40.7 GB</code>. Even with FP8 KV (<code>42.95 GB</code> needed), Option A falls short (<code>B_max = 15</code> at zero safety margin, or <code>~12</code> at 90% GPU memory utilization).</li>
+    <li><strong>Evaluate Option B (2x 80 GB H100 = 160 GB, FP8 weights):</strong> FP8 weights take <code>70.6B * 1.0 B = 70.60 GB</code> total (35.30 GB/GPU), plus <code>2 * 2.0 GB = 4.0 GB</code> runtime/activation overhead across both GPUs = <strong>74.60 GB</strong> base. Leftover KV headroom is <code>160 - 74.60 = 85.40 GB</code> (or <code>69.40 GB</code> at 90% utilization).</li>
+    <li><strong>Decision:</strong> Pick <strong>Option B (2x H100 80 GB with FP8 weights + FP8 KV cache)</strong>. It uses <code>74.60 + 42.95 = 117.55 GB</code> out of 160 GB (73.5% utilization), avoids INT4 accuracy loss on enterprise RAG, and leaves ~26 GB of extra KV headroom for traffic bursts plus 2x the HBM bandwidth.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Inference memory math splits GPU VRAM into static weights, fixed runtime and prefill activation overhead, and the dynamic KV cache. Doing this math upfront prevents surprise production OOMs and tells you the exact ceiling on concurrent requests and context length before provisioning hardware.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Total VRAM equals weights plus runtime plus peak prefill activations plus KV cache. Weights cost parameters times weight bytes, or 2 GB per billion parameters in BF16. CUDA runtime and kernel workspaces reserve about 1.5 GB per GPU, while chunked prefill caps single-layer activation scratchpad under half a gigabyte. Whatever VRAM remains is your usable KV pool. Each token costs 2 times layers times KV heads times head dim times KV bytes: 128 KiB per token for Llama-3-8B in BF16, or 320 KiB for 70B. Dividing the KV pool by per-token cost gives your maximum total active tokens, S times B.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Because the KV pool is the residual after subtracting weights, weight quantization has nonlinear leverage: shrinking 8B weights from 16 GB in BF16 to 4 GB in INT4 on a 24 GB card triples free KV space from 6.2 GB to 18.2 GB, and adding FP8 KV lifts 8k concurrency from 5 to 33 requests without adding hardware. Keep chunked prefill and PagedAttention enabled so activation spikes and fragmentation never steal that headroom.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"To see if an LLM fits on a GPU, you multiply the parameter count by 2 bytes for FP16 and make sure there is a few gigabytes left over for context and user traffic."</p>
+    <p class="strong">"Total VRAM is M_weights + M_runtime + M_act + M_kv. On a 24 GB L4 running Llama-3-8B in BF16, weights take 16.06 GB and CUDA plus chunked prefill activations take ~1.74 GB, leaving only 6.20 GB for KV cache. At 128 KiB per token (2 * 32 * 8 * 128 * 2 B), that 6.20 GB pool holds at most 47,300 active tokens, capping 8k-context concurrency at 5 requests. Quantizing weights to INT4 (4.01 GB) and KV to FP8 (64 KiB/token) expands the KV pool to 18.25 GB and raises 8k concurrency to 33 requests."</p>
+    <p>The strong answer writes the four-part budget, subtracts fixed costs first, derives the exact token pool from 128 KiB/token, and quantifies how weight and KV quantization multiply concurrency.</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"A 7B BF16 model takes 14 GB, so on a 24 GB GPU you have 10 GB available for the KV cache."</summary><div class="a">Wrong. You must subtract the <strong>1.5 to 2.0 GB</strong> CUDA runtime, cuBLAS workspace, and prefill activation scratchpad first, plus the serving engine's safety margin (e.g. vLLM's 90% utilization cap, which holds back 2.4 GB). Real usable KV space on a 24 GB card with 14 to 16 GB weights is only <strong>4 to 6.5 GB</strong>.</div></details>
+  <details class="q"><summary>"Quantizing model weights from BF16 to INT4 (4x smaller) increases maximum batch size by at most 4x."</summary><div class="a">Wrong. Max batch size is proportional to <strong>leftover KV headroom</strong> <code>VRAM - (W + Ovh)</code>, not total VRAM. If weights took 20 GB on a 24 GB card (leaving 2 GB for KV after 2 GB overhead), cutting weights 4x to 5 GB expands KV headroom from <strong>2 GB to 17 GB (an 8.5x increase in max batch size)</strong>.</div></details>
+  <details class="q"><summary>"During inference, activation memory scales with the number of layers L just like weights and KV cache do."</summary><div class="a">Wrong. Weights and KV cache persist across all <code>L</code> layers simultaneously, so both multiply by <code>L</code>. Inference activations are transient and overwritten layer by layer during the forward pass, so peak activation scratchpad scales with a <strong>single layer's</strong> width times the prefill chunk token count.</div></details>
+  <details class="q"><summary>"Llama-3-70B has 8.75x more parameters than Llama-3-8B, so its KV cache per token is also 8.75x larger."</summary><div class="a">Wrong. KV cache per token depends only on <code>2 * L * n_kv * d_head * b_kv</code>, ignoring MLP width and query head count. Both Llama-3-8B and 70B use <code>n_kv = 8</code> and <code>d_head = 128</code>; only <code>L</code> grows from 32 to 80 (<code>2.5x</code>), so KV per token grows just <strong>2.5x</strong> (from 128 KiB to 320 KiB in BF16).</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>State the full GPU memory budget equation for LLM inference and explain what determines each term.</summary><div class="a"><code>M_total = M_weights + M_runtime + M_act + M_kv</code>. <code>M_weights = P * b_w</code> depends on parameter count and weight precision; <code>M_runtime</code> (~1 to 2 GB) is fixed per GPU for CUDA kernels and workspaces; <code>M_act</code> scales with prefill chunk tokens and single-layer hidden/MLP width; <code>M_kv = 2 * L * n_kv * d_head * S * B * b_kv / eff_frag</code> scales linearly with active tokens <code>S * B</code>.</div></details>
+  <details class="q"><summary>Calculate the BF16 KV cache size per token for Llama-3-8B (L=32, n_q=32, n_kv=8, d_head=128) and Llama-3-70B (L=80, n_q=64, n_kv=8, d_head=128).</summary><div class="a">Llama-3-8B: <code>2 * 32 * 8 * 128 * 2 = 131,072 B</code> (<strong>128 KiB/token</strong>). Llama-3-70B: <code>2 * 80 * 8 * 128 * 2 = 327,680 B</code> (<strong>320 KiB/token</strong>). Notice <code>n_q</code> is not in the formula.<div class="f"><b>Follow-up</b>Why is 70B's KV per token only 2.5x larger than 8B's when its weight footprint is 8.75x larger? Because 70B keeps <code>n_kv = 8</code> and <code>d_head = 128</code> identical to 8B (using an 8:1 GQA ratio instead of 4:1), so only the layer ratio <code>80 / 32 = 2.5x</code> increases KV size.</div></div></details>
+  <details class="q"><summary>Why does vLLM profile a dummy forward pass at startup before allocating the KV cache block pool?</summary><div class="a">Because exact PyTorch activation buffers, custom CUDA workspaces, and NCCL buffers are hard to predict analytically. vLLM loads weights, runs a synthetic prefill batch at <code>max_num_batched_tokens</code> to measure real peak non-KV memory, and assigns all remaining VRAM (up to <code>gpu_memory_utilization</code>) to fixed-size KV blocks.</div></details>
+  <details class="q"><summary>How does chunked prefill prevent activation OOMs on long-context requests?</summary><div class="a">Instead of prefilling a 32k or 64k prompt in one giant forward pass (which allocates multi-gigabyte intermediate QKV and MLP buffers for all 64k tokens at once), chunked prefill splits the prompt into fixed chunks (e.g. 2,048 tokens), bounding peak activation memory to a constant ~0.24 GB.<div class="f"><b>Follow-up</b>What other tensor can cause a sudden multi-gigabyte spike at the end of an unchunked prefill pass? The final LM head vocabulary logits tensor: for 64k tokens and a 128,256-token vocabulary in FP32, materializing all prompt logits takes <code>65,536 * 128,256 * 4 B = 33.6 GB</code>! Engines must slice the hidden state to the last token before the LM head unless prompt logprobs are explicitly requested.</div></div></details>
+  <details class="q"><summary>Why do INT4 quantized models (like AWQ or GPTQ with group size 128) use slightly more than 0.5 bytes per parameter in VRAM?</summary><div class="a">Each group of 128 INT4 weights stores a 16-bit scale and a zero-point (~4 bytes per 128 weights = <code>0.03125 B/param</code>), and embedding/LM-head/norm layers are often kept in FP16, bringing effective weight bytes to roughly <strong>0.55 to 0.58 B/param</strong>.</div></details>
+  <details class="q"><summary>Suppose you double Tensor Parallelism from TP=1 (one 80 GB GPU) to TP=2 (two 80 GB GPUs) for a 35 GB INT4 70B model. By what factor does your KV cache capacity increase?</summary><div class="a">On 1x 80 GB GPU, after 35.3 GB weights and ~2 GB overhead, KV headroom is <strong>42.7 GB</strong>. On 2x 80 GB GPUs (160 GB total), weights still total 35.3 GB (17.65 GB/GPU) and overhead is ~4 GB (2 GB/GPU), leaving <strong>120.7 GB</strong> for KV cache: a <strong>2.83x increase</strong> in KV capacity from doubling GPUs.<div class="f"><b>Follow-up</b>What happens to per-GPU KV cache per token under TP=2? Because TP shards the <code>n_kv = 8</code> KV heads across the 2 GPUs (4 KV heads per GPU), each GPU stores half the KV bytes per token (160 KiB/token instead of 320 KiB/token).</div></div></details>
+  <details class="q"><summary>What is the difference between internal fragmentation and external fragmentation in KV cache allocation?</summary><div class="a"><strong>Internal fragmentation</strong> wastes reserved slots inside a request's pre-allocated contiguous buffer (e.g. reserving 8,192 tokens when the user stops at 600). <strong>External fragmentation</strong> leaves unusable gaps between different requests' contiguous buffers in HBM. PagedAttention (<strong>K15</strong>) eliminates external fragmentation and bounds internal fragmentation to at most one block (e.g. 16 tokens) per request.</div></details>
+  <details class="q"><summary>You have 12 GB of usable KV pool and a model with kv_per_token = 128 KiB. If your product manager doubles average prompt + output length from 3,000 to 6,000 tokens, how does max concurrency change?</summary><div class="a">Total token slots are fixed at <code>12,000,000,000 / 131,072 = 91,552 tokens</code>. At <code>S = 3,000</code>, <code>B_max = floor(91,552 / 3,000) = 30</code> concurrent requests. At <code>S = 6,000</code>, <code>B_max = floor(91,552 / 6,000) = 15</code> concurrent requests (halved).</div></details>
+  <details class="q"><summary>When can Tensor Parallelism duplicate KV cache heads across GPUs instead of splitting them cleanly?</summary><div class="a">When <code>tp_size &gt; n_kv</code>. For example, Llama-3-8B and 70B have <code>n_kv = 8</code> KV heads; if you run TP=16 across two 8-GPU nodes, each KV head must be replicated across 2 GPUs so that local query heads can attend without cross-GPU KV transfers, doubling total KV memory across the cluster.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the master 4-term VRAM equation, (2) the weight GB/1B rule of thumb for BF16, FP8, and INT4, (3) the KV per token formula and the exact BF16 numbers for Llama-3-8B and 70B, (4) the formula for B_max and S_max, and (5) why weight quantization has nonlinear leverage on B_max.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Drew the 24 GB bar: 16.06 GB BF16 weights + 1.50 GB CUDA runtime + 0.24 GB prefill activation scratchpad = 17.80 GB baseline, leaving 6.20 GB KV pool (fits B=5 at 8k, OOMs at B=8).</li>
+    <li>Master budget: <code>M_total = M_weights + M_runtime + M_act(T_prefill) + M_kv(S, B)</code>.</li>
+    <li>Weights rule: <code>P * b_w</code> -&gt; 2.0 GB (BF16), 1.0 GB (FP8/INT8), 0.5 GB (INT4) per 1B parameters (+6% to 10% group-scale overhead for INT4).</li>
+    <li>KV per token: <code>2 * L * n_kv * d_head * b_kv</code> -&gt; Llama-3-8B BF16 = <strong>128 KiB/token</strong>; Llama-3-70B BF16 = <strong>320 KiB/token</strong> (only 2.5x larger because both use <code>n_kv = 8, d_head = 128</code>).</li>
+    <li>Capacity limits: <code>Tokens_max = floor((VRAM - W - Ovh) * eff_frag / kv_per_token)</code>; <code>B_max = floor(Tokens_max / S)</code>; <code>S_max = floor(Tokens_max / B)</code>.</li>
+    <li>Nonlinear quantization leverage: cutting weights expands the residual difference <code>VRAM - W - Ovh</code> by a much larger factor when weights occupied most of the card (6.20 GB to 18.25 GB on 24 GB, yielding 6.6x concurrency with FP8 KV).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K06: Why does a KV cache store post-RoPE Keys and Values, and never Queries?</summary><div class="a">In causal decode, only the newest token's query <code>q_t</code> attends over past history, so past queries are never reused. Keys are cached post-RoPE so their absolute sequence positions are baked in once rather than re-rotated on every decode step.</div></details>
+  <details class="q"><summary>K05: What is arithmetic intensity, and why does it explain the difference between prefill and decode hardware utilization?</summary><div class="a">Arithmetic intensity is FLOPs executed per byte transferred from HBM. Prefill batches hundreds of prompt tokens into dense matrix-matrix multiplies with high FLOPs/byte (compute-bound), whereas decode runs matrix-vector multiplies for 1 token per sequence with ~1 to 2 FLOPs/byte (HBM bandwidth-bound).</div></details>
+  <details class="q"><summary>A09: Why do we divide Q @ K^T by sqrt(d_head) before applying softmax?</summary><div class="a">If components of <code>q</code> and <code>k</code> have zero mean and unit variance, their dot product has variance <code>d_head</code>. Dividing by <code>sqrt(d_head)</code> restores unit variance so large dot products do not push softmax into flat saturation regions with vanishing gradients or peaked one-hot attention.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/2309.06180">Kwon et al. (2023): Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Breakdown of weight vs KV cache vs fragmentation memory in LLM serving and why KV capacity caps batch size. Checked 2026-11-20.</small></li>
+    <li><a href="https://arxiv.org/abs/2407.21783">Dubey et al. (2024): The Llama 3 Herd of Models</a><small>Exact architectural dimensions for Llama-3-8B (L=32, n_q=32, n_kv=8, d_h=128, d_ff=14336) and 70B (L=80, n_q=64, n_kv=8, d_h=128, d_ff=28672). Checked 2026-11-20.</small></li>
+    <li><a href="https://arxiv.org/abs/2211.05102">Pope et al. (2022): Efficiently Scaling Transformer Inference</a><small>Derivation of weight, activation, and KV memory scaling laws across batch sizes and sequence lengths. Checked 2026-11-20.</small></li>
+    <li><a href="https://arxiv.org/abs/2403.02310">Agrawal et al. (2024): Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve</a><small>Chunked prefill mechanics bounding peak prefill activation memory and stabilizing mixed prefill-decode batches. Checked 2026-11-20.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Four-part VRAM budget:</strong> <code>M_total = M_weights + M_runtime + M_act(T_prefill) + M_kv(S, B)</code>; static weights and fixed overhead are paid first, leaving the residual pool for KV tokens.</li>
+    <li><strong>Model weights math:</strong> <code>M_weights = P * b_w</code> (<strong>2.0 GB/1B</strong> in BF16, <strong>1.0 GB/1B</strong> in FP8/INT8, <strong>0.5 GB/1B</strong> in INT4 plus ~6% to 10% group-scale overhead).</li>
+    <li><strong>Runtime and activation overhead:</strong> CUDA context/workspaces take <strong>~1.0 to 2.0 GB per GPU</strong>; inference activations only hold <strong>1 layer at a time</strong> (<code>~0.24 GB</code> for a 2,048-token prefill chunk on 8B, but <code>~3.89 to 7.78 GB</code> if 32k to 64k prompts run unchunked).</li>
+    <li><strong>KV cache per token:</strong> <code>kv_per_token = 2 * L * n_kv * d_head * b_kv</code>; Llama-3-8B BF16 = <strong>128 KiB/tok</strong>, Llama-3-70B BF16 = <strong>320 KiB/tok</strong> (only 2.5x larger because both use <code>n_kv = 8</code>), and Llama-2-7B MHA = <strong>512 KiB/tok</strong>.</li>
+    <li><strong>Context and concurrency limits:</strong> <code>Tokens_max = floor((VRAM - W - Ovh) * eff_frag / kv_per_token)</code>, giving <code>B_max = floor(Tokens_max / S)</code> and <code>S_max = floor(Tokens_max / B)</code>; weight quantization multiplies <code>Tokens_max</code> non-linearly when weights dominate VRAM.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook:</strong> "W-O-K fills the pot: Weights static, Overhead fixed, KV scales with S times B."</li>
+      <li><strong>Anchor calculation (8B BF16 on 24 GB):</strong> <code>16.06 GB</code> weights + <code>1.74 GB</code> overhead = <code>17.80 GB</code> base -&gt; <code>6.20 GB</code> KV pool -&gt; <code>47,301</code> max tokens -&gt; <code>B_max = 5</code> at 8k context (OOM at B=8).</li>
+      <li><strong>Quantization leverage (8B INT4w + FP8kv on 24 GB):</strong> <code>4.01 GB</code> weights + <code>1.74 GB</code> overhead -&gt; <code>18.25 GB</code> KV pool at <code>64 KiB/tok</code> -&gt; <code>B_max = 33</code> at 8k context (<strong>6.6x gain</strong>).</li>
+      <li><strong>Three OOM signatures:</strong> Startup crash = weights + runtime &gt; VRAM; single long-prompt crash = unchunked prefill activation/logit spike; high-traffic crash/preemption = <code>S * B</code> exceeding KV block pool.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K07 T1 W01", "cards": [{"q": "What are the four terms in the master GPU VRAM budget equation for LLM inference?", "a": "M_total = M_weights (P*b_w) + M_runtime (1-2 GB CUDA context) + M_act (single-layer prefill chunk scratchpad) + M_kv (S*B*kv_per_token)."}, {"q": "How many gigabytes per billion parameters do model weights require in BF16, FP8, and INT4?", "a": "2.0 GB per 1B parameters in BF16/FP16, 1.0 GB in FP8/INT8, and 0.5 GB in INT4 (plus ~6-10% group-scale overhead)."}, {"q": "Why is Llama-3-70B's BF16 KV cache per token (320 KiB) only 2.5x larger than Llama-3-8B's (128 KiB)?", "a": "Both use n_kv=8 GQA heads and d_head=128; only layer count L increases 2.5x (from 32 to 80 layers)."}, {"q": "How do you calculate max concurrent requests B_max at context length S from total GPU VRAM?", "a": "Subtract weights and runtime/activation overhead from usable VRAM to get the KV pool, then compute floor(KV_pool / (kv_per_token * S))."}, {"q": "Why does weight quantization from BF16 to INT4 often increase max concurrency by much more than 4x on a single GPU?", "a": "Concurrency scales with residual KV headroom (VRAM - W - Ovh); when weights occupy most of VRAM, shrinking them triples or quadruples leftover KV space."}, {"q": "Why does inference activation memory scale with a single layer's dimensions instead of all L layers?", "a": "Forward-only inference reuses the same scratchpad buffer for layer l+1 as soon as layer l writes its persistent K and V slices."}, {"q": "What causes a sudden multi-gigabyte VRAM OOM when a single 64k-token prompt arrives even at batch size 1?", "a": "Unchunked prefill materializes huge single-layer QKV/MLP activation tensors (and full-prompt vocabulary logits) across all 64k tokens at once."}, {"q": "How do you distinguish a boot OOM, a prefill-spike OOM, and a KV-concurrency OOM in production?", "a": "Boot OOM fails loading weights; prefill OOM fails on one long unchunked prompt; KV OOM/preemption fails when concurrent S*B tokens fill the KV pool."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

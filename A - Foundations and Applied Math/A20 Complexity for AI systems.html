@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A20 Complexity for AI systems</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A20">
+<main>
+<header>
+  <div class="eyebrow"><b>A20</b><span>Foundations and applied math</span><span>Tier 2</span><span>Week 1</span><span>45 min</span></div>
+  <h1>Complexity for AI systems</h1>
+  <p class="lede">Why does doubling prompt length quadruple prefill attention latency while doubling batch-1 decode context barely moves per-step compute until memory bandwidth saturates? This page covers big-O of self-attention versus projections, compute-bound prefill versus memory-bound decode, and throughput math. GPU hardware execution and the full roofline diagram belong to K23.</p>
+  <div class="chips"><span><em>Before</em>A09 Matrices, matmul, tensor shapes, broadcasting, einsum</span><span><em>After</em>K23 GPU execution and the roofline model</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>4 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5 and test the FLOP crossover slider</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run the attention timing kata and verify the log-log exponent</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Read production and interview, say the 90 second answer aloud</span><small>7 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Close the page, write the blank-page recall</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Import the cards and record your answer</span><small>3 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later. The numbers come from the kata in station 6.</p>
+  <details class="q"><summary>In a transformer layer with hidden width <code>d = 256</code>, does attention (<code>QK^T</code> and <code>PV</code>) or linear projection (<code>Q, K, V, O</code>) do more floating-point operations at sequence length <code>n = 256</code>, and at what exact length <code>n</code> do their FLOP counts become equal?</summary><div class="a">At <code>n = 256</code>, the four linear projections do twice as many FLOPs as attention (<code>0.134 GFLOP</code> vs <code>0.067 GFLOP</code>). Projections cost <code>8*n*d^2</code> FLOPs and attention matmuls cost <code>4*n^2*d</code> FLOPs, so they become equal at <code>n = 2*d = 512</code> (<code>0.268 GFLOP</code> each). When you include the feed-forward MLP (<code>16*n*d^2</code>), total linear block FLOPs are <code>24*n*d^2</code>, which crosses attention at <code>n = 6*d = 1,536</code>.</div></details>
+  <details class="q"><summary>In the kata, raising sequence length 16x from <code>n = 256</code> to <code>n = 4096</code> increases linear projection time by <code>8.0x</code> (<code>1.63 ms</code> to <code>13.11 ms</code>), but increases causal attention time by <code>149.5x</code> (<code>1.18 ms</code> to <code>176.42 ms</code>). Why did attention grow nearly 150x while its score matrix grew 256x to <code>64.00 MB</code>?</summary><div class="a">Attention FLOPs scale as <code>O(n^2 * d)</code> and score-matrix bytes scale as <code>O(n^2)</code>, so a 16x increase in <code>n</code> multiplies both arithmetic and score memory by <code>16^2 = 256x</code>. At small <code>n = 256</code>, fixed call overhead and L2/L3 cache residency mask the curve; from <code>n = 1024</code> to <code>n = 4096</code>, the <code>64 MB</code> score matrix spills out of CPU cache into main RAM and the empirical log-log exponent reaches <code>alpha = 1.93</code>.</div></details>
+  <details class="q"><summary>Generating 1 token during batch-1 decode on a 7B model requires only about <code>14 GFLOPs</code> (<code>2 * P</code>), whereas a single GPU can execute over <code>300,000 GFLOPs/s</code>. Why can the GPU not generate 20,000 tokens per second for that single user?</summary><div class="a">Batch-1 decode is memory-bandwidth-bound, not compute-bound. To compute those 14 GFLOPs for 1 token, the GPU must stream all <code>14 GB</code> of FP16 model weights from HBM into SRAM on every single token step. Even at <code>2,000 GB/s</code> memory bandwidth, reading <code>14 GB</code> takes <code>7 ms</code> per token, capping throughput at roughly <code>140 tokens/s</code> while the compute units sit over 99% idle.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Algorithmic complexity in AI systems has two dimensions that rarely bottleneck at the same time: floating-point operations (compute) and bytes moved across the memory hierarchy (bandwidth and capacity). Inside a transformer block of sequence length <code>n</code> and model dimension <code>d</code>, dense weight projections and MLPs touch every token independently in <code>O(n * d^2)</code> compute, while self-attention compares every token pair in <code>O(n^2 * d)</code> compute and materializes an <code>O(n^2)</code> score matrix. At short sequences (<code>n &lt;&lt; d</code>), weight projections dominate runtime; past the crossover <code>n = 6*d</code>, the quadratic attention term takes over.</p>
+  <p>In serving, the bottleneck flips between two phases. Prefill processes all <code>n</code> prompt tokens in parallel, amortizing one weight read across <code>n</code> tokens (high arithmetic intensity, compute-bound) and paying the full <code>O(n^2 * d)</code> attention cost. Autoregressive decode generates one token at a time against a KV cache of length <code>n</code>, cutting per-step compute to <code>O(d^2 + n * d)</code> but streaming every weight matrix and all <code>n</code> cached KV vectors from memory for each token (low arithmetic intensity, memory-bandwidth-bound).</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Transformer complexity across prefill, crossover, and decode</div>
+    <svg viewBox="0 0 500 220" role="img" aria-label="Five-step complexity progression: 1 Linear projections O(n d^2), 2 Quadratic attention O(n^2 d) and O(n^2) score memory, 3 Crossover at n = 2d (or 6d with MLP), 4 Compute-bound prefill vs bandwidth-bound decode, 5 Log-log exponent fit alpha = 1.93.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="20" width="106" height="54" rx="6" class="c-soft" data-hi="1"/>
+          <text x="63" y="42" text-anchor="middle">1 Linear Proj</text>
+          <text x="63" y="60" text-anchor="middle" class="m">O(n d^2) = 8nd^2</text>
+        </g>
+        <g data-step="2">
+          <path d="M116 47 H130" class="ink" fill="none"/>
+          <rect x="130" y="20" width="114" height="54" rx="6" class="c-warn" data-hi="2"/>
+          <text x="187" y="42" text-anchor="middle">2 Attention</text>
+          <text x="187" y="60" text-anchor="middle" class="m">O(n^2 d) + n^2 mem</text>
+        </g>
+        <g data-step="3">
+          <path d="M244 47 H258" class="ink" fill="none"/>
+          <rect x="258" y="20" width="110" height="54" rx="6" class="c-accent" data-hi="3"/>
+          <text x="313" y="42" text-anchor="middle">3 Crossover</text>
+          <text x="313" y="60" text-anchor="middle" class="m">n=2d (6d w/ MLP)</text>
+        </g>
+        <g data-step="4">
+          <rect x="10" y="96" width="234" height="52" rx="6" class="c-good" data-hi="4"/>
+          <text x="127" y="118" text-anchor="middle">4a Prefill: Compute-bound</text>
+          <text x="127" y="136" text-anchor="middle" class="m">All n tokens at once, O(n^2 d)</text>
+          <rect x="258" y="96" width="232" height="52" rx="6" class="c-bad" data-hi="4"/>
+          <text x="374" y="118" text-anchor="middle">4b Decode: Bandwidth-bound</text>
+          <text x="374" y="136" text-anchor="middle" class="m">1 token/step, streams weights+KV</text>
+        </g>
+        <g data-step="5">
+          <path d="M368 47 H382" class="ink" fill="none"/>
+          <rect x="382" y="20" width="108" height="54" rx="6" class="c-good" data-hi="5"/>
+          <text x="436" y="42" text-anchor="middle">5 Fit Slope</text>
+          <text x="436" y="60" text-anchor="middle" class="m">alpha = 1.93</text>
+          <text x="250" y="182" text-anchor="middle" class="m">Throughput bound: T = max(T_compute, T_memory) = FLOPs/Peak * max(1, I_ridge / I)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Projecting n tokens through d x d weight matrices (Q, K, V, O) costs 8*n*d^2 FLOPs and scales linearly with sequence length n.</li>
+      <li>Causal self-attention multiplies Q by K^T and weights by V in 4*n^2*d FLOPs while allocating an n x n score matrix (64 MB at n=4096 in float32).</li>
+      <li>Attention FLOPs overtake QKVO projections at n = 2*d (n=512 for d=256) and overtake the entire layer including MLP (24*n*d^2) at n = 6*d.</li>
+      <li>Prefill runs all n tokens in parallel (high FLOPs per byte, compute-bound), whereas decode runs 1 token per step and stalls streaming weights and KV cache from memory.</li>
+      <li>Fitting a line to log2(time) vs log2(n) from n=1024 to 4096 measures an empirical exponent alpha = 1.93 (13.5x slower than projections at n=4096).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Linear weight layers dominate at short context (<code>O(n * d^2)</code>), quadratic attention dominates prefill past <code>n = 6*d</code> (<code>O(n^2 * d)</code>), and memory bandwidth dominates single-token decode.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>L-Q-C-B-S (Linear, Quadratic, Crossover, Bandwidth, Slope):</strong> <strong>L</strong>inear projections <code>24*n*d^2</code> (<code>8*n*d^2</code> for QKVO, <code>16*n*d^2</code> for MLP), <strong>Q</strong>uadratic attention <code>4*n^2*d</code> FLOPs and <code>n^2</code> score memory, <strong>C</strong>rossover at <code>n = 6*d</code> (or <code>2*d</code> vs QKVO alone), <strong>B</strong>andwidth-bound decode vs compute-bound prefill, <strong>S</strong>lope <code>alpha = d(log T)/d(log n)</code> to verify empirical scaling.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Big-O of a transformer layer: projections vs attention</h3>
+  <p>Recall from A09 that multiplying an <code>(M, K)</code> matrix by a <code>(K, N)</code> matrix performs <code>M * K * N</code> multiply-accumulates, or <code>2 * M * K * N</code> FLOPs. For a single sequence of length <code>n</code> and model width <code>d</code> (where multi-head dimensions sum to <code>H * d_head = d</code>), each of the four attention projections (<code>W_Q, W_K, W_V, W_O</code> of shape <code>d x d</code>) costs <code>2*n*d^2</code> FLOPs, totaling <code>8*n*d^2</code> FLOPs. A standard feed-forward MLP with hidden width <code>4*d</code> adds two <code>(n, d) @ (d, 4d)</code> matmuls, or <code>16*n*d^2</code> FLOPs, giving <code>24*n*d^2</code> linear-in-<code>n</code> FLOPs per layer.</p>
+  <p>Self-attention computes the score matrix <code>S = Q @ K^T</code> of shape <code>(n, n)</code> in <code>2*n^2*d</code> FLOPs, applies causal mask and softmax in <code>O(n^2)</code> elementwise operations, and multiplies <code>P @ V</code> in another <code>2*n^2*d</code> FLOPs, totaling <code>4*n^2*d</code> FLOPs. Dividing attention FLOPs by linear FLOPs yields the exact crossover:</p>
+  <div class="codewrap"><pre>Attention / QKVO ratio = (4 * n^2 * d) / (8 * n * d^2)  = n / (2 * d)   --&gt; crosses 1.0 at n = 2 * d
+Attention / Full-block = (4 * n^2 * d) / (24 * n * d^2) = n / (6 * d)   --&gt; crosses 1.0 at n = 6 * d</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Linear block vs quadratic attention FLOP crossover</div>
+    <p class="ask">Predict first. At model width <code>d = 256</code>, at what sequence length <code>n</code> does quadratic attention (<code>4*n^2*d</code>) overtake QKVO projections (<code>8*n*d^2</code>), and where does it overtake the full linear block including the <code>4d</code> MLP (<code>24*n*d^2</code>)?</p>
+    <div class="ctl">
+      <label><span>Sequence length (n)</span><input type="range" name="n" min="256" max="8192" step="256" value="1536"><output data-for="n" data-unit=" tok"></output></label>
+      <label><span>Model dimension (d)</span><input type="range" name="d" min="256" max="2048" step="256" value="256"><output data-for="d" data-unit=""></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Attention FLOPs equal QKVO projections at <code>n = 2*d</code> and equal the full linear block (QKVO + MLP) at <code>n = 6*d</code>; above <code>6*d</code>, attention dominates prefill compute.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var n=v.n, d=v.d;
+    var qkvo = (8 * n * d * d) / 1e9;
+    var mlp = (16 * n * d * d) / 1e9;
+    var fullLin = qkvo + mlp;
+    var attn = (4 * n * n * d) / 1e9;
+    var share = (100 * attn) / (fullLin + attn);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GFLOP",digits:2,rows:[
+      {label:"QKVO projections (8nd^2)",value:qkvo,tone:"muted"},
+      {label:"MLP projections (16nd^2)",value:mlp,tone:"muted"},
+      {label:"Full linear block (24nd^2)",value:fullLin,tone:attn>=fullLin?"muted":"good"},
+      {label:"Attention QK^T+PV (4n^2d)",value:attn,tone:attn>=fullLin?"bad":"warn"}
+    ]});
+    return {verdict:"At n="+tl.fmt(n,0)+", d="+tl.fmt(d,0)+": attention is "+tl.fmt(attn,2)+" GFLOP vs "+tl.fmt(fullLin,2)+" GFLOP full linear ("+tl.fmt(share,1)+"% of layer FLOPs). Crossovers: 2d="+tl.fmt(2*d,0)+" (vs QKVO), 6d="+tl.fmt(6*d,0)+" (vs full linear)."};
+  })});</script>
+  <details class="q"><summary>Check: for a Llama-scale layer with <code>d = 4096</code>, at what context length <code>n</code> do attention matmul FLOPs overtake the combined QKVO + MLP linear projections?</summary><div class="a">At <code>n = 6 * d = 6 * 4096 = 24,576</code> tokens. Below 24k tokens, the <code>24*n*d^2</code> dense weight matmuls actually consume more FLOPs than the <code>4*n^2*d</code> attention matmuls.</div></details>
+
+  <h3>Compute vs memory: arithmetic intensity and prefill vs decode</h3>
+  <p>A processor with peak compute <code>C_peak</code> (FLOPs/s) and memory bandwidth <code>BW</code> (bytes/s) finishes an operation of <code>F</code> FLOPs and <code>M</code> bytes of memory traffic in at least <code>T &gt;= max(F / C_peak, M / BW)</code>. The ratio <code>I = F / M</code> (FLOPs per byte moved) is the operation's <strong>arithmetic intensity</strong>. When <code>I</code> is below the hardware ridge point <code>I_ridge = C_peak / BW</code> (typically 150 to 300 FLOPs/byte on modern GPUs; covered in detail in K23), execution is memory-bandwidth-bound.</p>
+  <p>During <strong>prefill</strong> of <code>B * n</code> tokens, a weight matrix of <code>d^2</code> parameters (<code>2*d^2</code> bytes in FP16) performs <code>2*B*n*d^2</code> FLOPs, so arithmetic intensity is roughly <code>B * n</code> FLOPs/byte: easily compute-bound. During <strong>autoregressive decode</strong>, each step processes only 1 new token per sequence (<code>2*B*d^2</code> FLOPs) while still reading all <code>2*d^2</code> weight bytes plus the KV cache of <code>4*B*n*d</code> FP16 bytes per layer. At <code>B = 1</code>, intensity collapses to ~1 FLOP/byte, so latency per token equals total bytes streamed divided by <code>BW</code>.</p>
+
+  <h3>Throughput math and fitting the empirical exponent</h3>
+  <p>For a model with <code>P</code> parameters stored in <code>b_w</code> bytes per parameter (<code>b_w = 2</code> for FP16/BF16), a full forward pass over <code>N = B * n</code> tokens takes approximately <code>2 * P * N</code> weight FLOPs (and a training step takes <code>6 * P * N</code> FLOPs: <code>2P</code> forward + <code>4P</code> backward). Consequently, batch-1 decode step time is bounded below by weight streaming plus KV cache streaming:</p>
+  <div class="codewrap"><pre>T_decode_step(B, n) &gt;= (P * b_w + B * n * bytes_kv_per_tok) / BW
+Throughput (tok/s)  = B / T_decode_step(B, n)</pre></div>
+  <p>Raising batch size <code>B</code> amortizes the fixed weight read <code>P * b_w</code> across <code>B</code> sequences, multiplying token throughput almost linearly with <code>B</code> until either arithmetic intensity reaches <code>I_ridge</code> or the KV cache term <code>B * n * bytes_kv_per_tok</code> saturates memory capacity or bandwidth. To verify whether any code path scales linearly (<code>alpha = 1</code>) or quadratically (<code>alpha = 2</code>) in practice, time it across powers of two and fit a straight line to <code>log2(T) = log2(c) + alpha * log2(n)</code>: a doubling ratio <code>T(2n) / T(n)</code> of <code>2x</code> gives <code>alpha = 1</code>, while a <code>4x</code> doubling ratio gives <code>alpha = 2</code>.</p>
+  <details class="q"><summary>Check: you double sequence length from <code>n = 2048</code> to <code>n = 4096</code> and wall-clock latency rises from <code>47.21 ms</code> to <code>176.42 ms</code> (a <code>3.74x</code> ratio). What is the empirical two-point exponent <code>alpha</code>?</summary><div class="a"><code>alpha = log2(176.42 / 47.21) = log2(3.737) = 1.90</code>, confirming near-quadratic <code>O(n^2)</code> runtime growth.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Transformer layer linear FLOPs (QKVO = <code>8nd^2</code>, 4d MLP = <code>16nd^2</code>)</td><td class="n">24 * n * d^2</td><td>Derived</td></tr>
+    <tr><td>Transformer layer self-attention matmul FLOPs (<code>QK^T</code> + <code>PV</code>)</td><td class="n">4 * n^2 * d</td><td>Derived</td></tr>
+    <tr><td>Attention vs linear FLOP crossover (vs QKVO alone / vs full block)</td><td class="n">n = 2 * d / n = 6 * d</td><td>Derived</td></tr>
+    <tr><td>Dense model FLOPs per token across all layers (forward / training step)</td><td class="n">~2 * P / ~6 * P</td><td>Derived</td></tr>
+    <tr><td>Attention score matrix memory for <code>H</code> heads in FP32 (4 B) / FP16 (2 B)</td><td class="n">4 * B * H * n^2 / 2 * B * H * n^2</td><td>Derived</td></tr>
+    <tr><td>Kata <code>n = 256</code> vs <code>n = 4096</code> projection time (<code>d = 256</code>, FP32)</td><td class="n">1.63 ms to 13.11 ms (8.0x)</td><td>Your own run, 2026-11-21</td></tr>
+    <tr><td>Kata <code>n = 256</code> vs <code>n = 4096</code> causal attention time and score memory</td><td class="n">1.18 ms to 176.42 ms (149.5x), 0.25 MB to 64.00 MB</td><td>Your own run, 2026-11-21</td></tr>
+    <tr><td>Kata fitted log-log exponent <code>alpha</code> (full <code>256..4096</code> / asymptotic <code>1024..4096</code>)</td><td class="n">proj = 0.74, attn = 1.80 / attn tail = 1.93 (R^2 = 1.000)</td><td>Your own run, 2026-11-21</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Materialized standard attention (<code>QK^T</code> in HBM/RAM)</td><td>Simple implementation using standard BLAS GEMM + softmax</td><td><code>O(n^2)</code> memory allocation and memory-bandwidth round-trips</td><td>OOM or cache spill once <code>B * H * n^2</code> exceeds SRAM/L3 cache (<code>64 MB</code> at <code>n=4096</code> in kata)</td></tr>
+    <tr><td>Fused tiled attention (FlashAttention)</td><td>Cuts attention HBM memory from <code>O(n^2)</code> to <code>O(n)</code>; avoids HBM round-trips</td><td>Still performs all <code>4*n^2*d</code> FLOPs; requires hardware-specific SRAM tiling kernels</td><td>Prefill latency still scales quadratically as <code>O(n^2 * d)</code> at long context</td></tr>
+    <tr><td>Sliding-window / local attention (window <code>w</code>)</td><td>Reduces attention compute to <code>O(n * w * d)</code> and KV state to <code>O(w)</code></td><td>Tokens cannot attend directly beyond distance <code>w</code> within a single layer</td><td>Loss of exact long-range retrieval if global or dilated layers are not interleaved</td></tr>
+    <tr><td>Larger decode batch size <code>B</code></td><td>Amortizes weight streaming across <code>B</code> users, raising total tok/s roughly <code>B</code>x</td><td>Multiplies KV cache memory and KV bandwidth by <code>B</code>; increases per-user tail latency once compute-bound</td><td>Crossing the batch size where KV cache reads surpass model weight reads</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: time attention for n from 256 to 4096 and fit the exponent</h2>
+  <p>Times four <code>(n, d) @ (d, d)</code> linear projections against causal self-attention (<code>Q @ K.T</code> + causal mask + softmax + <code>weights @ V</code>) for <code>n = 256, 512, 1024, 2048, 4096</code> at <code>d = 256</code>, tracks exact GFLOPs and score-matrix megabytes, and fits the empirical log-log scaling exponent <code>alpha</code>.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""A20 kata: time causal self-attention vs linear projection across sequence lengths n=256..4096."""
+import time
+import numpy as np
+
+D = 256
+SEQ_LENS = [256, 512, 1024, 2048, 4096]
+REPS = 5
+RNG = np.random.default_rng(42)
+W_QKV = RNG.standard_normal((D, 3 * D), dtype=np.float32) * 0.02
+W_O = RNG.standard_normal((D, D), dtype=np.float32) * 0.02
+
+
+def linear_projections(x):
+    """O(n * d^2) Q, K, V, O projections: 4 matmuls of (n, d) @ (d, d) -&gt; 8*n*d^2 FLOPs."""
+    q, k, v = np.split(x @ W_QKV, 3, axis=-1)
+    out_proj = q @ W_O
+    return q, k, v, out_proj
+
+
+def causal_attention(q, k, v):
+    """O(n^2 * d) dot-product attention (QK^T + softmax + PV) with O(n^2) score matrix."""
+    n = q.shape[0]
+    scores = (q @ k.T) * (D ** -0.5)
+    mask = np.triu(np.ones((n, n), dtype=bool), k=1)
+    scores[mask] = -1e9
+    scores -= scores.max(axis=-1, keepdims=True)
+    weights = np.exp(scores)
+    weights /= weights.sum(axis=-1, keepdims=True)
+    return weights @ v
+
+
+def bench(fn, *args):
+    fn(*args)  # warm up cache / BLAS threads
+    t0 = time.perf_counter()
+    for _ in range(REPS):
+        fn(*args)
+    return (time.perf_counter() - t0) * 1000.0 / REPS
+
+
+def fit_exponent(ns, times):
+    """Fit T(n) ~ c * n^alpha via OLS on log2(n) vs log2(T)."""
+    lx, ly = np.log2(ns), np.log2(times)
+    alpha, _ = np.polyfit(lx, ly, 1)
+    r2 = np.corrcoef(lx, ly)[0, 1] ** 2
+    return alpha, r2
+
+
+if __name__ == "__main__":
+    proj_ms_list, attn_ms_list = [], []
+    print(f"Config: d={D}, dtype=float32, reps={REPS}")
+    print(f"{'n':&gt;5} | {'proj_ms':&gt;8} | {'attn_ms':&gt;8} | {'attn/proj':&gt;9} | {'proj_GFLOP':&gt;10} | {'attn_GFLOP':&gt;10} | {'score_MB':&gt;8}")
+    print("-" * 76)
+    for n in SEQ_LENS:
+        x = RNG.standard_normal((n, D), dtype=np.float32)
+        q, k, v, _ = linear_projections(x)
+        p_ms = bench(linear_projections, x)
+        a_ms = bench(causal_attention, q, k, v)
+        proj_ms_list.append(p_ms)
+        attn_ms_list.append(a_ms)
+        proj_gflops = (8.0 * n * (D ** 2)) / 1e9  # Q,K,V,O projections = 4 * (2*n*d^2)
+        attn_gflops = (4.0 * (n ** 2) * D) / 1e9  # QK^T + PV = 2 * (2*n^2*d)
+        score_mb = (n * n * 4) / (1024 ** 2)      # float32 n x n matrix in MiB
+        print(f"{n:5d} | {p_ms:8.2f} | {a_ms:8.2f} | {a_ms/p_ms:8.1f}x | {proj_gflops:10.3f} | {attn_gflops:10.3f} | {score_mb:8.2f}")
+
+    a_proj, r2_proj = fit_exponent(SEQ_LENS, proj_ms_list)
+    a_attn, r2_attn = fit_exponent(SEQ_LENS, attn_ms_list)
+    a_tail, r2_tail = fit_exponent(SEQ_LENS[2:], attn_ms_list[2:])
+    print("-" * 76)
+    print(f"Log-log slope alpha (n=256..4096): projection={a_proj:.2f} (R^2={r2_proj:.3f}) | attention={a_attn:.2f} (R^2={r2_attn:.3f})")
+    print(f"Asymptotic attention slope (n=1024..4096): alpha={a_tail:.2f} (R^2={r2_tail:.3f}), 4096/2048 time ratio={attn_ms_list[-1]/attn_ms_list[-2]:.2f}x")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿Config: d=256, dtype=float32, reps=5
+    n |  proj_ms |  attn_ms | attn/proj | proj_GFLOP | attn_GFLOP | score_MB
+----------------------------------------------------------------------------
+  256 |     1.63 |     1.18 |      0.7x |      0.134 |      0.067 |     0.25
+  512 |     2.01 |     3.92 |      2.0x |      0.268 |      0.268 |     1.00
+ 1024 |     3.55 |    12.18 |      3.4x |      0.537 |      1.074 |     4.00
+ 2048 |     5.42 |    47.21 |      8.7x |      1.074 |      4.295 |    16.00
+ 4096 |    13.11 |   176.42 |     13.5x |      2.147 |     17.180 |    64.00
+----------------------------------------------------------------------------
+Log-log slope alpha (n=256..4096): projection=0.74 (R^2=0.956) | attention=1.80 (R^2=0.999)
+Asymptotic attention slope (n=1024..4096): alpha=1.93 (R^2=1.000), 4096/2048 time ratio=3.74x</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata causal attention vs linear projection latency across sequence lengths</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"n=256: Projection (0.134 GFLOP)","value":1.63,"tone":"muted"},{"label":"n=256: Attention (0.7x proj, 0.25 MB)","value":1.18,"tone":"good"},{"label":"n=512: Attention (2.0x proj, 1.00 MB)","value":3.92,"tone":"good"},{"label":"n=1024: Attention (3.4x proj, 4.00 MB)","value":12.18,"tone":"warn"},{"label":"n=2048: Attention (8.7x proj, 16.00 MB)","value":47.21,"tone":"warn"},{"label":"n=4096: Projection (2.147 GFLOP)","value":13.11,"tone":"muted"},{"label":"n=4096: Attention (13.5x proj, 64.00 MB)","value":176.42,"tone":"bad"}]}'></div>
+    <figcaption><b>Takeaway.</b> When <code>n</code> grows 16x from 256 to 4096, linear projection rises 8.0x (<code>1.63 ms</code> to <code>13.11 ms</code>), while causal attention jumps 149.5x (<code>1.18 ms</code> to <code>176.42 ms</code>) with an asymptotic log-log slope of <code>alpha = 1.93</code>.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Exact FLOP crossover at <code>n = 2*d = 512</code>:</strong> At <code>n = 256</code>, the four projections execute <code>0.134 GFLOP</code> vs <code>0.067 GFLOP</code> for attention, and attention is faster (<code>1.18 ms</code> vs <code>1.63 ms</code>, <code>0.7x</code>). At <code>n = 512</code>, both perform exactly <code>0.268 GFLOP</code>, yet attention already takes <code>3.92 ms</code> vs <code>2.01 ms</code> (<code>2.0x</code>) because masking and softmax move the <code>1.00 MB</code> score matrix through memory.</li>
+    <li><strong>Quadratic takeoff past <code>n = 1024</code>:</strong> Each doubling of <code>n</code> from <code>1024</code> to <code>2048</code> to <code>4096</code> quadruples attention FLOPs (<code>1.074</code> to <code>4.295</code> to <code>17.180 GFLOP</code>) and quadruples score memory (<code>4.00</code> to <code>16.00</code> to <code>64.00 MB</code>), driving wall-clock latency from <code>12.18 ms</code> to <code>47.21 ms</code> (<code>3.88x</code>) to <code>176.42 ms</code> (<code>3.74x</code>).</li>
+    <li><strong>Log-log regression proves the exponent:</strong> Across all five points, <code>np.polyfit(log2(n), log2(T), 1)</code> gives <code>alpha = 0.74</code> for linear projections and <code>alpha = 1.80</code> for attention. In the asymptotic regime <code>n = 1024..4096</code>, where fixed dispatch overhead is negligible, attention slope hits <code>alpha = 1.93</code> with <code>R^2 = 1.000</code>.</li>
+    <li><strong>Memory bandwidth amplifiers:</strong> Even though at <code>n = 4096</code> attention has <code>8.0x</code> more FLOPs than projections (<code>17.180</code> vs <code>2.147 GFLOP</code>), its wall time is <code>13.5x</code> longer (<code>176.42 ms</code> vs <code>13.11 ms</code>) because materializing, masking, and exponentiating the <code>64.00 MB</code> float32 matrix thrashes main-memory bandwidth.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Push to <code>n = 8192</code> and watch memory thrash.</strong> Append <code>8192</code> to <code>SEQ_LENS</code>. Predict the score matrix size in MB and the expected attention time from <code>176.42 ms * 2^1.93</code> before running, then observe whether allocation and cache thrashing push the final doubling ratio above <code>4.0x</code>.</li>
+    <li><strong>Shift the crossover by quadrupling width <code>d</code>.</strong> Change <code>D = 256</code> to <code>D = 1024</code>. Predict which row in <code>SEQ_LENS</code> now has equal projection and attention GFLOPs (<code>n = 2*D</code>), and verify how the <code>attn/proj</code> ratio at <code>n = 1024</code> drops from <code>3.4x</code> to near <code>1.0x</code>.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a third benchmark function <code>decode_step_attention(q_last, k_cache, v_cache)</code> where <code>q_last</code> has shape <code>(1, D)</code> and <code>k_cache, v_cache</code> have shape <code>(n, D)</code>. Fit its log-log exponent across <code>n = 256..4096</code> to prove that single-step cached decode attention scales linearly (<code>alpha ~ 1.0</code>) with <code>O(n)</code> score memory instead of <code>O(n^2)</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Time-to-first-token (TTFT) explodes 15x when prompt length grows 4x (e.g., 4k to 16k)</td><td>Prefill crossed <code>n = 6*d</code> where quadratic <code>O(n^2 * d)</code> attention dominates total FLOPs</td><td>Enable prefix/prompt caching so repeated system/RAG prefixes skip prefill, or chunk/compress long retrieval contexts</td></tr>
+    <tr><td>CUDA OOM during long-context prefill even though model weights and KV cache fit in VRAM</td><td>Unfused attention or eager-mode diagnostic flags materializing full <code>(B, H, n, n)</code> score tensors in HBM</td><td>Force FlashAttention / SDPA tiled kernels (<code>O(n)</code> HBM intermediates) and cap maximum prefill chunk tokens</td></tr>
+    <tr><td>GPU compute utilization reports 95% busy during decode, yet token throughput is tiny (100 tok/s)</td><td>Batch-1 decode is memory-bandwidth-bound; CUDA kernels stay active waiting on HBM weight reads while Tensor Cores idle</td><td>Use continuous batching to raise effective decode batch size <code>B</code>, or quantize weights (FP8/INT4) to cut bytes streamed per step</td></tr>
+    <tr><td>Large-batch decode throughput suddenly degrades when context length passes 16k tokens</td><td>KV cache traffic <code>B * n * bytes_kv</code> overtook fixed weight traffic <code>P * b_w</code> as the primary bandwidth consumer</td><td>Use Grouped-Query Attention (GQA), FP8 KV cache quantization, or sliding-window/paged eviction</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Prefill TTFT plotted against prompt token length <code>n</code> on a log-log chart (watch for the bend from slope 1 to slope 2), achieved FLOPs/s (MFU) vs achieved HBM bandwidth (GB/s), and decode tokens/s per active batch size <code>B</code>.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>In LLM systems, scaling behavior splits along two axes: sequence length <code>n</code> versus model width <code>d</code>, and compute-bound prefill versus memory-bandwidth-bound decode. Knowing the exact crossover formula and arithmetic intensity lets you predict when doubling context will quadruple latency and when adding batch size is free.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Inside one transformer layer, dense weight projections cost <code>24*n*d^2</code> FLOPs: <code>8*n*d^2</code> for Q, K, V, O and <code>16*n*d^2</code> for a <code>4d</code> MLP. Self-attention matmuls cost <code>4*n^2*d</code> FLOPs and materialize an <code>n x n</code> score matrix per head. Dividing the two gives a crossover at <code>n = 2*d</code> against QKVO alone and <code>n = 6*d</code> against the full linear block. Below <code>6*d</code>, linear weight layers dominate; above <code>6*d</code>, quadratic attention dominates prefill. During decode, the KV cache cuts per-token attention compute to <code>4*n*d</code>, but batch-1 arithmetic intensity drops to roughly 1 FLOP per weight byte, making decode latency equal to weight plus KV bytes divided by memory bandwidth.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In my benchmark at <code>d = 256</code>, growing <code>n</code> 16x from 256 to 4096 raised attention latency 149.5x to 176.4 ms with a fitted log-log slope of 1.93 and a 64 MB score matrix. FlashAttention reduces that <code>O(n^2)</code> HBM memory to <code>O(n)</code> via SRAM tiling, but prefill compute remains strictly <code>O(n^2 * d)</code>.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"Transformers are O(n^2) because of self-attention, which makes long prompts really slow and expensive, so we use FlashAttention and caching to make it scale better for users."</p><p class="strong">"A transformer layer spends 24*n*d^2 FLOPs in linear projections and 4*n^2*d FLOPs in self-attention, so attention only overtakes the linear layers past n = 6*d. During prefill, we are compute-bound and pay the full O(n^2*d) FLOPs; FlashAttention cuts HBM score memory from O(n^2) to O(n) by tiling in SRAM, but does not reduce the 4*n^2*d FLOPs. During decode, KV caching drops per-step compute to O(d^2 + n*d), shifting the bottleneck to HBM bandwidth streaming 2*P weight bytes and KV cache bytes per token."</p><p>The strong answer gives exact coefficients (<code>24*n*d^2</code> vs <code>4*n^2*d</code>), the <code>n = 6*d</code> crossover, what FlashAttention changes (memory, not FLOPs), and the prefill-to-decode bottleneck shift.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"FlashAttention reduces self-attention time complexity from O(n^2) to O(n)."</summary><div class="a">Wrong. FlashAttention still computes every causal pair in <code>Q @ K^T</code> and performs the exact same <code>4*n^2*d</code> FLOPs, so prefill compute complexity remains <code>O(n^2 * d)</code>. What FlashAttention reduces from <code>O(n^2)</code> to <code>O(n)</code> is HBM memory footprint and HBM read/write traffic, by tiling blocks in on-chip SRAM with online softmax.</div></details>
+  <details class="q"><summary>"Self-attention is always the biggest compute bottleneck in a transformer forward pass."</summary><div class="a">Wrong whenever sequence length <code>n</code> is shorter than <code>6*d</code>. For a model with <code>d = 4096</code>, the linear weight projections (<code>24*n*d^2</code>) do more FLOPs than attention (<code>4*n^2*d</code>) at every context length below <code>n = 24,576</code> tokens. At <code>n = 2048</code> and <code>d = 4096</code>, attention is only 8% of layer FLOPs.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Derive the exact FLOP counts for QKVO projections, a 4d feed-forward MLP, and multi-head self-attention for batch 1, sequence length <code>n</code>, and hidden dimension <code>d</code>.</summary><div class="a">A matmul <code>(n, d) @ (d, d)</code> takes <code>2*n*d^2</code> FLOPs. Four projections (<code>W_Q, W_K, W_V, W_O</code>) take <code>4 * 2*n*d^2 = 8*n*d^2</code> FLOPs. Two MLP matmuls <code>(n, d) @ (d, 4d)</code> and <code>(n, 4d) @ (4d, d)</code> take <code>2 * 8*n*d^2 = 16*n*d^2</code> FLOPs (total linear = <code>24*n*d^2</code>). Across <code>H</code> heads with <code>H * d_head = d</code>, <code>Q @ K^T</code> takes <code>H * 2*n^2*d_head = 2*n^2*d</code> FLOPs and <code>P @ V</code> takes <code>2*n^2*d</code> FLOPs, giving <code>4*n^2*d</code> attention FLOPs.<div class="f"><b>Follow-up</b>How does causal masking affect the effective FLOPs of FlashAttention? Because the upper triangle of the causal mask is zero, tiled causal FlashAttention skips roughly half the blocks, executing about <code>2*n^2*d</code> useful FLOPs instead of <code>4*n^2*d</code>.</div></div></details>
+  <details class="q"><summary>Why does increasing batch size from <code>B = 1</code> to <code>B = 16</code> during autoregressive decode raise total throughput nearly 16x with only a tiny increase in per-token step latency?</summary><div class="a">At <code>B = 1</code>, the step is memory-bandwidth-bound on streaming the model weights (<code>P * b_w</code> bytes) from HBM, and arithmetic intensity is ~1 FLOP/byte. At <code>B = 16</code>, the exact same weight read from HBM is reused across all 16 tokens in SRAM registers, multiplying arithmetic intensity 16x while adding almost no extra weight-memory traffic until reaching the GPU's ridge point.</div></details>
+  <details class="q"><summary>A 7B parameter model in FP16 (<code>14 GB</code> of weights) runs batch-1 decode on a GPU with <code>1,400 GB/s</code> achieved memory bandwidth. Ignoring KV cache size, what is the theoretical minimum time per output token and maximum tokens/second?</summary><div class="a">Minimum step time is <code>14 GB / (1,400 GB/s) = 0.010 s = 10 ms</code> per token. The maximum single-stream decode throughput is <code>1 / 0.010 s = 100 tokens/s</code>, no matter how many teraflops of compute the GPU has.<div class="f"><b>Follow-up</b>If you quantize the weights from FP16 (2 bytes) to INT4 (0.5 bytes), how do the weight size and theoretical bandwidth-bound decode speed change? Weight traffic drops 4x from 14 GB to 3.5 GB, cutting the bandwidth floor to 2.5 ms/token (~400 tokens/s).</div></div></details>
+  <details class="q"><summary>During autoregressive decode with a KV cache of length <code>n</code>, what is the per-step time and memory-traffic complexity of generating token <code>n + 1</code>, and what is the total complexity of generating a sequence of <code>n</code> tokens from scratch?</summary><div class="a">For a single decode step at context length <code>n</code>, projections cost <code>O(d^2)</code> and attending the 1 new query against <code>n</code> cached keys and values costs <code>O(n * d)</code> FLOPs and streams <code>O(d^2 + n * d)</code> bytes. Summing over all <code>n</code> generated tokens from <code>t = 1..n</code> gives <code>sum(t * d) = O(n * d^2 + n^2 * d)</code> total generation FLOPs.</div></details>
+  <details class="q"><summary>In the kata, why was the fitted log-log exponent for attention <code>alpha = 1.80</code> across <code>n = 256..4096</code>, but <code>alpha = 1.93</code> across <code>n = 1024..4096</code>?</summary><div class="a">Measured runtime is a sum of lower-order terms plus the asymptotic term: <code>T(n) = c_0 + c_1 * n + c_2 * n^2</code>. At small <code>n = 256</code> and <code>512</code>, fixed Python/BLAS launch overhead <code>c_0</code> and fast L2/L3 cache hits make doubling ratios smaller than 4x. Once <code>n &gt;= 1024</code>, the quadratic term dominates and the empirical slope approaches 2.0 (<code>1.93</code>).</div></details>
+  <details class="q"><summary>At what batch-times-context threshold does KV cache memory traffic overtake model weight traffic during a decode step?</summary><div class="a">Per layer, weight traffic in FP16 is roughly <code>24 * d^2</code> bytes (<code>12 * d^2</code> params * 2 bytes), while MHA KV cache traffic for batch <code>B</code> and sequence <code>n</code> is <code>4 * B * n * d</code> bytes (K and V, 2 bytes each). Setting <code>4 * B * n * d = 24 * d^2</code> shows KV traffic overtakes weight traffic when <code>B * n &gt; 6 * d</code> (or <code>6 * d * (H / KVH)</code> under GQA).</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its five steps, then write: the exact layer FLOP formulas for linear projections (<code>QKVO</code> and <code>MLP</code>) vs self-attention, the two crossover points (<code>2*d</code> and <code>6*d</code>), the batch-1 decode bandwidth latency formula, and the kata timings and log-log exponent from <code>n = 256</code> to <code>4096</code>.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Spine (L-Q-C-B-S): Linear <code>24*n*d^2</code> (<code>8*n*d^2</code> QKVO + <code>16*n*d^2</code> MLP), Quadratic attention <code>4*n^2*d</code> FLOPs and <code>n^2</code> score matrix, Crossover at <code>n = 2*d</code> (vs QKVO) and <code>n = 6*d</code> (vs full block), Bandwidth-bound decode vs compute-bound prefill, Slope <code>alpha = d(log T)/d(log n)</code>.</li>
+    <li>Arithmetic intensity <code>I = FLOPs / Bytes</code>: prefill has <code>I ~ B * n</code> (compute-bound); batch-1 decode has <code>I ~ 1</code> (memory-bandwidth-bound).</li>
+    <li>Decode step latency lower bound: <code>T_step &gt;= (P * b_w + B * n * bytes_kv) / BW</code>; for 7B FP16 (<code>14 GB</code>) at <code>1,400 GB/s</code>, floor is <code>10 ms/tok</code> (<code>100 tok/s</code>).</li>
+    <li>FlashAttention distinction: reduces attention HBM memory and traffic from <code>O(n^2)</code> to <code>O(n)</code> via SRAM tiling, while keeping compute at <code>4*n^2*d</code> FLOPs.</li>
+    <li>Kata numbers (<code>d = 256</code>, FP32): at <code>n = 256</code>, proj = <code>1.63 ms</code> (<code>0.134 GFLOP</code>), attn = <code>1.18 ms</code> (<code>0.067 GFLOP</code>, <code>0.25 MB</code>); at <code>n = 512</code>, FLOPs tie at <code>0.268 GFLOP</code>; at <code>n = 4096</code>, proj = <code>13.11 ms</code> (<code>2.147 GFLOP</code>), attn = <code>176.42 ms</code> (<code>13.5x</code> proj, <code>17.180 GFLOP</code>, <code>64.00 MB</code>), asymptotic slope <code>alpha = 1.93</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A09: Why does parenthesizing a rank-<code>r</code> LoRA update as <code>(x @ A) @ B</code> instead of <code>x @ (A @ B)</code> save massive FLOPs at runtime when <code>r &lt;&lt; d_model</code>?</summary><div class="a">For input <code>x</code> of shape <code>(B, S, d)</code>, <code>(x @ A) @ B</code> contracts down to bottleneck width <code>r</code> first in <code>4*B*S*d*r</code> FLOPs. <code>x @ (A @ B)</code> materializes the dense <code>(d, d)</code> matrix first and runs a full dense projection in <code>2*d^2*r + 2*B*S*d^2</code> FLOPs (6.67x more FLOPs in the A09 kata).</div></details>
+  <details class="q"><summary>A07: In <code>cProfile</code> and <code>pstats</code>, why can a function with the highest <code>cumtime</code> have almost zero <code>tottime</code>, and which column tells you what to optimize?</summary><div class="a"><code>cumtime</code> includes all time spent inside child functions called by a wrapper, whereas <code>tottime</code> measures only exclusive time inside the function's own body. Sort by <code>tottime</code> to find the leaf function actually burning CPU cycles.</div></details>
+  <details class="q"><summary>A16: Why does minimizing cross-entropy loss <code>H(P, Q)</code> during LLM pretraining automatically minimize forward KL divergence <code>D_KL(P || Q)</code>?</summary><div class="a">Because <code>H(P, Q) = H(P) + D_KL(P || Q)</code>, and the true data entropy <code>H(P)</code> does not depend on model parameters <code>Q</code>, so its gradient with respect to model weights is identically zero.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need (Table 1)</a><small>Per-layer complexity comparison of self-attention O(n^2 * d) versus recurrent and dense layers O(n * d^2). Checked 2026-11-21.</small></li>
+    <li><a href="https://arxiv.org/abs/2205.14135">Dao et al. (2022): FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a><small>HBM vs SRAM IO complexity analysis showing O(n^2) FLOPs vs O(n) memory footprint via tiling. Checked 2026-11-21.</small></li>
+    <li><a href="https://arxiv.org/abs/2001.08361">Kaplan et al. (2020): Scaling Laws for Neural Language Models</a><small>Canonical forward (2*P) and training (6*P) non-embedding FLOP per token accounting and attention crossover equations. Checked 2026-11-21.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Linear projections &amp; MLP complexity:</strong> <code>O(n * d^2)</code> compute; four attention projections (<code>W_Q, W_K, W_V, W_O</code>) cost <code>8*n*d^2</code> FLOPs and a <code>4d</code> MLP costs <code>16*n*d^2</code> FLOPs, totaling <code>24*n*d^2</code> FLOPs per layer.</li>
+    <li><strong>Self-attention compute &amp; memory complexity:</strong> <code>O(n^2 * d)</code> compute (<code>4*n^2*d</code> FLOPs across <code>QK^T</code> and <code>PV</code>) and <code>O(n^2)</code> memory to materialize the <code>(B, H, n, n)</code> score matrix (<code>64 MB</code> at <code>n = 4096</code> in FP32).</li>
+    <li><strong>Compute vs memory &amp; prefill vs decode:</strong> Arithmetic intensity <code>I = FLOPs / Bytes</code>; prefill runs <code>n</code> tokens in parallel (<code>I ~ B*n</code>, compute-bound), while batch-1 decode runs 1 token per step (<code>I ~ 1</code>, memory-bandwidth-bound on streaming weights + KV cache).</li>
+    <li><strong>Throughput math &amp; empirical log-log fitting:</strong> Forward pass is <code>~2*P</code> FLOPs/token; decode step time <code>T &gt;= (P*b_w + B*n*bytes_kv)/BW</code>; fitting <code>log2(T)</code> vs <code>log2(n)</code> gives empirical exponent <code>alpha</code> (<code>1.93</code> for attention across <code>n = 1024..4096</code> in the kata).</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Crossover rule:</strong> Attention FLOPs (<code>4*n^2*d</code>) overtake QKVO projections (<code>8*n*d^2</code>) at <code>n = 2*d</code> and overtake the full linear block (<code>24*n*d^2</code>) at <code>n = 6*d</code>.</li>
+      <li><strong>FlashAttention rule:</strong> FlashAttention reduces HBM memory footprint and IO from <code>O(n^2)</code> to <code>O(n)</code> via SRAM tiling, but prefill FLOPs remain <code>O(n^2 * d)</code>.</li>
+      <li><strong>Batch-1 decode rule:</strong> Single-stream decode latency is set by HBM bandwidth (<code>Weight_Bytes / BW</code>), not peak TFLOPs; batching <code>B</code> sequences multiplies throughput ~<code>B</code>x until KV cache traffic or compute saturates.</li>
+      <li><strong>KV vs weight traffic crossover:</strong> During MHA decode, KV cache bandwidth overtakes weight bandwidth when <code>B * n &gt; 6 * d</code> (or <code>6 * d * H / KVH</code> with GQA).</li>
+      <li><strong>Doubling test:</strong> When <code>n</code> doubles, runtime multiplies by <code>2^alpha</code>: <code>2x</code> means <code>O(n)</code> (<code>alpha = 1</code>), <code>4x</code> means <code>O(n^2)</code> (<code>alpha = 2</code>; kata measured <code>3.74x</code> from 2048 to 4096, <code>alpha = 1.93</code>).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A20 T2 W01", "cards": [{"q": "In a standard transformer layer with sequence length n and model width d, how do projection and attention FLOPs scale, and where do they cross?", "a": "Linear projections and MLP scale as 24*n*d^2 FLOPs; attention matmuls scale as 4*n^2*d FLOPs. Attention overtakes all linear layers when n > 6*d."}, {"q": "Why is LLM prefill usually compute-bound while autoregressive decode is memory-bandwidth-bound?", "a": "Prefill multiplies n tokens against each weight read (arithmetic intensity ~n FLOPs/byte); batch-1 decode reads all model weights for 1 token (~1 FLOP/byte)."}, {"q": "How do you estimate the empirical complexity exponent alpha from benchmark timings T(n) across sequence lengths n?", "a": "Fit a linear regression slope on log(T) versus log(n): since log T(n) = log c + alpha * log n, slope alpha = 2 confirms O(n^2) scaling."}, {"q": "Why does standard dot-product attention run out of memory at long context n even when weight memory is fixed, and how does FlashAttention change this?", "a": "Standard attention materializes an n x n score matrix per head in HBM (O(n^2) bytes); FlashAttention tiles Q, K, V in SRAM for O(n) HBM memory."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
