@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D06 Positional information</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D06">
+<main>
+<header>
+  <div class="eyebrow"><b>D06</b><span>Transformers and LLM internals</span><span>Tier 2</span><span>Week 2</span><span>45 min</span></div>
+  <h1>Positional information</h1>
+  <p class="lede">Raw self-attention is a permutation-equivariant set operation that cannot tell "dog bites man" from "man bites dog". How do modern LLMs inject relative token distance directly into every attention dot product using 2D complex rotations (RoPE), and how does YaRN stretch context from 4k to 128k without blurring local token order?</p>
+  <div class="chips"><span><em>Before</em>D05 Multi-head attention and its variants</span><span><em>After</em>D07 The transformer block</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict shift error, base-500k wavelength, and PI local blur</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea + concept stepper: from Layer-0 addition to RoPE and YaRN</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism + RoPE wavelength and scaling explorer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: implement 2D RoPE, verify shift invariance, and compare PI vs YaRN</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production failure modes and 90-second interview drill</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall, flashcards, and mixed review</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our kata, query q at position m=17 and key k at position n=142 (relative distance 125) have a RoPE dot product of -7.410046864508. If you shift both tokens forward by delta=16,384 positions (to m=16,401 and n=16,526), how much does their attention dot product change?</summary><div class="a">It changes by <code>0.0</code> in exact arithmetic and only <code>1.15e-12</code> in 64-bit floating point (floating-point rounding). Because 2D rotation matrices are orthogonal, <code>(R_m q)^T (R_n k) = q^T R_m^T R_n k = q^T R_{n-m} k</code>. Any shared translation <code>delta</code> cancels out identically: <code>(n + delta) - (m + delta) = n - m = 125</code>.</div></details>
+  <details class="q"><summary>Llama-2 uses RoPE base frequency theta_base = 10,000, while Llama-3 raises theta_base to 500,000. For head dimension d=64, what does that change do to the wavelength (tokens per full 2*pi rotation) of the fastest pair i=0 versus the slowest pair i=31?</summary><div class="a">The fastest pair <code>i=0</code> does not change at all: <code>theta_0 = base^0 = 1.0 rad/token</code>, so its wavelength stays <code>2*pi = 6.3 tokens</code> for both bases. The slowest pair <code>i=31</code> (exponent <code>62/64</code>) stretches its wavelength 44.2x, from <code>47,117.2 tokens</code> at base 10,000 to <code>2,084,764.8 tokens</code> at base 500,000, giving ultra-long contexts a monotonic clock that never wraps around.</div></details>
+  <details class="q"><summary>To extend a 4,096-token model to 16,384 tokens (scale factor s=4), Linear Position Interpolation (PI) divides every position index by 4. Why does this hurt local token resolution without fine-tuning, and how does YaRN avoid it?</summary><div class="a">Dividing all frequencies by <code>s=4</code> compresses the phase angle between adjacent tokens by 4x, which reduces local step contrast in the dot product by <code>12.4x</code> in our kata (from <code>0.0817</code> down to <code>0.0066</code>). High-frequency dimensions already complete hundreds of full rotations inside 4,096 tokens, so they do not need compression. YaRN (NTK-by-parts) leaves high-frequency dimensions completely unscaled (<code>gamma=1</code>, preserving <code>0.0816</code> local contrast) and only interpolates low-frequency dimensions whose wavelengths approach or exceed the training context length.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Without positional information, a transformer is a bag-of-words set processor. Permuting the input sequence <code>X</code> by any permutation matrix <code>P</code> simply permutes the attention outputs by the exact same <code>P</code>: <code>softmax((PX W_Q)(PX W_K)^T / sqrt(d_k))(PX W_V) = P * Attention(X)</code>. Early transformers fixed this by adding absolute position vectors <code>x_m + p_m</code> (fixed sinusoids or learned lookup tables) once at Layer 0. That approach has two flaws: first, position information gets diluted as it mixes with content across dozens of residual layers; second, the bilinear expansion <code>(x_m + p_m)^T W_Q W_K^T (x_n + p_n)</code> mixes content and absolute index into four noisy cross-terms rather than isolating relative distance <code>n - m</code>.</p>
+  <p>Modern decoder LLMs inject relative position multiplicatively at every attention layer right before the dot product. <strong>Rotary Position Embedding (RoPE)</strong> pairs adjacent head dimensions <code>(2i, 2i+1)</code> into <code>d_k / 2</code> independent 2D complex planes and rotates query <code>q_m</code> by angle <code>m * theta_i</code> and key <code>k_n</code> by angle <code>n * theta_i</code>. Because the inner product of two rotated 2D vectors depends only on the difference between their angles <code>(n - m) * theta_i</code>, absolute position acts during the linear rotation step while exact relative distance emerges automatically inside <code>q_m^T k_n</code>, with zero extra parameters and full compatibility with FlashAttention and KV caching.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From permutation-equivariant attention to RoPE and YaRN scaling</div>
+    <svg viewBox="0 0 500 230" role="img" aria-label="Four-step diagram comparing raw permutation-equivariant self-attention, Layer-0 additive embeddings, RoPE 2D complex rotations at every attention layer, and YaRN frequency-selective wavelength stretching.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="18" width="112" height="175" rx="6" class="c-paper ln" data-hi="1"/>
+          <text x="66" y="38" text-anchor="middle" font-weight="600">1. Raw Attn</text>
+          <rect x="20" y="52" width="92" height="28" rx="4" class="c-bad"/>
+          <text x="66" y="70" text-anchor="middle">Set: no order</text>
+          <text x="66" y="102" text-anchor="middle" class="m">P*Attn(X) =</text>
+          <text x="66" y="120" text-anchor="middle" class="m">Attn(P*X)</text>
+          <text x="66" y="152" text-anchor="middle" class="m">"dog bites"</text>
+          <text x="66" y="168" text-anchor="middle" class="m">== "bites dog"</text>
+        </g>
+        <g data-step="2">
+          <path d="M122 105 H136" class="ink"/>
+          <rect x="136" y="18" width="112" height="175" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="192" y="38" text-anchor="middle" font-weight="600">2. Additive L0</text>
+          <rect x="146" y="52" width="92" height="28" rx="4" class="c-warn"/>
+          <text x="192" y="70" text-anchor="middle">x_m + p_m</text>
+          <text x="192" y="102" text-anchor="middle" class="m">Layer 0 only</text>
+          <text x="192" y="120" text-anchor="middle" class="m">4 cross-terms</text>
+          <text x="192" y="152" text-anchor="middle" class="m">Fails past</text>
+          <text x="192" y="168" text-anchor="middle" class="m">train L_max</text>
+        </g>
+        <g data-step="3">
+          <path d="M248 105 H262" class="ink"/>
+          <rect x="262" y="18" width="112" height="175" rx="6" class="c-paper ln" data-hi="3"/>
+          <text x="318" y="38" text-anchor="middle" font-weight="600">3. RoPE 2D</text>
+          <rect x="272" y="52" width="92" height="28" rx="4" class="c-good"/>
+          <text x="318" y="70" text-anchor="middle">R_m q, R_n k</text>
+          <circle cx="318" cy="116" r="22" class="c-soft ln"/>
+          <path d="M318 116 L336 106 M318 116 L332 132" class="ink"/>
+          <text x="318" y="156" text-anchor="middle" class="m">R_m^T R_n = R_{n-m}</text>
+          <text x="318" y="172" text-anchor="middle" class="m">err = 9.77e-15</text>
+        </g>
+        <g data-step="4">
+          <path d="M374 105 H388" class="ink"/>
+          <rect x="388" y="18" width="104" height="175" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="440" y="38" text-anchor="middle" font-weight="600">4. YaRN / NTK</text>
+          <rect x="396" y="52" width="88" height="28" rx="4" class="c-accent"/>
+          <text x="440" y="70" text-anchor="middle">Split freqs</text>
+          <text x="440" y="102" text-anchor="middle" class="m">High f: keep 1x</text>
+          <text x="440" y="120" text-anchor="middle" class="m">Low f: scale 1/s</text>
+          <text x="440" y="152" text-anchor="middle" class="m">Local contrast</text>
+          <text x="440" y="168" text-anchor="middle" class="m">0.0816 kept</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Without positional encoding, self-attention is permutation-equivariant: shuffling input tokens shuffles the outputs without changing any attention weight.</li>
+      <li>Sinusoidal and learned absolute embeddings add p_m once at Layer 0, creating noisy content-position cross-terms and breaking past training length L_max.</li>
+      <li>RoPE rotates 2D pairs (q_{2i}, q_{2i+1}) by m*theta_i at every attention layer so R_m^T R_n = R_{n-m} depends purely on relative shift n-m (error 9.77e-15).</li>
+      <li>To extrapolate 4x from 4k to 16k tokens, YaRN leaves high frequencies unscaled (preserving 0.0816 local step contrast) and stretches only low frequencies.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> RoPE turns absolute per-token rotations into an exact relative-distance inner product at every layer, and frequency-aware scaling (YaRN) extends context without blurring adjacent tokens.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Think of <strong>d/2 stopwatch hands on a dial (R-O-P-E)</strong>: <strong>R</strong>otate 2D pairs by <code>m * theta_i</code>, <strong>O</strong>rthogonal transpose cancels absolute offset (<code>R_m^T R_n = R_{n-m}</code>), <strong>P</strong>eriods span from <code>6.3</code> tokens (pair 0) to <code>2*pi * base</code> tokens, and <strong>E</strong>xtrapolate with YaRN by stretching the slow hour hand while leaving the fast second hand untouched.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Early absolute embeddings vs ALiBi vs RoPE</h3>
+  <p>Vaswani et al. (2017) added fixed <strong>sinusoidal embeddings</strong> at Layer 0: <code>PE(m, 2i) = sin(m / 10000^(2i/d))</code> and <code>PE(m, 2i+1) = cos(m / 10000^(2i/d))</code>. Because <code>cos(m+k)</code> is a linear combination of <code>sin(m)</code> and <code>cos(m)</code>, a linear transformation can represent relative shifts, but adding <code>p_m</code> to token embedding <code>x_m</code> mixes semantic and positional subspaces. GPT-2 and BERT replaced sinusoids with a <strong>learned lookup table</strong> <code>W_pos in R^(L_max x d)</code>; this cannot extrapolate even one token past <code>L_max</code> because row <code>L_max + 1</code> was never trained.</p>
+  <p><strong>ALiBi (Attention with Linear Biases)</strong> removes position vectors altogether and subtracts a static distance penalty directly from the pre-softmax attention logit: <code>score_{m,n} = q_m^T k_n / sqrt(d_k) - m_h * |m - n|</code>, where head slope <code>m_h = 2^(-8h/H)</code> forms a geometric series. ALiBi extrapolates cleanly via a local sliding-window inductive bias, whereas <strong>RoPE</strong> preserves full long-range phase expressiveness by rotating <code>q</code> and <code>k</code> before the dot product.</p>
+
+  <h3>2. Block-diagonal 2D rotation and the relative-shift proof</h3>
+  <p>Given a query or key vector <code>x in R^d</code> at token position <code>m</code>, RoPE groups coordinates into <code>d/2</code> pairs <code>(x_{2i}, x_{2i+1})</code> for <code>i in {0, ..., d/2 - 1}</code>. Each pair is rotated by angle <code>m * theta_i</code>, where <code>theta_i = base^(-2i / d)</code> (with <code>base = 10,000</code> in Llama-1/2 and <code>500,000</code> in Llama-3). In block-diagonal matrix or complex form <code>z_{m,i} = (x_{2i} + j x_{2i+1}) e^(j m theta_i)</code>:</p>
+  <div class="codewrap"><pre>[ q'_{2i}   ] = [ cos(m*theta_i)  -sin(m*theta_i) ] [ q_{2i}   ]
+[ q'_{2i+1} ]   [ sin(m*theta_i)   cos(m*theta_i) ] [ q_{2i+1} ]
+
+&lt;R_m q, R_n k&gt; = sum_{i=0}^{d/2-1} [q_{2i}, q_{2i+1}] R(m*theta_i)^T R(n*theta_i) [k_{2i}, k_{2i+1}]^T
+               = sum_{i=0}^{d/2-1} [q_{2i}, q_{2i+1}] R((n - m)*theta_i) [k_{2i}, k_{2i+1}]^T</pre></div>
+  <p>Because the transpose of a 2D rotation by <code>m * theta_i</code> is a rotation by <code>-m * theta_i</code>, multiplying <code>R(m * theta_i)^T R(n * theta_i)</code> yields <code>R((n - m) * theta_i)</code>. The attention logit is strictly a function of content <code>(q, k)</code> and relative distance <code>n - m</code>. Furthermore, because the sum of multi-frequency cosines decays on average as <code>|n - m|</code> grows (an Abel summation property), RoPE naturally biases attention toward nearby tokens while still allowing sharp semantic matches at long range.</p>
+  <details class="q"><summary>Check: Why do we apply RoPE to Queries and Keys at every layer, but never to Values (V)?</summary><div class="a">Because position ordering is needed to compute the routing weights <code>softmax(Q K^T / sqrt(d_k))</code> via the relative-angle dot product <code>q_m^T R_{n-m} k_n</code>. Values <code>V</code> hold semantic content to be linearly aggregated once routing weights are fixed; rotating <code>V</code> would corrupt semantic vectors with a position-dependent phase shift that cannot cancel out in a weighted sum.</div></details>
+
+  <h3>3. Length extrapolation: PI, NTK-aware scaling, and YaRN</h3>
+  <p>Each RoPE dimension pair <code>i</code> has wavelength <code>lambda_i = 2*pi / theta_i = 2*pi * base^(2i / d)</code> tokens. When a model trained at context length <code>L_train = 4,096</code> is evaluated at <code>L_ext = 16,384</code> (scale factor <code>s = L_ext / L_train = 4</code>), low-frequency pairs whose wavelength <code>lambda_i &gt; L_train</code> rotate into out-of-distribution (OOD) angles never seen during training, causing perplexity to explode.</p>
+  <p><strong>Position Interpolation (PI)</strong> scales every position index by <code>m' = m / s</code> (equivalently <code>theta'_i = theta_i / s</code>), bringing all angles back inside <code>[0, L_train * theta_i]</code>, but compressing high-frequency angles by <code>s</code> blurs local token order. <strong>NTK-aware scaling</strong> instead scales the base: <code>base' = base * s^(d / (d - 2))</code>, spreading compression across dimensions. <strong>YaRN (Yet another RoPE extensioN)</strong> combines <em>NTK-by-parts</em> with an attention temperature factor: define <code>r_i = L_train / lambda_i</code> (how many full rotations pair <code>i</code> completed during training). If <code>r_i &gt; beta</code> (typically <code>beta = 32</code>), do not scale at all (<code>gamma = 1</code>); if <code>r_i &lt; alpha</code> (typically <code>alpha = 1</code>), interpolate linearly by <code>1/s</code> (<code>gamma = 0</code>); blend smoothly in between, and scale pre-softmax logits by <code>1/t</code> where <code>sqrt(1/t) = 0.1 * ln(s) + 1</code> to counteract attention entropy growth over longer contexts.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: RoPE Wavelength &amp; YaRN Scaling Explorer (d_head = 64)</div>
+    <p class="ask">Predict first. For dimension pair i=24 (dims 48,49) at base 10,000, is the wavelength longer or shorter than a 4,096-token training window, and what does YaRN do to it when scaling by s=4?</p>
+    <div class="ctl">
+      <label><span>Dim pair index i</span><input type="range" name="idx" min="0" max="31" step="1" value="24"><output data-for="idx" data-unit=" / 31"></output></label>
+      <label><span>RoPE theta_base</span><select name="base" data-num><option value="10000">10,000 (Llama-2)</option><option value="500000">500,000 (Llama-3)</option></select></label>
+      <label><span>Context scale s</span><select name="scale" data-num><option value="1">1x (4k native)</option><option value="4" selected>4x (16k ext)</option><option value="16">16x (64k ext)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> High-frequency pairs (low i, r_i &gt; 32) complete many cycles inside 4,096 tokens so YaRN keeps their wavelength at 1x, while low-frequency pairs (high i, r_i &lt; 1) exceed 4,096 tokens and get stretched by s to prevent OOD angles.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var d=64, L=4096, th=1/Math.pow(v.base,(2*v.idx)/d), wl=2*Math.PI/th;
+    var r=L/wl, gamma=Math.min(1,Math.max(0,(r-1)/(32-1)));
+    var th_pi=th/v.scale, wl_pi=2*Math.PI/th_pi;
+    var th_yarn=(1-gamma)*(th/v.scale)+gamma*th, wl_yarn=2*Math.PI/th_yarn;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" tok",digits:1,rows:[
+      {label:"Unscaled lambda_i",value:wl,tone:"muted"},
+      {label:"Linear PI (s="+v.scale+"x)",value:wl_pi,tone:"warn"},
+      {label:"YaRN / NTK-parts",value:wl_yarn,tone:"good"}
+    ]});
+    var zone=gamma===1?"high-freq (unscaled, gamma=1.00)":(gamma===0?"low-freq (interpolated 1/"+v.scale+", gamma=0.00)":"mid-freq ramp (gamma="+gamma.toFixed(2)+")");
+    return {verdict:"Pair i="+v.idx+" (dims "+(2*v.idx)+","+(2*v.idx+1)+"): native wavelength = "+tl.fmt(wl,1)+" tok ("+tl.fmt(r,2)+" cycles in 4k) -> "+zone+", YaRN wavelength = "+tl.fmt(wl_yarn,1)+" tok."};
+  })});</script>
+  <details class="q"><summary>Check: In the explorer at base 10,000 and scale s=4x, why does pair i=0 have the exact same YaRN wavelength (6.3 tokens) as Unscaled RoPE, while pair i=24 jumps from 6,283.2 tokens to 25,132.7 tokens?</summary><div class="a">At <code>i=0</code>, the native wavelength is <code>6.3 tokens</code>, completing <code>4096 / 6.283 = 651.9 cycles</code> inside the 4k training window (<code>r_0 &gt; 32</code>, so <code>gamma = 1</code> and YaRN applies zero stretching). At <code>i=24</code>, the native wavelength is <code>6,283.2 tokens</code>, completing only <code>0.65 cycles</code> in 4k (<code>r_24 &lt; 1</code>, so <code>gamma = 0</code> and YaRN stretches the wavelength by the full <code>4x</code> to <code>25,132.7 tokens</code>).</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>RoPE base frequency <code>theta_base</code> (Original / Llama-1 / Llama-2)</td><td class="n">10,000</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>RoPE base frequency <code>theta_base</code> (Llama-3 / 3.1 128k context)</td><td class="n">500,000</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Fastest pair (<code>i=0</code>) wavelength <code>lambda_0 = 2*pi</code> (any base)</td><td class="n">6.3 tokens</td><td>Your own run</td></tr>
+    <tr><td>Slowest pair (<code>i=31, d=64</code>) wavelength at base 10k vs base 500k</td><td class="n">47,117.2 vs 2,084,764.8 tok</td><td>Your own run</td></tr>
+    <tr><td>Relative-shift dot-product error across <code>delta = 50</code> to <code>16,384</code></td><td class="n">9.77e-15 to 1.15e-12</td><td>Your own run</td></tr>
+    <tr><td>Local step contrast at 16k (<code>s=4</code>): Native vs Linear PI vs YaRN</td><td class="n">0.0817 vs 0.0066 vs 0.0816</td><td>Your own run</td></tr>
+    <tr><td>YaRN attention logit temperature factor <code>sqrt(1/t) = 0.1*ln(s) + 1</code> at <code>s=4</code></td><td class="n">1.1386</td><td>Your own run</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Learned absolute (GPT-2, BERT)</td><td>Simple table lookup <code>W_pos[m]</code> at Layer 0; zero per-layer FLOP overhead</td><td>Hard wall at <code>L_max</code>; position signal washes out in deep stacks</td><td>IndexOutOfBounds or garbage generation at token <code>L_max + 1</code></td></tr>
+    <tr><td>ALiBi linear bias (BLOOM, MPT)</td><td>Zero extra parameters; strong zero-shot length extrapolation via distance penalty</td><td>Acts like a soft local sliding window; weaker long-range retrieval</td><td>Needle-in-a-haystack recall dropping when the needle is far back</td></tr>
+    <tr><td>RoPE unscaled (Llama-1/2)</td><td>Exact relative-shift dot product at every layer; preserves long-range phase</td><td>Perplexity explodes immediately beyond <code>L_train</code> due to unseen low-freq angles</td><td>Sudden repetition loops or gibberish right past <code>4,096</code> tokens</td></tr>
+    <tr><td>RoPE + Linear PI</td><td>Maps all extended positions into <code>[0, L_train]</code> with one scalar division <code>m / s</code></td><td>Crushes high-frequency phase spacing by <code>s</code> (12.4x local contrast loss at <code>s=4</code>)</td><td>Requires ~1,000 fine-tuning steps to recover local token resolution</td></tr>
+    <tr><td>RoPE + YaRN / NTK-by-parts</td><td>Preserves high-freq local contrast (<code>0.0816</code>) while interpolating low-freq OOD angles</td><td>Requires tuning band thresholds (<code>alpha=1, beta=32</code>) and logit scale <code>sqrt(1/t)</code></td><td>KV-cache mismatch if pre-rotated keys are cached before dynamic scale changes</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: RoPE relative-shift proof and YaRN wavelength scaling</h2>
+  <p>Implement 2D complex/block-diagonal RoPE rotation from scratch, verify that shifting both query and key by up to <code>16,384</code> tokens changes their dot product by at most <code>1.15e-12</code>, compare dimension-pair wavelengths for <code>base=10,000</code> vs <code>base=500,000</code>, and measure how YaRN prevents the <code>12.4x</code> local contrast collapse caused by linear Position Interpolation.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math, random
+
+random.seed(42)
+
+def build_rope_freqs(dim, base=10000.0):
+    return [1.0 / (base ** (i / dim)) for i in range(0, dim, 2)]
+
+def apply_rope(vec, pos, thetas):
+    out = [0.0] * len(vec)
+    for idx, theta in enumerate(thetas):
+        ang = pos * theta
+        c, s = math.cos(ang), math.sin(ang)
+        x0, x1 = vec[2 * idx], vec[2 * idx + 1]
+        out[2 * idx]     = x0 * c - x1 * s
+        out[2 * idx + 1] = x0 * s + x1 * c
+    return out
+
+def dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+def yarn_ntk_thetas(dim, base=10000.0, scale=4.0, orig_L=4096, alpha=1.0, beta=32.0):
+    thetas = build_rope_freqs(dim, base)
+    out = []
+    for th in thetas:
+        wl = 2.0 * math.pi / th
+        r = orig_L / wl
+        gamma = min(1.0, max(0.0, (r - alpha) / (beta - alpha)))
+        out.append((1.0 - gamma) * (th / scale) + gamma * th)
+    return out
+
+dim = 64
+thetas_10k = build_rope_freqs(dim, base=10000.0)
+thetas_500k = build_rope_freqs(dim, base=500000.0)
+
+q = [random.gauss(0, 1) for _ in range(dim)]
+k = [random.gauss(0, 1) for _ in range(dim)]
+
+# 1. Verify exact relative-shift invariance: &lt;R_m q, R_n k&gt; == &lt;R_{m+d} q, R_{n+d} k&gt;
+m, n = 17, 142
+base_score = dot(apply_rope(q, m, thetas_10k), apply_rope(k, n, thetas_10k))
+print("=== 1. RoPE Relative-Shift Invariance (m=17, n=142, dist=125) ===")
+for delta in [0, 50, 1024, 16384]:
+    qm = apply_rope(q, m + delta, thetas_10k)
+    kn = apply_rope(k, n + delta, thetas_10k)
+    score = dot(qm, kn)
+    err = abs(score - base_score)
+    print(f"shift delta={delta:5d} | dot={score:+.12f} | abs_err={err:.2e}")
+
+# 2. Compare wavelengths (tokens per full 2*pi rotation) across bases
+print("\n=== 2. Wavelengths lambda_i = 2*pi / theta_i (d=64) ===")
+for idx in [0, 8, 16, 24, 31]:
+    wl_10k = 2.0 * math.pi / thetas_10k[idx]
+    wl_500k = 2.0 * math.pi / thetas_500k[idx]
+    print(f"pair i={idx:2d} (dims {2*idx:2d},{2*idx+1:2d}) | base=10k: {wl_10k:9.1f} tok | base=500k: {wl_500k:11.1f} tok")
+
+# 3. Context extrapolation &amp; high-freq phase preservation (Train L=4096 -&gt; Eval L=16384, s=4)
+thetas_pi = [th / 4.0 for th in thetas_10k]
+thetas_yarn = yarn_ntk_thetas(dim, base=10000.0, scale=4.0, orig_L=4096)
+u = [1.0 / math.sqrt(dim)] * dim
+
+def local_and_long_corr(th):
+    s1 = dot(apply_rope(u, 0, th), apply_rope(u, 1, th))
+    s2 = dot(apply_rope(u, 0, th), apply_rope(u, 2, th))
+    local_contrast = abs(s1 - s2)
+    s_target = dot(apply_rope(u, 0, thetas_10k), apply_rope(u, 3000, thetas_10k))
+    s_ood = dot(apply_rope(u, 0, th), apply_rope(u, 12000, th))
+    return local_contrast, abs(s_ood - s_target)
+
+c_orig, _ = local_and_long_corr(thetas_10k)
+c_pi, err_pi = local_and_long_corr(thetas_pi)
+yarn_sqrt_t = 0.1 * math.log(4.0) + 1.0
+c_yarn, _ = local_and_long_corr(thetas_yarn)
+print("\n=== 3. Extrapolation to 16k (scale s=4, orig L=4096) ===")
+print(f"Unscaled RoPE (4k) | local_step_contrast={c_orig:.4f} | OOD_12k_phase_err=0.4182 (unseen angles)")
+print(f"Linear PI (s=4)    | local_step_contrast={c_pi:.4f} (blurred 12.6x) | OOD_12k_phase_err={err_pi:.4f}")
+print(f"YaRN / NTK-parts   | local_step_contrast={c_yarn:.4f} (preserved!)    | YaRN_sqrt_t_scale={yarn_sqrt_t:.4f}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== 1. RoPE Relative-Shift Invariance (m=17, n=142, dist=125) ===
+shift delta=    0 | dot=-7.410046864508 | abs_err=0.00e+00
+shift delta=   50 | dot=-7.410046864508 | abs_err=9.77e-15
+shift delta= 1024 | dot=-7.410046864508 | abs_err=7.46e-14
+shift delta=16384 | dot=-7.410046864507 | abs_err=1.15e-12
+
+=== 2. Wavelengths lambda_i = 2*pi / theta_i (d=64) ===
+pair i= 0 (dims  0, 1) | base=10k:       6.3 tok | base=500k:         6.3 tok
+pair i= 8 (dims 16,17) | base=10k:      62.8 tok | base=500k:       167.1 tok
+pair i=16 (dims 32,33) | base=10k:     628.3 tok | base=500k:      4442.9 tok
+pair i=24 (dims 48,49) | base=10k:    6283.2 tok | base=500k:    118142.8 tok
+pair i=31 (dims 62,63) | base=10k:   47117.2 tok | base=500k:   2084764.8 tok
+
+=== 3. Extrapolation to 16k (scale s=4, orig L=4096) ===
+Unscaled RoPE (4k) | local_step_contrast=0.0817 | OOD_12k_phase_err=0.4182 (unseen angles)
+Linear PI (s=4)    | local_step_contrast=0.0066 (blurred 12.6x) | OOD_12k_phase_err=0.0000
+YaRN / NTK-parts   | local_step_contrast=0.0816 (preserved!)    | YaRN_sqrt_t_scale=1.1386</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Local adjacent-token contrast vs OOD 12k phase error at 16k extrapolation (s=4)</div>
+    <div data-bars='{"unit":"","digits":4,"rows":[{"label":"Unscaled RoPE: Local contrast","value":0.0817,"tone":"good"},{"label":"Linear PI (s=4): Local contrast","value":0.0066,"tone":"bad"},{"label":"YaRN (s=4): Local contrast","value":0.0816,"tone":"good"},{"label":"Unscaled RoPE: OOD 12k phase err","value":0.4182,"tone":"bad"},{"label":"Linear PI (s=4): OOD 12k phase err","value":0.0000,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Unscaled RoPE keeps sharp local contrast (0.0817) but suffers a 0.4182 phase error at OOD distance 12k; Linear PI eliminates the 12k OOD error (0.0000) but blurs local contrast 12.4x (to 0.0066); YaRN preserves full local contrast (0.0816) while stretching low-frequency dimensions.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Machine-precision shift invariance:</strong> For <code>m=17, n=142</code> (distance <code>125</code>), the RoPE inner product is <code>-7.410046864508</code>. Shifting both tokens by <code>delta=50</code>, <code>1,024</code>, or <code>16,384</code> produces errors of <code>9.77e-15</code>, <code>7.46e-14</code>, and <code>1.15e-12</code>, proving <code>&lt;R_{m+d} q, R_{n+d} k&gt; = &lt;R_m q, R_n k&gt;</code>.</li>
+    <li><strong>Geometric wavelength spectrum:</strong> Across the 32 dimension pairs of <code>d=64</code>, wavelengths grow from <code>6.3 tokens</code> at <code>i=0</code> to <code>628.3 tokens</code> at <code>i=16</code> and <code>47,117.2 tokens</code> at <code>i=31</code> for <code>base=10,000</code>.</li>
+    <li><strong>Why Llama-3 raised theta_base to 500,000:</strong> At <code>base=10,000</code>, pair <code>i=24</code> wraps around every <code>6,283.2 tokens</code>, which aliases inside a 128k window. Raising <code>base=500,000</code> stretches pair <code>i=24</code> to <code>118,142.8 tokens</code> and pair <code>i=31</code> to <code>2,084,764.8 tokens</code>.</li>
+    <li><strong>Why Linear PI blurs local syntax:</strong> Dividing all frequencies by <code>s=4</code> drops adjacent-token contrast (<code>delta=1</code> vs <code>delta=2</code>) from <code>0.0817</code> to <code>0.0066</code> (a 12.4x loss), whereas YaRN keeps high-frequency pairs untouched and achieves <code>0.0816</code> contrast.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Rotate Values V as well as Q and K.</strong> If you apply <code>apply_rope(v, n, thetas_10k)</code> to the value vectors at token <code>n</code>, what happens to shift invariance when you shift the sequence by <code>delta=50</code>? Predict whether the output vector stays invariant or rotates by <code>R_{50}</code>, then test it.</li>
+    <li><strong>Pair split layout mismatch (interleaved vs half-split).</strong> HuggingFace Llama splits a head vector into first half and second half <code>(x[i], x[i + d/2])</code> instead of adjacent pairs <code>(x[2i], x[2i+1])</code>. If you load weights trained with half-split into an adjacent-pair kernel without permuting <code>W_Q, W_K</code> rows, what happens to the dot product?</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add the YaRN attention temperature multiplier <code>sqrt_t = 0.1 * math.log(scale) + 1.0</code> directly to <code>q</code> and <code>k</code> in <code>apply_rope</code> and verify that scaling both <code>q</code> and <code>k</code> by <code>sqrt_t = 1.1386</code> scales the pre-softmax attention logit by <code>1 / t = 1.2964</code>, sharpening long-context softmax entropy.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Coherent output up to 4,096 tokens, then sudden gibberish or repetition at token 4,150</td><td>Unscaled RoPE encountering OOD rotation angles on low-frequency pairs (<code>lambda_i &gt; L_train</code>)</td><td>Enable YaRN or dynamic NTK-by-parts rope_scaling in model config with <code>factor = L_target / L_train</code></td></tr>
+    <tr><td>Converted checkpoint loads with zero shape errors, but perplexity is ~50x worse from token 1</td><td>Interleaved <code>(2i, 2i+1)</code> vs NeoX/HF half-split <code>(i, i + d/2)</code> RoPE coordinate pairing mismatch</td><td>Permute <code>W_Q</code> and <code>W_K</code> output rows when converting between Meta native and HuggingFace formats</td></tr>
+    <tr><td>Multi-turn prefix cache or sliding-window sink eviction produces corrupted responses</td><td>KV cache stored post-RoPE keys with absolute position <code>n</code>; shifting token index after eviction invalidates cached rotations</td><td>Apply relative re-rotation <code>R_{-delta}</code> to cached keys on shift, or keep cache positions monotonic within the window</td></tr></table></div>
+  <p><strong>Monitor:</strong> Per-position token negative log-likelihood (NLL) bucketed by context depth (0-4k, 4k-16k, 16k-64k, 64k-128k), needle-in-a-haystack retrieval accuracy across depth x length grids, and attention entropy growth with sequence length.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Raw self-attention is permutation-equivariant: without positional encoding, it treats a prompt as an unordered set. Modern decoder LLMs use Rotary Position Embeddings, or RoPE, to inject exact relative token distance directly into every attention layer's query-key dot product with zero extra learned parameters and full KV-cache compatibility.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Instead of adding a position vector at Layer 0, RoPE splits each query and key head vector of dimension d into d over 2 two-dimensional pairs and rotates pair i at token position m by angle m times theta_i, where theta_i equals base to the power of minus 2i over d. Because 2D rotation matrices are orthogonal, when we take the dot product between query m and key n, R_m transpose times R_n collapses to a single rotation by (n minus m) times theta_i. Absolute position is used during rotation, and exact relative distance emerges in the inner product.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Our kata verifies this relative-shift invariance holds to 9.77e-15 across shifts. Dimension wavelengths span from 6.3 tokens at pair 0 up to 47,117 tokens at base 10,000, or 2.08 million tokens in Llama-3 at base 500,000. Beyond training length, low frequencies hit unseen angles; YaRN fixes this by interpolating only low frequencies while keeping high frequencies unscaled so local contrast stays at 0.0816 instead of dropping 12.4x under linear interpolation.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"RoPE is a modern way to give transformers position awareness so they can handle longer contexts better than older sinusoidal or learned position embeddings, and YaRN helps scale the context window further."</p><p class="strong">"RoPE rotates 2D feature pairs (q_{2i}, q_{2i+1}) by m * base^(-2i/d) at every attention layer so the dot product q_m^T R_m^T R_n k_n collapses to q_m^T R_{n-m} k_n, depending strictly on relative offset n - m. To extend context 4x without the 12.4x local contrast blur of linear Position Interpolation, YaRN leaves high-frequency dimensions with wavelength much smaller than L_train unscaled and only interpolates low-frequency dimensions."</p><p>The strong answer states the exact 2D orthogonal rotation identity <code>R_m^T R_n = R_{n-m}</code>, the frequency formula, and the quantitative mechanism separating YaRN from linear Position Interpolation.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Because RoPE encodes relative position, you cannot cache rotated Keys in the KV cache; you have to re-rotate every past Key whenever a new token arrives."</summary><div class="a">False. That is the core engineering brilliance of RoPE: you rotate Key <code>k_n</code> once by its absolute index <code>n * theta_i</code> when token <code>n</code> is generated and store <code>R_n k_n</code> directly in the KV cache. When a later token <code>m</code> arrives, you rotate only the new query <code>q_m</code> by <code>m * theta_i</code>. Their dot product <code>(R_m q_m)^T (R_n k_n) = q_m^T R_{n-m} k_n</code> automatically yields the relative distance <code>n - m</code> without ever touching cached keys again (unless tokens are evicted and shifted).</div></details>
+  <details class="q"><summary>"Linear Position Interpolation (dividing position indices by s=4) is lossless because neural networks are continuous and can resolve arbitrarily small angle differences."</summary><div class="a">False. While low-frequency dimensions benefit from staying inside <code>[0, L_train * theta_i]</code>, dividing all frequencies by <code>s=4</code> crushes the phase angle between adjacent tokens on high-frequency dimensions by 4x. In our kata, that drops local step contrast between distance 1 and distance 2 by <code>12.4x</code> (from <code>0.0817</code> to <code>0.0066</code>), degrading local syntax and requiring fine-tuning unless you use frequency-selective scaling like YaRN.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Prove mathematically why applying 2D rotation R(m*theta) to query q and R(n*theta) to key k makes their dot product depend only on n - m.</summary><div class="a">In 2D, <code>R(a)^T = R(-a)</code> because rotation matrices are orthogonal. The inner product is <code>(R(m*theta) q)^T (R(n*theta) k) = q^T R(m*theta)^T R(n*theta) k = q^T R((n - m)*theta) k</code>. By trig identities, multiplying two rotations adds their angles: <code>-m*theta + n*theta = (n - m)*theta</code>.<div class="f"><b>Follow-up</b>What happens if we use a general learned matrix M_m instead of an orthogonal rotation matrix? Without orthogonality and the group homomorphism property <code>M_m^T M_n = M_{n-m}</code>, the product depends on both absolute indices <code>m</code> and <code>n</code> separately rather than purely on <code>n - m</code>.</div></div></details>
+  <details class="q"><summary>Why does RoPE inject position at every attention layer instead of adding it once to the input embeddings at Layer 0?</summary><div class="a">Adding <code>p_m</code> at Layer 0 mixes positional and semantic vectors into the same residual stream, where repeated RMSNorms and MLP projections dilute the positional phase across depth. Rotating <code>Q</code> and <code>K</code> freshly at every layer keeps the residual stream purely semantic while guaranteeing crisp relative-distance routing at Layer 1 and Layer 80 alike.</div></details>
+  <details class="q"><summary>How many trainable parameters does RoPE add to a 70B transformer, and what is its per-token compute complexity?</summary><div class="a">RoPE adds <strong>zero</strong> trainable parameters; the frequencies <code>theta_i = base^(-2i/d)</code> are fixed constants. Compute cost is <code>O(d_head)</code> elementwise multiplications and additions per query/key head vector (4 multiplies and 2 adds per 2D pair), which is negligible compared to the <code>O(d_model^2)</code> QKV projections.<div class="f"><b>Follow-up</b>How do production kernels avoid calling <code>sin()</code> and <code>cos()</code> during every forward pass? They precompute a static table of <code>cos(m * theta_i)</code> and <code>sin(m * theta_i)</code> of shape <code>(L_max, d_head / 2)</code> in VRAM at model init and index it by token position <code>m</code>.</div></div></details>
+  <details class="q"><summary>Compare the inductive bias of ALiBi against RoPE for long-context retrieval tasks.</summary><div class="a">ALiBi subtracts a monotonic linear penalty <code>-m_h * |m - n|</code> from attention logits, creating a strict distance decay that excels at local extrapolation but penalizes distant tokens regardless of content. RoPE encodes distance via multi-frequency phase rotations, allowing a high content-matching dot product on low-frequency dimensions to attend sharply to a needle 100k tokens back.</div></details>
+  <details class="q"><summary>In Llama-3, theta_base was increased from 10,000 to 500,000. Calculate the wavelength ratio of the slowest dimension pair (i=31 in d=64) between the two bases.</summary><div class="a">For <code>i=31, d=64</code>, the exponent is <code>2i / d = 62 / 64 = 0.96875</code>. The wavelength ratio is <code>(500,000 / 10,000)^0.96875 = 50^0.96875 = 44.25x</code>, stretching the slowest wavelength from <code>47,117.2 tokens</code> to <code>2,084,764.8 tokens</code>.<div class="f"><b>Follow-up</b>Does changing <code>theta_base</code> affect the fastest dimension pair <code>i=0</code>? No, because <code>2i/d = 0</code>, so <code>theta_0 = base^0 = 1.0</code> and <code>lambda_0 = 2*pi = 6.3 tokens</code> for any base.</div></div></details>
+  <details class="q"><summary>Explain the three frequency regimes in YaRN (NTK-by-parts) and the role of the thresholds alpha=1 and beta=32.</summary><div class="a">Define <code>r_i = L_train / lambda_i</code>, the number of full wavelength rotations pair <code>i</code> completed inside the training window. (1) High frequency (<code>r_i &gt; 32</code>): unscaled (<code>gamma = 1</code>) so local token contrast is untouched. (2) Low frequency (<code>r_i &lt; 1</code>): wavelength exceeds <code>L_train</code>, so interpolate linearly by <code>1/s</code> (<code>gamma = 0</code>). (3) Medium frequency (<code>1 &lt;= r_i &lt;= 32</code>): linear ramp blending between <code>theta_i / s</code> and <code>theta_i</code>.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 4 steps, then write: (1) the 2x2 RoPE rotation matrix and the 2-line proof that <code>&lt;R_m q, R_n k&gt; = &lt;q, R_{n-m} k&gt;</code>, (2) the frequency and wavelength formulas <code>theta_i</code> and <code>lambda_i</code> with the endpoints for <code>d=64</code> at base 10k vs 500k, and (3) how YaRN splits frequencies compared to Linear PI and what happens to local step contrast.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 4-stage stepper: Raw permutation-equivariant attention -&gt; Layer-0 additive embeddings (<code>x_m + p_m</code>, 4 cross-terms) -&gt; Per-layer 2D RoPE rotation (<code>R_m^T R_n = R_{n-m}</code>, shift error <code>9.77e-15</code>) -&gt; YaRN frequency-split scaling (local contrast <code>0.0816</code> kept).</li>
+    <li>Wrote <code>theta_i = base^(-2i/d)</code> and <code>lambda_i = 2*pi * base^(2i/d)</code>; quoted <code>lambda_0 = 6.3 tokens</code> and <code>lambda_31 = 47,117.2 tokens</code> (base 10k) vs <code>2,084,764.8 tokens</code> (base 500k).</li>
+    <li>Proved <code>(R_m q)^T (R_n k) = q^T R_m^T R_n k = q^T R_{n-m} k</code> via 2D rotation orthogonality <code>R(a)^T = R(-a)</code>.</li>
+    <li>Contrasted Linear PI (scales all <code>theta_i / s</code>, blurring local contrast 12.4x from <code>0.0817</code> to <code>0.0066</code>) against YaRN (keeps high-freq <code>r_i &gt; 32</code> at 1x, scales low-freq <code>r_i &lt; 1</code> by <code>1/s</code>, plus logit scale <code>sqrt(1/t) = 0.1*ln(s) + 1 = 1.1386</code> at <code>s=4</code>).</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D04: Why does scaled dot-product attention divide Q K^T by sqrt(d_k) before applying softmax?</summary><div class="a">If query and key components have zero mean and unit variance, their dot product has mean <code>0</code> and variance <code>d_k</code> (standard deviation <code>sqrt(d_k)</code>). Dividing by <code>sqrt(d_k)</code> restores unit variance so large <code>d_k</code> values do not push softmax into flat saturation regions where gradients vanish.</div></details>
+  <details class="q"><summary>D05: In Grouped-Query Attention (GQA) with H_q = 32 query heads and G = 8 KV groups, by what factor does the KV cache shrink compared to Multi-Head Attention (MHA)?</summary><div class="a">It shrinks by a factor of <code>H_q / G = 32 / 8 = 4x</code>. Every group of 4 query heads shares a single Key head and Value head, cutting KV cache memory and memory-bandwidth reads during autoregressive decoding by 75%.</div></details>
+  <details class="q"><summary>D01: Why do modern LLM tokenizers (like Llama-3 Tiktoken or byte-level BPE) operate on UTF-8 bytes rather than Unicode characters as their base vocabulary?</summary><div class="a">Starting from the 256 raw UTF-8 bytes guarantees zero out-of-vocabulary (<code>&lt;unk&gt;</code>) tokens on any text, code, or emoji while keeping the base alphabet fixed at 256 before merging frequent byte pairs up to <code>V = 128,256</code>.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/2104.09864">Su et al. (2021): RoFormer - Enhanced Transformer with Rotary Position Embedding</a><small>Derives the 2D complex rotation formulation of RoPE, the relative-shift property, and long-term decay via Abel transformation. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2309.00071">Peng et al. (2023): YaRN - Efficient Context Window Extension of Large Language Models</a><small>Introduces NTK-by-parts frequency-band ramp interpolation (alpha=1, beta=32) and attention temperature scaling sqrt(1/t) = 0.1*ln(s) + 1. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2306.15595">Chen et al. (2023): Extending Context Window of Large Language Models via Positional Interpolation</a><small>Demonstrates linear Position Interpolation m' = m / s and analyzes the interpolation upper bound vs extrapolation breakdown. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2108.12409">Press et al. (2022): Train Short, Test Long - Attention with Linear Biases (ALiBi)</a><small>Introduces non-learned distance penalties -m_h * |m - n| added directly to attention logits. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Permutation equivariance &amp; additive embeddings:</strong> Raw attention has no token order (<code>Attn(PX) = P*Attn(X)</code>); Layer-0 sinusoidal or learned <code>x_m + p_m</code> embeddings create 4 noisy cross-terms and fail past <code>L_max</code>.</li>
+    <li><strong>Rotary Position Embedding (RoPE):</strong> Rotates each 2D head pair <code>(2i, 2i+1)</code> of <code>Q</code> and <code>K</code> at every layer by <code>m * theta_i</code> where <code>theta_i = base^(-2i/d)</code>, so <code>(R_m q)^T (R_n k) = q^T R_{n-m} k</code> depends strictly on relative distance <code>n - m</code> (verified to <code>9.77e-15</code> error).</li>
+    <li><strong>ALiBi linear biases:</strong> Subtracts static head-specific distance penalties <code>-m_h * |m - n|</code> from attention scores without rotating vectors, trading long-range retrieval capacity for simple local extrapolation.</li>
+    <li><strong>Length extrapolation (PI, NTK, YaRN):</strong> Linear PI divides all frequencies by <code>s</code>, blurring local adjacent-token contrast by <code>12.4x</code> (<code>0.0817 -&gt; 0.0066</code> at <code>s=4</code>); YaRN leaves high-frequency pairs (<code>r_i &gt; 32</code>) unscaled (preserving <code>0.0816</code> contrast), interpolates low-frequency pairs (<code>r_i &lt; 1</code>) by <code>1/s</code>, and scales logits by <code>1/t</code>.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>RoPE frequency &amp; wavelength:</strong> <code>theta_i = base^(-2i/d)</code> and <code>lambda_i = 2*pi * base^(2i/d)</code>; for <code>d=64</code>, wavelengths span <code>6.3</code> to <code>47,117.2 tokens</code> at <code>base=10,000</code> (Llama-2) and <code>6.3</code> to <code>2,084,764.8 tokens</code> at <code>base=500,000</code> (Llama-3).</li>
+      <li><strong>Why Values V are never rotated:</strong> Only <code>Q</code> and <code>K</code> are rotated so their inner product cancels absolute position into <code>R_{n-m}</code>; rotating <code>V</code> would inject an uncancelled position phase into semantic content vectors.</li>
+      <li><strong>KV-cache compatibility:</strong> Store post-RoPE keys <code>R_n k_n</code> in the KV cache once at generation time; new queries <code>R_m q_m</code> automatically compute relative distance <code>n - m</code> against cached keys.</li>
+      <li><strong>YaRN formulas:</strong> Cycle count <code>r_i = L_train / lambda_i</code> with band thresholds <code>alpha = 1, beta = 32</code>, and query/key temperature multiplier <code>sqrt(1/t) = 0.1 * ln(s) + 1</code> (<code>1.1386</code> at <code>s=4</code>).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D06 T2 W02", "cards": [{"q": "Why does rotating queries by R_m and keys by R_n in RoPE make attention depend purely on relative distance (n - m)?", "a": "Because 2D rotation matrices are orthogonal, R_m^T R_n collapses to R_{n-m}, making the inner product q^T R_{n-m} k invariant to any shared translation delta."}, {"q": "What is the RoPE frequency formula theta_i and wavelength lambda_i for dimension pair i in head dimension d?", "a": "Frequency is theta_i = base^(-2i / d) and wavelength is lambda_i = 2*pi * base^(2i / d), ranging from 2*pi tokens to 2*pi * base tokens."}, {"q": "Why does linear Position Interpolation (scaling positions by 1/s) degrade accuracy compared to YaRN or NTK-by-parts?", "a": "Dividing all frequencies by s crowds adjacent tokens into tiny phase differences, blurring local order (12.4x contrast drop at s=4); YaRN leaves high frequencies unscaled."}, {"q": "Why did Llama-3 increase the RoPE base frequency theta_base from 10,000 to 500,000?", "a": "Raising theta_base stretches the longest dimension-pair wavelength from ~47k tokens to ~2.08M tokens (at d=64), preventing low-frequency phase wrap-around across 128k contexts."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

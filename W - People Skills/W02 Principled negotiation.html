@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>W02 Principled negotiation</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="W02">
+<main>
+<header>
+  <div class="eyebrow"><b>W02</b><span>People skills: negotiation, influence, speaking</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Principled negotiation</h1>
+  <p class="lede">How do you turn a zero-sum price standoff into a multi-issue engineering agreement that expands total joint utility by over 30% without conceding below your reservation floor?</p>
+  <div class="chips"><span><em>Before</em>W01 Tactical empathy</span><span><em>After</em>W03 Negotiating offers and contracts</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict the ZOPA and MESO outcomes before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Read stations 2 to 5: Interests, BATNA, ZOPA, MESOs, and objective criteria</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Run and break the W02 negotiation prep-sheet and MESO scorer kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Study production failure modes, role-play script, and 90-second interview answer</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall: redraw the 5-step negotiation geometry and scoring table</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Drill flashcards and copy Anki import text</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our clinic voice-AI contract kata, the provider's single-issue reservation floor is $195k/yr (44.0 utils) and the buyer's ceiling is $230k/yr (46.0 utils). Why does splitting the price down the middle at $210k/yr fail to close?</summary><div class="a">Because single-issue positional haggling ignores the non-price terms (1-year term, standard 800ms latency, zero data retention). Under those default restrictive terms, a $210k/yr midpoint yields only <strong>41.50 utils</strong> for the provider, which falls <strong>2.50 utils below</strong> the provider's 44.0-util BATNA reservation floor.</div></details>
+  <details class="q"><summary>If two parties weight four contract variables asymmetrically (e.g. the provider weights contract term at 0.25 vs the buyer's 0.10, while the buyer weights p99 latency SLA at 0.25 vs the provider's 0.10), how much joint utility can a 3-option MESO trade unlock over the $210k positional midpoint?</summary><div class="a">In our kata, trading a 3-year term and 90-day de-identified eval logs for a dedicated p99 &lt; 450ms SLA (MESO B at $225k/yr) raises joint utility from <strong>103.75 to 142.40 utils (+37.3%)</strong>, putting both provider (79.90 utils) and buyer (62.50 utils) well above their BATNA floors.</div></details>
+  <details class="q"><summary>When you present three Multiple Equivalent Simultaneous Offers (MESOs) to a counterpart, should you rank them from your most preferred to least preferred?</summary><div class="a"><strong>Never.</strong> All three packages must yield roughly equal utility to you (e.g. 76.25 to 79.90 provider utils in our kata) and be presented simultaneously with equal enthusiasm. Ranking them leaks your internal utility weights, whereas equal-utility packages force the counterpart to reveal their relative weights by how they react to the tradeoffs.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Positional bargaining treats negotiation as a fixed-pie tug-of-war along a single axis (price or base salary). Every dollar one side wins is a dollar the other loses, and each concession damages trust by rewarding stubbornness. The Harvard Program on Negotiation framework (Fisher, Ury, and Patton; formalized quantitatively by Raiffa) replaces positional haggling with <strong>principled negotiation</strong> across four pillars: separate people from the problem, focus on underlying <strong>interests</strong> rather than stated positions, invent multi-issue <strong>options</strong> for mutual gain (logrolling), and insist on <strong>objective criteria</strong> for claiming value.</p>
+  <p>For an AI systems engineer negotiating an enterprise deployment contract, a GPU cluster commitment, or a Staff compensation package, principled negotiation is an optimization problem over asymmetric utility vectors. You first compute each side's <strong>BATNA</strong> (Best Alternative to a Negotiated Agreement), translate those BATNAs into reservation thresholds to verify whether a positive <strong>ZOPA</strong> (Zone of Possible Agreement) exists, and then construct <strong>MESOs</strong> (Multiple Equivalent Simultaneous Offers) that trade variables low-cost to you but high-value to them for variables low-cost to them but high-value to you.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Principled negotiation geometry from positions to Pareto frontier</div>
+    <svg viewBox="0 0 500 240" role="img" aria-label="Five-step principled negotiation diagram showing positional deadlock, BATNA and ZOPA range from $195k to $230k, interest weight matrix, MESO Pareto expansion to 142.40 joint utils, and objective criteria anchoring.">
+      <g font-size="12">
+        <rect x="10" y="10" width="480" height="220" rx="8" class="c-paper ln"/>
+        <g data-step="1">
+          <rect x="24" y="24" width="210" height="44" rx="6" class="c-bad" data-hi="1"/>
+          <text x="129" y="43" text-anchor="middle">1. Positional deadlock</text>
+          <text x="129" y="59" text-anchor="middle">Ask $255k vs Bid $180k</text>
+          <rect x="266" y="24" width="210" height="44" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="371" y="43" text-anchor="middle">Underlying Interests</text>
+          <text x="371" y="59" text-anchor="middle">ARR certainty vs p99 latency</text>
+          <path d="M234 46 H266" class="ink"/>
+        </g>
+        <g data-step="2">
+          <line x1="40" y1="102" x2="460" y2="102" class="ink"/>
+          <rect x="140" y="88" width="220" height="28" rx="4" class="c-good" data-hi="2"/>
+          <text x="250" y="106" text-anchor="middle">2. ZOPA: $195k to $230k ($35k)</text>
+          <text x="85" y="100" text-anchor="middle" class="m">Seller RP $195k</text>
+          <text x="415" y="100" text-anchor="middle" class="m">Buyer RP $230k</text>
+        </g>
+        <g data-step="3">
+          <rect x="24" y="132" width="215" height="42" rx="6" class="c-warn" data-hi="3"/>
+          <text x="131" y="150" text-anchor="middle">3. Asymmetric weights</text>
+          <text x="131" y="166" text-anchor="middle">Term 0.25/0.10 | SLA 0.10/0.25</text>
+        </g>
+        <g data-step="4">
+          <path d="M239 153 H265" class="ink"/>
+          <rect x="265" y="132" width="211" height="42" rx="6" class="c-accent" data-hi="4"/>
+          <text x="370" y="150" text-anchor="middle">4. 3 MESO packages</text>
+          <text x="370" y="166" text-anchor="middle">Joint 103.75 -&gt; 142.40 (+37.3%)</text>
+        </g>
+        <g data-step="5">
+          <rect x="24" y="186" width="452" height="34" rx="6" class="c-soft ln" data-hi="5"/>
+          <text x="250" y="207" text-anchor="middle">5. Objective criteria: GPU TCO ($2.10/hr H100), HIPAA BAA benchmarks</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Step 1: Unpack stated positions ($255k ask vs $180k bid) into underlying engineering and business interests (multi-year ARR stability and eval data vs sub-450ms clinical latency and HIPAA safety).</li>
+      <li>Step 2: Calculate each party's BATNA to fix reservation prices: Seller RP = $195k/yr (44.0 utils) and Buyer RP = $230k/yr (46.0 utils), revealing a $35k/yr single-issue ZOPA.</li>
+      <li>Step 3: Score multi-issue weight asymmetries where Seller prizes contract term (0.25 vs 0.10) and eval data (0.20 vs 0.15) while Buyer prizes p99 latency SLA (0.25 vs 0.10).</li>
+      <li>Step 4: Present 3 Multiple Equivalent Simultaneous Offers (MESOs A, B, C) that logroll term and data for dedicated latency, lifting joint utility from 103.75 to 142.40 utils (+37.3%).</li>
+      <li>Step 5: Anchor value division inside the expanded ZOPA using objective criteria (published H100 GPU hourly costs, peer health-system SLA rates, and standard HIPAA BAA audit clauses) rather than willpower.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> BATNA and ZOPA define where you must walk away; multi-issue logrolling via MESOs expands the pie before objective criteria divide it.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>IBZ-MO (I Buy Zero Mediocre Offers):</strong> <strong>I</strong>nterests over positions -&gt; <strong>B</strong>ATNA sets your walk-away floor -&gt; <strong>Z</strong>OPA bounds the viable deal range -&gt; <strong>M</strong>ESOs logroll asymmetric weights to expand the pie -&gt; <strong>O</strong>bjective criteria settle the split.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Positions vs interests and the diagnostic why</h3>
+  <p>A <strong>position</strong> is a concrete single-point demand a counterpart states at the table ("We only sign 1-year vendor contracts" or "We require zero data retention"). An <strong>interest</strong> is the silent constraint, fear, or incentive that produced that position ("Our CFO got burned by shelfware last year, so we fear paying for year two if physician adoption stays below 60%" or "Our CISO forbids raw patient PHI from entering shared weights").</p>
+  <p>Positions frequently conflict head-on while underlying interests are compatible. When a clinic buyer demands a 1-year term, haggling to 18 months leaves both sides unhappy. Diagnosing the adoption-risk interest lets you propose a <strong>3-year contract with an objective 60% active-clinician adoption gate at month 9</strong>: the provider gets multi-year booking credit (weight 0.25) and the buyer eliminates shelfware risk.</p>
+
+  <h3>2. BATNA, reservation price, and ZOPA geometry</h3>
+  <p>Your <strong>BATNA</strong> (Best Alternative to a Negotiated Agreement) is not a vague wish or your opening aspiration; it is the concrete action plan you will execute if the current deal dies today (for example, deploying those same reserved GPUs to Clinic Group B at $195k/yr net value, or staying at your current employer at $245k total comp). Your <strong>Reservation Price (RP)</strong> is the exact utility or dollar threshold equivalent to your BATNA, adjusted for switching costs and risk.</p>
+  <div class="codewrap"><pre>ZOPAWidth = RP_buyer - RP_seller
+DealViable &lt;=&gt; (RP_buyer &gt;= RP_seller) AND (U_seller(pkg) &gt;= U_seller(BATNA)) AND (U_buyer(pkg) &gt;= U_buyer(BATNA))</pre></div>
+  <p>When the buyer's reservation ceiling ($230k/yr in our kata) exceeds the seller's reservation floor ($195k/yr), a <strong>positive ZOPA</strong> of $35k/yr exists. Any agreement inside `[RP_seller, RP_buyer]` yields positive surplus for both parties relative to walking away. If `RP_buyer &lt; RP_seller` on a single issue, no single-issue ZOPA exists: you must either inject new issues to create a multi-issue ZOPA or execute your BATNA cleanly.</p>
+
+  <details class="q"><summary>Check: What is the difference between your target (aspiration) price and your reservation price, and which one determines whether you walk away?</summary><div class="a">Your <strong>target price</strong> is the optimistic upper bound of the counterpart's ZOPA that guides your opening anchor. Your <strong>reservation price</strong> is the minimum threshold derived strictly from your BATNA; you walk away only when the final package utility drops below your reservation price.</div></details>
+
+  <h3>3. Logrolling and the multi-issue Pareto frontier</h3>
+  <p>Most engineering negotiations involve at least four to six dimensions: base fee, committed volume/term, latency or uptime SLA, data usage rights, payment schedule (Net-15 vs Net-90 or upfront annual prepay), and implementation support. Let party $p \in \{S, B\}$ assign normalized weights $w_{p,i}$ across $K$ issues ($\sum_{i=1}^K w_{p,i} = 1$) and score option level $x_i$ as $v_{p,i}(x_i) \in [0, 100]$. Total package utility is:</p>
+  <div class="codewrap"><pre>U_seller(X) = sum_{i=1..K} w_{S,i} * v_{S,i}(x_i)
+U_buyer(X)  = sum_{i=1..K} w_{B,i} * v_{B,i}(x_i)
+ParetoGain  = (U_seller(X*) + U_buyer(X*)) - (U_seller(X_mid) + U_buyer(X_mid))</pre></div>
+  <p>Whenever $w_{S,i} \neq w_{B,i}$, <strong>logrolling</strong> (trading an issue where $w_{B,i} \gg w_{S,i}$ for an issue where $w_{S,j} \gg w_{B,j}$) shifts the deal outward toward the Pareto frontier. In our kata, upgrading latency SLA from 800ms to dedicated 450ms costs the provider only $0.10 \times (90 - 65) = 2.50$ utils, but grants the buyer $0.25 \times (80 - 25) = 13.75$ utils (+5.5x leverage). Conversely, extending the term from 1 year to 3 years costs the buyer only $0.10 \times (85 - 55) = 3.00$ utils while granting the provider $0.25 \times (100 - 15) = 21.25$ utils (+7.1x leverage).</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: ZOPA, BATNA, and Multi-Issue Logrolling (MESO) Calculator</div>
+    <p class="ask">Predict first. If the provider's BATNA floor is 44 utils and the buyer's BATNA floor is 46 utils, what happens to the positional midpoint package ($210k, 1-yr, 800ms, zero-retention) when the provider's BATNA rises to 50 utils, and which MESO package still survives?</p>
+    <div class="ctl">
+      <label><span>Provider BATNA floor</span><input type="range" name="p_batna" min="35" max="82" step="1" value="44"><output data-for="p_batna" data-unit=" utils"></output></label>
+      <label><span>Buyer BATNA floor</span><input type="range" name="b_batna" min="35" max="70" step="1" value="46"><output data-for="b_batna" data-unit=" utils"></output></label>
+      <label><span>Annual rate ($k/yr)</span><select name="rate" data-num><option value="0">$180k/yr</option><option value="1" selected>$210k/yr</option><option value="2">$225k/yr</option><option value="3">$240k/yr</option><option value="4">$255k/yr</option></select></label>
+      <label><span>Contract term</span><select name="term" data-num><option value="0">1-year</option><option value="1">2-year</option><option value="2" selected>3-year</option></select></label>
+      <label><span>Latency SLA tier</span><select name="sla" data-num><option value="0">p99 &lt; 800ms (standard)</option><option value="1" selected>p99 &lt; 450ms (dedicated)</option><option value="2">p99 &lt; 300ms (pinned GPU)</option></select></label>
+      <label><span>Eval data rights</span><select name="data" data-num><option value="0">Zero-retention</option><option value="1" selected>De-id eval logs (90d)</option><option value="2">Full de-id training</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Computed from the kata's exact utility matrix: logrolling term and 90-day eval logs for dedicated 450ms latency lifts joint utility from 103.75 (positional midpoint) to 142.40 utils (+37.3%).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var rP=[20,55,72,90,100], rB=[95,65,50,30,10];
+    var tP=[15,65,100], tB=[85,70,55];
+    var sP=[90,65,35], sB=[25,80,100];
+    var dP=[20,80,100], dB=[100,80,35];
+    var pu=0.45*rP[v.rate]+0.25*tP[v.term]+0.10*sP[v.sla]+0.20*dP[v.data];
+    var bu=0.50*rB[v.rate]+0.10*tB[v.term]+0.25*sB[v.sla]+0.15*dB[v.data];
+    var ju=pu+bu, baseJ=103.75;
+    var pOk=pu>=v.p_batna, bOk=bu>=v.b_batna;
+    var gain=((ju-baseJ)/baseJ)*100;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" utils",digits:2,max:150,rows:[
+      {label:"Provider utility (floor "+v.p_batna+")",value:pu,tone:pOk?"good":"bad"},
+      {label:"Buyer utility (floor "+v.b_batna+")",value:bu,tone:bOk?"good":"bad"},
+      {label:"Custom package joint utility",value:ju,tone:(pOk&&bOk)?"good":"warn"},
+      {label:"Positional midpoint baseline",value:baseJ,tone:"muted"}
+    ]});
+    var status=(pOk&&bOk)?"INSIDE ZOPA: both parties beat BATNA (provider +"+tl.fmt(pu-v.p_batna,2)+", buyer +"+tl.fmt(bu-v.b_batna,2)+" utils).":"OUTSIDE ZOPA: "+(pOk?"buyer":"provider")+" falls below BATNA floor.";
+    return {verdict:status+" Joint utility = "+tl.fmt(ju,2)+" utils ("+(gain>=0?"+":"")+tl.fmt(gain,1)+"% vs 103.75 positional midpoint)."};
+  })});</script>
+
+  <h3>4. MESOs (Multiple Equivalent Simultaneous Offers) and objective criteria</h3>
+  <p>Even when you suspect an asymmetric trade exists, asking "How much do you care about latency versus contract length?" invites strategic misrepresentation: a savvy buyer claims everything is top priority. Presenting <strong>three MESO packages simultaneously</strong> solves information asymmetry without surrendering value. You construct Packages A, B, and C so that all three sit around 76 to 80 utils for you, but each stresses a different axis (Package A: premium $240k rate for 300ms pinned-GPU latency and 2-yr term; Package B: $225k rate for 450ms dedicated latency, 3-yr term, and 90-day eval logs; Package C: $210k rate for 3-yr term and full de-identified training rights).</p>
+  <p>Psychologically, MESOs shift the counterpart's frame from binary rejection ("Should I say yes or no?") to comparative selection ("Which of these three works best for our clinic?"). When they respond, "We prefer Package B, except our CISO wants 60-day log retention instead of 90-day," they have mapped their utility gradient for you. You then anchor any remaining value claim on <strong>objective criteria</strong>: external market benchmarks (e.g., AWS/GCP p99 reserved H100 pricing, standard Radford/Levels.fyi P75 staff engineering comp bands, or third-party SOC2/HIPAA audit costs) and reciprocal standards ("We apply the exact same SLA credit formula to our top five hospital deployments").</p>
+
+  <details class="q"><summary>Check: Why does presenting three MESOs simultaneously outperform making three sequential offers over three weeks?</summary><div class="a">Sequential offers look like positional retreats, training the counterpart to keep rejecting until you hit your floor. Simultaneous equivalent offers signal problem-solving flexibility while proving your total utility threshold is firm, and the counterpart's comparison reveals their hidden issue weights in one turn.</div></details>
+
+  <h3>5. W-domain engineering toolkit: phrases, role-play script, and rubric</h3>
+  <p>In high-stakes negotiations (enterprise AI deployments, cloud commit contracts, or Staff+ compensation), the exact words you speak prevent defensive escalation while locking in principled structure:</p>
+  <ul>
+    <li><strong>Pivoting from position to interest:</strong> "Help me understand the operational constraint behind the 1-year term limit so we design around the actual risk rather than a calendar date."</li>
+    <li><strong>Testing objective criteria:</strong> "Walk me through the benchmark or TCO calculation you used to arrive at $180k/yr; if that methodology holds across dedicated p99 &lt; 450ms GPU reservations, we will align with it."</li>
+    <li><strong>Introducing MESOs:</strong> "Based on our architecture review, here are three complete configurations that all work for our infrastructure economics. Tell me which one comes closest to your clinical and compliance priorities, and we can fine-tune from there."</li>
+    <li><strong>Defending against a unilateral concession demand:</strong> "To lower the annual fee from $225k to $210k while keeping dedicated 450ms latency, we need to rebalance the package on either the 3-year commit or de-identified training logs. Which lever is easier for your team?"</li>
+  </ul>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Single-issue ZOPA width in W02 clinic contract kata ($230k buyer RP - $195k seller RP)</td><td class="n">$35k/yr</td><td>Your own run</td></tr>
+    <tr><td>Positional midpoint ($210k, 1-yr, 800ms, zero-retention) provider utility vs 44.0 BATNA floor</td><td class="n">41.50 utils (-2.50 below BATNA)</td><td>Your own run</td></tr>
+    <tr><td>Positional midpoint joint utility across provider (41.50) and buyer (62.25)</td><td class="n">103.75 utils</td><td>Your own run</td></tr>
+    <tr><td>MESO B ($225k, 3-yr, 450ms, 90d eval logs) joint utility and Pareto gain over midpoint</td><td class="n">142.40 utils (+37.3%)</td><td>Your own run</td></tr>
+    <tr><td>MESO A / B / C provider utility band (equivalent simultaneous offers)</td><td class="n">76.25 to 79.90 utils</td><td>Your own run</td></tr>
+    <tr><td>Asymmetric logrolling leverage on contract term (provider weight 0.25 vs buyer 0.10)</td><td class="n">2.5x weight ratio (+21.25 vs -3.00 utils)</td><td>Derived</td></tr>
+    <tr><td>Asymmetric logrolling leverage on latency SLA (buyer weight 0.25 vs provider 0.10)</td><td class="n">2.5x weight ratio (+13.75 vs -2.50 utils)</td><td>Derived</td></tr>
+    <tr><td>Recommended number of equivalent packages in a simultaneous MESO presentation</td><td class="n">3 packages across 4 to 5 issues</td><td>Checked 2026-11-23</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Single-issue positional haggling</td><td>Zero prep time; simple scalar math on a single price line</td><td>Misses Pareto gains (103.75 vs 142.40 utils); high deadlock risk when midpoint violates one party's BATNA</td><td>Counterpart digging in on arbitrary round numbers or demanding split-the-difference concessions</td></tr>
+    <tr><td>Sequential multi-issue offers (one package at a time)</td><td>Simpler conversation flow; less upfront modeling</td><td>Each new offer is read as a concession; slow convergence; hides counterpart's cross-issue tradeoffs</td><td>Counterpart cherry-picking the cheapest price from Offer 2 with the premium SLA from Offer 1</td></tr>
+    <tr><td>3-package simultaneous MESO logrolling</td><td>Reveals counterpart's utility weights in one turn; expands joint utility by &gt;30% while holding your utility floor</td><td>Requires upfront issue-weight scoring matrix and executive alignment on 4+ contract levers</td><td>Presenting more than 3 packages (causes choice paralysis) or leaking which package you secretly prefer</td></tr>
+    <tr><td>Hard BATNA escalation (threatening to walk early)</td><td>Forces rapid decision if counterpart is stalling below your reservation price</td><td>Destroys collaborative problem-solving; triggers defensive counter-threats</td><td>Revealing a weak or unverified BATNA that the counterpart can easily call as a bluff</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Negotiation prep-sheet and MESO package scorer</h2>
+  <p>Models an enterprise voice-AI clinic deployment negotiation across four issues with asymmetric party weights, verifies BATNA reservation thresholds, and proves how three Multiple Equivalent Simultaneous Offers (MESOs) turn a deadlocked $210k positional compromise into a +37.3% Pareto expansion.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python w02_kata.py</pre></div>
+  <p class="cap">w02_kata.py</p><div class="codewrap"><pre data-copy>"""
+W02 Kata: Principled Negotiation Prep-Sheet &amp; MESO Package Scorer
+Scenario: Enterprise Voice-AI Clinic Deployment Contract (Provider vs Health System Buyer)
+"""
+
+ISSUES = {
+    # issue: (provider_weight, buyer_weight, levels_dict)
+    # levels_dict maps option_label -&gt; (provider_score_0_to_100, buyer_score_0_to_100, dollar_impact_k)
+    "annual_rate_k": (0.45, 0.50, {
+        "$180k/yr": (20, 95, 180),
+        "$210k/yr": (55, 65, 210),
+        "$225k/yr": (72, 50, 225),
+        "$240k/yr": (90, 30, 240),
+        "$255k/yr": (100, 10, 255),
+    }),
+    "contract_term": (0.25, 0.10, {
+        "1-year": (15, 85, 0),
+        "2-year": (65, 70, 15),
+        "3-year": (100, 55, 35),
+    }),
+    "latency_sla": (0.10, 0.25, {
+        "p99 &lt; 800ms (standard)": (90, 25, 0),
+        "p99 &lt; 450ms (dedicated)": (65, 80, -8),
+        "p99 &lt; 300ms (pinned GPU)": (35, 100, -18),
+    }),
+    "data_retention": (0.20, 0.15, {
+        "Zero-retention (no fine-tune)": (20, 100, -25),
+        "De-identified eval logs (90d)": (80, 80, 20),
+        "Full de-identified training": (100, 35, 35),
+    }),
+}
+
+PROVIDER_BATNA_UTILITY = 44.0  # Reservation floor ($195k equivalent net value from next-best clinic deal)
+BUYER_BATNA_UTILITY = 46.0     # Reservation floor (building in-house Whisper + LLM wrapper at $230k/yr TCO)
+
+PACKAGES = {
+    "Positional haggling ($210k midpoint, 1-yr, 800ms, Zero-ret)": {
+        "annual_rate_k": "$210k/yr",
+        "contract_term": "1-year",
+        "latency_sla": "p99 &lt; 800ms (standard)",
+        "data_retention": "Zero-retention (no fine-tune)",
+    },
+    "MESO A (Speed-first: $240k, 2-yr, 300ms pinned, 90d eval logs)": {
+        "annual_rate_k": "$240k/yr",
+        "contract_term": "2-year",
+        "latency_sla": "p99 &lt; 300ms (pinned GPU)",
+        "data_retention": "De-identified eval logs (90d)",
+    },
+    "MESO B (Balanced-term: $225k, 3-yr, 450ms dedicated, 90d eval logs)": {
+        "annual_rate_k": "$225k/yr",
+        "contract_term": "3-year",
+        "latency_sla": "p99 &lt; 450ms (dedicated)",
+        "data_retention": "De-identified eval logs (90d)",
+    },
+    "MESO C (Data-partner: $210k, 3-yr, 450ms dedicated, Full de-id train)": {
+        "annual_rate_k": "$210k/yr",
+        "contract_term": "3-year",
+        "latency_sla": "p99 &lt; 450ms (dedicated)",
+        "data_retention": "Full de-identified training",
+    },
+}
+
+def score_package(pkg):
+    p_util, b_util = 0.0, 0.0
+    for issue, choice in pkg.items():
+        pw, bw, levels = ISSUES[issue]
+        ps, bs, _ = levels[choice]
+        p_util += pw * ps
+        b_util += bw * bs
+    return round(p_util, 2), round(b_util, 2), round(p_util + b_util, 2)
+
+print("=== W02 PRINCIPLED NEGOTIATION: BATNA, ZOPA &amp; MESO SCORER ===")
+print(f"Provider BATNA floor : {PROVIDER_BATNA_UTILITY:.1f} utils | Single-issue reservation price: $195k/yr")
+print(f"Buyer BATNA floor    : {BUYER_BATNA_UTILITY:.1f} utils | Single-issue reservation ceiling: $230k/yr")
+print(f"Single-issue ZOPA    : $195k/yr to $230k/yr (width = $35k/yr)\n")
+
+base_p, base_b, base_j = score_package(PACKAGES["Positional haggling ($210k midpoint, 1-yr, 800ms, Zero-ret)"])
+print(f"{'Package Name':&lt;68} | {'Prov':&gt;5} | {'Buyer':&gt;5} | {'Joint':&gt;6} | {'ZOPA?'}")
+print("-" * 100)
+for name, pkg in PACKAGES.items():
+    pu, bu, ju = score_package(pkg)
+    viable = "YES" if (pu &gt;= PROVIDER_BATNA_UTILITY and bu &gt;= BUYER_BATNA_UTILITY) else "NO (below BATNA)"
+    gain_pct = ((ju - base_j) / base_j) * 100.0
+    print(f"{name:&lt;68} | {pu:5.2f} | {bu:5.2f} | {ju:6.2f} | {viable} ({gain_pct:+.1f}%)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== W02 PRINCIPLED NEGOTIATION: BATNA, ZOPA &amp; MESO SCORER ===
+Provider BATNA floor : 44.0 utils | Single-issue reservation price: $195k/yr
+Buyer BATNA floor    : 46.0 utils | Single-issue reservation ceiling: $230k/yr
+Single-issue ZOPA    : $195k/yr to $230k/yr (width = $35k/yr)
+
+Package Name                                                         |  Prov | Buyer |  Joint | ZOPA?
+----------------------------------------------------------------------------------------------------
+Positional haggling ($210k midpoint, 1-yr, 800ms, Zero-ret)          | 41.50 | 62.25 | 103.75 | NO (below BATNA) (+0.0%)
+MESO A (Speed-first: $240k, 2-yr, 300ms pinned, 90d eval logs)       | 76.25 | 59.00 | 135.25 | YES (+30.4%)
+MESO B (Balanced-term: $225k, 3-yr, 450ms dedicated, 90d eval logs)  | 79.90 | 62.50 | 142.40 | YES (+37.3%)
+MESO C (Data-partner: $210k, 3-yr, 450ms dedicated, Full de-id train) | 76.25 | 63.25 | 139.50 | YES (+34.5%)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Joint and party utilities across positional haggling vs 3 MESO packages</div>
+    <div data-bars='{"unit":" utils","digits":2,"max":150,"rows":[{"label":"Positional midpoint ($210k, 1yr) - Joint","value":103.75,"tone":"bad"},{"label":"MESO A (Speed-first $240k, 2yr) - Joint","value":135.25,"tone":"good"},{"label":"MESO C (Data-partner $210k, 3yr) - Joint","value":139.50,"tone":"good"},{"label":"MESO B (Balanced $225k, 3yr) - Joint","value":142.40,"tone":"good"},{"label":"Positional midpoint - Provider (<44 BATNA)","value":41.50,"tone":"bad"},{"label":"MESO B - Provider utility (>=44 BATNA)","value":79.90,"tone":"good"},{"label":"MESO B - Buyer utility (>=46 BATNA)","value":62.50,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Splitting the price at $210k fails the provider's 44.0-util BATNA floor (41.50 utils), whereas MESOs A, B, and C all clear both BATNAs and boost joint utility by +30.4% to +37.3%.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Midpoint splitting violates BATNA when non-price issues stay at defensive defaults:</strong> At $210k/yr, 1-year term, 800ms SLA, and zero retention, the provider scores only <code>41.50 utils</code>, falling <code>2.50 utils</code> below its <code>44.0-util</code> BATNA floor even though $210k sits inside the $195k-$230k single-issue price range.</li>
+    <li><strong>Tight provider equivalence across all three MESOs:</strong> MESO A (<code>76.25 utils</code>), MESO B (<code>79.90 utils</code>), and MESO C (<code>76.25 utils</code>) span only a <code>3.65-util</code> band for the provider while giving the buyer three distinct architectures (pinned 300ms speed at $240k, balanced 450ms at $225k, or $210k price discount in exchange for full de-identified training rights).</li>
+    <li><strong>Pareto expansion exceeds +30% across every MESO option:</strong> Joint utility jumps from <code>103.75 utils</code> under positional haggling to <code>135.25 (+30.4%)</code> in MESO A, <code>139.50 (+34.5%)</code> in MESO C, and <code>142.40 (+37.3%)</code> in MESO B.</li>
+    <li><strong>Same $210k price, +34.75 provider utility swing via logrolling:</strong> Compare Positional ($210k/yr, <code>41.50</code> provider utils, <code>62.25</code> buyer utils) against MESO C ($210k/yr, <code>76.25</code> provider utils, <code>63.25</code> buyer utils). Trading dedicated 450ms SLA for a 3-year term and de-identified training data makes <em>both</em> parties strictly better off at the exact same $210k annual fee.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Eliminate weight asymmetry (zero-sum collapse).</strong> Set both <code>provider_weight</code> and <code>buyer_weight</code> to <code>(0.50, 0.15, 0.20, 0.15)</code> across the four issues and predict what happens to the Pareto gain of MESO B over the baseline before running. When weights are identical and level scores sum to 100, logrolling loses its leverage.</li>
+    <li><strong>Inflate Buyer BATNA via strong in-house alternative.</strong> Raise <code>BUYER_BATNA_UTILITY</code> from <code>46.0</code> to <code>61.0</code> (simulating an existing internal DevOps team that can run open-weight STT + LLM cheap). Predict which of the three MESO packages falls outside the ZOPA first (hint: check MESO A's buyer score of <code>59.00</code>).</li>
+    <li><strong>Cherry-picked hybrid counter-offer trap.</strong> Create a fifth package where the buyer cherry-picks the lowest price from MESO C (<code>$210k/yr</code>), shortest term (<code>1-year</code>), fastest SLA from MESO A (<code>p99 &lt; 300ms</code>), and <code>Zero-retention</code>. Score it to verify why unbundled concessions crash provider utility to <code>35.75 utils</code> (well below the 44.0 BATNA floor).</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a fifth issue <code>payment_schedule</code> (Net-90 = 20/90, Quarterly = 60/65, Annual upfront prepay = 100/40) with weights 0.10 provider / 0.05 buyer (renormalizing other weights), and write a grid search function that finds the top 3 Pareto-efficient packages where <code>abs(U_prov(A) - U_prov(B)) &lt;= 2.0</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Counterpart cherry-picks the lowest price from MESO C ($210k) and the pinned 300ms SLA from MESO A</td><td>You presented the matrix as a menu of independent line items rather than coupled engineering systems</td><td>Restate coupling explicitly: "Each package is priced as a coupled resource allocation; pinned 300ms GPUs require the $240k tier or a 3-year volume commit to amortize reserved capacity."</td></tr>
+    <tr><td>Negotiation stalls for weeks on a single legal or security clause (e.g., zero data retention)</td><td>Arguing over the stated position ("zero vs full training") without diagnosing the underlying compliance interest</td><td>Unbundle the interest: separate raw PHI storage (0 days, in-memory only) from de-identified latency/WER telemetry (90-day eval buffer under BAA), satisfying both CISO and ML teams.</td></tr>
+    <tr><td>You accept a deal below your reservation floor in the final call due to sunk-cost pressure</td><td>Entered the room without a quantified BATNA score and a pre-committed walk-away trigger</td><td>Write your BATNA utility score (44.0 utils) and explicit red-line conditions at the top of your prep sheet before the call; require a 24-hour cool-down before signing any sub-floor revision.</td></tr>
+    <tr><td>Counterpart rejects your opening anchor as arbitrary and counters with an aggressive lowball</td><td>Anchor was stated as a raw want ("We want $240k") rather than derived from objective criteria</td><td>Tie every price tier to verifiable engineering drivers: reserved H100 node-hours required for p99 &lt; 300ms concurrency, HIPAA audit overhead, and published peer benchmarks.</td></tr></table></div>
+  <p><strong>Monitor:</strong> Joint utility score vs positional baseline, BATNA surplus margin (<code>U_pkg - U_BATNA</code>), concession reciprocity ratio (never make two unilateral concessions in a row without a paired trade), and role-play rubric score (target &ge; 13/15 before live executive calls).</p>
+  <div class="box model"><b>Role-play script and 15-point scoring rubric (practice in chat)</b>
+    <p><strong>Context:</strong> Buyer VP of Clinical IT says: <em>"We like your voice AI pilot, but $240k is out of the question. Cut it to $195k on a 1-year contract with p99 &lt; 300ms pinned latency and zero data retention, and I can sign Friday."</em></p>
+    <p><strong>Engineer response script:</strong> <em>"I appreciate you mapping out what it takes to get this live by Friday. Help me understand the constraint driving the 1-year cap - is it annual budget allocation or concern about clinician adoption in year two? [Pause for interest discovery]. On the infrastructure side, p99 &lt; 300ms requires dedicated pinned GPU nodes that cost us $42k/yr in reserved compute at standard AWS/GCP rates. We cannot sustain pinned 300ms at $195k on a 1-year term, which falls below our walk-away floor. However, we built three complete configurations that hit your clinical goals at different price points: Option A gives you the 300ms pinned SLA on a 2-year commit at $240k; Option B drops the fee to $225k with a dedicated 450ms SLA and 90-day de-identified eval logs on a 3-year term with an adoption checkpoint; Option C hits $210k/yr if we pair the 3-year term with de-identified training telemetry. Which of those three aligns best with your budget and CISO rules?"</em></p>
+    <p><strong>Self-scoring rubric (0 to 3 points each, target &ge; 13/15):</strong> (1) <strong>Diagnostic question first:</strong> asked an open "help me understand / what drives" question before counter-offering; (2) <strong>BATNA discipline:</strong> refused the sub-floor cherry-picked package ($195k + 1-yr + 300ms = 24.50 utils &lt; 44.0 BATNA) without hostility; (3) <strong>Objective criteria:</strong> cited verifiable cost/benchmark drivers (reserved GPU node TCO) rather than personal pleading; (4) <strong>Simultaneous MESOs:</strong> presented 3 coupled packages of equivalent provider utility (~76-80 utils); (5) <strong>Conditional if-then framing:</strong> tied every price reduction to a reciprocal lever ("If we move to $210k, then we pair it with...").</p>
+  </div>
+  <details class="q"><summary>Scenario: You are negotiating a Staff AI Systems Engineer offer. The hiring VP says: "Our base salary band is strictly capped at $215k by HR leveling, so we cannot meet your $240k base request." Walk through your 4-step principled response.</summary><div class="a"><ol>
+    <li><strong>Separate position from interest and validate objective criteria:</strong> Acknowledge the HR base band as an objective institutional constraint rather than fighting it positionally. Ask: "What flexibility exists across non-base levers - specifically Year-1 sign-on bonus, RSU grant tier (P75 vs P50), and an accelerated 6-month scope review tied to shipping the clinic voice-AI pipeline?"</li>
+    <li><strong>Check against your quantified BATNA:</strong> Compare the total Year-1 and 4-year expected value against your concrete BATNA (e.g., your competing offer or current role at $340k/yr total comp), not just base salary in isolation.</li>
+    <li><strong>Logroll asymmetric levers via 3 MESOs:</strong> Base salary carries high fixed-cost weight for HR (comp ratios, future raises), whereas a one-time sign-on bonus or extra RSUs come from separate equity/recruiting pools. Present three equivalent $365k total-comp structures: (A) $215k base + $50k sign-on + $100k/yr RSUs; (B) $215k base + $25k sign-on + $125k/yr RSUs; (C) $215k base + $35k sign-on + $100k/yr RSUs + written 6-month Staff-level promo trigger upon hitting p99 &lt; 400ms production KPIs.</li>
+    <li><strong>Anchor on objective market data:</strong> Cite verified P75 compensation benchmarks for engineers shipping production LLM/voice inference systems and ask which of the three structures is easiest for compensation committee approval.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Principled negotiation replaces zero-sum positional haggling with interest-based multi-issue optimization. By anchoring on a quantified BATNA and trading asymmetrically weighted variables through Multiple Equivalent Simultaneous Offers, you prevent deadlocks and expand joint contract utility by over thirty percent while protecting your reservation floor.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>The mechanism runs in four steps. First, unpack stated positions into underlying operational interests using diagnostic questions. Second, compute both parties' BATNAs to establish reservation thresholds and verify a positive Zone of Possible Agreement. Third, model issue weights across four to five dimensions such as annual rate, contract term, latency SLA, and data rights. Whenever party weights differ, logroll low-cost, high-value levers by presenting three simultaneous packages that yield equal utility to you. Fourth, anchor the division of surplus on objective criteria like reserved GPU costs or market benchmarks.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In my four-issue clinic voice-AI simulation, splitting price at the two-hundred-ten-thousand-dollar midpoint yielded only 41.50 provider utils, violating our 44.0-util BATNA reservation floor. Logrolling a three-year term and ninety-day de-identified eval logs for dedicated 450-millisecond latency lifted provider utility to 79.90 and joint utility from 103.75 to 142.40, a 37.3 percent Pareto gain. Logrolling fails when all issues have identical weights or when counterparts cherry-pick unbundled terms across packages.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"In negotiations I always look for a win-win outcome by building a strong relationship, listening actively, and compromising halfway on price so both businesses feel good about the partnership."</p><p class="strong">"I treat negotiation as multi-issue constrained optimization. Before the call, I score our BATNA reservation floor - say 44.0 utils or $195k net - and weight 4 to 5 levers like annual fee, contract term, p99 latency SLA, and eval data rights. Rather than splitting the price at $210k, which actually drops our utility to 41.50 below BATNA under default 1-year terms, I present 3 simultaneous MESO packages (~76-80 utils each) that trade a dedicated 450ms SLA (weight 0.10 to us, 0.25 to them) for a 3-year commit and 90-day de-identified eval logs (weight 0.45 combined to us), expanding joint utility by 37.3%."</p><p>The weak answer confuses principled negotiation with soft compromise ("splitting halfway"). The strong answer specifies the mathematical mechanism (BATNA reservation bound, asymmetric weight vectors, 3 simultaneous iso-utility MESOs) and proves with numbers why midpoint splitting fails while logrolling expands the Pareto frontier.</p></div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Principled negotiation means being collaborative and splitting the difference down the middle so both sides compromise equally."</summary><div class="a">Wrong. Splitting the difference on a single axis is positional bargaining, and it leaves massive value on the table or violates BATNA. In our kata, the $210k price midpoint yields <strong>41.50 provider utils</strong> (below the 44.0 BATNA floor) and <strong>103.75 joint utils</strong>, whereas multi-issue logrolling (MESO B at $225k) yields <strong>79.90 provider utils</strong>, <strong>62.50 buyer utils</strong>, and <strong>142.40 joint utils (+37.3%)</strong>.</div></details>
+  <details class="q"><summary>"Your BATNA is your ideal target outcome - the highest price or compensation package you hope to get if the negotiation goes well."</summary><div class="a">Wrong. That is your <strong>aspiration (target) price</strong>. Your <strong>BATNA</strong> is your Best Alternative to a Negotiated Agreement - the concrete fallback action you will execute if this deal fails today. Your BATNA determines your <strong>reservation price</strong> (walk-away floor), not your target ceiling.</div></details>
+  <details class="q"><summary>"To avoid overwhelming a counterpart, present your multi-issue packages one at a time, starting with your favorite option."</summary><div class="a">Wrong. Sequential offers are interpreted as positional concessions and fail to elicit comparative preferences. You must present <strong>3 packages simultaneously (MESOs)</strong> that all carry roughly equal utility to you (e.g., 76.25 to 79.90 utils) without revealing any preference ordering.</div></details>
+  <details class="q"><summary>"If the buyer's maximum budget ($200k) is lower than the seller's minimum standalone price ($215k), no ZOPA exists and you should immediately walk away."</summary><div class="a">Wrong. No <em>single-issue price ZOPA</em> exists, but adding non-price variables with asymmetric weights (such as annual upfront prepay, a 3-year commit, de-identified eval data rights, or off-peak batch SLA) can lower the seller's effective delivery cost or raise total package utility above the 44.0-util BATNA floor, creating a <strong>multi-issue ZOPA</strong>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>What are the four pillars of Harvard principled negotiation, and what engineering artifact maps to each pillar?</summary><div class="a">The four pillars are: (1) <strong>Separate people from the problem</strong> (use W01 tactical empathy and blame-free architecture reviews); (2) <strong>Focus on interests, not positions</strong> (diagnose operational constraints like adoption risk or CISO compliance behind rigid demands); (3) <strong>Invent options for mutual gain</strong> (build a multi-issue weight matrix and 3 iso-utility MESO packages); (4) <strong>Insist on objective criteria</strong> (anchor pricing on GPU TCO, market comp percentiles, and reciprocal SLA formulas).<div class="f"><b>Follow-up</b>Which pillar addresses value creation vs value claiming? Interests and multi-issue options (MESOs) create value (expanding joint utility to the Pareto frontier); BATNA and objective criteria claim value and defend your share inside the ZOPA.</div></div></details>
+  <details class="q"><summary>How do you mathematically verify whether a multi-issue package sits inside the Zone of Possible Agreement (ZOPA)?</summary><div class="a">Compute the weighted utility sum for each party: $U_S(X) = \sum w_{S,i} v_{S,i}(x_i)$ and $U_B(X) = \sum w_{B,i} v_{B,i}(x_i)$. The package sits inside the ZOPA if and only if both parties strictly meet or beat their BATNA reservation thresholds simultaneously: $U_S(X) \ge U_S(\text{BATNA})$ and $U_B(X) \ge U_B(\text{BATNA})$ (in our kata, $\ge 44.0$ and $\ge 46.0$ utils).<div class="f"><b>Follow-up</b>What happens if $U_S(X) + U_B(X)$ increases by 25%, but $U_S(X) &lt; U_S(\text{BATNA})$? The deal is still non-viable for the seller; high joint utility never overrides an individual BATNA violation.</div></div></details>
+  <details class="q"><summary>Why does logrolling create positive joint surplus, and what mathematical condition is required on the issue weight vectors?</summary><div class="a">Logrolling creates surplus by trading concessions on issues you weight lightly for gains on issues you weight heavily. Mathematically, the parties' weight vectors must be non-identical ($w_{S,i} \neq w_{B,i}$ for at least two issues $i, j$): party S concedes on issue $i$ where $w_{B,i} \gg w_{S,i}$ in exchange for party B conceding on issue $j$ where $w_{S,j} \gg w_{B,j}$.<div class="f"><b>Follow-up</b>In our kata, what is the exact utility exchange when trading latency SLA (800ms to 450ms) for contract term (1-yr to 3-yr)? Upgrading SLA costs the provider 2.50 utils and gives the buyer +13.75 utils; extending term costs the buyer 3.00 utils and gives the provider +21.25 utils, netting +18.75 provider utils and +10.75 buyer utils (+29.50 joint utils before price adjustment).</div></div></details>
+  <details class="q"><summary>Walk through how you construct three Multiple Equivalent Simultaneous Offers (MESOs) before an enterprise contract call.</summary><div class="a">First, list 4 to 5 negotiable levers (rate, term, latency SLA, data retention, payment schedule) and score each level from 0 to 100 for yourself and estimated for the counterpart. Second, set a target utility band well above your BATNA (e.g., 76 to 80 provider utils vs 44.0 BATNA). Third, assemble three distinct combinations of levers that all score inside that 76-80 util band for you, where Package A optimizes the counterpart's speed/SLA, Package B balances rate and term, and Package C optimizes lowest upfront price via non-cash value (3-yr term + training data).</div></details>
+  <details class="q"><summary>A procurement buyer looks at your three MESO packages and says: "Give us the $210k price from Package C with the 300ms pinned-GPU latency from Package A and a 1-year term." How do you respond?</summary><div class="a">Never accept unbundled cherry-picking. Explain the architectural coupling using objective criteria and re-link the levers conditionally: "Pinned 300ms latency requires dedicated GPU reservations that cost $42k/yr in base infrastructure. In Package C, the $210k rate is only economically viable because the 3-year commit and training telemetry offset that compute cost. If we lock in p99 &lt; 300ms on a shorter term, we are back in Package A's $240k structure - or we can keep $210k with the dedicated 450ms SLA and 3-year commit."<div class="f"><b>Follow-up</b>What score does that cherry-picked package ($210k, 1-yr, 300ms, zero-retention) produce in the kata? It yields only 35.75 provider utils ($24.75 + 3.75 + 3.25 + 4.00$), which is 8.25 utils below the provider's 44.0 BATNA floor.</div></div></details>
+  <details class="q"><summary>How do you improve your negotiation outcome before you ever speak to the counterpart?</summary><div class="a">By actively strengthening your own BATNA and researching the counterpart's BATNA switching costs. Since your reservation floor equals your BATNA utility, cultivating a second qualified clinic deployment lead or a competing job offer raises your walk-away floor (e.g., from 44.0 to 58.0 utils), narrows the ZOPA upward in your favor, and gives you genuine calm to decline sub-par packages.</div></details>
+  <details class="q"><summary>When should you make the first numerical offer (anchor) vs let the counterpart anchor first?</summary><div class="a">Anchor first when you have strong information about the counterpart's ZOPA and verifiable objective criteria (e.g., TCO benchmarks or market comp data) to justify an ambitious anchor near the top of their ZOPA. Let the counterpart anchor first when information asymmetry is high and you risk anchoring below what they were already prepared to pay; if they anchor first with an extreme lowball, immediately re-anchor using objective criteria rather than splitting the difference.<div class="f"><b>Follow-up</b>If a counterpart anchors at $180k/yr (below your $195k reservation floor), why is counter-offering so that $180k and your counter average to $210k dangerous? It validates their sub-ZOPA anchor as a legitimate boundary. Instead, ask them to explain the objective cost model behind $180k, state clearly that $180k does not cover dedicated inference infrastructure, and pivot to your three benchmark-backed MESOs.</div></div></details>
+  <details class="q"><summary>How do W01 (Tactical empathy) and W02 (Principled negotiation) work together in a tense customer or compensation negotiation?</summary><div class="a">W01 tactical empathy (labeling emotions, calibrated "How/What" questions, accusation audits) regulates the counterpart's amygdala and uncovers their unstated constraints without triggering defensiveness (Pillar 1 and Pillar 2 of Harvard negotiation). Once those underlying interests and relative priorities are surfaced, W02 principled negotiation quantifies the BATNA/ZOPA bounds, structures the 3-package MESO logroll, and anchors the final split on objective criteria (Pillars 3 and 4).</div></details>
+  <details class="q"><summary>What constitutes a valid "objective criterion" in an AI engineering negotiation, and how do you test whether a counterpart's criterion is legitimate?</summary><div class="a">A valid objective criterion is an external standard independent of either party's willpower: published cloud GPU hourly pricing ($2.10/hr reserved H100), empirical p99 latency load-test curves, peer health-system contract rates, or Levels.fyi / Radford compensation percentiles. You test legitimacy with the <strong>reciprocity test</strong>: if the counterpart cites a standard to demand a discount, ask whether they apply that exact same formula reciprocally when scope or token volume exceeds forecast.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: (1) the IBZ-MO memory hook, (2) the ZOPA and multi-issue utility formulas, (3) the 4 issues, weights, and exact utility numbers from the clinic voice-AI kata (Positional midpoint vs MESO B), and (4) the 5-point role-play scoring rubric.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Concept stepper (5 steps):</strong> (1) Separate positions ($255k vs $180k) from interests (ARR stability vs p99 clinical latency); (2) BATNAs fix reservation prices (Seller RP $195k / 44.0 utils, Buyer RP $230k / 46.0 utils -&gt; $35k ZOPA); (3) Asymmetric issue weights (Term 0.25/0.10, Latency SLA 0.10/0.25, Data 0.20/0.15, Rate 0.45/0.50); (4) 3 simultaneous MESO packages expand joint utility from 103.75 to 142.40 (+37.3%); (5) Objective criteria (H100 GPU TCO, HIPAA benchmarks) settle the split.</li>
+    <li><strong>Memory hook:</strong> <code>IBZ-MO</code> (Interests -&gt; BATNA -&gt; ZOPA -&gt; MESOs -&gt; Objective criteria).</li>
+    <li><strong>Formulas:</strong> $\text{ZOPA} = [\text{RP}_{\text{seller}}, \text{RP}_{\text{buyer}}]$; $U_p(X) = \sum w_{p,i} v_{p,i}(x_i)$; viable iff $U_S(X) \ge U_S(\text{BATNA})$ and $U_B(X) \ge U_B(\text{BATNA})$.</li>
+    <li><strong>Kata numbers cold:</strong> Positional midpoint ($210k, 1-yr, 800ms, zero-ret) = 41.50 provider utils (fails 44.0 BATNA), 62.25 buyer utils, 103.75 joint. MESO B ($225k, 3-yr, 450ms, 90d eval logs) = 79.90 provider utils, 62.50 buyer utils, 142.40 joint (+37.3%).</li>
+    <li><strong>Role-play rubric (5 items, 15 pts):</strong> Diagnostic question first, BATNA floor discipline, objective criteria cited, 3 simultaneous iso-utility MESOs, conditional if-then framing.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>W01: What is the difference between a tactical empathy label and a calibrated question, and in what order do you deploy them when a stakeholder resists a design?</summary><div class="a">A <strong>label</strong> ("It sounds like you are concerned that a 3-year commit locks you into unproven latency") names the counterpart's emotion or constraint without asking a question, disarming defensiveness. A <strong>calibrated question</strong> ("How would we structure an adoption checkpoint at month 9 so your team never pays for unused seats?") starts with <em>How</em> or <em>What</em> to invite collaborative problem-solving. You deploy the <strong>label first</strong> (followed by a 4-second silent pause) to earn a "That's right" before asking the calibrated question.</div></details>
+  <details class="q"><summary>G01: Why does LLM prompt caching only reduce prefill cost and TTFT when the shared context sits at the exact prefix of the prompt?</summary><div class="a">Because causal self-attention computes each token's Key and Value tensors as a function of all preceding tokens ($t_0 \dots t_i$). Changing even one token at position $k$ invalidates every KV state from position $k$ onward, so KV cache reuse must terminate at the first divergent token.</div></details>
+  <details class="q"><summary>K06: Write the per-token KV cache memory formula for a decoder-only Transformer and state how GQA reduces it.</summary><div class="a">$\text{Bytes/token} = 2 \times n_{\text{layers}} \times n_{\text{kv\_heads}} \times d_{\text{head}} \times \text{bytes\_per\_elem}$ (the factor of 2 accounts for Key and Value). Grouped-Query Attention (GQA) shares each KV head across $G = n_{\text{q\_heads}} / n_{\text{kv\_heads}}$ query heads, shrinking KV cache memory and decode bandwidth by a factor of $G$ (typically 4x to 8x).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://www.pon.harvard.edu/daily/negotiation-skills-daily/principled-negotiation-focus-interests-create-value/">Harvard Program on Negotiation (Fisher, Ury, and Patton): Getting to Yes and Principled Negotiation</a><small>Supports the four pillars of principled negotiation (people, interests, options, objective criteria) and BATNA discipline. Checked 2026-11-23.</small></li>
+    <li><a href="https://www.hup.harvard.edu/books/9780674016965">Howard Raiffa: The Art and Science of Negotiation (Harvard University Press)</a><small>Supports quantitative multi-issue additive utility scoring, reservation price geometry, ZOPA bounds, and Pareto frontier expansion via logrolling. Checked 2026-11-23.</small></li>
+    <li><a href="https://www.pon.harvard.edu/daily/dealmaking-daily/make-the-most-of-multiple-offers/">Harvard Program on Negotiation (Medvec and Galinsky): Multiple Equivalent Simultaneous Offers (MESOs)</a><small>Supports constructing 3 simultaneous iso-utility packages to reveal counterpart issue weights without losing value. Checked 2026-11-23.</small></li>
+    <li><a href="https://www.kellogg.northwestern.edu/faculty/directory/medvec_victoria.aspx">Victoria Medvec: Negotiate Without Fear (Kellogg School of Management)</a><small>Supports engineering MESO matrices across pricing, SLA, term, and non-cash variables in enterprise B2B negotiations. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Interests vs positions:</strong> A position is a single-point demand ("1-year term only"); an interest is the underlying risk or constraint ("fear of paying for year-2 shelfware if clinician adoption &lt; 60%"). Diagnose with "Help me understand what drives..." before counter-offering.</li>
+    <li><strong>BATNA (Best Alternative to a Negotiated Agreement):</strong> Your concrete executable fallback plan if the deal dies today; translates directly into your Reservation Price (RP) walk-away threshold (44.0 provider utils / $195k; 46.0 buyer utils / $230k).</li>
+    <li><strong>ZOPA (Zone of Possible Agreement):</strong> The region where both parties beat their BATNA reservation thresholds simultaneously ($[\text{RP}_{\text{seller}}, \text{RP}_{\text{buyer}}] = [\$195\text{k}, \$230\text{k}]$, width $35k/yr single-issue).</li>
+    <li><strong>Logrolling and Pareto expansion:</strong> Trading concessions on low-weight issues for gains on high-weight issues when $w_{S,i} \neq w_{B,i}$ (trading dedicated 450ms SLA for 3-year term and 90-day eval logs yields +37.3% joint utility).</li>
+    <li><strong>MESOs (Multiple Equivalent Simultaneous Offers):</strong> Presenting 3 complete coupled packages of equal utility to you (76.25 to 79.90 utils) at the same time so the counterpart's comparison reveals their hidden issue weights.</li>
+    <li><strong>Objective criteria:</strong> Anchoring value claims on verifiable external standards (reserved H100 hourly TCO, empirical load-test curves, Levels.fyi P75 comp bands) tested for reciprocity.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Memory hook (IBZ-MO):</strong> Interests -&gt; BATNA -&gt; ZOPA -&gt; MESOs -&gt; Objective criteria.</li>
+      <li><strong>Why midpoint splitting fails (kata proof):</strong> Splitting price at $210k/yr under default 1-yr / 800ms / zero-retention terms yields <code>41.50</code> provider utils (below the <code>44.0</code> BATNA floor) and <code>103.75</code> joint utils.</li>
+      <li><strong>MESO Pareto gain (kata proof):</strong> MESO B ($225k, 3-yr, 450ms dedicated, 90d eval logs) scores <code>79.90</code> provider utils, <code>62.50</code> buyer utils, and <code>142.40</code> joint utils (<code>+37.3%</code> over positional midpoint).</li>
+      <li><strong>MESO presentation rule:</strong> Always present 3 packages simultaneously with equal enthusiasm; never rank them and never let a counterpart cherry-pick unbundled line items across packages.</li>
+      <li><strong>Conditional trade syntax:</strong> "If you need X [price/SLA concession], then we need to pair it with Y [term/data/prepay lever] so the infrastructure economics stay above our floor."</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::W People skills: negotiation, influence, speaking", "tags": "W02 T1 W02", "cards": [{"q": "What is the IBZ-MO spine for principled negotiation?", "a": "Interests over positions, BATNA sets walk-away floor, ZOPA bounds viable deals, MESOs logroll asymmetric weights, and Objective criteria settle the split."}, {"q": "How does a negotiation BATNA differ from a target (aspiration) price?", "a": "Target price is your optimistic goal inside their ZOPA; BATNA is your concrete fallback if the deal dies, fixing your walk-away reservation price."}, {"q": "When does a multi-issue package sit inside the Zone of Possible Agreement (ZOPA)?", "a": "When total weighted package utility simultaneously meets or exceeds the BATNA reservation threshold for both seller (U_S >= BATNA_S) and buyer (U_B >= BATNA_B)."}, {"q": "Why did the $210k/yr midpoint compromise fail in the W02 clinic voice-AI kata?", "a": "Because default non-price terms (1-year, 800ms, zero-retention) left provider utility at 41.50 utils, falling 2.50 utils below the 44.0-util BATNA floor."}, {"q": "What mathematical condition on issue weights allows logrolling to expand joint utility?", "a": "Asymmetric weights (w_S,i != w_B,i): trading an issue you weight lightly (latency 0.10 vs 0.25) for one you weight heavily (term 0.25 vs 0.10)."}, {"q": "How much did MESO B expand joint utility over positional haggling in the W02 kata?", "a": "Joint utility rose from 103.75 to 142.40 utils (+37.3%), lifting provider utility from 41.50 to 79.90 and buyer utility to 62.50."}, {"q": "Why must you present three MESO packages simultaneously with equal utility to yourself?", "a": "Simultaneous equal-utility offers (~76-80 utils) signal firmness on your threshold while forcing the counterpart's comparison to reveal their hidden issue weights."}, {"q": "How do you counter a buyer who cherry-picks the lowest price from MESO C with the fastest SLA from MESO A?", "a": "Explain the architectural cost coupling using objective criteria and require a conditional trade on term or data rights to sustain that SLA."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

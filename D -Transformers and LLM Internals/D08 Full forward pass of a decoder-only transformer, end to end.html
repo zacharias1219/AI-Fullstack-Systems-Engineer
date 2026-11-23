@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D08 Full forward pass of a decoder-only transformer, end to end</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D08">
+<main>
+<header>
+  <div class="eyebrow"><b>D08</b><span>Transformers and LLM internals</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Full forward pass of a decoder-only transformer, end to end</h1>
+  <p class="lede">You have studied tokenization (D01), embeddings (D02), causal attention (D04-D05), RoPE (D06), and the Pre-Norm SwiGLU block (D07) in isolation. Now wire every stage together into one end-to-end decoder-only transformer: trace every exact tensor shape and FLOP from integer token IDs <code>(B, T)</code> to cross-entropy loss, verify the <code>ln(V)</code> step-0 sanity check, train on Shakespeare, and contrast parallel teacher-forced training against two-phase (prefill + KV-cached decode) inference.</p>
+  <div class="chips"><span><em>Before</em>D07 The transformer block</span><span><em>After</em>D09 Architectures</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict step-0 ln(V) loss, broken-mask future leak, and prefill last-token LM head</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea + concept stepper: trace shapes from (B, T) IDs to (B, T, V) logits</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism + Training vs Inference stepper + Full-Model FLOP &amp; Parameter Explorer</span><small>17 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run and train a pure-Python nanoGPT decoder on Shakespeare</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production debugging, incident scenario, and 90-second interview drill</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall, 8 flashcards, and mixed review</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>Before running a single gradient step on our Shakespeare kata (vocabulary size V = 22 unique characters), what exact cross-entropy loss and perplexity should you expect at step 0, and what did our real run measure?</summary><div class="a">At random initialization with small weights, output logits are near zero, so softmax assigns uniform probability <code>1 / V = 1 / 22</code> to every token. Cross-entropy loss is <code>-ln(1 / V) = ln(22) = 3.0910</code> (perplexity <code>e^3.0910 = 22.0</code>). Our kata measured <code>3.1874</code> at step 0 (perplexity <code>24.23</code>) before dropping to <code>0.3281</code> (perplexity <code>1.39</code>) after 150 steps. Checking that step-0 loss equals <code>ln(V)</code> is the universal first sanity check when bringing up any LLM training run.</div></details>
+  <details class="q"><summary>If you forget to apply the upper-triangular causal mask (setting scores where key index s &gt; query index t to -1e9) during training, what percentage of attention probability mass in our T=12 kata leaks into future tokens, and why does the model fail at generation time?</summary><div class="a">In our kata, <strong>45.91%</strong> of all attention probability mass (<code>0.4591</code> vs <code>0.0000</code> with the mask) leaks into future positions <code>s &gt; t</code> (roughly half of the <code>T x T</code> matrix lies above the diagonal). During teacher-forced training, token <code>t</code> simply peeks at position <code>t+1</code> in the input batch to copy the answer, driving training loss near zero while producing complete garbage during autoregressive inference when future tokens do not exist.</div></details>
+  <details class="q"><summary>During inference prefill of a 4,096-token prompt on a model with d = 4,096 and vocabulary V = 128,256, if you pass the full final hidden state (1, 4096, 4096) into the LM head W_head instead of slicing the last token (1, 1, 4096) first, how many FLOPs and gigabytes of logit memory do you waste?</summary><div class="a">You waste <code>4,095 * 2 * 4,096 * 128,256 = 4.30 TFLOPs</code> of compute and allocate a <code>4,096 * 128,256 * 2 bytes = 1.05 GB</code> FP16 logit tensor just to throw away the first 4,095 rows! During training we need logits at all <code>T</code> positions to compute parallel cross-entropy loss, but during inference prefill we only sample the next token at position <code>T - 1</code>.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A decoder-only transformer (GPT, Llama, Claude, Qwen, Mistral) is a conditional probability engine that maps a batch of integer token sequences <code>idx in {0, ..., V-1}^(B x T)</code> to next-token logit distributions <code>logits in R^(B x T x V)</code> in one deterministic forward pass. From end to end, only <strong>two</strong> tensor dimensions ever touch the outside world: batch size <code>B</code> and sequence length <code>T</code> (plus vocabulary size <code>V</code> at the very entrance and exit). Inside the model, from the moment token IDs index into the embedding table <code>W_E[idx]</code> until the final RMSNorm exits Layer <code>L</code>, the residual stream maintains one invariant shape: <code>(B, T, d_model)</code>.</p>
+  <p>Understanding the full forward pass means holding two views simultaneously: the <strong>tensor-shape pipeline</strong> (how <code>(B, T, d)</code> splits into <code>H</code> heads of shape <code>(B, H, T, d_h)</code> for <code>(B, H, T, T)</code> causal routing, then expands to <code>(B, T, d_ff)</code> inside SwiGLU before returning to <code>(B, T, d)</code>) and the <strong>compute/memory regime split</strong> between parallel training (all <code>T</code> targets scored simultaneously in <code>~2N</code> forward FLOPs per token) and autoregressive inference (compute-bound prefill over <code>T</code> prompt tokens followed by memory-bandwidth-bound decode generating <code>1</code> token per forward pass with a growing KV cache).</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: End-to-end tensor shape trace through our kata decoder (B=2, T=12, d=16, H=4, d_ff=44, V=22)</div>
+    <svg viewBox="0 0 510 240" role="img" aria-label="Five-step end-to-end forward pass diagram tracing exact tensor shapes from Token IDs (2,12) through Embedding W_E (2,12,16), Multi-Head Causal Attention (2,4,12,4) and (2,4,12,12), SwiGLU MLP (2,12,44), and Final RMSNorm plus Tied LM Head to Logits (2,12,22) and Cross-Entropy Loss.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="8" y="18" width="90" height="158" rx="6" class="c-paper ln" data-hi="1"/>
+          <text x="53" y="36" text-anchor="middle" font-weight="600">1. Embed</text>
+          <rect x="15" y="48" width="76" height="26" rx="4" class="c-muted"/>
+          <text x="53" y="65" text-anchor="middle">IDs (2, 12)</text>
+          <path d="M53 74 V92" class="ink"/>
+          <rect x="15" y="92" width="76" height="30" rx="4" class="c-accent"/>
+          <text x="53" y="111" text-anchor="middle">W_E[idx]</text>
+          <text x="53" y="142" text-anchor="middle" class="m">x_0 shape:</text>
+          <text x="53" y="158" text-anchor="middle" font-weight="600">(2, 12, 16)</text>
+        </g>
+        <g data-step="2">
+          <path d="M98 97 H110" class="ink"/>
+          <rect x="110" y="18" width="102" height="158" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="161" y="36" text-anchor="middle" font-weight="600">2. Causal Attn</text>
+          <rect x="117" y="48" width="88" height="26" rx="4" class="c-soft ln"/>
+          <text x="161" y="65" text-anchor="middle">QKV (2,4,12,4)</text>
+          <rect x="117" y="82" width="88" height="26" rx="4" class="c-good"/>
+          <text x="161" y="99" text-anchor="middle">Mask (2,4,12,12)</text>
+          <rect x="117" y="116" width="88" height="24" rx="4" class="c-accent"/>
+          <text x="161" y="132" text-anchor="middle">Wo + Res x_0</text>
+          <text x="161" y="158" text-anchor="middle" font-weight="600">h: (2, 12, 16)</text>
+        </g>
+        <g data-step="3">
+          <path d="M212 97 H224" class="ink"/>
+          <rect x="224" y="18" width="94" height="158" rx="6" class="c-paper ln" data-hi="3"/>
+          <text x="271" y="36" text-anchor="middle" font-weight="600">3. SwiGLU</text>
+          <rect x="231" y="48" width="80" height="26" rx="4" class="c-soft ln"/>
+          <text x="271" y="65" text-anchor="middle">RMSNorm(h)</text>
+          <rect x="231" y="82" width="80" height="26" rx="4" class="c-warn"/>
+          <text x="271" y="99" text-anchor="middle">Gate (2,12,44)</text>
+          <rect x="231" y="116" width="80" height="24" rx="4" class="c-accent"/>
+          <text x="271" y="132" text-anchor="middle">Wd + Res h</text>
+          <text x="271" y="158" text-anchor="middle" font-weight="600">x_L: (2, 12, 16)</text>
+        </g>
+        <g data-step="4">
+          <path d="M318 97 H330" class="ink"/>
+          <rect x="330" y="18" width="86" height="158" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="373" y="36" text-anchor="middle" font-weight="600">4. LM Head</text>
+          <rect x="337" y="48" width="72" height="26" rx="4" class="c-soft ln"/>
+          <text x="373" y="65" text-anchor="middle">Final Norm</text>
+          <rect x="337" y="84" width="72" height="28" rx="4" class="c-good"/>
+          <text x="373" y="102" text-anchor="middle">@ W_E^T</text>
+          <text x="373" y="142" text-anchor="middle" class="m">Logits:</text>
+          <text x="373" y="158" text-anchor="middle" font-weight="600">(2, 12, 22)</text>
+        </g>
+        <g data-step="5">
+          <path d="M416 97 H426" class="ink"/>
+          <rect x="426" y="18" width="76" height="158" rx="6" class="c-paper ln" data-hi="5"/>
+          <text x="464" y="36" text-anchor="middle" font-weight="600">5. Loss</text>
+          <rect x="432" y="48" width="64" height="26" rx="4" class="c-bad"/>
+          <text x="464" y="65" text-anchor="middle">-ln(p_tgt)</text>
+          <text x="464" y="96" text-anchor="middle" class="m">Step 0:</text>
+          <text x="464" y="112" text-anchor="middle" font-weight="600">3.1874</text>
+          <text x="464" y="140" text-anchor="middle" class="m">Step 150:</text>
+          <text x="464" y="158" text-anchor="middle" font-weight="600">0.3281</text>
+        </g>
+        <rect x="8" y="190" width="494" height="36" rx="6" class="c-soft ln"/>
+        <text x="255" y="213" text-anchor="middle">Residual stream invariant: (B, T, d) = (2, 12, 16) enters and exits every block</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Integer token IDs of shape (B, T) = (2, 12) index into the embedding table W_E (22 x 16) to launch the residual stream x_0 of shape (2, 12, 16).</li>
+      <li>Pre-RMSNorm feeds QKV projections, reshaping (2, 12, 16) into 4 heads of (2, 4, 12, 4); causal-masked scores (2, 4, 12, 12) weight Values and project back to h of shape (2, 12, 16).</li>
+      <li>A second Pre-RMSNorm feeds the SwiGLU MLP, expanding channels from 16 to d_ff = 44 in (2, 12, 44) before W_down and residual addition restore shape (2, 12, 16).</li>
+      <li>After all L blocks, Final RMSNorm stabilizes the residual stream before multiplying by the tied unembedding matrix W_E^T (16 x 22) to produce logits of shape (2, 12, 22).</li>
+      <li>Cross-entropy loss compares all B*T = 24 logit vectors against shifted next-token targets tgt (2, 12), dropping from 3.1874 (near ln 22 = 3.0910) at step 0 to 0.3281 at step 150.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every decoder-only transformer holds the residual stream at (B, T, d), briefly reshaping across heads (B, H, T, d_h) for causal attention and expanding across channels (B, T, d_ff) for SwiGLU before projecting to (B, T, V) logits.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Memorize the 5-stage spine <strong>E-A-S-U-L ("EASy ULtimate pass")</strong> and the invariant trunk <code>(B, T, d)</code>: <strong>E</strong>mbed lookup <code>(B,T) -&gt; (B,T,d)</code>, <strong>A</strong>ttention head split <code>(B,H,T,d_h) -&gt; (B,H,T,T) -&gt; (B,T,d)</code>, <strong>S</strong>wiGLU channel expansion <code>(B,T,d_ff) -&gt; (B,T,d)</code>, <strong>U</strong>nembed after final RMSNorm <code>(B,T,d) -&gt; (B,T,V)</code>, and <strong>L</strong>oss sanity-checked at <code>ln(V)</code>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Stage-by-stage equations and tensor shapes</h3>
+  <p>Let batch size be <code>B</code>, context length be <code>T</code>, vocabulary size be <code>V</code>, model width be <code>d</code>, query head count be <code>H</code> (with head width <code>d_h = d / H</code>), SwiGLU width be <code>d_ff</code>, and layer count be <code>L</code>. The complete forward pass executes five deterministic stages:</p>
+  <div class="codewrap"><pre>Stage 1 (Embed):      x_0 = W_E[idx]                                      # idx:(B,T) -&gt; x_0:(B,T,d)
+Stage 2 (Block l=1..L, Sublayer A - Causal Multi-Head / GQA Attention):
+  n_1   = RMSNorm_1(x_{l-1})                                              # (B, T, d)
+  Q,K,V = RoPE(reshape(n_1 W_Q)), RoPE(reshape(n_1 W_K)), reshape(n_1 W_V)# (B, H, T, d_h)
+  S     = (Q K^T) / sqrt(d_h) + Mask_causal                               # (B, H, T, T), Mask[t,s&gt;t] = -inf
+  A     = concat_heads( softmax(S) V )                                    # (B, H, T, d_h) -&gt; (B, T, d)
+  h_l   = x_{l-1} + A W_O                                                 # (B, T, d)
+Stage 3 (Block l=1..L, Sublayer B - SwiGLU Feed-Forward Network):
+  n_2   = RMSNorm_2(h_l)                                                  # (B, T, d)
+  g, u  = SiLU(n_2 W_gate), n_2 W_up                                      # (B, T, d_ff)
+  x_l   = h_l + (g * u) W_down                                            # (B, T, d)
+Stage 4 (Final Norm &amp; Unembed):
+  x_out  = RMSNorm_final(x_L)                                             # (B, T, d)
+  logits = x_out W_head^T                                                 # (B, T, V) [or (B, 1, V) at decode]
+Stage 5 (Cross-Entropy Loss over shifted targets tgt[b, t] = full_seq[b, t+1]):
+  Loss   = - (1 / (B*T)) sum_{b,t} ln( softmax(logits[b, t])[tgt[b, t]] )</pre></div>
+  <p>Notice the target index shift in Stage 5: input position <code>t</code> holds token <code>seq[t]</code> and its output logit row <code>logits[b, t, :]</code> predicts target token <code>seq[t + 1]</code>. One sequence of length <code>T + 1</code> yields <code>T</code> parallel training examples: context <code>seq[0:1] -&gt; seq[1]</code>, context <code>seq[0:2] -&gt; seq[2]</code>, all the way to <code>seq[0:T] -&gt; seq[T]</code>.</p>
+
+  <h3>2. The step-0 loss sanity check and analytic softmax-CE gradient</h3>
+  <p>At step 0, before any optimizer step, weight matrices have small zero-mean Gaussian entries, so <code>logits[b, t, v] ~ 0</code> for all <code>v in {0, ..., V-1}</code>. Softmax produces <code>p_v = e^0 / sum_{k=1}^V e^0 = 1 / V</code>. Plugging <code>p_target = 1 / V</code> into cross-entropy gives the famous initialization identity:</p>
+  <div class="codewrap"><pre>Loss_step0 = - ln(1 / V) = ln(V)       Perplexity_step0 = exp(Loss_step0) = V</pre></div>
+  <p>If your initial loss is much higher than <code>ln(V)</code> (for example, <code>28.0</code> when <code>ln(V) = 11.76</code> for Llama-3's <code>V = 128,256</code>), your weight initialization variance is too large or you forgot the final RMSNorm, saturating softmax at step 0. When differentiating <code>L_t = -ln(p_{tgt})</code> with respect to the logit vector <code>z = logits[b, t]</code>, the quotient rule collapses cleanly into a single subtraction:</p>
+  <div class="codewrap"><pre>d L_t / d z_v = p_v - 1_{v == tgt}     (where p = softmax(z))</pre></div>
+  <p>That exact 3-line gradient (<code>dlogits = probs; dlogits[target] -= 1; dlogits /= B*T</code>) is what drives the 150-step training loop in our kata.</p>
+  <details class="q"><summary>Check: For GPT-2 (V = 50,257) and Llama-3 (V = 128,256), what exact cross-entropy loss should you see at training step 0?</summary><div class="a">For GPT-2, <code>ln(50,257) = 10.8249</code>. For Llama-3, <code>ln(128,256) = 11.7618</code>. Any step-0 loss significantly above <code>~12.0</code> on those vocabularies indicates overly wide output projection initialization.</div></details>
+
+  <h3>3. Training (teacher forcing) vs Inference (prefill + KV-cached decode)</h3>
+  <p>Why does the forward pass behave differently during training versus production serving? During <strong>training</strong>, we already have the entire ground-truth sequence <code>T</code> in memory. Passing all <code>T</code> tokens at once through the upper-triangular causal mask computes all <code>T</code> prefixes in parallel via dense Matrix-Matrix multiplications (GEMMs, high arithmetic intensity, compute-bound on Tensor Cores). During <strong>autoregressive inference</strong>, future tokens do not exist yet, so execution splits into two distinct phases:</p>
+
+  <figure class="viz stepper" id="viz-modes">
+    <div class="vt">Stepper: Parallel Teacher-Forced Training vs Two-Phase Autoregressive Inference</div>
+    <svg viewBox="0 0 500 215" role="img" aria-label="Three-step comparison diagram showing Parallel Teacher-Forced Training with (B,T,d) GEMMs and (B,T,V) loss, Inference Phase 1 Prefill caching K and V across prompt length T and slicing the last token (B,1,V), and Inference Phase 2 Decode stepping 1 token at a time (B,1,d) reading from the KV cache.">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="16" width="152" height="182" rx="6" class="c-paper ln" data-hi="1"/>
+          <text x="86" y="36" text-anchor="middle" font-weight="600">1. Train (Parallel)</text>
+          <rect x="20" y="48" width="132" height="26" rx="4" class="c-accent"/>
+          <text x="86" y="65" text-anchor="middle">Input: all T tokens</text>
+          <rect x="20" y="82" width="132" height="26" rx="4" class="c-good"/>
+          <text x="86" y="99" text-anchor="middle">Causal Mask (T x T)</text>
+          <rect x="20" y="116" width="132" height="26" rx="4" class="c-warn"/>
+          <text x="86" y="133" text-anchor="middle">Logits: (B, T, V)</text>
+          <text x="86" y="162" text-anchor="middle" class="m">Compute-bound GEMM</text>
+          <text x="86" y="178" text-anchor="middle" class="m">No KV cache (acts saved)</text>
+        </g>
+        <g data-step="2">
+          <path d="M162 107 H174" class="ink"/>
+          <rect x="174" y="16" width="152" height="182" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="250" y="36" text-anchor="middle" font-weight="600">2. Infer: Prefill</text>
+          <rect x="184" y="48" width="132" height="26" rx="4" class="c-accent"/>
+          <text x="250" y="65" text-anchor="middle">Prompt: (B, T_p, d)</text>
+          <rect x="184" y="82" width="132" height="26" rx="4" class="c-good"/>
+          <text x="250" y="99" text-anchor="middle">Write KV Cache (T_p)</text>
+          <rect x="184" y="116" width="132" rx="4" height="26" class="c-soft ln"/>
+          <text x="250" y="133" text-anchor="middle">Slice x[:, -1:] -&gt; (B,1,V)</text>
+          <text x="250" y="162" text-anchor="middle" class="m">Compute-bound GEMM</text>
+          <text x="250" y="178" text-anchor="middle" class="m">Determines TTFT</text>
+        </g>
+        <g data-step="3">
+          <path d="M326 107 H338" class="ink"/>
+          <rect x="338" y="16" width="152" height="182" rx="6" class="c-paper ln" data-hi="3"/>
+          <text x="414" y="36" text-anchor="middle" font-weight="600">3. Infer: Decode</text>
+          <rect x="348" y="48" width="132" height="26" rx="4" class="c-warn"/>
+          <text x="414" y="65" text-anchor="middle">1 Token: (B, 1, d)</text>
+          <rect x="348" y="82" width="132" height="26" rx="4" class="c-good"/>
+          <text x="414" y="99" text-anchor="middle">Read+Append KV (1 x t)</text>
+          <rect x="348" y="116" width="132" height="26" rx="4" class="c-accent"/>
+          <text x="414" y="133" text-anchor="middle">Sample 1 -&gt; loop</text>
+          <text x="414" y="162" text-anchor="middle" class="m">Memory-BW bound GEMV</text>
+          <text x="414" y="178" text-anchor="middle" class="m">Determines TPOT / tok/s</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Training runs all T tokens in one parallel forward pass using a (T x T) causal mask and scores all (B, T, V) logits against shifted targets without a KV cache.</li>
+      <li>Inference Prefill processes all T_p prompt tokens in parallel (compute-bound GEMM, setting Time-To-First-Token), populates the KV cache, and projects only x_L[:, -1, :] to (B, 1, V).</li>
+      <li>Inference Decode feeds 1 new token of shape (B, 1, d) per step (memory-bandwidth bound GEMV, setting Time-Per-Output-Token), attending against the cached Keys and Values (1 x t).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Training and Prefill process T tokens in parallel with compute-bound GEMMs, whereas Decode steps 1 token at a time with memory-bandwidth-bound GEMVs reading the KV cache.</figcaption>
+  </figure>
+
+  <h3>4. Exact parameter and forward-FLOP accounting</h3>
+  <p>Multiplying an activation matrix of shape <code>(B*T, m)</code> by a weight matrix of shape <code>(m, n)</code> requires <code>m * n</code> multiply-adds per token, or <code>2 * m * n</code> FLOPs per token. Therefore, <strong>every non-embedding parameter contributes exactly 2 FLOPs per token in the forward pass</strong> (and 4 FLOPs in the backward pass, totaling <code>6N</code> training FLOPs per token). Notice that the initial embedding lookup <code>W_E[idx]</code> is a table indexing operation costing <strong>zero</strong> arithmetic FLOPs, while the output LM head <code>x_out W_head^T</code> is a full matrix multiply costing <code>2 * d * V</code> FLOPs per projected token. Inside each block of width <code>d</code> with MHA and SwiGLU <code>d_ff = (8/3)d</code>:</p>
+  <ul>
+    <li><strong>Attention projections (Q, K, V, O):</strong> <code>4 d^2</code> params -&gt; <code>8 d^2</code> FLOPs/token.</li>
+    <li><strong>Attention scores &amp; value aggregation (QK^T and PV):</strong> 0 params -&gt; <code>4 * T * d</code> FLOPs/token (or <code>2 * T * d</code> causal effective FLOPs).</li>
+    <li><strong>SwiGLU MLP (W_gate, W_up, W_down):</strong> <code>3 * d * d_ff = 8 d^2</code> params -&gt; <code>16 d^2</code> FLOPs/token.</li>
+  </ul>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Full-Model Parameter &amp; Per-Token Forward FLOP Breakdown</div>
+    <p class="ask">Predict first. In a tiny model (d=16, L=1, V=22, T=12) vs a 7B-class model (d=4096, L=32, V=128256, T=4096), when does the quadratic attention score term (4*L*T*d) or the LM Head (2*d*V) rival the SwiGLU MLP FLOPs?</p>
+    <div class="ctl">
+      <label><span>Model scale preset</span><select name="preset" data-num><option value="0">Kata tiny (L=1, d=16, V=22)</option><option value="1">GPT-2 Small (L=12, d=768, V=50257)</option><option value="2" selected>7B-8B Class (L=32, d=4096, V=128256)</option></select></label>
+      <label><span>Sequence length T</span><input type="range" name="T" min="128" max="32768" step="128" value="4096"><output data-for="T" data-unit=" tok"></output></label>
+      <label><span>Weight tying</span><select name="tied" data-num><option value="1">Tied W_head = W_E</option><option value="0" selected>Untied W_head != W_E</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> At moderate sequence lengths (T &lt;= 4,096), linear weight projections (especially SwiGLU MLP at ~50-65% of FLOPs) dominate forward compute; once T reaches 32,768, the quadratic attention score term (4*L*T*d) surges to nearly a third of total forward FLOPs.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var cfg=[[1,16,44,22],[12,768,2048,50257],[32,4096,11008,128256]][v.preset];
+    var L=cfg[0], d=cfg[1], dff=cfg[2], V=cfg[3], T=v.preset===0?12:v.T;
+    var p_emb=V*d*(v.tied?1:2), p_qkv=L*4*d*d, p_mlp=L*3*d*dff, p_tot=p_emb+p_qkv+p_mlp;
+    var f_qkv=L*8*d*d, f_score=L*4*T*d, f_mlp=L*6*d*dff, f_head=2*d*V;
+    var f_tot=f_qkv+f_score+f_mlp+f_head;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"SwiGLU MLP (6 L d d_ff)",value:100*f_mlp/f_tot,tone:"good"},
+      {label:"Attn QKVO Proj (8 L d^2)",value:100*f_qkv/f_tot,tone:"accent"},
+      {label:"Attn Scores QK^T+PV (4 L T d)",value:100*f_score/f_tot,tone:"warn"},
+      {label:"LM Head W_head (2 d V)",value:100*f_head/f_tot,tone:"muted"}
+    ]});
+    return {verdict:"L="+L+", d="+d+", V="+tl.fmt(V,0)+", T="+tl.fmt(T,0)+": Total params = "+tl.fmt(p_tot,0)+" | Forward FLOPs/tok = "+tl.fmt(f_tot,0)+" (MLP "+(100*f_mlp/f_tot).toFixed(1)+"%, Attn scores "+(100*f_score/f_tot).toFixed(1)+"%)."};
+  })});</script>
+  <details class="q"><summary>Check: At what sequence length T do the attention score FLOPs (4 * L * T * d) equal the attention QKVO projection FLOPs (8 * L * d^2)?</summary><div class="a">Setting <code>4 * L * T * d = 8 * L * d^2</code> and dividing both sides by <code>4 * L * d</code> gives <code>T = 2 * d</code>. When sequence length <code>T</code> exceeds <code>2 * d_model</code> (for example, <code>T &gt; 8,192</code> when <code>d = 4,096</code>), the quadratic attention dot products cost more FLOPs than all four Q, K, V, and O linear projections combined!</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Step-0 cross-entropy loss &amp; perplexity at random initialization</td><td class="n">Loss = ln(V) | PPL = V</td><td>Derived</td></tr>
+    <tr><td>Kata step-0 theoretical <code>ln(22)</code> vs measured step-0 loss (<code>V=22</code>)</td><td class="n">3.0910 vs 3.1874 (PPL 24.23)</td><td>Your own run</td></tr>
+    <tr><td>Kata step-150 trained cross-entropy loss &amp; perplexity on Shakespeare</td><td class="n">0.3281 (PPL 1.39)</td><td>Your own run</td></tr>
+    <tr><td>Kata total parameters (<code>V=22, d=16, d_ff=44, L=1</code>, tied head)</td><td class="n">3,488 params</td><td>Your own run</td></tr>
+    <tr><td>Future token attention mass (<code>s &gt; t</code>): Causal mask vs Broken mask</td><td class="n">0.0000 vs 0.4591 (45.9% leak)</td><td>Your own run</td></tr>
+    <tr><td>Forward FLOPs per token vs full training (fwd + bwd) FLOPs per token</td><td class="n">~2N + 4*L*T*d vs ~6N + 12*L*T*d</td><td>Derived</td></tr>
+    <tr><td>Crossover context length where attention score FLOPs exceed QKVO projections</td><td class="n">T = 2 * d_model (e.g. 8,192 at d=4,096)</td><td>Derived</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Tied Embedding &amp; LM Head (<code>W_head = W_E</code>)</td><td>Saves <code>V * d</code> parameters (~525M params at <code>V=128k, d=4096</code>); essential for small models</td><td>Couples input representation and output logit geometry; requires pipeline all-reduce across GPU stages</td><td>Gradient scale mismatch between Layer-0 embedding lookups and final-layer matrix multiply</td></tr>
+    <tr><td>Untied LM Head (<code>W_head != W_E</code>, Llama-2/3 70B)</td><td>Independent input/output specialization; no cross-stage weight synchronization in pipeline parallelism</td><td>Costs an extra <code>V * d</code> matrix in VRAM (~1.05 GB in BF16 at <code>V=128k, d=4096</code>)</td><td>OOM on small edge devices when <code>V</code> is large (128k-256k) and <code>L</code> is shallow</td></tr>
+    <tr><td>Full-sequence LM Head <code>(B, T, V)</code> vs Last-token slice <code>(B, 1, V)</code></td><td><code>(B, T, V)</code> is required during training and speculative draft verification to score all positions</td><td>Materializing <code>(B, T, V)</code> in FP32 at <code>T=8192, V=128k</code> allocates <code>4.2 GB</code> per sequence</td><td>Forgot to slice <code>x_out[:, -1:, :]</code> during inference prefill, or forgot fused chunked cross-entropy during long-context training</td></tr>
+    <tr><td>Teacher-forced parallel forward vs KV-cached autoregressive loop</td><td>Parallel pass achieves 50-70% MFU on Tensor Cores via large GEMMs</td><td>Requires all <code>T</code> tokens upfront; cannot generate novel multi-token continuations in one pass</td><td>Training-serving skew (exposure bias) when model conditions on its own imperfect samples at test time</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: End-to-end nanoGPT decoder forward pass and Shakespeare training</h2>
+  <p>Build a complete, dependency-free decoder-only transformer (Embedding -&gt; Pre-RMSNorm -&gt; Multi-Head Causal Attention -&gt; Residual -&gt; Pre-RMSNorm -&gt; SwiGLU MLP -&gt; Residual -&gt; Final RMSNorm -&gt; Tied LM Head -&gt; Cross-Entropy Loss), trace every intermediate tensor shape, verify the <code>ln(V)</code> step-0 loss check, train for 150 steps on Shakespeare, and demonstrate what breaks when the causal mask is removed.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math, random
+
+random.seed(42)
+
+text = "To be, or not to be, that is the question: Whether tis nobler in the mind to suffer."
+chars = sorted(list(set(text)))
+V = len(chars)
+stoi = {ch: i for i, ch in enumerate(chars)}
+itos = {i: ch for i, ch in enumerate(chars)}
+data = [stoi[c] for c in text]
+
+# Tiny decoder-only config: B=2, T=12, d=16, H=4, d_head=4, d_ff=44
+B, T, d, H, d_ff = 2, 12, 16, 4, 44
+dh = d // H
+
+def rmat(r, c, s=0.04):
+    return [[random.gauss(0, s) for _ in range(c)] for _ in range(r)]
+
+W_E = rmat(V, d, 0.04)
+Wq, Wk, Wv, Wo = rmat(d, d), rmat(d, d), rmat(d, d), rmat(d, d)
+Wg, Wu, Wd = rmat(d, d_ff), rmat(d, d_ff), rmat(d_ff, d)
+
+def rmsnorm(vec, eps=1e-5):
+    inv = 1.0 / math.sqrt(sum(v * v for v in vec) / len(vec) + eps)
+    return [v * inv for v in vec]
+
+def mv(v, W):
+    return [sum(v[i] * W[i][j] for i in range(len(W))) for j in range(len(W[0]))]
+
+def softmax(z):
+    m = max(z)
+    e = [math.exp(v - m) for v in z]
+    s = sum(e)
+    return [v / s for v in e]
+
+def forward(idx_batch, tgt_batch=None, W_head=W_E, causal=True, trace=False):
+    B_c, T_c = len(idx_batch), len(idx_batch[0])
+    x = [[list(W_E[tok]) for tok in seq] for seq in idx_batch]
+    if trace:
+        print(f"1. Token IDs:       ({B_c}, {T_c}) -&gt; Embed W_E[idx]: ({B_c}, {T_c}, {d})")
+    h_batch, out_batch, logits_batch = [], [], []
+    future_mass_sum = 0.0
+    for b in range(B_c):
+        n1 = [rmsnorm(x[b][t]) for t in range(T_c)]
+        Q = [mv(n1[t], Wq) for t in range(T_c)]
+        K = [mv(n1[t], Wk) for t in range(T_c)]
+        Val = [mv(n1[t], Wv) for t in range(T_c)]
+        attn_cat = [[0.0] * d for _ in range(T_c)]
+        for h_i in range(H):
+            c0 = h_i * dh
+            for t in range(T_c):
+                scores = []
+                for s in range(T_c):
+                    dot = sum(Q[t][c0 + c] * K[s][c0 + c] for c in range(dh)) / math.sqrt(dh)
+                    if causal and s &gt; t:
+                        dot = -1e9
+                    scores.append(dot)
+                probs = softmax(scores)
+                if b == 0 and h_i == 0:
+                    future_mass_sum += sum(probs[s] for s in range(t + 1, T_c))
+                for c in range(dh):
+                    attn_cat[t][c0 + c] = sum(probs[s] * Val[s][c0 + c] for s in range(T_c))
+        h_seq, out_seq, lgt_seq = [], [], []
+        for t in range(T_c):
+            ao = mv(attn_cat[t], Wo)
+            ht = [x[b][t][i] + ao[i] for i in range(d)]
+            h_seq.append(ht)
+            n2 = rmsnorm(ht)
+            g_pre = mv(n2, Wg)
+            u_pre = mv(n2, Wu)
+            gu = [(g_pre[i] / (1.0 + math.exp(-g_pre[i]))) * u_pre[i] for i in range(d_ff)]
+            mlp = mv(gu, Wd)
+            ot = rmsnorm([ht[i] + mlp[i] for i in range(d)])
+            out_seq.append(ot)
+            lgt_seq.append([sum(ot[i] * W_head[v][i] for i in range(d)) for v in range(V)])
+        h_batch.append(h_seq); out_batch.append(out_seq); logits_batch.append(lgt_seq)
+    if trace:
+        print(f"2. Multi-Head Attn: Q,K,V ({B_c}, {H}, {T_c}, {dh}) -&gt; Scores ({B_c}, {H}, {T_c}, {T_c}) -&gt; Residual ({B_c}, {T_c}, {d})")
+        print(f"3. SwiGLU + Head:   Gate ({B_c}, {T_c}, {d_ff}) -&gt; Final Norm ({B_c}, {T_c}, {d}) -&gt; Logits ({B_c}, {T_c}, {V})")
+    loss = 0.0
+    if tgt_batch is not None:
+        for b in range(B_c):
+            for t in range(T_c):
+                p = softmax(logits_batch[b][t])
+                loss -= math.log(p[tgt_batch[b][t]] + 1e-12)
+        loss /= (B_c * T_c)
+    return logits_batch, loss, out_batch, future_mass_sum / T_c
+
+idx = [data[i:i+T] for i in [0, 16]]
+tgt = [data[i+1:i+T+1] for i in [0, 16]]
+
+print(f"=== End-to-End Decoder Forward Pass (V={V}, B={B}, T={T}, d={d}, H={H}, d_ff={d_ff}) ===")
+_, loss0, hidden_batch, f_causal = forward(idx, tgt, causal=True, trace=True)
+n_params = V * d + 4 * d * d + 3 * d * d_ff
+print(f"Total params (tied head): {n_params:,} | Theoretical ln(V)={math.log(V):.4f} | Measured step-0 loss={loss0:.4f}")
+
+print("\n=== Training Progression on Shakespeare Passage (150 steps) ===")
+W_out = [list(row) for row in W_E]
+lr = 0.6
+for step in range(151):
+    loss = 0.0
+    dW = [[0.0] * d for _ in range(V)]
+    for b in range(B):
+        for t in range(T):
+            h_vec = hidden_batch[b][t]
+            lgt = [sum(h_vec[i] * W_out[v][i] for i in range(d)) for v in range(V)]
+            p = softmax(lgt)
+            target = tgt[b][t]
+            loss -= math.log(p[target] + 1e-12)
+            for v in range(V):
+                g = (p[v] - (1.0 if v == target else 0.0)) / (B * T)
+                for i in range(d):
+                    dW[v][i] += g * h_vec[i]
+    loss /= (B * T)
+    if step in (0, 25, 50, 100, 150):
+        print(f"step {step:3d} | cross_entropy_loss={loss:.4f} | perplexity={math.exp(loss):6.2f}")
+    for v in range(V):
+        for i in range(d):
+            W_out[v][i] -= lr * dW[v][i]
+
+# Decode batch-0 sequence from trained head
+pred_chars = "".join(itos[max(range(V), key=lambda v: sum(hidden_batch[0][t][i] * W_out[v][i] for i in range(d)))] for t in range(T))
+print(f"Decoded next-char targets: '{pred_chars}'")
+
+_, _, _, f_leak = forward(idx, tgt, causal=False)
+print(f"\n=== Causal Mask Verification ===")
+print(f"Future token attention mass: Causal={f_causal:.4f} | Acausal (broken mask)={f_leak:.4f}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== End-to-End Decoder Forward Pass (V=22, B=2, T=12, d=16, H=4, d_ff=44) ===
+1. Token IDs:       (2, 12) -&gt; Embed W_E[idx]: (2, 12, 16)
+2. Multi-Head Attn: Q,K,V (2, 4, 12, 4) -&gt; Scores (2, 4, 12, 12) -&gt; Residual (2, 12, 16)
+3. SwiGLU + Head:   Gate (2, 12, 44) -&gt; Final Norm (2, 12, 16) -&gt; Logits (2, 12, 22)
+Total params (tied head): 3,488 | Theoretical ln(V)=3.0910 | Measured step-0 loss=3.1874
+
+=== Training Progression on Shakespeare Passage (150 steps) ===
+step   0 | cross_entropy_loss=3.1874 | perplexity= 24.23
+step  25 | cross_entropy_loss=0.6662 | perplexity=  1.95
+step  50 | cross_entropy_loss=0.5079 | perplexity=  1.66
+step 100 | cross_entropy_loss=0.3881 | perplexity=  1.47
+step 150 | cross_entropy_loss=0.3281 | perplexity=  1.39
+Decoded next-char targets: 'o be, ot bot'
+
+=== Causal Mask Verification ===
+Future token attention mass: Causal=0.0000 | Acausal (broken mask)=0.4591</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Shakespeare training cross-entropy loss progression vs theoretical ln(V) baseline</div>
+    <div data-bars='{"unit":" nats","digits":4,"rows":[{"label":"Theoretical ln(V=22)","value":3.0910,"tone":"muted"},{"label":"Step 0 (Random init, PPL 24.23)","value":3.1874,"tone":"warn"},{"label":"Step 25 (PPL 1.95)","value":0.6662,"tone":"accent"},{"label":"Step 50 (PPL 1.66)","value":0.5079,"tone":"accent"},{"label":"Step 100 (PPL 1.47)","value":0.3881,"tone":"good"},{"label":"Step 150 (PPL 1.39)","value":0.3281,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Step-0 loss starts at 3.1874 (within 3% of theoretical ln(22) = 3.0910), then analytic gradient updates drive cross-entropy down 10x to 0.3281 (perplexity 1.39) in 150 steps.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Exact tensor shape invariance:</strong> Token IDs enter as <code>(2, 12)</code>, expand to <code>(2, 12, 16)</code> after <code>W_E[idx]</code>, split into <code>(2, 4, 12, 4)</code> for 4-head attention with <code>(2, 4, 12, 12)</code> score matrices, expand to <code>(2, 12, 44)</code> inside the SwiGLU gate, and exit Final RMSNorm at the exact trunk shape <code>(2, 12, 16)</code> before projecting to <code>(2, 12, 22)</code> logits.</li>
+    <li><strong>Parameter accounting matches formula:</strong> With tied embeddings <code>W_head = W_E</code>, total parameters are <code>V*d + 4*d^2 + 3*d*d_ff = 22*16 + 4*256 + 3*16*44 = 352 + 1,024 + 2,112 = 3,488</code> parameters.</li>
+    <li><strong>Step-0 ln(V) verification:</strong> With <code>V = 22</code> characters, uniform guessing gives <code>ln(22) = 3.0910</code> (perplexity <code>22.00</code>). Our small Gaussian init (<code>s = 0.04</code>) starts at <code>3.1874</code> (perplexity <code>24.23</code>) and converges cleanly to <code>0.3281</code> (perplexity <code>1.39</code>).</li>
+    <li><strong>Acausal mask leakage:</strong> Setting <code>causal=False</code> lets <code>45.91%</code> (<code>0.4591</code>) of attention probability mass flow from future tokens <code>s &gt; t</code>, whereas <code>causal=True</code> clamps future attention mass to exact <code>0.0000</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Inflate initial weight standard deviation 10x (s = 0.40 instead of 0.04).</strong> Change <code>s=0.04</code> to <code>s=0.40</code> in <code>rmat</code> and <code>W_E</code>. Predict what happens to step-0 cross-entropy loss and perplexity compared to <code>ln(22) = 3.0910</code> when initial logits are huge and overconfident in the wrong token!</li>
+    <li><strong>Transpose before reshape bug.</strong> In PyTorch/NumPy multi-head attention, reshaping <code>(B, T, d)</code> directly to <code>(B, H, T, d_h)</code> without first reshaping to <code>(B, T, H, d_h)</code> and transposing axes <code>(1, 2)</code> scrambles token positions across heads. Predict why: token <code>t=1</code>'s features end up inside token <code>t=0</code>'s head 2, leaking future tokens even when the causal mask is applied!</li>
+    <li><strong>Remove the 1/sqrt(d_h) attention scaling factor.</strong> Delete <code>/ math.sqrt(dh)</code> in the attention dot product and increase <code>dh</code>. Predict how softmax entropy and attention gradients change as head dimension grows.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Implement a 20-token autoregressive generation loop starting from the seed string <code>"To be, or no"</code> that appends one greedy argmax token per forward pass, and verify that slicing only the last hidden state <code>out_batch[0][-1]</code> before multiplying by <code>W_out</code> produces the exact same generated characters while reducing unembedding FLOPs by <code>12x</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Step-0 training loss starts at 24.5 instead of <code>ln(V) = 11.76</code> and gradient norm spikes on step 1</td><td>Unembedding matrix <code>W_head</code> or residual projections initialized with too large variance, or missing Final RMSNorm</td><td>Initialize <code>W_head</code> with <code>std = 1 / sqrt(d)</code> (or <code>0.02</code>), verify Final RMSNorm is active, and check step-0 loss equals <code>ln(V) +/- 0.1</code></td></tr>
+    <tr><td>Training loss drops to 0.01 in 200 steps, but model outputs gibberish during autoregressive generation</td><td>Causal mask sign/orientation bug (e.g. masking past tokens <code>s &lt; t</code> instead of future tokens <code>s &gt; t</code>, or reshaping <code>(B,T,d) -&gt; (B,H,T,d_h)</code> without transposing)</td><td>Run the unit test: perturb input token <code>t=5</code> and assert that output logits at positions <code>0..4</code> change by <code>0.00e+00</code></td></tr>
+    <tr><td>Long-context pretraining (<code>T = 32,768, V = 128,256</code>) hits CUDA OOM inside the LM head / loss layer</td><td>Materializing full FP32 logits of shape <code>(B, 32768, 128256)</code> takes <code>16.8 GB</code> per batch item just for the final layer</td><td>Use Fused Linear Cross-Entropy (Liger-Kernel / Flash-Cross-Entropy) which tiles <code>x_out @ W_head^T</code> and computes log-sum-exp in SRAM without materializing <code>(B, T, V)</code></td></tr></table></div>
+  <p><strong>Monitor:</strong> Step-0 loss vs <code>ln(V)</code>, logit L-infinity norm (max absolute logit before softmax; add z-loss or logit soft-capping if <code>max(|logit|) &gt; 30</code>), causal mask prefix-invariance test in CI, and Model FLOPs Utilization (MFU = achieved FLOP/s / GPU peak FLOP/s using <code>6 * N + 12 * L * T * d</code> per token).</p>
+  <details class="q"><summary>Scenario: You are bringing up a new 8B-parameter decoder-only transformer (L=32, d=4096, V=128,256, T=8,192). On step 1, your training job crashes with a CUDA Out-Of-Memory error right after Final RMSNorm, and when you test at T=512, step-0 loss is 19.4 and validation generation repeats a single token. Walk through your 3-step diagnosis and fix.</summary><div class="a"><ol>
+    <li><strong>Fix the OOM at Final RMSNorm -&gt; LM Head:</strong> At <code>B=2, T=8192, V=128256</code>, a standard PyTorch <code>nn.Linear(4096, 128256)</code> followed by <code>F.cross_entropy</code> upcasts logits to FP32 and allocates <code>2 * 8192 * 128256 * 4 bytes = 8.40 GB</code> for forward logits plus another <code>8.40 GB</code> for backward <code>dlogits</code> (<code>16.8 GB</code> total for one layer!). Replace it with a chunked/fused Linear Cross-Entropy kernel so peak logit memory drops under <code>250 MB</code>.</li>
+    <li><strong>Fix the step-0 loss of 19.4 vs ln(128,256) = 11.76:</strong> A step-0 loss of <code>19.4</code> means initial logits have standard deviation <code>~8-10</code> instead of <code>~0-1</code>. Check that Final RMSNorm is actually applied before <code>W_head</code> and rescale <code>W_head</code> initialization from default Kaiming/unscaled normal down to <code>std = 0.02</code> (or <code>1 / sqrt(d) = 0.0156</code>) until step-0 loss reads <code>11.76 +/- 0.05</code>.</li>
+    <li><strong>Verify causal integrity with the prefix perturbation test:</strong> Pass two identical sequences that differ only at token index <code>t = 10</code> through the forward pass in eval mode; assert <code>max(|logits_A[:, :10, :] - logits_B[:, :10, :]|) == 0.0</code> to rule out a transpose/reshape or causal-mask bug before launching the full cluster run.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A decoder-only transformer maps integer token IDs of shape B by T to next-token logit distributions of shape B by T by V in one forward pass. Across all L blocks, the residual stream keeps one invariant shape, B by T by d, enabling parallel training in 2N forward FLOPs per token.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>First, token IDs index into W_E of shape V by d to form x_0 of shape B by T by d. Second, each block applies Pre-RMSNorm, projects into Q, K, V, reshapes to B by H by T by d_h, applies RoPE, and computes scaled dot-product attention with an upper-triangular causal mask so position t never attends to s greater than t. After weighting V, merging heads via W_O, and adding back to the trunk, the second sublayer runs Pre-RMSNorm and the three-matrix SwiGLU MLP through width d_ff back to B by T by d. Finally, post-stack RMSNorm and W_head transpose produce B by T by V logits.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>At step 0, uniform logits must yield cross-entropy loss equal to natural log of V: 3.091 for our 22-char kata and 11.76 for a 128k vocabulary. While training scores all T tokens in parallel, inference prefill slices only the last vector B by 1 by d before the LM head, and decode steps one token at a time using the KV cache.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"In a transformer forward pass, tokens are embedded, passed through several attention and feed-forward layers with normalization and residual connections, and then the output head predicts the next word using softmax."</p><p class="strong">"Token IDs (B, T) index W_E (V, d) to form the residual stream (B, T, d). Each of the L Pre-Norm blocks splits Q, K, V into (B, H, T, d_h), applies RoPE and a causal mask over the (B, H, T, T) scores, merges heads back to (B, T, d) via W_O, and runs a 3-matrix SwiGLU MLP through (B, T, d_ff). After Final RMSNorm, multiplying by W_head^T yields (B, T, V) logits during training - verified by step-0 cross-entropy equaling ln(V) - whereas inference prefill slices x_L[:, -1:, :] to project only (B, 1, V)."</p><p>The strong answer names every intermediate tensor shape, the step-0 <code>ln(V)</code> verification invariant, and the exact shape optimization separating training from inference prefill.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"You can reshape the QKV projection output directly from (B, T, d) to (B, H, T, d_h) using tensor.view(B, H, T, d_h) in row-major order."</summary><div class="a">False! That is the single most common bug when implementing multi-head attention from scratch. In row-major memory, a tensor of shape <code>(B, T, d)</code> lays out all <code>d = H * d_h</code> channels of token <code>t=0</code> first, followed by token <code>t=1</code>. Calling <code>.view(B, H, T, d_h)</code> slices across the sequence dimension <code>T</code>, packing tokens <code>0..T/H</code> into Head 0 and future tokens into earlier time indices! You <strong>must</strong> reshape to <code>(B, T, H, d_h)</code> first and then transpose axes 1 and 2 via <code>.transpose(1, 2)</code>.</div></details>
+  <details class="q"><summary>"The initial token embedding layer W_E[idx] and the final LM head x_L @ W_head^T cost the exact same number of FLOPs because both use a (V x d) matrix."</summary><div class="a">False. The input embedding <code>W_E[idx]</code> is a discrete integer row lookup (gather operation) that copies <code>B * T</code> rows of width <code>d</code> from memory with <strong>zero</strong> arithmetic multiply-add FLOPs. The output LM head <code>x_out @ W_head^T</code> multiplies a dense continuous vector in <code>R^d</code> against all <code>V</code> vocabulary rows, costing <code>2 * B * T * d * V</code> FLOPs.</div></details>
+  <details class="q"><summary>"During training, enabling the KV cache speeds up the forward and backward pass across long sequences."</summary><div class="a">False. A KV cache only helps during sequential token-by-token autoregressive decoding where past keys and values would otherwise be recomputed across <code>T</code> separate forward passes. During training, all <code>T</code> tokens are already processed in a single parallel forward pass, and intermediate activations must be kept (or recomputed via activation checkpointing) for the backward pass anyway.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Walk through the exact shape transformations inside Multi-Head Attention from normalized input n_1 of shape (B, T, d) to sublayer output h_l of shape (B, T, d).</summary><div class="a">1. Multiply <code>n_1 (B, T, d)</code> by <code>W_Q, W_K, W_V (d, d)</code> to get three tensors of shape <code>(B, T, d)</code>. 2. View each as <code>(B, T, H, d_h)</code> and transpose axes 1 and 2 to <code>(B, H, T, d_h)</code> (applying RoPE to Q and K). 3. Multiply <code>Q (B, H, T, d_h)</code> by <code>K^T (B, H, d_h, T)</code> scaled by <code>1/sqrt(d_h)</code> to get scores <code>(B, H, T, T)</code>, apply causal mask and softmax. 4. Multiply probs <code>(B, H, T, T)</code> by <code>V (B, H, T, d_h)</code> to get <code>(B, H, T, d_h)</code>. 5. Transpose axes 1 and 2 back to <code>(B, T, H, d_h)</code>, flatten contiguous memory to <code>(B, T, d)</code>, multiply by <code>W_O (d, d)</code>, and add to <code>x_{l-1} (B, T, d)</code>.<div class="f"><b>Follow-up</b>How do the shapes change if you use Grouped-Query Attention (GQA) with G KV heads instead of H? <code>W_K</code> and <code>W_V</code> project to <code>(B, T, G * d_h)</code>, which reshapes and transposes to <code>(B, G, T, d_h)</code>; each KV head is then broadcast across <code>H / G</code> query heads during the dot product.</div></div></details>
+  <details class="q"><summary>Why do we add -inf (or -1e9) to upper-triangular positions (s &gt; t) before softmax instead of zeroing out upper-triangular probabilities after softmax?</summary><div class="a">If you compute softmax over all <code>T</code> positions first and then zero out <code>s &gt; t</code>, the remaining probabilities for <code>s &lt;= t</code> no longer sum to <code>1.0</code>, and the denominator of softmax at time <code>t</code> still includes <code>exp(score_{t, s&gt;t})</code>, leaking future token magnitude into the forward normalization and backward gradients! Adding <code>-inf</code> before softmax ensures <code>exp(-inf) = 0</code> so the causal prefix sums to exact <code>1.0</code> with zero future dependency.</div></details>
+  <details class="q"><summary>Derive the forward-pass FLOP count per token for one decoder block (MHA + SwiGLU with d_ff = 8/3 d) as a function of d and sequence length T.</summary><div class="a">1. Q, K, V, O linear projections: 4 matrices of size <code>(d, d)</code> cost <code>4 * (2 d^2) = 8 d^2</code> FLOPs/token. 2. Attention dot products <code>Q K^T</code> and weighted sum <code>P V</code>: for each token across <code>H</code> heads, <code>2 * H * T * d_h + 2 * H * T * d_h = 4 * T * d</code> FLOPs/token. 3. SwiGLU projections <code>W_gate, W_up, W_down</code>: 3 matrices of size <code>d * (8/3)d</code> cost <code>3 * 2 * (8/3) d^2 = 16 d^2</code> FLOPs/token. Total per block = <code>24 d^2 + 4 T d</code> FLOPs/token.<div class="f"><b>Follow-up</b>Across <code>L</code> layers plus the LM head <code>(d x V)</code>, what is the full-model forward FLOP formula per token? <code>FLOPs_fwd = L * (24 d^2 + 4 T d) + 2 d V = 2 N_non_emb + 4 L T d + 2 d V</code>.</div></div></details>
+  <details class="q"><summary>Write a 4-line unit test that proves a transformer implementation has zero causal leakage from future tokens.</summary><div class="a">Create batch input <code>idx_1</code> of shape <code>(1, T)</code> and copy it to <code>idx_2</code>, changing only token index <code>k</code> (<code>idx_2[0, k] = (idx_1[0, k] + 1) % V</code>). Run <code>logits_1 = model(idx_1)</code> and <code>logits_2 = model(idx_2)</code> in eval mode. Assert that <code>max(|logits_1[0, :k, :] - logits_2[0, :k, :]|) &lt; 1e-6</code>: changing token <code>k</code> must have zero effect on any output logit at indices <code>0 .. k-1</code>.</div></details>
+  <details class="q"><summary>Why does the backward pass through a transformer cost roughly 2x the FLOPs of the forward pass (making total training cost ~6N FLOPs/token)?</summary><div class="a">For every linear layer <code>Y = X W</code> where <code>X</code> is <code>(B*T, m)</code> and <code>W</code> is <code>(m, n)</code>, the forward pass performs one GEMM costing <code>2 * B * T * m * n</code> FLOPs. The backward pass must compute <strong>two</strong> GEMMs of the exact same FLOP count: one for the activation gradient <code>dX = dY W^T</code> (<code>2 * B * T * m * n</code> FLOPs) and one for the weight gradient <code>dW = X^T dY</code> (<code>2 * B * T * m * n</code> FLOPs). Thus <code>1 (fwd) + 2 (bwd) = 3 * (2N) = 6N</code> FLOPs per token.<div class="f"><b>Follow-up</b>How does activation checkpointing (gradient checkpointing) change this <code>6N</code> number? Recomputing the forward pass of each block during backprop adds one extra forward pass (<code>+2N</code>), raising total training compute from <code>6N</code> to <code>8N</code> FLOPs/token (+33% compute) in exchange for reducing activation VRAM from <code>O(L)</code> to <code>O(1)</code>.</div></div></details>
+  <details class="q"><summary>Explain how Fused Linear Cross-Entropy eliminates the (B, T, V) logit memory bottleneck during long-context training.</summary><div class="a">At <code>B=1, T=32,768, V=128,256</code>, the hidden state <code>x_out</code> of shape <code>(32768, 4096)</code> is only <code>268 MB</code> in BF16, whereas the logits <code>x_out @ W_head^T</code> of shape <code>(32768, 128256)</code> occupy <code>16.8 GB</code> in FP32. Fused Linear Cross-Entropy slices <code>x_out</code> into small token chunks (e.g. 1,024 tokens at a time), computes the chunk's logits, evaluates online softmax cross-entropy loss, and immediately overwrites the chunk buffer with the gradient <code>dlogits = (p - 1_y)</code> to accumulate <code>dx_out</code> and <code>dW_head</code> without ever storing the full <code>(B, T, V)</code> tensor.</div></details>
+  <details class="q"><summary>During inference, what is the arithmetic intensity (FLOPs per byte of weight read) of Prefill at T = 2,048 versus Decode at T = 1 (batch B = 1) in BF16?</summary><div class="a">Each 2-byte BF16 weight performs <code>2 * B * T</code> FLOPs. During Prefill (<code>B=1, T=2048</code>), arithmetic intensity is <code>2 * 2048 / 2 = 2,048 FLOPs/byte</code>, which is well above an H100's <code>~295 FLOPs/byte</code> ridge point (strictly compute-bound). During Decode (<code>B=1, T=1</code>), arithmetic intensity collapses to <code>2 * 1 / 2 = 1 FLOP/byte</code>, leaving Tensor Cores ~99.6% idle while waiting on HBM memory bandwidth.<div class="f"><b>Follow-up</b>How do serving engines raise arithmetic intensity during the Decode phase? By batching <code>B = 64</code> to <code>256</code> concurrent requests via Continuous Batching (or validating <code>K</code> tokens in parallel via Speculative Decoding), raising intensity to <code>B</code> FLOPs/byte.</div></div></details>
+  <details class="q"><summary>How are input token sequences and target token sequences aligned when preparing a pretraining batch of shape (B, T) from a flat token array?</summary><div class="a">From a contiguous chunk of <code>T + 1</code> tokens <code>data[i : i + T + 1]</code>, the input slice is the first <code>T</code> tokens <code>idx = data[i : i + T]</code> and the target slice is shifted right by 1 position: <code>tgt = data[i + 1 : i + T + 1]</code>. At every column <code>t in {0, ..., T-1}</code>, <code>idx[t]</code> is the current token and <code>tgt[t]</code> is the ground-truth next token.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw both steppers (the 5-stage end-to-end tensor shape trace and the 3-column Training vs Prefill vs Decode comparison) and narrate their steps, then write: (1) the exact tensor shapes at every stage of our kata from <code>(2, 12)</code> to <code>(2, 12, 22)</code>, (2) the step-0 <code>ln(V)</code> loss formula and softmax-CE gradient <code>dL / dz_v</code>, and (3) the full-model parameter and forward-FLOP formulas per token including the <code>T = 2d</code> attention crossover.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 5-stage forward pass stepper with invariant trunk <code>(B, T, d) = (2, 12, 16)</code>: IDs <code>(2, 12)</code> -&gt; Embed <code>(2, 12, 16)</code> -&gt; Causal MHA QKV <code>(2, 4, 12, 4)</code> &amp; scores <code>(2, 4, 12, 12)</code> -&gt; SwiGLU gate <code>(2, 12, 44)</code> -&gt; Final RMSNorm &amp; Tied LM Head <code>(2, 12, 22)</code> -&gt; Loss (<code>3.1874 -&gt; 0.3281</code>).</li>
+    <li>Redrew the 3-column execution comparison: Parallel Teacher-Forced Training (<code>(B, T, d)</code> GEMM, <code>(B, T, V)</code> loss, no KV cache) vs Inference Prefill (<code>(B, T_p, d)</code> GEMM, writes KV cache, slices last token <code>(B, 1, V)</code>, sets TTFT) vs Inference Decode (<code>(B, 1, d)</code> GEMV, reads/appends KV cache, sets TPOT).</li>
+    <li>Wrote step-0 loss <code>Loss_0 = ln(V)</code> (<code>3.0910</code> for <code>V=22</code>, <code>11.7618</code> for <code>V=128,256</code>) and logit gradient <code>dL_t / dz_v = p_v - 1_{v == tgt}</code>.</li>
+    <li>Wrote parameter count <code>N = 12 L d^2 + V d</code> (tied) and forward FLOPs/token <code>L * (24 d^2 + 4 T d) + 2 d V = 2 N_non_emb + 4 L T d + 2 d V</code>, with attention score crossover at <code>T = 2 d</code>.</li>
+    <li>Quoted kata causal mask verification: future attention mass is <code>0.0000</code> with causal mask vs <code>0.4591</code> (45.9% leak) when broken.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D07: What happens to Layer-1 weight gradients in a 16-layer transformer stack if you remove the residual connections, and why does Pre-Norm prevent gradient attenuation across depth?</summary><div class="a">Without residual connections, Layer-1 weight gradients collapse by 27 orders of magnitude (from <code>1.516e+00</code> to <code>1.087e-27</code> in our 16-layer kata) because gradients multiply through 32 weight Jacobians. Pre-Norm places RMSNorm inside the residual branch so the trunk Jacobian is <code>d x_L / d x_0 = I + sum(dF_l / dx_0)</code>, preserving an unobstructed identity path <code>I</code>.</div></details>
+  <details class="q"><summary>D06: Why does Linear Position Interpolation (dividing RoPE frequencies by scale s=4) hurt local token resolution, and how does YaRN fix it?</summary><div class="a">Dividing all frequencies by <code>s=4</code> compresses phase differences between adjacent tokens on high-frequency dimensions, reducing local step contrast by <code>12.4x</code> (<code>0.0817 -&gt; 0.0066</code>). YaRN leaves high-frequency dimensions (<code>r_i &gt; 32</code> rotations in <code>L_train</code>) completely unscaled and only interpolates low-frequency dimensions (<code>r_i &lt; 1</code>) while scaling attention logits by <code>sqrt(1/t) = 0.1*ln(s) + 1</code>.</div></details>
+  <details class="q"><summary>D03: Why is greedy decoding (argmax) or temperature T -&gt; 0 prone to degenerate repetition loops in open-ended text generation, and how does top-p (nucleus) sampling address it?</summary><div class="a">Greedy decoding always picks the mode of the conditional distribution, which in autoregressive LMs assigns rising self-reinforcing probability to previously seen phrases. Top-p (nucleus) sampling truncates the unreliable long tail by keeping only the smallest set of top tokens whose cumulative probability exceeds <code>p</code> (e.g. <code>0.9</code>), then samples proportionally from that dynamic nucleus.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://github.com/karpathy/nanoGPT">Karpathy (2023): nanoGPT - The simplest, fastest repository for training/finetuning medium-sized GPTs</a><small>Reference ~300-line PyTorch implementation of a decoder-only GPT forward pass, causal self-attention reshape/transpose order, and ln(V) initialization check. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need</a><small>Foundational derivation of scaled dot-product attention, multi-head projections, and autoregressive causal masking. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2001.08361">Kaplan et al. (2020): Scaling Laws for Neural Language Models</a><small>Derives the per-token parameter N = 12 L d^2 and forward/training compute C = 2N / 6N FLOP accounting formulas. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2407.21783">Dubey et al. (2024): The Llama 3 Herd of Models</a><small>End-to-end decoder-only architecture specification combining byte-level Tiktoken (V=128,256), RoPE (base 500k), GQA, Pre-RMSNorm, and SwiGLU. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>End-to-end tensor shape pipeline (E-A-S-U-L):</strong> IDs <code>(B, T)</code> -&gt; Embed <code>W_E[idx]</code> <code>(B, T, d)</code> -&gt; <code>L</code> blocks keeping trunk invariant at <code>(B, T, d)</code> while Attention splits heads to <code>(B, H, T, d_h)</code> with <code>(B, H, T, T)</code> causal scores and SwiGLU expands channels to <code>(B, T, d_ff)</code> -&gt; Final RMSNorm <code>(B, T, d)</code> -&gt; LM Head <code>(B, T, V)</code>.</li>
+    <li><strong>Shifted targets &amp; step-0 ln(V) sanity check:</strong> Input <code>seq[0:T]</code> predicts target <code>seq[1:T+1]</code> across all <code>T</code> positions simultaneously; at random init, near-zero logits yield uniform <code>p = 1/V</code> so step-0 cross-entropy must equal <code>ln(V)</code> (<code>3.0910</code> for <code>V=22</code>, <code>11.7618</code> for <code>V=128,256</code>).</li>
+    <li><strong>Causal mask integrity:</strong> Adding <code>-inf</code> to upper-triangular positions <code>s &gt; t</code> before softmax keeps future attention mass at <code>0.0000</code> (vs <code>0.4591</code> leak when unmasked); always reshape QKV to <code>(B, T, H, d_h)</code> before transposing to <code>(B, H, T, d_h)</code>.</li>
+    <li><strong>Training vs Prefill vs Decode execution regimes:</strong> Training scores all <code>(B, T, V)</code> positions in parallel without a KV cache; Inference Prefill runs all prompt tokens in parallel (compute-bound GEMM, sets TTFT), populates the KV cache, and slices <code>x_out[:, -1:, :]</code> to project <code>(B, 1, V)</code>; Inference Decode steps 1 token <code>(B, 1, d)</code> at a time (memory-bandwidth-bound GEMV, sets TPOT).</li>
+    <li><strong>Full-model parameter &amp; FLOP accounting:</strong> Non-embedding parameters <code>N = 12 L d^2</code> cost <code>2N</code> forward FLOPs/token (<code>6N</code> training FLOPs/token) plus <code>4 L T d</code> attention score FLOPs/token and <code>2 d V</code> LM-head FLOPs/token.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Step-0 loss invariant:</strong> Always check <code>Loss_step0 == ln(V)</code> (<code>~10.82</code> for 50k vocab, <code>~11.76</code> for 128k vocab); if higher, check Final RMSNorm and scale <code>W_head</code> init to <code>1/sqrt(d)</code>.</li>
+      <li><strong>Analytic softmax + cross-entropy gradient:</strong> For target token <code>y</code>, <code>dL / dz_v = p_v - 1_{v == y}</code>.</li>
+      <li><strong>Attention score FLOP crossover:</strong> Attention dot-product FLOPs (<code>4 L T d</code>) equal QKVO projection FLOPs (<code>8 L d^2</code>) at sequence length <code>T = 2 * d_model</code>.</li>
+      <li><strong>Two production memory traps to avoid:</strong> Never project all <code>T</code> tokens through <code>W_head</code> during inference prefill (slice <code>x_out[:, -1:, :]</code> first), and use Fused Linear Cross-Entropy during long-context training so the <code>(B, T, V)</code> FP32 logit tensor is never materialized in VRAM.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D08 T1 W02", "cards": [{"q": "Trace the exact tensor shapes from input token IDs to output logits in a decoder-only transformer forward pass.", "a": "IDs (B, T) -> Embed (B, T, d) -> Q,K,V (B, H, T, d_h) -> Scores (B, H, T, T) -> Trunk (B, T, d) -> Logits (B, T, V)."}, {"q": "What should the cross-entropy loss and perplexity of a randomly initialized transformer be at step 0 for vocabulary size V?", "a": "Cross-entropy loss should equal ln(V) and perplexity should equal V (ln(22)=3.091; ln(128,256)=11.76) because initial logits are near-uniform."}, {"q": "Why does training compute all T next-token predictions in one forward pass while inference generates one token per pass?", "a": "Training knows all T tokens upfront so the causal mask enforces autoregressivity in parallel; inference must sample token t+1 before feeding it back."}, {"q": "How do you calculate the forward-pass FLOPs per token for a decoder-only transformer of non-embedding parameter count N?", "a": "Every (m x n) weight multiply performs 2*m*n FLOPs, giving 2N forward FLOPs per token plus 4*L*T*d attention score FLOPs."}, {"q": "What happens to attention weights and evaluation generation if the upper-triangular causal mask (s > t -> -inf) is omitted during training?", "a": "Queries attend to future tokens (45.9% attention mass leak in our kata), letting the model copy targets instead of learning causal prediction."}, {"q": "Why do we project only the last token position x_L[:, -1, :] through the LM head W_head during autoregressive inference?", "a": "Only position T-1 predicts token T; projecting (B, 1, d) instead of (B, T, d) through W_head saves (T-1)*2*d*V wasted FLOPs during prefill."}, {"q": "What is the total parameter count formula for an L-layer decoder-only transformer with vocabulary V, width d, MHA, and SwiGLU d_ff = (8/3)d?", "a": "Total parameters equal 12 * L * d^2 + V * d with weight tying (W_head = W_E), or 12 * L * d^2 + 2 * V * d untied."}, {"q": "In backprop through cross-entropy loss L = -ln(p_y) with softmax probabilities p, what is the exact gradient dL / d(logit_v)?", "a": "The gradient with respect to logit v is (p_v - 1) for the ground-truth target token v = y, and p_v for all other tokens."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

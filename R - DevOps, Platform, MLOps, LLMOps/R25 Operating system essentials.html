@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R25 Operating system essentials</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="R25">
+<main>
+<header>
+  <div class="eyebrow"><b>R25</b><span>DevOps, platform, MLOps, LLMOps</span><span>Tier 2</span><span>Week 2</span><span>45 min</span></div>
+  <h1>Operating system essentials</h1>
+  <p class="lede">How virtual memory, the kernel page cache, mmap, context switches, epoll, and zero-copy I/O govern model weight loading and high-concurrency LLM serving.</p>
+  <div class="chips"><span><em>Before</em>A03 Linux and shell fluency</span><span><em>After</em>R01 Networking for engineers</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, kernel-boundary stepper, and mechanism</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Numbers, tradeoffs, and mmap vs read kata</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production, interview drill, and blank-page recall</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our kata on a 64 MB weight file already warm in the OS page cache, how much faster and how much less Python user-space heap does mmap take to inspect one 4 MB layer tensor compared with f.read()?</summary><div class="a"><strong>61.2x faster</strong> (<strong>0.42 ms vs 25.62 ms</strong>) and <strong>7,214x less user heap</strong> (<strong>0.009 MB vs 64.008 MB</strong>). <code>f.read()</code> allocates a 64 MB buffer in user space and copies every byte across the kernel-user boundary, whereas <code>mmap</code> maps virtual page table entries directly to the kernel page cache without copying bytes.</div></details>
+  <details class="q"><summary>When you call mmap() on a 70 GB safetensors weight file, does the operating system immediately read 70 GB from NVMe into RAM?</summary><div class="a">No. <code>mmap()</code> only creates a virtual memory area (<code>vm_area_struct</code>) in the process address space with zero physical pages wired. Physical 4 KB pages are faulted in lazily via <strong>demand paging</strong> only when your CPU actually touches those virtual addresses (a minor fault if in page cache, or a major fault if fetched from NVMe).</div></details>
+  <details class="q"><summary>Four Gunicorn/FastAPI worker processes on the same machine load the same 16 GB model file. Why does f.read() consume 64 GB of RAM while mmap() consumes only 16 GB?</summary><div class="a"><code>f.read()</code> copies the file into <strong>private anonymous heap pages</strong> inside each process (<code>4 * 16 GB = 64 GB</code>). Read-only <code>mmap()</code> maps all four processes' virtual page tables to the <strong>same physical 4 KB frames in the OS kernel page cache</strong>, sharing a single 16 GB copy in RAM.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every byte of model weights loaded from disk and every SSE token streamed to a user crosses the boundary between <strong>kernel space</strong> (Ring 0, which owns physical RAM, NVMe drives, and network cards) and <strong>user space</strong> (Ring 3, where Python and PyTorch run inside a virtual address space). Engineers who treat the OS as a black box pay twice: once by copying multi-gigabyte weight files redundantly between kernel and user buffers, and again by burning CPU cycles switching between thousands of blocked threads.</p>
+  <p>Two kernel mechanisms eliminate these bottlenecks. First, the OS caches disk blocks in unused physical RAM called the <strong>page cache</strong>. Standard <code>read()</code> copies bytes from the page cache into a newly allocated user-space buffer, whereas <strong><code>mmap()</code></strong> points your process's virtual page table entries directly at the kernel page cache frames (zero user-space copy, lazy demand paging, and instant cross-process sharing). Second, for network concurrency, <strong><code>epoll</code></strong> lets a single event-loop thread sleep until the kernel signals which sockets are ready, avoiding the stack memory and CPU cache-flushing overhead of thread-per-connection context switches.</p>
+
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Disk -> Kernel Page Cache -> read() copy vs mmap() zero-copy &amp; epoll</div>
+    <svg viewBox="0 0 500 240" role="img" aria-label="Operating system boundary diagram showing NVMe disk feeding the kernel page cache in physical RAM, contrasting read() which copies 64 MB into user-space heap against mmap() which wires virtual page table entries directly to the page cache in 0.42 ms, alongside epoll readiness notifications.">
+      <g font-size="12">
+        <line x1="12" y1="115" x2="488" y2="115" class="ln" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="485" y="108" text-anchor="end" class="m">USER SPACE (Virtual Memory) ^ | v KERNEL SPACE</text>
+        <g data-step="1">
+          <rect x="16" y="182" width="135" height="44" rx="4" class="c-muted" data-hi="1"/>
+          <text x="83" y="202" text-anchor="middle" font-weight="600">NVMe Disk (64 MB)</text>
+          <text x="83" y="218" text-anchor="middle">16,384 x 4 KB blocks</text>
+          <path d="M151 204 H185" class="ink" stroke-width="2"/>
+          <rect x="185" y="132" width="155" height="94" rx="4" class="c-accent" data-hi="1"/>
+          <text x="262" y="154" text-anchor="middle" font-weight="600">Kernel Page Cache</text>
+          <text x="262" y="172" text-anchor="middle">Physical RAM frames</text>
+          <text x="262" y="190" text-anchor="middle">(DMA from NVMe once;</text>
+          <text x="262" y="206" text-anchor="middle">shared across procs)</text>
+        </g>
+        <g data-step="2">
+          <path d="M220 132 V86" class="ink" stroke-width="2"/>
+          <rect x="16" y="18" width="218" height="68" rx="4" class="c-bad" data-hi="2"/>
+          <text x="125" y="38" text-anchor="middle" font-weight="600">Path A: f.read() syscall copy</text>
+          <text x="125" y="56" text-anchor="middle">CPU copies 64 MB to user heap</text>
+          <text x="125" y="74" text-anchor="middle">Kata: 25.62 ms | 64.01 MB heap</text>
+        </g>
+        <g data-step="3">
+          <path d="M305 132 V86" class="ink" stroke-width="2" stroke-dasharray="3 2"/>
+          <rect x="250" y="18" width="236" height="68" rx="4" class="c-good" data-hi="3"/>
+          <text x="368" y="38" text-anchor="middle" font-weight="600">Path B: mmap() PTE mapping</text>
+          <text x="368" y="56" text-anchor="middle">Maps virtual PTEs -> page cache</text>
+          <text x="368" y="74" text-anchor="middle">Kata slice: 0.42 ms | 0.009 MB heap</text>
+        </g>
+        <g data-step="4">
+          <rect x="355" y="132" width="131" height="94" rx="4" class="c-soft" data-hi="4"/>
+          <text x="420" y="154" text-anchor="middle" font-weight="600">epoll + Zero-Copy</text>
+          <text x="420" y="172" text-anchor="middle">O(1) ready events</text>
+          <text x="420" y="190" text-anchor="middle">No 10k thread</text>
+          <text x="420" y="206" text-anchor="middle">context switches</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>When a 64 MB weight file (16,384 blocks of 4 KB) is read from NVMe, the kernel DMA-transfers it into the physical RAM Page Cache.</li>
+      <li>Calling f.read() crosses into kernel mode, allocates 64.01 MB of private user-space heap, and CPU-copies every byte in 25.62 ms.</li>
+      <li>Calling mmap() maps virtual Page Table Entries directly to the kernel page cache frames: inspecting a 4 MB layer slice takes 0.42 ms (61.2x faster) and 0.009 MB heap.</li>
+      <li>For network serving, epoll notifies a single event loop of ready sockets in O(1) without per-connection thread context switches, while sendfile/DMA streams bytes zero-copy.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Keep data in the kernel page cache: mmap avoids user-space copies and duplicate multi-worker RAM during model loading, while epoll avoids thread context-switch thrashing during streaming serving.</figcaption>
+  </figure>
+
+  <div class="box hook"><b>Memory hook</b><p><strong>"VPM-CEZ: Virtual pages, Page cache, Mmap, Context switch, Epoll, Zero-copy."</strong> The first three (<strong>VPM</strong>) explain zero-copy weight loading (<code>safetensors</code> maps virtual pages to the kernel page cache via <code>mmap</code>); the last three (<strong>CEZ</strong>) explain high-concurrency streaming servers (replace thread context switches with <code>epoll</code> readiness and zero-copy DMA).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>1. Virtual memory, 4 KB page tables, and page faults</h3>
+  <p>Every Linux/Windows process sees its own contiguous 64-bit <strong>virtual address space</strong>. The CPU's Memory Management Unit (MMU) translates virtual addresses into physical RAM frames in <strong>4 KB pages</strong> (or 2 MB huge pages) using per-process Page Table Entries (PTEs) cached inside the CPU's Translation Lookaside Buffer (<strong>TLB</strong>). Because virtual memory is decoupled from physical RAM, two powerful metrics diverge in <code>top</code>/<code>ps</code>: <strong>VIRT (VSZ)</strong> is total virtual address space reserved (which can be 100 GB at zero RAM cost), while <strong>RES (RSS)</strong> is the actual physical RAM pages currently wired to the process.</p>
+  <p>When your code touches a virtual address whose PTE is not marked present, the CPU triggers a <strong>page fault</strong> trap into the kernel:</p>
+  <ul>
+    <li><strong>Minor (soft) page fault (~1-2 us):</strong> the 4 KB page is already in physical RAM inside the kernel page cache (or newly allocated zero page). The kernel simply updates the PTE to point at that frame and resumes execution.</li>
+    <li><strong>Major (hard) page fault (~50-200 us on NVMe):</strong> the page is not in RAM. The kernel puts the thread to sleep, issues an NVMe block read into the page cache, wires the PTE, and wakes the thread.</li>
+  </ul>
+
+  <h3>2. Page cache and read() vs mmap() for model weights</h3>
+  <p>The kernel uses free physical RAM as the <strong>page cache</strong> to store recently accessed file blocks. When you load a PyTorch or <code>safetensors</code> checkpoint via standard <code>f.read()</code>, the OS first populates the page cache (if cold) and then <strong>CPU-copies every byte</strong> from the kernel page cache into a newly allocated user-space buffer. You now hold two copies of the weights in physical RAM: one in the kernel page cache and one in your process's private heap.</p>
+  <p>With <strong><code>mmap()</code></strong> (used by Hugging Face <code>safetensors</code> and <code>llama.cpp</code>), the kernel maps a virtual address range directly to the file's page-cache pages. No bytes are copied into user heap (<strong>zero-copy</strong> into user space), only touched layers fault in (<strong>demand paging</strong>), and multiple worker processes share the exact same physical RAM frames.</p>
+  <div class="codewrap"><pre>read() RAM cost (W workers) = Page_Cache(Size) + W * Private_Heap(Size)
+mmap() RAM cost (W workers) = Page_Cache(Size)   [shared across all W workers]</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Multi-worker model weight loading (f.read vs mmap, cold vs warm cache)</div>
+    <p class="ask">Predict first. If 4 inference worker processes on one node load a 16 GB model from a warm OS page cache, how much total physical RAM and load time does f.read() require compared with mmap()?</p>
+    <div class="ctl">
+      <label><span>Model size (GB)</span><input type="range" name="gb" min="1" max="32" step="1" value="16"><output data-for="gb" data-unit=" GB"></output></label>
+      <label><span>Worker processes (W)</span><input type="range" name="w" min="1" max="8" step="1" value="4"><output data-for="w" data-unit=" procs"></output></label>
+      <label><span>OS Page Cache state</span><select name="warm" data-num><option value="1">Warm page cache (in RAM)</option><option value="0">Cold cache (NVMe 3.2 GB/s)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Scaled from our kata's warm-cache rates (2.50 GB/s f.read copy vs 1.41 GB/s page-touch scan), mmap shares one physical page-cache copy across all W workers and avoids multi-gigabyte user-heap duplication.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var diskMs = v.warm ? 0 : (v.gb / 3.2) * 1000;
+    var readCopyMs = v.w * (v.gb * 1024 / 2.5);
+    var mmapTouchMs = diskMs + (v.gb * 1024 / 2.35);
+    var readTotalMs = diskMs + readCopyMs;
+    var readRamGb = v.gb * (1 + v.w);
+    var mmapRamGb = v.gb;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GB RAM",digits:1,rows:[
+      {label:"f.read() total RAM (cache + W heaps)",value:readRamGb,tone:"bad"},
+      {label:"mmap() total RAM (shared page cache)",value:mmapRamGb,tone:"good"}
+    ]});
+    return {verdict:"RAM: f.read() uses " + readRamGb + " GB vs mmap() " + mmapRamGb + " GB (" + (readRamGb/mmapRamGb).toFixed(1) + "x less) | Load time (" + v.w + " workers): f.read() " + (readTotalMs/1000).toFixed(2) + " s vs mmap fault-in " + (mmapTouchMs/1000).toFixed(2) + " s"};
+  })});</script>
+
+  <details class="q"><summary>Check: Why does our kata's 4th benchmark (`mmap` touching 1 byte per 4 KB page across all 16,384 pages) take 27.22 ms while slicing a single 4 MB tensor takes 0.42 ms?</summary><div class="a">Because <code>mmap()</code> is lazy: creating the mapping and slicing one 4 MB tensor only faults in the few touched pages (0.42 ms). Stepping through all 16,384 pages at stride 4,096 triggers <strong>16,384 separate minor page faults</strong> (plus Python loop overhead) to wire every 4 KB page into the process page table, costing 27.22 ms while still using only 0.009 MB of user heap.</div></details>
+
+  <h3>3. Context switches, epoll, and zero-copy I/O</h3>
+  <p>A <strong>syscall</strong> switches the CPU from user mode to kernel mode within the <em>same</em> process (~0.1-0.3 us). A <strong>process/thread context switch</strong> is much heavier (~1-5 us direct, plus tens of microseconds of indirect L1/L2/TLB cache pollution): the kernel must save CPU registers and stack pointers, swap page tables (if switching processes), and load the next thread. In our kata, reading 64 MB via 1,024 chunked <code>read(64KB)</code> syscalls takes 14.43 ms purely from syscall and copy overhead.</p>
+  <p>If an LLM gateway spawns 10,000 OS threads for 10,000 slow SSE streaming clients, default 8 MB thread stacks consume 80 GB of virtual memory and the scheduler thrashes CPU caches context-switching between sleeping threads. Instead, async frameworks (<code>asyncio</code>, <code>uvloop</code>, nginx) use <strong><code>epoll</code></strong> (Linux) / <code>kqueue</code> (macOS) / IOCP (Windows): the kernel monitors all 10,000 socket file descriptors in an internal red-black tree and returns only the active ready list in <strong><code>O(1)</code> per ready event</strong>, while <strong>zero-copy</strong> primitives (<code>sendfile</code>, <code>splice</code>, GPU GPUDirect Storage DMA) move bytes directly between storage/NIC and memory without bouncing through user space.</p>
+
+  <details class="q"><summary>Check: Why is `select()` or `poll()` slower than `epoll_wait()` when 10,000 SSE clients are connected but only 5 sockets receive a token chunk in a given millisecond?</summary><div class="a"><code>select()</code> and <code>poll()</code> pass the entire 10,000-descriptor array from user space to kernel space on every call and linearly scan all 10,000 sockets in <code>O(N)</code>. <code>epoll</code> registers sockets once via <code>epoll_ctl</code> and uses NIC interrupt callbacks to push only the 5 active sockets onto a ready list, returning in <code>O(k)</code> where <code>k = 5</code> ready events.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table>
+    <tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Standard OS virtual memory page size (x86_64 / ARM64)</td><td class="n">4 KB (4,096 bytes); HugePages = 2 MB / 1 GB</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Kata (64 MB warm cache): full <code>f.read()</code> + slice time &amp; peak user heap</td><td class="n">25.62 ms | 64.008 MB peak heap</td><td>Your own run</td></tr>
+    <tr><td>Kata (64 MB warm cache): chunked <code>read(64KB)</code> x 1,024 syscalls</td><td class="n">14.43 ms | 0.134 MB peak heap</td><td>Your own run</td></tr>
+    <tr><td>Kata (64 MB warm cache): <code>mmap</code> zero-copy 4 MB layer slice</td><td class="n">0.42 ms (61.2x faster) | 0.009 MB heap (7,214x less)</td><td>Your own run</td></tr>
+    <tr><td>Kata (64 MB warm cache): <code>mmap</code> touch all 16,384 pages (4 KB stride)</td><td class="n">27.22 ms (~1.66 us/page incl. Python loop) | 0.009 MB heap</td><td>Your own run</td></tr>
+    <tr><td>Minor page fault (in RAM page cache) vs Major page fault (NVMe read)</td><td class="n">~1-2 us (minor) vs ~50-200 us (major NVMe)</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Thread context switch cost (direct + cache/TLB warmup) &amp; default Linux stack</td><td class="n">~1-5 us direct (10-30 us with cache miss); 8 MB stack/thread</td><td>Checked 2026-11-23</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table>
+    <tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td><code>mmap()</code> weight loading (e.g. <code>safetensors</code>)</td><td>Zero user-space heap copy, instant startup (0.42 ms slice), shared physical RAM across workers</td><td>First access to uncached pages triggers synchronous major page faults that stall the calling thread</td><td>Cold-boot latency spikes on network filesystems (NFS/EFS/FUSE) where page faults block for milliseconds</td></tr>
+    <tr><td>Full <code>f.read()</code> into user buffer</td><td>Predictable sequential bulk I/O upfront; no surprise major page faults after load completes</td><td>2x RAM peak (page cache + user heap) and slow CPU copy (25.62 ms per 64 MB)</td><td>OOM killer (<code>SIGKILL</code> exit 137) when multiple workers call <code>f.read()</code> on a multi-GB checkpoint</td></tr>
+    <tr><td><code>epoll</code> single-thread async event loop</td><td>Handles 10k+ concurrent streaming sockets with minimal RAM and zero thread context-switch thrashing</td><td>Any CPU-bound task or synchronous blocking disk read on the event loop freezes all 10k connections</td><td>Accidental synchronous <code>requests.get</code>, heavy JSON/BPE tokenization, or major page faults on the event loop</td></tr>
+    <tr><td>2 MB HugePages (vs 4 KB standard pages)</td><td>512x fewer page table entries and far fewer TLB misses on 70 GB model weight allocations</td><td>Memory fragmentation and internal waste if allocations are small or non-contiguous</td><td>Transparent HugePages (THP) compaction stalls causing latency spikes under memory pressure</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: 64 MB weight loader benchmark (f.read vs chunked syscalls vs mmap)</h2>
+  <p>Build a 64 MB binary tensor file (16 layers of 4 MB, 16,384 OS pages of 4 KB), warm the OS page cache, and measure wall time and peak Python user-space heap (<code>tracemalloc</code>) across four access patterns: full <code>f.read()</code>, 1,024 chunked <code>read(64KB)</code> syscalls, zero-copy <code>mmap</code> layer slicing, and a full 16,384-page <code>mmap</code> stride scan.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import mmap
+import os
+import struct
+import tempfile
+import time
+import tracemalloc
+
+# Simulate a 64 MB safetensors weight file with 16 tensor blocks of 4 MB each
+NUM_TENSORS = 16
+TENSOR_BYTES = 4 * 1024 * 1024  # 4 MB per layer tensor
+TOTAL_BYTES = NUM_TENSORS * TENSOR_BYTES  # 64 MB total
+
+def build_weight_file(path):
+    block = (b"\x01\x02\x03\x04" * (TENSOR_BYTES // 4))
+    with open(path, "wb") as f:
+        for i in range(NUM_TENSORS):
+            # Stamp layer index into first 4 bytes of each 4 MB tensor block
+            f.write(struct.pack("&lt;I", i) + block[4:])
+        f.flush()
+        os.fsync(f.fileno())
+
+def bench_full_read(path, target_layer=11):
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    with open(path, "rb") as f:
+        buf = f.read()  # Copies entire 64 MB from OS page cache into Python user heap
+    offset = target_layer * TENSOR_BYTES
+    layer_view = memoryview(buf)[offset : offset + TENSOR_BYTES]
+    tag = struct.unpack("&lt;I", layer_view[:4])[0]
+    checksum = layer_view[0] + layer_view[-1]
+    ms = (time.perf_counter() - t0) * 1000.0
+    _, peak_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return ms, peak_bytes / (1024 * 1024), tag, checksum
+
+def bench_chunked_read(path):
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    total = 0
+    with open(path, "rb") as f:
+        while True:
+            chunk = f.read(64 * 1024)  # 1024 syscalls of 64 KB each
+            if not chunk:
+                break
+            total += chunk[0]
+    ms = (time.perf_counter() - t0) * 1000.0
+    _, peak_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return ms, peak_bytes / (1024 * 1024), total
+
+def bench_mmap_slice(path, target_layer=11):
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    with open(path, "rb") as f:
+        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            offset = target_layer * TENSOR_BYTES
+            mv = memoryview(mm)[offset : offset + TENSOR_BYTES]
+            tag = struct.unpack("&lt;I", mv[:4])[0]
+            checksum = mv[0] + mv[-1]
+            del mv
+    ms = (time.perf_counter() - t0) * 1000.0
+    _, peak_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return ms, peak_bytes / (1024 * 1024), tag, checksum
+
+def bench_mmap_touch_all(path):
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    with open(path, "rb") as f:
+        with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+            # Touch 1 byte per 4 KB OS page across all 16,384 pages
+            total = sum(mm[i] for i in range(0, TOTAL_BYTES, 4096))
+    ms = (time.perf_counter() - t0) * 1000.0
+    _, peak_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return ms, peak_bytes / (1024 * 1024), total
+
+if __name__ == "__main__":
+    tmp = os.path.join(tempfile.gettempdir(), "r25_weights_64mb.bin")
+    build_weight_file(tmp)
+    try:
+        # Warm page cache with one pass so we compare warm OS cache behavior
+        with open(tmp, "rb") as f:
+            _ = f.read()
+
+        r_ms, r_mb, tag1, cs1 = bench_full_read(tmp)
+        c_ms, c_mb, _ = bench_chunked_read(tmp)
+        m_ms, m_mb, tag2, cs2 = bench_mmap_slice(tmp)
+        p_ms, p_mb, _ = bench_mmap_touch_all(tmp)
+
+        print(f"File size: {TOTAL_BYTES // (1024*1024)} MB ({TOTAL_BYTES // 4096} OS pages of 4 KB)")
+        print(f"1. Full f.read() + slice   : {r_ms:6.2f} ms | Peak heap: {r_mb:6.3f} MB | layer={tag1} cs={cs1}")
+        print(f"2. Chunked read (1024x64K) : {c_ms:6.2f} ms | Peak heap: {c_mb:6.3f} MB | syscalls=1024")
+        print(f"3. mmap zero-copy slice    : {m_ms:6.2f} ms | Peak heap: {m_mb:6.3f} MB | layer={tag2} cs={cs2}")
+        print(f"4. mmap touch 16384 pages  : {p_ms:6.2f} ms | Peak heap: {p_mb:6.3f} MB | stride=4096B")
+        print(f"Speedup (mmap slice vs read): {r_ms / m_ms:.1f}x faster, {r_mb / max(m_mb, 0.001):.0f}x less user heap")
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">File size: 64 MB (16384 OS pages of 4 KB)
+1. Full f.read() + slice   :  25.62 ms | Peak heap: 64.008 MB | layer=11 cs=15
+2. Chunked read (1024x64K) :  14.43 ms | Peak heap:  0.134 MB | syscalls=1024
+3. mmap zero-copy slice    :   0.42 ms | Peak heap:  0.009 MB | layer=11 cs=15
+4. mmap touch 16384 pages  :  27.22 ms | Peak heap:  0.009 MB | stride=4096B
+Speedup (mmap slice vs read): 61.2x faster, 7214x less user heap</pre></div>
+
+  <figure class="viz">
+    <div class="vt">Chart: Kata wall time (ms) across the four 64 MB file access patterns</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"1. Full f.read() + slice (64.01 MB heap)","value":25.62,"tone":"bad"},{"label":"2. Chunked read 1024x64K (0.13 MB heap)","value":14.43,"tone":"warn"},{"label":"3. mmap zero-copy slice (0.009 MB heap)","value":0.42,"tone":"good"},{"label":"4. mmap touch 16,384 pages (0.009 MB heap)","value":27.22,"tone":"muted"}]}'></div>
+    <figcaption><b>Takeaway.</b> On a warm page cache, zero-copy mmap slicing inspects layer 11 in 0.42 ms with 0.009 MB heap (61.2x faster and 7,214x less heap than f.read()'s 25.62 ms and 64.008 MB copy).</figcaption>
+  </figure>
+
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Full <code>f.read()</code> pays a 64.008 MB heap tax even when you only need one 4 MB tensor:</strong> in Method 1, copying all 64 MB from the kernel page cache into Python's heap takes <code>25.62 ms</code> and allocates <code>64.008 MB</code> of private user memory.</li>
+    <li><strong><code>mmap</code> + <code>memoryview</code> is true zero-copy in user space:</strong> in Method 3, mapping the 64 MB file and slicing layer 11's 4 MB block takes <code>0.42 ms</code> (<strong>61.2x faster</strong>) and allocates just <code>0.009 MB</code> (9 KB) for Python wrapper structs (<strong>7,214x less heap</strong>) while verifying the exact same layer tag (<code>11</code>) and checksum (<code>15</code>).</li>
+    <li><strong>Chunked <code>read(64KB)</code> bounds heap at the cost of 1,024 syscalls:</strong> Method 2 reuses a 64 KB buffer (<code>0.134 MB</code> peak heap) and finishes in <code>14.43 ms</code> because reusing a warm L2-cache-sized buffer avoids allocating a fresh 64 MB contiguous block, though it still executes 1,024 user-kernel transitions.</li>
+    <li><strong>Demand paging faults pages only when touched:</strong> Method 4 steps across all <code>16,384</code> pages at a <code>4,096-byte</code> stride, forcing a minor page fault on every single 4 KB frame in the 64 MB file (<code>27.22 ms</code> total, or <code>~1.66 us/page</code> including Python's generator loop) while still keeping user heap at <code>0.009 MB</code>.</li>
+  </ol>
+
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Trigger an involuntary copy from an mmap slice.</strong> In <code>bench_mmap_slice</code>, replace <code>mv = memoryview(mm)[offset : offset + TENSOR_BYTES]</code> with direct bytes slicing <code>mv = mm[offset : offset + TENSOR_BYTES]</code>. Predict what happens to peak user heap before running (slicing an <code>mmap</code> object directly in Python returns a newly copied <code>bytes</code> object of 4.00 MB instead of a zero-copy <code>memoryview</code>!).</li>
+      <li><strong>Tiny syscall storm.</strong> In <code>bench_chunked_read</code>, change the chunk size from <code>64 * 1024</code> (1,024 syscalls) to <code>64</code> bytes (1,048,576 syscalls). Predict how much slower the 1M user-kernel mode switches run for the exact same 64 MB of data.</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Use <code>torch.frombuffer(mm, dtype=torch.float32, count=1024*1024, offset=11*TENSOR_BYTES)</code> (or <code>numpy.frombuffer</code>) on the <code>mmap</code> object and verify with <code>tracemalloc</code> that creating a 4 MB tensor view over an <code>mmap</code> file allocates 0 MB of heap copy.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Container killed with exit code 137 (<code>OOMKilled</code>) during multi-worker model startup</td><td>Each worker loads weights with <code>f.read()</code> / legacy pickle <code>torch.load</code>, multiplying private heap by worker count <code>W</code></td><td>Switch checkpoints to <code>safetensors</code> (which uses zero-copy <code>mmap</code>) or pass <code>mmap=True</code> in <code>torch.load(..., mmap=True)</code> so workers share one page-cache copy</td></tr>
+    <tr><td>First inference request after pod start takes 45 seconds when loading an <code>mmap</code> model from AWS EFS / GCS FUSE</td><td>Demand paging triggers thousands of sequential 4 KB major page faults over a high-latency network filesystem</td><td>Pre-warm the file with <code>posix_fadvise(POSIX_FADV_WILLNEED)</code> / <code>madvise(MADV_WILLNEED)</code> or copy weights to local NVMe instance storage before serving</td></tr>
+    <tr><td>High <code>%sy</code> (kernel CPU time) and 50,000+ context switches/sec in <code>vmstat</code>/<code>pidstat -w</code> under streaming load</td><td>Thread-per-request server or blocking disk/network calls inside an async event loop forcing thread pool handoffs</td><td>Run streaming SSE gateways on an <code>epoll</code>/<code>uvloop</code> async loop and offload tokenization or blocking I/O to bounded worker pools</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Track <strong>major page faults/sec</strong> (<code>sar -B</code> / <code>majflt/s</code> - any spike during steady inference means weights or KV swap are hitting disk), <strong>container RSS vs page cache</strong> (<code>memory.stat</code> <code>anon</code> vs <code>file</code> in cgroups v2), and <strong>voluntary vs involuntary context switches</strong> (<code>pidstat -w</code>).</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Operating system primitives determine how fast an AI service loads multi-gigabyte model weights and how many concurrent streaming connections it can hold. Using mmap and the kernel page cache eliminates duplicate user-space memory copies during model loading, while epoll and zero-copy I/O eliminate thread context-switch thrashing under high streaming concurrency.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Processes run in virtual memory translated by the MMU in 4-kilobyte pages. When a file is read from NVMe, the kernel stores those blocks in physical RAM inside the page cache. A standard read syscall allocates private user-space heap and CPU-copies bytes across the kernel boundary. By contrast, mmap maps the process's virtual page table entries directly to the kernel page cache frames. Pages fault in lazily on access via minor faults if warm or major faults if on disk, and multiple workers share the same physical RAM frames. For network I/O, epoll tracks socket readiness in the kernel and returns only active descriptors in O(1) per event.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In my 64-megabyte weight benchmark on a warm page cache, full read took 25.62 milliseconds and 64 megabytes of user heap, whereas zero-copy mmap slicing took 0.42 milliseconds and 9 kilobytes of heap: 61 times faster. Watch out for mmap over network filesystems like EFS, where 4-kilobyte major page faults stall inference unless pre-warmed with madvise.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We use safetensors and async servers because they are modern best practices that load models faster and scale better for our users."</p>
+    <p class="strong">"We store weights in safetensors so workers map virtual PTEs directly to the kernel's 4 KB page cache frames via mmap instead of copying bytes into private user heaps with read(). In my 64 MB benchmark, zero-copy mmap slicing cut tensor access from 25.62 ms and 64.01 MB of user heap down to 0.42 ms and 9 KB of heap (61.2x faster), while sharing a single physical RAM copy across all worker processes."</p>
+    <p>The strong answer names virtual PTEs, the 4 KB kernel page cache, the user-kernel copy boundary, and exact measured latency and memory numbers.</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"If a Python process shows 70 GB of VIRT (virtual memory) in top after mmap-ing a model, it is using 70 GB of physical RAM."</summary><div class="a">Wrong: <strong>VIRT (VSZ)</strong> only measures reserved virtual address space entries, which cost almost zero physical RAM. Physical RAM usage is measured by <strong>RES (RSS)</strong>, and even within RSS, file-backed <code>mmap</code> pages live in the shared kernel page cache and can be reclaimed by the OS under memory pressure.</div></details>
+  <details class="q"><summary>"mmap() is always faster than read() for loading large model files on any storage backend."</summary><div class="a">Wrong on high-latency network filesystems (NFS, AWS EFS, GCS FUSE) or cold spinning disks when accessed randomly: demand paging triggers thousands of tiny <strong>4 KB synchronous major page faults</strong> over the network, whereas large sequential <code>read()</code> (or <code>madvise(MADV_WILLNEED)</code> readahead) coalesces I/O into high-throughput multi-megabyte transfers.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+
+  <details class="q"><summary>1. Walk through what happens in the kernel and MMU when a process calls `mmap()` on a 64 MB weight file and then reads the first byte of layer 11.</summary><div class="a">Calling <code>mmap()</code> creates a virtual memory mapping (<code>vm_area_struct</code>) in the process address space without allocating physical RAM or reading disk. When the CPU reads the virtual address for layer 11 (offset 44 MB), the MMU sees an unmapped PTE and raises a page fault. If that 4 KB block is already in the kernel page cache, the kernel resolves a <strong>minor page fault</strong> (~1-2 us) by wiring the PTE to the existing page cache frame; if not, it issues a <strong>major page fault</strong> (~50-200 us) to DMA the block from NVMe into the page cache first.<div class="f"><b>Follow-up</b>In Python, why must you wrap the `mmap` object in `memoryview(mm)[start:end]` instead of slicing `mm[start:end]` directly? Direct slicing `mm[start:end]` allocates a new Python `bytes` object and copies the slice into user heap, defeating zero-copy; `memoryview` creates a zero-copy buffer pointer.</div></div></details>
+
+  <details class="q"><summary>2. Why does Hugging Face `safetensors` or `torch.load(..., mmap=True)` prevent container OOM kills when running multiple worker processes on a single node?</summary><div class="a">Because standard file reads copy tensor data into each process's <strong>private anonymous heap</strong> (<code>anon</code> pages in cgroups), so <code>W</code> workers multiply RAM usage by <code>W</code>. Read-only <code>mmap</code> maps every worker's virtual page table entries to the <strong>same physical frames in the kernel page cache</strong> (<code>file</code> pages), so <code>W</code> workers share a single copy in physical RAM.</div></details>
+
+  <details class="q"><summary>3. Compare a system call, a voluntary thread context switch, and a process context switch in terms of CPU state and cache overhead.</summary><div class="a">A <strong>system call</strong> transitions privilege level (Ring 3 to Ring 0) inside the same thread without changing the virtual address space (~0.1-0.3 us). A <strong>thread context switch</strong> within the same process saves/restores CPU registers and stack pointers to run a different thread (~1-5 us, plus L1/L2 cache pollution) while keeping the same page table and TLB. A <strong>process context switch</strong> also swaps the page table base register (<code>CR3</code> on x86), flushing non-PCID TLB entries and causing expensive TLB misses.<div class="f"><b>Follow-up</b>When does a voluntary context switch occur versus an involuntary one? Voluntary occurs when a thread blocks on a syscall (like `read`, `epoll_wait`, or a mutex); involuntary occurs when the OS scheduler's time slice expires or a higher-priority thread preempts it.</div></div></details>
+
+  <details class="q"><summary>4. How does `epoll` solve the C10K problem for an LLM streaming gateway holding 10,000 open SSE connections?</summary><div class="a">Instead of allocating 10,000 OS threads (80 GB of virtual stack space and constant scheduler thrashing) or scanning 10,000 file descriptors linearly on every loop with <code>select()</code>/<code>poll()</code> (<code>O(N)</code>), <code>epoll</code> registers sockets once in an in-kernel red-black tree via <code>epoll_ctl</code>. When a NIC interrupt arrives, the kernel pushes only the ready socket onto a linked list, so <code>epoll_wait</code> wakes the single event-loop thread in <strong><code>O(1)</code> per active event</strong>.</div></details>
+
+  <details class="q"><summary>5. What does "zero-copy" mean in the context of `sendfile()` or GPUDirect Storage, and how many data copies does a naive `read()` + `write()` file server make?</summary><div class="a">A naive <code>read(disk_fd, buf)</code> followed by <code>write(sock_fd, buf)</code> makes <strong>4 context switches and 3 data copies</strong> (1: Disk DMA to kernel page cache, 2: CPU copy from page cache to user buffer, 3: CPU copy from user buffer to kernel socket buffer, followed by NIC DMA). <strong><code>sendfile()</code></strong> eliminates the two user-space CPU copies and two mode switches by instructing the kernel to DMA directly from the page cache descriptors to the NIC (and <strong>GPUDirect Storage</strong> DMAs directly from NVMe into GPU HBM without bouncing through CPU bounce buffers).</div></details>
+
+  <details class="q"><summary>6. You deploy a 30 GB `mmap`-backed model on a Kubernetes pod running over a cloud network volume, and the first inference request takes 40 seconds while subsequent requests take 50 ms. What happened and how do you fix it?</summary><div class="a">On the first forward pass, every layer access triggered a <strong>synchronous 4 KB major page fault</strong> over the high-latency network volume. Subsequent requests hit the now-warm kernel page cache via fast minor faults. Fix it by calling <code>madvise(MADV_WILLNEED)</code> (or sequential pre-read) during pod readiness probe so the kernel prefetches the file in large sequential chunks before traffic arrives, or stage checkpoints onto local NVMe SSDs.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture (NVMe -> Kernel Page Cache -> Path A `read()` vs Path B `mmap()` + `epoll`) and narrate its steps, then write: (1) the difference between VIRT and RES and minor vs major page faults, (2) our kata's exact numbers comparing full `f.read()`, chunked `read`, zero-copy `mmap` slice, and 16,384-page `mmap` touch, and (3) why `epoll` is O(1) per ready event vs `poll` O(N).</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Kernel/user boundary diagram showing NVMe DMA into the 4 KB Kernel Page Cache, contrasting <code>f.read()</code> copying bytes into user heap against <code>mmap()</code> wiring virtual PTEs directly to page cache frames.</li>
+    <li>Virtual memory concepts: 4 KB standard pages (2 MB HugePages), MMU + TLB translation, VIRT (reserved address space) vs RES/RSS (wired physical RAM), minor fault (~1-2 us in page cache) vs major fault (~50-200 us NVMe I/O).</li>
+    <li>Kata numbers (64 MB file, 16,384 pages): full <code>f.read()</code> = 25.62 ms, 64.008 MB heap; chunked 1024x64KB <code>read</code> = 14.43 ms, 0.134 MB heap; zero-copy <code>mmap</code> 4 MB slice = 0.42 ms (61.2x faster), 0.009 MB heap (7,214x less); <code>mmap</code> touch all 16,384 pages = 27.22 ms, 0.009 MB heap.</li>
+    <li>Multi-worker RAM formula: <code>W</code> workers using <code>f.read()</code> consume <code>(1 + W) * Size</code> RAM; <code>W</code> workers using read-only <code>mmap()</code> share <code>1 * Size</code> in the page cache.</li>
+    <li>Concurrency &amp; zero-copy: thread context switches (~1-5 us + cache/TLB flush, 8 MB stack) vs <code>epoll</code> readiness list (O(1) per active event); <code>sendfile</code> / GPUDirect avoiding user-space bounce buffers.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A03: Which Linux command and flags show per-process voluntary (`cswch/s`) and involuntary (`nvcswch/s`) context switches and page faults (`minflt/s`, `majflt/s`) in real time?</summary><div class="a"><code>pidstat -w 1</code> reports voluntary and involuntary context switches per second per PID, and <code>pidstat -r 1</code> reports minor and major page faults alongside VSZ and RSS memory.</div></details>
+  <details class="q"><summary>K07: For a 70B parameter model stored in BF16/FP16 (2 bytes per parameter), how much disk and page-cache space do the raw model weights occupy?</summary><div class="a"><code>70 * 10^9 * 2 bytes = 140 GB</code> (or ~130.4 GiB). Loading it via <code>f.read()</code> without <code>mmap</code> temporarily requires 140 GB of page cache plus 140 GB of user heap (280 GB total RAM).</div></details>
+  <details class="q"><summary>K08: Write the exact equation relating End-to-End latency (E2E), Time To First Token (TTFT), Time Per Output Token (TPOT), and output token count N_out.</summary><div class="a"><code>E2E = TTFT + (N_out - 1) * TPOT</code>, because the first output token is emitted at the end of prefill inside <code>TTFT</code> and <code>N_out - 1</code> decode steps follow.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://man7.org/linux/man-pages/man2/mmap.2.html">Linux man-pages: mmap(2) and epoll(7) System Calls</a><small>Supports virtual address mapping, demand paging, shared page-cache semantics, and O(1) readiness notification. Checked 2026-11-23.</small></li>
+    <li><a href="https://huggingface.co/docs/safetensors/speed">Hugging Face Documentation: Safetensors Zero-Copy Weight Loading via mmap</a><small>Supports why safetensors uses mmap buffer views to load tensors instantly and share physical RAM across multi-worker processes. Checked 2026-11-23.</small></li>
+    <li><a href="https://docs.python.org/3/library/mmap.html">Python 3.11 Standard Library: mmap and memoryview Buffer Protocol</a><small>Supports zero-copy memoryview slicing over memory-mapped file descriptors used in the kata. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Virtual Memory &amp; Page Faults:</strong> the MMU and TLB translate 64-bit virtual addresses into physical RAM frames in <strong>4 KB pages</strong> (or 2 MB HugePages); minor faults (~1-2 us) wire a page already in RAM, whereas major faults (~50-200 us) block on NVMe disk I/O.</li>
+    <li><strong>Kernel Page Cache:</strong> the OS caches accessed disk blocks in unused physical RAM; standard <code>read()</code> CPU-copies bytes from the page cache into private user heap (<code>25.62 ms</code> and <code>64.008 MB</code> heap for 64 MB in our kata).</li>
+    <li><strong><code>mmap()</code> &amp; Zero-Copy Tensor Loading:</strong> maps process virtual PTEs directly to kernel page-cache frames with lazy demand paging and cross-process RAM sharing; slicing a 4 MB tensor from a 64 MB file takes <code>0.42 ms</code> (<strong>61.2x faster</strong>) and <code>0.009 MB</code> heap (<strong>7,214x less</strong>).</li>
+    <li><strong>Context Switches vs Syscalls:</strong> a syscall switches Ring 3 to Ring 0 inside the same process (~0.1-0.3 us), whereas a thread/process context switch (~1-5 us direct, 10-30 us with L1/L2/TLB cache warmup) swaps registers, 8 MB thread stacks, and page tables.</li>
+    <li><strong><code>epoll</code> &amp; Zero-Copy Network/Storage I/O:</strong> <code>epoll</code> returns only ready sockets in <code>O(1)</code> per active event (vs <code>select</code>/<code>poll</code> <code>O(N)</code> scan), while <code>sendfile()</code> and GPUDirect Storage DMA transfer bytes directly without bouncing through user-space buffers.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Why <code>safetensors</code> uses <code>mmap</code>:</strong> zero user-space copy on load, lazy page-by-page demand paging, and <code>W</code> inference workers share a single physical copy in the OS page cache instead of multiplying RAM by <code>W</code>.</li>
+      <li><strong>Python zero-copy rule:</strong> always wrap <code>mmap</code> in <code>memoryview(mm)[start:end]</code> (or <code>torch.frombuffer</code>); slicing <code>mm[start:end]</code> directly allocates a copied Python <code>bytes</code> object in user heap.</li>
+      <li><strong>When <code>mmap</code> hurts:</strong> cold network filesystems (NFS/EFS/FUSE) turn random layer accesses into thousands of slow 4 KB major page faults; pre-warm with <code>madvise(MADV_WILLNEED)</code> or copy to local NVMe first.</li>
+      <li><strong>Memory hook (VPM-CEZ):</strong> Virtual pages (4 KB), Page cache (RAM), Mmap (zero user-copy), Context switch (cache/TLB flush), Epoll (O(1) ready events), Zero-copy (sendfile/DMA).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::R DevOps, platform, MLOps, LLMOps", "tags": "R25 T2 W02", "cards": [{"q": "Why does mmap load a single tensor slice from a 64 MB weight file 61x faster and with 7,214x less user heap than f.read()?", "a": "f.read() copies all 64 MB from the kernel page cache into user-space heap, whereas mmap maps page tables directly and faults in only touched 4 KB pages."}, {"q": "What is the difference between a minor (soft) page fault and a major (hard) page fault during mmap weight loading?", "a": "A minor fault wires an already-cached 4 KB page from the OS page cache into the process PTE in microseconds; a major fault blocks on disk I/O."}, {"q": "Why does an epoll event loop handle 10,000 concurrent streaming SSE connections better than a thread-per-connection server?", "a": "epoll monitors socket readiness in O(1) per active event without waking idle threads, avoiding 8 MB per-thread stacks and CPU cache-flushing context switches."}, {"q": "What are the six operating system mechanisms in the VPM-CEZ spine?", "a": "Virtual memory (4 KB page tables), Page cache (RAM disk cache), Mmap (zero user-copy), Context switches (register/TLB flush), Epoll (readiness events), and Zero-copy (sendfile/DMA)."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

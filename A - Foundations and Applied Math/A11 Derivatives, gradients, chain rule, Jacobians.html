@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A11 Derivatives, gradients, chain rule, Jacobians</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="A11">
+<main>
+<header>
+  <div class="eyebrow"><b>A11</b><span>Foundations and applied math</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Derivatives, gradients, chain rule, Jacobians</h1>
+  <p class="lede">Why neural network training never materializes full Jacobian matrices, how Vector-Jacobian Products (VJPs) compute exact gradients in one backward pass, and how centered finite differences catch backward bugs at 10^-10 precision.</p>
+  <div class="chips"><span><em>Before</em>A09 Matrices, matmul, tensor shapes, broadcasting, einsum</span><span><em>After</em>A12 Backpropagation and autodiff from scratch</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: guess the three gradient-check questions before reading</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea and stepper: scalar derivative to gradient, Jacobian, VJP, and FD check</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism and U-curve explorer: JVP vs VJP, Softmax/RMSNorm Jacobians, truncation vs cancellation</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run and break the RMSNorm + Softmax VJP gradient checker</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production debugging and 90-second interview drill</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and Anki flashcards</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You write a custom backward pass for Softmax Cross-Entropy and forget the off-diagonal Jacobian terms (-p_i * p_j for i != j), keeping only the diagonal derivative p_t * (1 - p_t) on the target class. Does the loss still decrease, and what relative error does a centered gradient check report?</summary><div class="a">The loss still decreases early in training because the target logit is pushed up, making this a silent accuracy killer. A centered finite-difference check at <code>eps = 1e-6</code> immediately catches it: the relative error jumps from <code>3.664e-10</code> (correct VJP) to <code>2.268e-01</code> (22.7% error) because all non-target logits receive zero gradient instead of <code>p_i</code>.</div></details>
+  <details class="q"><summary>In 64-bit floating point (FP64), a centered finite-difference check at eps = 1e-5 gives a relative error of 3.620e-11. If you shrink eps to 1e-14 to make the Taylor approximation tighter, does the error get smaller or larger?</summary><div class="a">It gets nearly nine orders of magnitude worse, jumping to <code>3.353e-02</code> (3.35% error). At <code>eps = 1e-14</code>, <code>f(x + eps)</code> and <code>f(x - eps)</code> agree in their first 14 decimal digits; subtracting them destroys almost all significant mantissa bits (catastrophic cancellation), amplifying rounding error as <code>O(u / eps)</code>.</div></details>
+  <details class="q"><summary>An RMSNorm layer maps an activation vector x in R^4096 to y in R^4096. How many entries are in its full Jacobian matrix J, and why does the backward pass compute dL/dx in O(d) time without ever allocating J?</summary><div class="a">The full Jacobian has <code>4096 x 4096 = 16,777,216</code> entries (64 MB per token in FP32). Because the Jacobian is a diagonal scale plus a rank-1 outer product, <code>J = inv_rms * (I - (1/d) y y^T)</code>, its Vector-Jacobian Product <code>v^T J</code> reduces to a dot product and vector subtraction: <code>inv_rms * (v - y * mean(v * y))</code> in <code>O(d)</code> time and <code>O(d)</code> memory.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every neural network layer is a vector-valued function <code>f: R^n -> R^m</code>, and its local linear approximation is the <strong>Jacobian matrix</strong> <code>J in R^{m x n}</code> containing all partial derivatives <code>J_{ij} = df_i / dx_j</code>. By the multivariable chain rule, the derivative of a composition of layers is the matrix product of their individual Jacobians. However, materializing an <code>m x n</code> Jacobian for hidden dimension <code>d = 4096</code> would cost <code>d^2 = 16.7M</code> floats per token per layer, turning every elementwise or normalization layer into an OOM bottleneck.</p>
+  <p>The key realization of modern deep learning is that training optimizes a <strong>single scalar loss</strong> <code>L in R</code> (<code>m = 1</code>) with respect to millions of parameters (<code>n >> 1</code>). Instead of multiplying full matrices <code>J_K ... J_2 J_1</code>, reverse-mode differentiation propagates a single <strong>cotangent row vector</strong> <code>v^T = dL / dy</code> backward from the scalar loss, contracting it with each layer's local Jacobian via a <strong>Vector-Jacobian Product (VJP)</strong> <code>v^T J</code> in <code>O(n)</code> work. To verify that a hand-written or custom CUDA VJP kernel is exact, we benchmark it against a <strong>centered finite-difference</strong> probe in FP64 at step size <code>eps ~ 10^-6</code>.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From scalar slope to Jacobian, reverse-mode VJP, and finite-difference check</div>
+    <svg viewBox="0 0 500 235" role="img" aria-label="Five-stage progression from scalar derivative to gradient vector, full Jacobian matrix, reverse-mode Vector-Jacobian Product versus forward-mode JVP, and centered finite-difference gradient check">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="16" width="102" height="58" rx="6" class="c-soft" stroke="var(--ink)" data-hi="1"/>
+          <text x="61" y="36" text-anchor="middle">1. Scalar &amp; Grad</text>
+          <text x="61" y="53" text-anchor="middle" class="m">f: R^d -&gt; R</text>
+          <text x="61" y="68" text-anchor="middle" class="m">nabla f in R^d</text>
+        </g>
+        <g data-step="2">
+          <path d="M112 45 H134" class="ink"/>
+          <rect x="134" y="16" width="114" height="58" rx="6" class="c-accent" data-hi="2"/>
+          <text x="191" y="36" text-anchor="middle" fill="#fff">2. Jacobian J</text>
+          <text x="191" y="53" text-anchor="middle" fill="#fff">f: R^n -&gt; R^m</text>
+          <text x="191" y="68" text-anchor="middle" fill="#fff">J_ij = df_i/dx_j</text>
+        </g>
+        <g data-step="3">
+          <path d="M248 45 H270" class="ink"/>
+          <rect x="270" y="16" width="108" height="58" rx="6" class="c-good" data-hi="3"/>
+          <text x="324" y="36" text-anchor="middle" fill="#fff">3. VJP (Reverse)</text>
+          <text x="324" y="53" text-anchor="middle" fill="#fff">v^T J (1 x n)</text>
+          <text x="324" y="68" text-anchor="middle" fill="#fff">1 pass for R^1</text>
+        </g>
+        <g data-step="4">
+          <rect x="270" y="86" width="108" height="52" rx="6" class="c-warn" data-hi="4"/>
+          <text x="324" y="105" text-anchor="middle" fill="#fff">4. JVP (Forward)</text>
+          <text x="324" y="124" text-anchor="middle" fill="#fff">J u: needs n passes</text>
+        </g>
+        <g data-step="5">
+          <path d="M378 45 H396" class="ink"/>
+          <rect x="396" y="16" width="96" height="122" rx="6" class="c-soft" stroke="var(--ink)" data-hi="5"/>
+          <text x="444" y="38" text-anchor="middle">5. FD Check</text>
+          <text x="444" y="58" text-anchor="middle" class="m">(f(+e)-f(-e))</text>
+          <text x="444" y="74" text-anchor="middle" class="m">/ (2 * eps)</text>
+          <text x="444" y="98" text-anchor="middle">eps = 1e-6</text>
+          <text x="444" y="116" text-anchor="middle" class="m">err: 3.66e-10</text>
+        </g>
+        <g data-step="3">
+          <rect x="10" y="152" width="482" height="72" rx="6" class="c-paper" stroke="var(--line)"/>
+          <text x="22" y="173">Chain rule contraction: dL/dx = ((dL/dz * J_soft) * J_lin) * J_rms</text>
+          <text x="22" y="193" class="m">Left-to-right VJP keeps intermediate state at 1 x d row vector (O(d) memory)</text>
+          <text x="22" y="212" class="m">Full d x d Jacobian materialization costs O(d^2) memory -> avoided!</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>A scalar loss f: R^d -> R has a gradient vector nabla f(x) in R^d pointing in the direction of steepest ascent, where component i is the partial derivative df/dx_i.</li>
+      <li>A vector layer f: R^n -> R^m has an m x n Jacobian matrix J where row i is the transposed gradient of output f_i and column j shows how perturbing x_j shifts all m outputs.</li>
+      <li>Reverse-mode VJP left-multiplies a 1 x m upstream cotangent v^T = dL/df into J to yield 1 x n dL/dx in one backward pass without building the m x n matrix.</li>
+      <li>Forward-mode JVP right-multiplies J by an n x 1 tangent vector u to get directional derivative J u in one pass, which would require n separate passes to recover a gradient in R^n.</li>
+      <li>Centered finite difference perturbs each coordinate by +/- eps (1e-6 in FP64) to estimate df/dx_i with O(eps^2) truncation error, verifying the analytic VJP to 3.66e-10 relative error.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Never materialize an m x n Jacobian when m = 1 at the loss: propagate a 1 x m cotangent left-to-right via VJPs and verify custom backward passes with centered finite differences in FP64.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>SGJ-VC</strong> ("Scalar, Gradient, Jacobian - VJP, Centered check"): <strong>S</strong>calar slope <code>f'(x)</code> in <code>R^1</code> -> <strong>G</strong>radient <code>nabla f(x)</code> in <code>R^d</code> -> <strong>J</strong>acobian <code>J</code> in <code>R^{m x n}</code> -> <strong>V</strong>JP <code>v^T J</code> contracts left-to-right in <code>O(1)</code> pass for scalar loss -> <strong>C</strong>entered check at <code>eps = u^(1/3) ~ 10^-6</code> balances <code>O(eps^2)</code> Taylor error against <code>O(u/eps)</code> cancellation.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Partial derivatives, gradients, and directional derivatives</h3>
+  <p>For a differentiable scalar function <code>f: R^d -> R</code>, the <strong>partial derivative</strong> <code>df / dx_i = lim_{h->0} (f(x + h e_i) - f(x)) / h</code> measures sensitivity along coordinate axis <code>e_i</code> while holding all other <code>d - 1</code> coordinates fixed. Stacking all <code>d</code> partials into a column vector defines the <strong>gradient</strong> <code>nabla f(x) = [df/dx_1, ..., df/dx_d]^T in R^d</code>. From the first-order Taylor expansion <code>f(x + u) = f(x) + nabla f(x)^T u + O(||u||^2)</code>, the rate of change along any unit vector <code>u</code> is the <strong>directional derivative</strong> <code>D_u f(x) = nabla f(x)^T u = ||nabla f(x)|| cos(theta)</code>. By Cauchy-Schwarz, this inner product is maximized when <code>theta = 0</code> (<code>u</code> aligns with <code>nabla f(x)</code>), proving that the gradient points in the direction of steepest ascent and is orthogonal to the level set <code>{x : f(x) = c}</code>.</p>
+
+  <h3>2. The Jacobian matrix and multivariable chain rule</h3>
+  <p>When a layer maps an input vector <code>x in R^n</code> to an output vector <code>y = f(x) in R^m</code>, its first-order linear approximation <code>f(x + dx) approx f(x) + J(x) dx</code> is governed by the <strong>Jacobian matrix</strong> <code>J(x) = df / dx in R^{m x n}</code>, defined entrywise as <code>J_{ij} = df_i / dx_j</code>. Row <code>i</code> is the transposed gradient <code>(nabla f_i(x))^T</code> of output coordinate <code>i</code>; column <code>j</code> is the partial derivative vector <code>df / dx_j</code> showing how nudging input <code>x_j</code> moves all <code>m</code> outputs. If we compose two vector functions <code>z = g(y)</code> (<code>g: R^m -> R^k</code>) and <code>y = f(x)</code> (<code>f: R^n -> R^m</code>), the multivariable chain rule states that the Jacobian of the composition is the matrix product of their Jacobians:</p>
+  <div class="codewrap"><pre>J_{g o f}(x) = J_g(f(x)) @ J_f(x)   in R^{k x n},   where (J_{g o f})_{ij} = sum_{r=1}^m (dg_i / dy_r) * (df_r / dx_j)</pre></div>
+
+  <h3>3. JVP (forward mode) vs VJP (reverse mode)</h3>
+  <p>For a deep network <code>L = f_K(f_{K-1}(...f_1(x)))</code> where <code>x in R^n</code> and the final output is a scalar loss <code>L in R^1</code>, the total derivative <code>dL / dx in R^{1 x n}</code> is the product <code>J_K J_{K-1} ... J_1</code>, where <code>J_K in R^{1 x d_{K-1}}</code> is a single row vector. Matrix multiplication is associative, but parenthesizing left-to-right versus right-to-left changes the asymptotic complexity by a factor of <code>n</code>:</p>
+  <ul>
+    <li><strong>Forward-mode JVP (right-to-left):</strong> Seed a tangent vector <code>u in R^{n x 1}</code> at the input and propagate <code>u_1 = J_1 u</code>, <code>u_2 = J_2 u_1</code>, ..., <code>J u</code>. One forward pass gives the directional derivative along <code>u</code>. To get all <code>n</code> partial derivatives of <code>L</code>, you must set <code>u = e_1, ..., e_n</code>, requiring <strong><code>n</code> passes</strong>. JVP is ideal when <code>n</code> is tiny and <code>m</code> is huge (e.g., sensitivity of 10,000 outputs to 1 hyperparameter).</li>
+    <li><strong>Reverse-mode VJP (left-to-right):</strong> Seed a cotangent row vector <code>v^T = [1] in R^{1 x 1}</code> at the scalar loss and propagate backward: <code>v_{K-1}^T = v^T J_K</code>, <code>v_{K-2}^T = v_{K-1}^T J_{K-1}</code>, ..., <code>dL/dx = v_1^T J_1</code>. Every step contracts a <code>1 x m</code> row vector with an <code>m x n</code> operator to produce a <code>1 x n</code> row vector in <strong>1 backward pass</strong>, at the price of storing intermediate forward activations.</li>
+  </ul>
+  <details class="q"><summary>Check: Suppose a physics simulator maps 3 control parameters (n = 3) to a 50,000-dimensional mesh state (m = 50,000) and you need the full 50,000 x 3 Jacobian matrix. Should you use JVP or VJP, and how many passes does each take?</summary><div class="a">Use <strong>forward-mode JVP</strong>. Seeding the 3 standard basis vectors <code>u = e_1, e_2, e_3</code> builds all 3 columns of the <code>50,000 x 3</code> Jacobian in just <strong>3 JVP passes</strong>. Reverse-mode VJP would build the matrix row-by-row, requiring <strong>50,000 backward passes</strong>.</div></details>
+
+  <h3>4. Analytic Jacobians of Softmax Cross-Entropy and RMSNorm</h3>
+  <p>Two of the most common interview derivations in LLM engineering are the Softmax Jacobian and the RMSNorm VJP. Neither materializes an <code>O(d^2)</code> matrix during execution, yet both rely on dense off-diagonal coupling inside their true Jacobians:</p>
+  <p><strong>Softmax + Cross-Entropy:</strong> Let <code>p_i = exp(z_i) / sum_k exp(z_k)</code>. Differentiating the quotient gives <code>dp_i / dz_j = p_i (delta_{ij} - p_j)</code>, or in matrix form <code>J_soft = diag(p) - p p^T</code>. Notice that increasing logit <code>z_j</code> increases <code>p_j</code> (diagonal term <code>p_j(1 - p_j)</code>) while <em>decreasing</em> every other probability <code>p_i</code> (off-diagonal term <code>-p_i p_j</code>) because probabilities sum to 1. For cross-entropy loss <code>L = -log p_t</code> on target class <code>t</code>, the upstream cotangent is <code>dL / dp_i = -delta_{it} / p_t</code>. Taking the VJP <code>(dL/dp) J_soft</code> gives:</p>
+  <div class="codewrap"><pre>dL/dz_j = (-1 / p_t) * (dp_t / dz_j) = (-1 / p_t) * p_t * (delta_{tj} - p_j) = p_j - delta_{tj}   (or dL/dz = p - e_t)</pre></div>
+  <p>If you forget the off-diagonal <code>-p_i p_j</code> terms in <code>J_soft</code>, non-target logits get zero gradient and our kata's gradient check fails with a <code>2.268e-01</code> relative error.</p>
+  <p><strong>RMSNorm VJP:</strong> Define <code>rms(x) = sqrt((1/d) sum_k x_k^2 + eps)</code>, <code>s = 1 / rms(x)</code>, and normalized output <code>y = s * x</code>. Because <code>s</code> depends on every coordinate of <code>x</code> via <code>ds / dx_j = -(s^3 / d) x_j = -(s / d) y_j</code>, the product rule yields <code>dy_i / dx_j = s * delta_{ij} - (s / d) y_i y_j</code>, so <code>J_rms = s * (I - (1/d) y y^T)</code>. Contracting with upstream gradient <code>dy</code> gives the <code>O(d)</code> VJP:</p>
+  <div class="codewrap"><pre>dx = J_rms^T @ dy = s * (dy - y * mean(dy * y))</pre></div>
+
+  <h3>5. Finite-difference gradient checks and the U-shaped error curve</h3>
+  <p>Before trusting a custom backward pass, we compare the analytic VJP against numerical differentiation. Expanding <code>f(x + eps)</code> and <code>f(x - eps)</code> in Taylor series around <code>x</code>:</p>
+  <div class="codewrap"><pre>f(x + eps) = f(x) + eps f'(x) + (eps^2 / 2) f''(x) + (eps^3 / 6) f'''(x) + O(eps^4)
+f(x - eps) = f(x) - eps f'(x) + (eps^2 / 2) f''(x) - (eps^3 / 6) f'''(x) + O(eps^4)</pre></div>
+  <p><strong>Forward difference</strong> <code>(f(x + eps) - f(x)) / eps = f'(x) + (eps / 2) f''(x) + O(eps^2)</code> has <code>O(eps)</code> truncation error. <strong>Centered difference</strong> subtracts the two expansions, canceling the even <code>f(x)</code> and <code>eps^2 f''(x)</code> terms to yield <code>(f(x + eps) - f(x - eps)) / (2 eps) = f'(x) + (eps^2 / 6) f'''(x) + O(eps^4)</code>, achieving <strong><code>O(eps^2)</code> truncation error</strong> at the cost of <code>2d</code> forward evaluations.</p>
+  <p>However, floating-point representation introduces a competing error. Each evaluation of <code>f</code> has rounding error bounded by <code>|f| * u</code>, where unit roundoff <code>u</code> is <code>1.11e-16</code> in FP64, <code>5.96e-8</code> in FP32, and <code>3.91e-3</code> in BF16. Dividing the difference by <code>2 eps</code> magnifies rounding noise to <code>O(u / eps)</code>. Total error is therefore <code>E(eps) approx c_1 eps^2 + c_2 (u / eps)</code>. Setting <code>dE / d(eps) = 0</code> reveals that optimal step size scales as <strong><code>eps* ~ u^(1/3)</code></strong> (<code>~10^-5.3</code> in FP64, achieving <code>~10^-11</code> error) while forward difference optimizes at <strong><code>eps* ~ u^(1/2)</code></strong> (<code>~10^-8</code> in FP64, achieving <code>~10^-8</code> error).</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Truncation error vs catastrophic cancellation across step sizes and float dtypes</div>
+    <p class="ask">Predict first. In FP64, moving step size from eps = 1e-2 to 1e-5 cuts centered-difference error by 50,000x. What happens if you keep shrinking eps to 1e-13, or switch precision from FP64 to FP32 at eps = 1e-6?</p>
+    <div class="ctl">
+      <label><span>Step exponent k (eps = 10^-k)</span><input type="range" name="k" min="1" max="14" step="1" value="6"><output data-for="k" data-unit=""></output></label>
+      <label><span>Floating-point dtype</span><select name="u" data-num><option value="1.11e-16">FP64 (u = 1.11e-16)</option><option value="5.96e-8">FP32 (u = 5.96e-8)</option><option value="4.88e-4">FP16 (u = 4.88e-4)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Total numerical gradient error follows a U-curve E(eps) = c_trunc + c_round: large eps is dominated by Taylor truncation, small eps is ruined by O(u/eps) subtraction cancellation, and FP32/FP16 cannot reach the 1e-7 verification threshold.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var eps=Math.pow(10,-v.k), u=v.u;
+    var fwd_trunc=0.08426*eps, cen_trunc=0.01857*eps*eps, rnd=0.58*u/eps;
+    var ef=Math.min(1.0,fwd_trunc+rnd), ec=Math.min(1.0,cen_trunc+rnd);
+    var lf=Math.max(0,12+Math.log10(ef)), lc=Math.max(0,12+Math.log10(ec));
+    var tc=ec<1e-7?"good":(ec<1e-4?"warn":"bad");
+    var tf=ef<1e-7?"good":(ef<1e-4?"warn":"bad");
+    tl.bars(fig.querySelector("[data-chart]"),{max:12,rows:[
+      {label:"Forward diff O(eps) + O(u/eps)",value:lf,tone:tf,text:ef.toExponential(2)+" rel err"},
+      {label:"Centered diff O(eps^2) + O(u/eps)",value:lc,tone:tc,text:ec.toExponential(2)+" rel err"},
+      {label:"Taylor truncation component (centered)",value:Math.max(0,12+Math.log10(cen_trunc)),tone:"muted",text:cen_trunc.toExponential(2)},
+      {label:"Rounding cancellation O(u/eps)",value:Math.max(0,12+Math.log10(rnd)),tone:"warn",text:rnd.toExponential(2)}
+    ]});
+    var reg=cen_trunc>rnd*2?"Truncation-dominated (eps too large)":(rnd>cen_trunc*2?"Cancellation-dominated (eps too small)":"Sweet spot (truncation ~ rounding)");
+    return {verdict:"At eps = 1e-"+v.k+", centered diff relative error is "+ec.toExponential(2)+" vs forward diff "+ef.toExponential(2)+" ["+reg+"]."};
+  })});</script>
+
+  <details class="q"><summary>Check: Why does PyTorch's torch.autograd.gradcheck require double precision (FP64) inputs and fail with false alarms if you run it on FP32 or BF16 tensors at eps = 1e-6?</summary><div class="a">In FP32, unit roundoff is <code>u = 5.96e-8</code>, so at <code>eps = 1e-6</code> the rounding cancellation error <code>O(u / eps)</code> is roughly <code>0.03</code> to <code>0.06</code> (3% to 6% error), which looks identical to a broken backward pass. Even at FP32's optimal <code>eps = u^(1/3) ~ 4e-3</code>, centered difference only reaches <code>~1e-5</code> accuracy. FP64 (<code>u = 1.11e-16</code>) pushes the centered-difference floor down to <code>~3.6e-11</code> at <code>eps = 1e-5</code> to <code>1e-6</code>, cleanly separating valid VJPs from subtle bugs.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>FP64 unit roundoff <code>u</code> (53 mantissa bits, <code>2^-53</code>)</td><td class="n">1.11e-16</td><td>Derived (IEEE 754)</td></tr>
+    <tr><td>FP32 / BF16 unit roundoff <code>u</code> (24 / 8 mantissa bits)</td><td class="n">5.96e-8 / 3.91e-3</td><td>Derived (IEEE 754)</td></tr>
+    <tr><td>Optimal step size <code>eps*</code> for centered difference in FP64 (<code>~u^(1/3)</code>)</td><td class="n">1e-5 to 1e-6</td><td>Derived &amp; your own run</td></tr>
+    <tr><td>Optimal step size <code>eps*</code> for forward difference in FP64 (<code>~u^(1/2)</code>)</td><td class="n">1e-7 to 1e-8</td><td>Derived &amp; your own run</td></tr>
+    <tr><td>Centered vs forward FD relative error at <code>eps = 1e-5</code> (kata, <code>d = 32</code>)</td><td class="n">3.620e-11 vs 8.426e-07</td><td>Your own run</td></tr>
+    <tr><td>Centered FD relative error when <code>eps</code> shrinks to <code>1e-14</code> (cancellation)</td><td class="n">3.353e-02</td><td>Your own run</td></tr>
+    <tr><td>Relative error of Softmax VJP missing off-diagonal <code>-p_i p_j</code> terms</td><td class="n">2.268e-01 (vs 3.664e-10 correct)</td><td>Your own run</td></tr>
+    <tr><td>Full Jacobian memory vs VJP vector for <code>d = 4096</code> layer in FP32</td><td class="n">64.0 MB (d^2) vs 16.0 KB (d)</td><td>Derived (4096x speedup)</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Reverse-mode VJP (<code>v^T J</code>)</td><td>Computes full gradient of scalar loss in <code>1</code> backward pass regardless of parameter count <code>n</code></td><td>Must save forward activations (or recompute via activation checkpointing), costing <code>O(depth)</code> memory</td><td>In-place tensor mutations during forward corrupt saved activations needed by VJP</td></tr>
+    <tr><td>Forward-mode JVP (<code>J u</code>)</td><td>Zero activation storage overhead; computes directional derivative in <code>1</code> pass with constant memory</td><td>Requires <code>n</code> separate forward passes to recover a gradient with respect to <code>n</code> inputs</td><td>Completely unusable for standard LLM weight updates where <code>n &gt; 10^9</code></td></tr>
+    <tr><td>Centered finite difference <code>(f(x+e)-f(x-e))/(2e)</code></td><td><code>O(eps^2)</code> truncation error; reaches <code>~3.6e-11</code> error in FP64 with zero derivative code</td><td>Costs <code>2n</code> forward evaluations (64 evals for <code>d = 32</code>); too slow for training loops</td><td>Crossing <code>ReLU</code>/<code>max</code> kinks between <code>x - eps</code> and <code>x + eps</code> or running in FP16/BF16</td></tr>
+    <tr><td>Forward finite difference <code>(f(x+e)-f(x))/e</code></td><td>Needs only <code>n + 1</code> forward evaluations instead of <code>2n</code></td><td><code>O(eps)</code> truncation error caps accuracy at <code>~1.03e-8</code> even at its optimal <code>eps = 1e-7</code></td><td>Weak sensitivity: subtle scaling bugs around <code>1e-5</code> hide inside truncation noise</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Analytic VJP and finite-difference gradient checker</h2>
+  <p>We implement a two-layer RMSNorm + Linear + Softmax Cross-Entropy block in pure Python (FP64), verify that its matrix-free <code>O(d)</code> RMSNorm VJP matches the explicit <code>32 x 32</code> Jacobian matrix to machine epsilon, sweep step sizes from <code>1e-1</code> to <code>1e-14</code> to expose the U-shaped truncation-versus-cancellation curve, and catch a planted Softmax off-diagonal Jacobian bug.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math
+import random
+import time
+
+random.seed(42)
+d, c = 32, 8
+x = [random.gauss(0.0, 1.0) for _ in range(d)]
+W = [[random.gauss(0.0, 0.25) for _ in range(d)] for _ in range(c)]
+target = 3
+eps_norm = 1e-5
+
+def rmsnorm(vec):
+    ms = sum(v * v for v in vec) / len(vec)
+    inv_rms = 1.0 / math.sqrt(ms + eps_norm)
+    return [v * inv_rms for v in vec], inv_rms
+
+def forward(vec, W_mat):
+    y, inv_rms = rmsnorm(vec)
+    z = [sum(W_mat[i][j] * y[j] for j in range(d)) for i in range(c)]
+    m = max(z)
+    exps = [math.exp(zi - m) for zi in z]
+    s = sum(exps)
+    p = [e / s for e in exps]
+    loss = -math.log(p[target])
+    return loss, y, inv_rms, p
+
+def analytic_vjp(vec, W_mat, buggy=False):
+    loss, y, inv_rms, p = forward(vec, W_mat)
+    # 1. Softmax + Cross-Entropy VJP: dL/dz = p - e_target
+    # Buggy version omits off-diagonal -p_i*p_j in Softmax Jacobian: dL/dz_buggy = -(1 - p_target) on target only
+    if buggy:
+        dz = [-(1.0 - p[target]) if i == target else 0.0 for i in range(c)]
+    else:
+        dz = [p[i] - (1.0 if i == target else 0.0) for i in range(c)]
+    # 2. Linear layer VJP: dL/dy = W^T @ dz
+    dy = [sum(W_mat[i][j] * dz[i] for i in range(c)) for j in range(d)]
+    # 3. RMSNorm VJP: J_rms^T @ dy = inv_rms * (dy - y * mean(dy * y))
+    dot_dy_y = sum(dy[j] * y[j] for j in range(d)) / d
+    dx = [inv_rms * (dy[j] - y[j] * dot_dy_y) for j in range(d)]
+    return dx, dy, dz
+
+def full_jacobian_rmsnorm(vec):
+    y, inv_rms = rmsnorm(vec)
+    return [[inv_rms * ((1.0 if i == j else 0.0) - (y[i] * y[j]) / d) for j in range(d)] for i in range(d)]
+
+def norm(v):
+    return math.sqrt(sum(vi * vi for vi in v))
+
+def rel_err(a, b):
+    diff = [ai - bi for ai, bi in zip(a, b)]
+    return norm(diff) / (norm(a) + norm(b) + 1e-30)
+
+dx_true, dy_true, _ = analytic_vjp(x, W, buggy=False)
+dx_bug, _, _ = analytic_vjp(x, W, buggy=True)
+
+# Verify reverse-mode VJP matches explicit J_rms^T @ dy
+J_rms = full_jacobian_rmsnorm(x)
+dx_via_J = [sum(J_rms[i][j] * dy_true[i] for i in range(d)) for j in range(d)]
+print(f"RMSNorm VJP vs full Jacobian (d={d}x{d}) rel_err: {rel_err(dx_true, dx_via_J):.2e}")
+
+print("\n--- Step-size sweep: Forward O(eps) vs Centered O(eps^2) ---")
+print(f"{'eps':&gt;8} | {'Forward diff err':&gt;16} | {'Centered diff err':&gt;17} | {'Dominant error regime'}")
+print("-" * 72)
+f0 = forward(x, W)[0]
+for k in [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14]:
+    eps = 10.0 ** (-k)
+    fd_fwd, fd_cen = [], []
+    for i in range(d):
+        xp = x[:]; xp[i] += eps
+        xm = x[:]; xm[i] -= eps
+        fp = forward(xp, W)[0]
+        fm = forward(xm, W)[0]
+        fd_fwd.append((fp - f0) / eps)
+        fd_cen.append((fp - fm) / (2.0 * eps))
+    ef, ec = rel_err(dx_true, fd_fwd), rel_err(dx_true, fd_cen)
+    regime = "Truncation O(eps^2)" if k &lt;= 4 else ("Optimal sweet spot" if k &lt;= 7 else "Cancellation O(u/eps)")
+    print(f"1e-{k:&lt;5d} | {ef:16.3e} | {ec:17.3e} | {regime}")
+
+# Compare buggy analytic gradient at optimal eps=1e-6
+eps_opt = 1e-6
+fd_opt = []
+for i in range(d):
+    xp = x[:]; xp[i] += eps_opt
+    xm = x[:]; xm[i] -= eps_opt
+    fd_opt.append((forward(xp, W)[0] - forward(xm, W)[0]) / (2.0 * eps_opt))
+
+print("\n--- Gradient Check Diagnostic (eps = 1e-6) ---")
+print(f"Correct analytic VJP vs Centered FD rel_err : {rel_err(dx_true, fd_opt):.3e} (PASS &lt; 1e-7)")
+print(f"Buggy Softmax VJP    vs Centered FD rel_err : {rel_err(dx_bug, fd_opt):.3e} (FAIL &gt; 1e-3)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿RMSNorm VJP vs full Jacobian (d=32x32) rel_err: 1.17e-16
+
+--- Step-size sweep: Forward O(eps) vs Centered O(eps^2) ---
+     eps | Forward diff err | Centered diff err | Dominant error regime
+------------------------------------------------------------------------
+1e-1     |        8.427e-03 |         1.856e-04 | Truncation O(eps^2)
+1e-2     |        8.426e-04 |         1.857e-06 | Truncation O(eps^2)
+1e-3     |        8.426e-05 |         1.857e-08 | Truncation O(eps^2)
+1e-4     |        8.426e-06 |         1.842e-10 | Truncation O(eps^2)
+1e-5     |        8.426e-07 |         3.620e-11 | Optimal sweet spot
+1e-6     |        8.420e-08 |         3.664e-10 | Optimal sweet spot
+1e-7     |        1.033e-08 |         4.542e-09 | Optimal sweet spot
+1e-8     |        6.382e-08 |         4.039e-08 | Cancellation O(u/eps)
+1e-10    |        6.156e-06 |         4.853e-06 | Cancellation O(u/eps)
+1e-12    |        6.652e-04 |         4.092e-04 | Cancellation O(u/eps)
+1e-14    |        6.300e-02 |         3.353e-02 | Cancellation O(u/eps)
+
+--- Gradient Check Diagnostic (eps = 1e-6) ---
+Correct analytic VJP vs Centered FD rel_err : 3.664e-10 (PASS &lt; 1e-7)
+Buggy Softmax VJP    vs Centered FD rel_err : 2.268e-01 (FAIL &gt; 1e-3)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Precision digits (-log10 relative error) across finite-difference step sizes and buggy VJP</div>
+    <div data-bars='{"unit":" digits","digits":2,"max":12,"rows":[{"label":"Centered FD (eps=1e-1, truncation)","value":3.73,"tone":"warn","text":"1.86e-04 err (3.7 digits)"},{"label":"Centered FD (eps=1e-3, truncation)","value":7.73,"tone":"good","text":"1.86e-08 err (7.7 digits)"},{"label":"Centered FD (eps=1e-5, sweet spot)","value":10.44,"tone":"good","text":"3.62e-11 err (10.4 digits)"},{"label":"Centered FD (eps=1e-6, sweet spot)","value":9.44,"tone":"good","text":"3.66e-10 err (9.4 digits)"},{"label":"Forward FD (eps=1e-5, O(eps) floor)","value":6.07,"tone":"muted","text":"8.43e-07 err (6.1 digits)"},{"label":"Centered FD (eps=1e-14, cancellation)","value":1.47,"tone":"bad","text":"3.35e-02 err (1.5 digits)"},{"label":"Buggy Softmax VJP (missing -p_i*p_j)","value":0.64,"tone":"bad","text":"2.27e-01 err (0.6 digits)"}]}'></div>
+    <figcaption><b>Takeaway.</b> Centered finite difference peaks at 10.44 digits of precision (3.62e-11 error) at eps = 1e-5, loses 9 digits to catastrophic cancellation at eps = 1e-14, and immediately exposes the missing off-diagonal Softmax Jacobian term (2.27e-01 error).</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Matrix-free VJP equals the full Jacobian contraction to <code>1.17e-16</code>:</strong> Contracting <code>dy</code> with the explicit <code>32 x 32</code> RMSNorm Jacobian <code>J_rms = inv_rms * (I - y y^T / d)</code> agrees with the <code>O(d)</code> vector formula <code>inv_rms * (dy - y * mean(dy * y))</code> to machine precision (<code>1.17e-16</code>).</li>
+    <li><strong>Quadratic 100x error drop per decade for centered difference:</strong> From <code>eps = 1e-1</code> to <code>1e-4</code>, reducing <code>eps</code> by <code>10x</code> shrinks forward-difference error by exactly <code>10x</code> (<code>8.427e-3 -> 8.426e-4 -> 8.426e-5 -> 8.426e-6</code>), whereas centered-difference error drops by <strong><code>100x</code> per decade</strong> (<code>1.856e-4 -> 1.857e-6 -> 1.857e-8 -> 1.842e-10</code>).</li>
+    <li><strong>Catastrophic cancellation reverses the trend below <code>1e-7</code>:</strong> Past the <code>3.620e-11</code> minimum at <code>eps = 1e-5</code>, every <code>100x</code> reduction in <code>eps</code> multiplies centered error by roughly <code>100x</code> (<code>4.039e-8</code> at <code>1e-8</code> -> <code>4.853e-6</code> at <code>1e-10</code> -> <code>3.353e-2</code> at <code>1e-14</code>).</li>
+    <li><strong>Planted off-diagonal Jacobian bug jumps out by 9 orders of magnitude:</strong> Omitting <code>-p_i p_j</code> in the Softmax backward pass raises relative error at <code>eps = 1e-6</code> from <code>3.664e-10</code> to <code>2.268e-01</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Omit the RMSNorm denominator derivative.</strong> In <code>analytic_vjp</code>, replace <code>dx = [inv_rms * (dy[j] - y[j] * dot_dy_y) for j in range(d)]</code> with the naive scale <code>dx = [inv_rms * dy[j] for j in range(d)]</code> (treating <code>inv_rms</code> as a constant). Predict whether the relative error is small or <code>&gt; 0.1</code>, then run.</li>
+    <li><strong>Simulate an FP32 gradient check.</strong> Round <code>fp</code> and <code>fm</code> inside the finite-difference loop to 7 significant digits using <code>float(f"{fp:.7g}")</code>. Predict which <code>eps</code> now gives the lowest error and watch <code>eps = 1e-6</code> fail with <code>&gt; 1e-2</code> noise.</li>
+    <li><strong>Plant a non-differentiable ReLU kink at zero.</strong> Set <code>x[0] = 1e-7</code> and apply <code>max(0.0, v)</code> before RMSNorm. Perturb with <code>eps = 1e-5</code> so <code>x[0] - eps &lt; 0 &lt; x[0] + eps</code> and observe why gradient checks fail when straddling a kink.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a learnable RMSNorm gain vector <code>gamma in R^d</code> so <code>out_j = gamma_j * y_j</code>, derive both <code>dL / d(gamma)</code> and the updated <code>dL / dx</code>, and verify both gradients to <code>&lt; 1e-9</code> relative error.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td><code>torch.autograd.gradcheck</code> fails with relative error <code>1e-2</code> on a correct custom kernel</td><td>Inputs were left in <code>float32</code> or <code>bfloat16</code>, or the input sits within <code>eps</code> of a <code>ReLU</code> / <code>abs</code> kink</td><td>Cast test inputs and weights to <code>torch.float64</code>, use small dimensions (<code>d = 16..32</code>), and seed away from non-differentiable kinks</td></tr>
+    <tr><td>Custom normalization or attention backward trains slowly and diverges at high learning rates</td><td>Backward kernel omitted the normalization denominator derivative (the <code>-y * mean(dy * y)</code> radial projection term)</td><td>Include the full rank-1 outer product contraction in the VJP and enforce a CI <code>gradcheck</code> at <code>atol=1e-6, rtol=1e-5</code></td></tr>
+    <tr><td>Out-of-memory (OOM) spike when computing per-sample gradients or Jacobian regularization</td><td>Code materialized a full batch Jacobian tensor <code>[B, m, n]</code> instead of chaining <code>torch.func.vjp</code> / <code>jvp</code></td><td>Replace explicit Jacobian allocation with matrix-free VJP/JVP or Hutchinson trace estimation <code>v^T J v</code></td></tr>
+    <tr><td><code>NaN</code> gradients on low-probability classes even though forward loss is finite</td><td>Computed <code>dL/dp = -1 / p_t</code> and multiplied by <code>J_soft</code> separately instead of fused <code>dL/dz = p - e_t</code></td><td>Always fuse Softmax and Cross-Entropy in both forward (log-sum-exp trick) and backward (<code>p - e_t</code> avoids dividing by <code>p_t ~ 0</code>)</td></tr></table></div>
+  <p><strong>Monitor:</strong> Per-layer gradient norm ratios <code>||dL/dx|| / ||dL/dy||</code> (spikes indicate exploding Jacobian singular values or missing normalization terms), cosine similarity between FP64 reference VJP and custom BF16/FP16 kernel outputs during CI, and NaN/Inf counts in backward hooks.</p>
+  <details class="q"><summary>Scenario: An engineer writes a custom Triton backward kernel for fused RMSNorm + Residual in a voice-AI transformer. Loss decreases on a toy batch, but in full training gradient norms drift and WER degrades by 18%. How do you isolate and prove the bug in under 10 minutes?</summary><div class="a"><ol>
+    <li><strong>Isolate on a tiny FP64 harness:</strong> Extract the custom op on a single tensor of shape <code>(4, 32)</code> in <code>torch.float64</code> with deterministic random seed and well-conditioned inputs away from zero.</li>
+    <li><strong>Run centered finite differences at <code>eps = 1e-6</code>:</strong> Compare the custom backward output <code>dx_triton</code> against centered finite differences and against an eager PyTorch FP64 reference graph.</li>
+    <li><strong>Inspect the residual vector <code>dx_triton - dx_fd</code>:</strong> If the residual is proportional to the normalized activation vector <code>y</code> (cosine similarity <code>= 1.0</code> with <code>y</code>), the kernel forgot the radial projection term <code>-y * mean(dy * y)</code> from differentiating <code>1 / rms(x)</code>.</li>
+    <li><strong>Lock in a regression test:</strong> Fix the kernel to accumulate <code>sum(dy * y)</code> in FP32 registers before subtracting, and gate CI on <code>rel_err &lt; 1e-7</code> in FP64 and <code>&lt; 1e-2</code> in BF16.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A vector layer mapping R^n to R^m has an m-by-n Jacobian matrix of partial derivatives, and the multivariable chain rule multiplies these Jacobians across layers. Because training optimizes a single scalar loss, we never materialize full Jacobians; we propagate a 1-by-m cotangent backward using Vector-Jacobian Products in one pass.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>For a layer y = f(x), entry J_ij is df_i / dx_j. Multiplying Jacobians right-to-left gives forward-mode JVP, J times u, which computes one directional derivative per pass and needs n passes for n parameters. Multiplying left-to-right from the scalar loss gives reverse-mode VJP, v-transpose times J, which contracts a row vector through each layer in O(n) time. For example, RMSNorm's Jacobian is inv_rms times I minus y y-transpose over d, so its VJP avoids the d-by-d matrix via inv_rms times dy minus y times mean of dy times y.Similarly, fusing Softmax and Cross-Entropy collapses the dense Jacobian contraction into p minus one-hot target.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>We verify custom VJPs with centered finite differences, f(x+eps) minus f(x-eps) over 2 eps, whose O(eps^2) truncation error beats forward difference's O(eps). In FP64, unit roundoff is 1.11e-16, placing optimal eps at u^(1/3) or 1e-6 with 3.6e-10 relative error, whereas shrinking eps to 1e-14 causes catastrophic cancellation and 3.3% error.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"Gradients tell the model how to update weights using the chain rule. Jacobians are used for multi-dimensional layers, and we use gradient checking with a very small epsilon to make sure our derivatives are accurate before deploying to production."</p>
+    <p class="strong">"For a layer f: R^n -> R^m, the Jacobian J is m-by-n, but since our loss L is a scalar (m = 1), reverse-mode autodiff propagates a 1-by-m cotangent via Vector-Jacobian Products v^T J in one backward pass instead of materializing O(d^2) matrices. When we write a custom VJP kernel, we verify it in FP64 against centered finite differences at eps = 1e-6, where O(eps^2) truncation error and O(u/eps) cancellation balance at ~3.6e-10 relative error."</p>
+    <p>The strong answer names dimensions (<code>m x n</code> vs <code>1 x m</code>), contrasts VJP complexity against full Jacobian materialization, and cites the exact FP64 step size (<code>1e-6</code>) and error floor (<code>~3.6e-10</code>) from the kata.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"The smaller you make epsilon in a finite-difference gradient check, the closer you get to the true mathematical limit lim_{eps->0}."</summary><div class="a">Wrong in floating-point arithmetic. While Taylor truncation error shrinks as <code>O(eps^2)</code> for centered differences, subtracting two nearly equal numbers <code>f(x + eps)</code> and <code>f(x - eps)</code> causes catastrophic cancellation whose error grows as <code>O(u / eps)</code>. In our FP64 run, shrinking <code>eps</code> from <code>1e-5</code> to <code>1e-14</code> degrades relative error from <code>3.620e-11</code> to <code>3.353e-02</code>.</div></details>
+  <details class="q"><summary>"An elementwise or normalization layer like Softmax or RMSNorm over d features has a diagonal Jacobian because each output corresponds to the same feature index."</summary><div class="a">Wrong. Only purely independent elementwise functions (like <code>ReLU</code> or <code>SiLU</code>) have diagonal Jacobians. Both Softmax (<code>sum_k exp(z_k)</code>) and RMSNorm (<code>sqrt(mean(x^2) + eps)</code>) couple every output to every input through their shared denominator, adding a dense rank-1 outer product (<code>-p p^T</code> for Softmax, <code>-(s/d) y y^T</code> for RMSNorm) to the diagonal.</div></details>
+  <details class="q"><summary>"Backpropagation computes the full Jacobian matrix of each layer and multiplies those matrices together from output to input."</summary><div class="a">Wrong. For a transformer hidden dimension <code>d = 4096</code>, materializing a single <code>d x d</code> Jacobian per token costs 64 MB in FP32. Backpropagation never builds <code>J</code>; it applies the linear operator <code>v^T -> v^T J</code> (the Vector-Jacobian Product) directly to the <code>1 x d</code> upstream gradient vector in <code>O(d)</code> memory and time.</div></details>
+  <details class="q"><summary>"Running torch.autograd.gradcheck in the model's native BF16 training dtype is the most realistic way to validate a custom backward kernel."</summary><div class="a">Wrong. BF16 has only 7 explicit mantissa bits (<code>u = 3.91e-3</code>), so finite differences suffer massive rounding noise (<code>&gt; 5%</code> error at any <code>eps</code>), drowning out real derivative bugs and triggering false failures. Always validate the mathematical VJP formula in <code>float64</code> first, then test the BF16 kernel against the FP64 analytic VJP reference.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>1. What is the difference between a gradient vector, a Jacobian matrix, and a Hessian matrix, including their exact shapes for f: R^n -> R^m and L: R^n -> R?</summary><div class="a">For a scalar function <code>L: R^n -> R</code>, the <strong>gradient</strong> <code>nabla L(x)</code> is an <code>n x 1</code> column vector of first partial derivatives <code>dL / dx_i</code>, and the <strong>Hessian</strong> <code>H(x)</code> is the <code>n x n</code> symmetric matrix of second partial derivatives <code>H_{ij} = d^2 L / (dx_i dx_j)</code> (which equals the Jacobian of the gradient). For a vector function <code>f: R^n -> R^m</code>, the <strong>Jacobian</strong> <code>J(x)</code> is the <code>m x n</code> matrix of first partial derivatives <code>J_{ij} = df_i / dx_j</code>.<div class="f"><b>Follow-up</b>What is the convention difference between the numerator layout Jacobian of a scalar function and its gradient? Answer: In numerator layout, the Jacobian of <code>L: R^n -> R^1</code> is a <code>1 x n</code> row vector (a covector/cotangent), whereas the gradient <code>nabla L(x)</code> is its <code>n x 1</code> transpose.</div></div></details>
+  <details class="q"><summary>2. Derive the O(eps^2) truncation error of centered finite differences and explain why it beats forward differences by four orders of magnitude at eps = 1e-4.</summary><div class="a">Taylor-expanding <code>f(x + eps) = f(x) + eps f'(x) + (eps^2/2) f''(x) + (eps^3/6) f'''(x) + O(eps^4)</code> and <code>f(x - eps) = f(x) - eps f'(x) + (eps^2/2) f''(x) - (eps^3/6) f'''(x) + O(eps^4)</code>, subtracting gives <code>f(x + eps) - f(x - eps) = 2 eps f'(x) + (eps^3/3) f'''(x) + O(eps^5)</code>. Dividing by <code>2 eps</code> cancels the <code>O(eps)</code> second-derivative term completely, leaving <code>(eps^2/6) f'''(x)</code>. At <code>eps = 1e-4</code> in our kata, forward error is <code>O(1e-4) = 8.426e-6</code> while centered error is <code>O(1e-8) = 1.842e-10</code>.</div></details>
+  <details class="q"><summary>3. Derive the optimal step size eps* as a function of unit roundoff u for both forward and centered finite differences.</summary><div class="a">For forward difference, total error is <code>E(eps) approx a * eps + b * (u / eps)</code>; setting <code>dE/d(eps) = a - b u / eps^2 = 0</code> gives <code>eps* ~ u^(1/2)</code> (<code>~1e-8</code> in FP64) with minimum error <code>O(u^(1/2)) ~ 1e-8</code>. For centered difference, total error is <code>E(eps) approx c * eps^2 + b * (u / eps)</code>; setting <code>dE/d(eps) = 2 c eps - b u / eps^2 = 0</code> gives <code>eps* ~ u^(1/3)</code> (<code>~5e-6</code> in FP64) with minimum error <code>O(u^(2/3)) ~ 3.6e-11</code>.<div class="f"><b>Follow-up</b>What happens to optimal eps* if you must run centered differences in FP32 (u = 5.96e-8)? Answer: <code>eps* ~ (5.96e-8)^(1/3) approx 3.9e-3</code> (around <code>1e-2</code> to <code>1e-3</code>), yielding a minimum relative error around <code>1e-5</code>.</div></div></details>
+  <details class="q"><summary>4. Derive the Softmax Jacobian J_ij = dp_i / dz_j and show how it simplifies when combined with Cross-Entropy loss L = -sum_i y_i log(p_i).</summary><div class="a">With <code>p_i = e^{z_i} / S</code> where <code>S = sum_k e^{z_k}</code>, for <code>i = j</code> the quotient rule gives <code>dp_i / dz_i = (e^{z_i} S - e^{z_i} e^{z_i}) / S^2 = p_i (1 - p_i)</code>. For <code>i != j</code>, <code>dp_i / dz_j = (0 - e^{z_i} e^{z_j}) / S^2 = -p_i p_j</code>. Combining both via Kronecker delta gives <code>J_{ij} = p_i (delta_{ij} - p_j)</code>. With cross-entropy <code>dL / dp_i = -y_i / p_i</code>, the VJP is <code>dL / dz_j = sum_i (-y_i / p_i) p_i (delta_{ij} - p_j) = -y_j + p_j sum_i y_i = p_j - y_j</code>.<div class="f"><b>Follow-up</b>Why is computing dL/dz = p - y numerically superior to computing dL/dp and multiplying by J_soft separately? Answer: When <code>p_t</code> underflows near <code>0</code>, <code>dL/dp_t = -1 / p_t</code> overflows to <code>-Inf</code> and <code>(-1 / p_t) * p_t</code> produces <code>NaN</code>, whereas <code>p_t - 1</code> stays bounded in <code>[-1, 1]</code>.</div></div></details>
+  <details class="q"><summary>5. Derive the RMSNorm backward pass (VJP) for y = x / sqrt(mean(x^2) + eps) and interpret its two terms geometrically.</summary><div class="a">Let <code>s = (mean(x^2) + eps)^(-1/2)</code> so <code>y = s x</code>. Then <code>ds / dx_j = (-1/2) s^3 (2 x_j / d) = -(s / d) y_j</code>. By the product rule, <code>dy_i / dx_j = s delta_{ij} - (s / d) y_i y_j</code>. Multiplying <code>J_rms^T</code> by upstream gradient <code>dy</code> gives <code>dx = s * (dy - y * mean(dy * y))</code>. Geometrically, <code>y</code> lies on a sphere of radius <code>sqrt(d)</code>; the second term subtracts the radial component of <code>dy</code> parallel to <code>y</code>, projecting the gradient onto the tangent plane of the sphere.</div></details>
+  <details class="q"><summary>6. For a linear layer y = W x + b where x in R^n, y in R^m, and W in R^{m x n}, write the VJPs dL/dx, dL/dW, and dL/db given upstream cotangent dz = dL/dy in R^{m x 1}.</summary><div class="a">Since <code>dy_i / dx_j = W_{ij}</code>, the Jacobian with respect to <code>x</code> is <code>J_x = W</code>. In column-vector form, <code>dL/dx = W^T dz in R^{n x 1}</code>. For weight entry <code>W_{ij}</code>, <code>dy_k / dW_{ij} = delta_{ki} x_j</code>, so contracting with <code>dz_k</code> gives the outer product <code>dL/dW = dz @ x^T in R^{m x n}</code>. Since <code>dy / db = I_m</code>, <code>dL/db = dz in R^{m x 1}</code> (summed across the batch dimension if batched).<div class="f"><b>Follow-up</b>How do you quickly sanity-check VJP formulas during a whiteboard interview? Answer: Match tensor shapes: <code>dL/dW</code> must have the exact shape of <code>W</code> (<code>m x n</code>), which uniquely forces the outer product <code>(m x 1) @ (1 x n) = dz @ x^T</code>.</div></div></details>
+  <details class="q"><summary>7. How can you estimate the trace or Frobenius norm of a giant n x n Jacobian without running n backward passes?</summary><div class="a">Use <strong>Hutchinson's trace estimator</strong> with random VJPs or JVPs. Draw <code>k</code> random Rademacher or standard normal vectors <code>v in R^n</code> with <code>E[v v^T] = I</code>. Compute a single VJP <code>u^T = v^T J</code> per sample; then <code>E[u^T v] = E[v^T J v] = Tr(J)</code> and <code>E[||u||_2^2] = E[v^T J J^T v] = ||J||_F^2</code>. Just <code>k = 10..30</code> backward passes estimate the Frobenius norm of a billion-parameter Jacobian.</div></details>
+  <details class="q"><summary>8. Why do gradient checks fail on functions containing ReLU, max-pooling, or dropout, and how do you fix the test harness?</summary><div class="a">Finite differences assume <code>f</code> is <code>C^3</code> smooth on <code>[x - eps, x + eps]</code>. If a coordinate crosses a <code>ReLU(z) = max(0, z)</code> kink at <code>z = 0</code> or switches the argmax winner in max-pooling between <code>x - eps</code> and <code>x + eps</code>, the secant slope averages two different linear regimes while the analytic subgradient uses the point slope at <code>x</code>. For dropout, different random masks between <code>f(x + eps)</code> and <code>f(x - eps)</code> inject <code>O(1 / eps)</code> noise. Fix by freezing the random seed/mask and choosing inputs bounded at least <code>10 * eps</code> away from kinks.<div class="f"><b>Follow-up</b>How do you gradient-check a large weight matrix W in R^{4096 x 4096} without running 33 million forward passes? Answer: Sample 20 random indices <code>(i, j)</code> or check a random directional projection <code>(f(W + eps U) - f(W - eps U)) / (2 eps) == sum(dL/dW * U)</code> for a random unit Frobenius matrix <code>U</code> in just 2 forward passes.</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 5 steps, then write: (1) the Softmax Jacobian <code>J_{ij}</code> and fused Cross-Entropy VJP, (2) the RMSNorm Jacobian and <code>O(d)</code> VJP formula, and (3) the Taylor + rounding error formula <code>E(eps)</code> that yields optimal <code>eps* ~ u^(1/3) ~ 1e-6</code> in FP64.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>5-step spine (SGJ-VC):</strong> Scalar slope <code>f'(x)</code> -> Gradient <code>nabla f in R^d</code> -> Jacobian <code>J in R^{m x n}</code> with <code>J_{ij} = df_i / dx_j</code> -> Reverse-mode VJP <code>v^T J</code> (1 pass for scalar loss vs <code>n</code> passes for JVP <code>J u</code>) -> Centered FD check at <code>eps = 1e-6</code>.</li>
+    <li><strong>Softmax Jacobian &amp; CE VJP:</strong> <code>J_{ij} = p_i (delta_{ij} - p_j)</code> or <code>diag(p) - p p^T</code>; contracting with <code>-e_t^T / p_t</code> yields <code>dL / dz = p - e_t</code>; missing <code>-p_i p_j</code> causes <code>2.268e-01</code> relative error.</li>
+    <li><strong>RMSNorm Jacobian &amp; VJP:</strong> <code>J_rms = inv_rms * (I - (1/d) y y^T)</code>; VJP is <code>dx = inv_rms * (dy - y * mean(dy * y))</code> in <code>O(d)</code> time/memory instead of <code>O(d^2)</code>.</li>
+    <li><strong>Centered FD &amp; U-curve numbers:</strong> <code>(f(x+eps)-f(x-eps))/(2 eps)</code> cancels <code>f''(x)</code> to give <code>O(eps^2)</code> truncation error vs <code>O(u / eps)</code> cancellation; in FP64 (<code>u = 1.11e-16</code>), optimal <code>eps* ~ u^(1/3) ~ 1e-5..1e-6</code> gives <code>3.62e-11..3.66e-10</code> relative error, while <code>eps = 1e-14</code> degrades to <code>3.35e-2</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>A09: Two tensors have shapes (B, 1, T, D) and (H, T, D). Are they broadcast-compatible, what is the resulting shape, and how many bytes of memory does broadcasting allocate for the expanded views?</summary><div class="a">Yes. Aligning trailing dimensions gives <code>(B, 1, T, D)</code> and <code>(1, H, T, D)</code>; dimensions of size 1 stretch to match, producing output shape <code>(B, H, T, D)</code>. Broadcasting allocates <strong>0 extra bytes</strong> for the input views by setting their stride along the stretched axis to <code>0</code>.</div></details>
+  <details class="q"><summary>A09: Write the einsum string for batched multi-head attention score computation Q @ K^T where Q has shape (B, H, T_q, d_k) and K has shape (B, H, T_k, d_k).</summary><div class="a"><code>torch.einsum("bhqd,bhkd->bhqk", Q, K)</code>, which contracts the head dimension <code>d</code> and preserves batch <code>b</code> and head <code>h</code> to produce an attention logit tensor of shape <code>(B, H, T_q, T_k)</code>.</div></details>
+  <details class="q"><summary>L04: Why does an event-loop server (epoll/asyncio) handle 10,000 concurrent I/O-bound LLM streaming connections in a single thread, and what breaks if one handler runs a 200 ms CPU-bound tokenizer loop synchronously?</summary><div class="a">An event loop registers non-blocking sockets with <code>epoll</code> and consumes zero thread stack while waiting on network I/O, waking only on readiness events. A synchronous 200 ms CPU loop blocks the single event-loop thread, freezing all 9,999 other connections and adding 200 ms of head-of-line blocking latency to every in-flight token stream.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://cs231n.github.io/neural-networks-3/">Stanford CS231n: Neural Networks Part 3 (Babysitting the Learning Process &amp; Gradient Checks)</a><small>Supports centered vs forward finite-difference formulas, relative error thresholds (&lt; 1e-7 pass, &gt; 1e-3 fail), and kink pitfalls. Checked 2026-11-23.</small></li>
+    <li><a href="https://pytorch.org/docs/stable/generated/torch.autograd.gradcheck.html">PyTorch Documentation: torch.autograd.gradcheck and Autograd Mechanics</a><small>Supports FP64 requirement for numerical Jacobians, VJP/JVP operator formulations, and step-size tolerances. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1502.05767">Baydin et al. (2018), Automatic Differentiation in Machine Learning: a Survey (JMLR)</a><small>Supports complexity analysis of forward-mode JVP O(n) passes vs reverse-mode VJP O(1) pass for scalar objectives. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1910.07467">Zhang &amp; Sennrich (2019), Root Mean Square Layer Normalization (NeurIPS)</a><small>Supports the RMSNorm forward definition and analytic backward VJP derivation. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Gradient &amp; Directional Derivative:</strong> <code>nabla f(x) in R^d</code> collects all partials <code>df/dx_i</code>; directional slope along unit <code>u</code> is <code>nabla f(x)^T u</code>, maximized along <code>nabla f(x)</code>.</li>
+    <li><strong>Jacobian Matrix &amp; Chain Rule:</strong> For <code>f: R^n -> R^m</code>, <code>J in R^{m x n}</code> with <code>J_{ij} = df_i / dx_j</code>; composition satisfies <code>J_{g o f}(x) = J_g(f(x)) @ J_f(x)</code>.</li>
+    <li><strong>JVP vs VJP:</strong> Forward-mode JVP (<code>J u</code>) propagates tangents right-to-left (needs <code>n</code> passes for <code>R^n -> R^1</code>); reverse-mode VJP (<code>v^T J</code>) propagates cotangents left-to-right (needs <code>1</code> backward pass for scalar loss).</li>
+    <li><strong>Softmax + Cross-Entropy VJP:</strong> <code>J_soft = diag(p) - p p^T</code>; contracting with <code>dL/dp = -e_t / p_t</code> collapses to <code>dL/dz = p - e_t</code> (omitting off-diagonal <code>-p_i p_j</code> causes <code>2.268e-01</code> error).</li>
+    <li><strong>RMSNorm VJP:</strong> <code>J_rms = inv_rms * (I - (1/d) y y^T)</code>; matrix-free VJP is <code>dx = inv_rms * (dy - y * mean(dy * y))</code> in <code>O(d)</code> time and <code>O(d)</code> memory.</li>
+    <li><strong>Finite-Difference U-Curve:</strong> Centered FD <code>(f(x+e)-f(x-e))/(2e)</code> cancels <code>f''(x)</code> to achieve <code>O(eps^2)</code> truncation error against <code>O(u / eps)</code> subtraction cancellation.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Optimal step size formulas:</strong> Centered FD optimizes at <code>eps* ~ u^(1/3)</code> (<code>1e-5..1e-6</code> in FP64 -> <code>3.62e-11..3.66e-10</code> error; <code>1e-2..1e-3</code> in FP32); Forward FD optimizes at <code>eps* ~ u^(1/2)</code> (<code>1e-7..1e-8</code> in FP64 -> <code>1.03e-8</code> error).</li>
+      <li><strong>Cancellation trap:</strong> Shrinking <code>eps</code> to <code>1e-14</code> in FP64 ruins centered FD (error jumps to <code>3.353e-02</code>) because <code>f(x+eps)</code> and <code>f(x-eps)</code> share 14 leading digits.</li>
+      <li><strong>Fast O(1)-pass gradient check for huge tensors:</strong> Project along a random unit direction <code>U</code> and check <code>(f(W + eps U) - f(W - eps U)) / (2 eps) == sum(dL/dW * U)</code> in just 2 forward evaluations.</li>
+      <li><strong>Production rule:</strong> Always run <code>gradcheck</code> in <code>float64</code> away from <code>ReLU</code>/<code>max</code> kinks with frozen dropout masks.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::A Foundations and applied math", "tags": "A11 T1 W02", "cards": [{"q": "How are the gradient vector, Jacobian matrix, and reverse-mode VJP ordered in the chain rule spine?", "a": "Scalar derivative f'(x), gradient nabla f(x) in R^d, Jacobian J in R^{m x n} with J_ij=df_i/dx_j, VJP v^T J, and centered difference check."}, {"q": "Why does backpropagation use reverse-mode VJP (v^T J) instead of forward-mode JVP (J u) for neural network training?", "a": "Training optimizes one scalar loss L (m=1) over n weights; reverse-mode VJP computes all n partials in one O(1) backward pass instead of n JVP passes."}, {"q": "What is the full Jacobian J_ij = dp_i/dz_j of the softmax function p = softmax(z), and what simplifies when composed with cross-entropy loss?", "a": "J_ij = p_i(delta_ij - p_j). Multiplying the cross-entropy cotangent -e_y^T / p_y by J collapses the sum to dL/dz = p - e_y."}, {"q": "What happens to the gradient check relative error when you omit the off-diagonal -p_i p_j terms of the softmax Jacobian?", "a": "Non-target logits get zero gradient instead of p_i, causing relative error against centered finite differences at eps=1e-6 to jump from 3.66e-10 to 0.227."}, {"q": "Why does the RMSNorm backward pass subtract y * mean(dy * y) instead of only scaling dy by 1/rms(x)?", "a": "Because rms(x) depends on every coordinate of x; differentiating 1/rms(x) adds the rank-1 outer product -(1/d) y y^T to the identity inside J_rms."}, {"q": "Why does centered finite difference achieve O(eps^2) truncation error while forward difference achieves only O(eps)?", "a": "Subtracting Taylor expansions f(x+eps) - f(x-eps) cancels the even quadratic terms (eps^2/2) f''(x), leaving the cubic remainder (eps^2/6) f'''(x)."}, {"q": "Why does shrinking step size eps below 1e-8 degrade finite-difference accuracy instead of improving it?", "a": "At tiny eps, f(x+eps) and f(x-eps) share nearly all significant bits; subtracting them causes catastrophic cancellation where rounding noise scales as O(u / eps)."}, {"q": "What is the optimal step size eps for centered finite-difference gradient checks in FP64 versus FP32?", "a": "Optimal eps scales as u^(1/3): around 1e-5 to 1e-6 in FP64 (u=1.11e-16, error ~3.6e-11), versus 1e-2 to 1e-3 in FP32 (u=5.96e-8)."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

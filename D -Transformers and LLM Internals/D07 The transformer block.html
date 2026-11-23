@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D07 The transformer block</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D07">
+<main>
+<header>
+  <div class="eyebrow"><b>D07</b><span>Transformers and LLM internals</span><span>Tier 2</span><span>Week 2</span><span>45 min</span></div>
+  <h1>The transformer block</h1>
+  <p class="lede">Every modern LLM is a repeating stack of identical decoder blocks wired around one shared residual stream. Why did the field replace Post-LayerNorm and 2-matrix ReLU/GELU MLPs with Pre-RMSNorm and 3-matrix SwiGLU, and what happens to Layer-1 gradients the instant you remove the residual addition?</p>
+  <div class="chips"><span><em>Before</em>D06 Positional information</span><span><em>After</em>D08 Full forward pass of a decoder-only transformer, end to end</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict no-residual gradient collapse, SwiGLU 8/3 d math, and parameter share</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea + concept stepper: the Pre-Norm residual highway and SwiGLU block</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism + Block Parameter &amp; Gradient Highway Explorer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run a 16-layer backward pass across Pre-Norm, Post-Norm, and No-Residual</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production failure modes and 90-second interview drill</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall, flashcards, and mixed review</span><small>5 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>In our 16-layer transformer stack kata (d=32, SwiGLU d_ff=86), Pre-Norm delivers a healthy Layer-1 weight gradient norm ||dL/dW_1|| of 1.516e+00. If you delete the two plus signs (the residual connections x + attn and h + mlp) and keep the exact same weights, what happens to the Layer-1 weight gradient norm?</summary><div class="a">It collapses by 27 orders of magnitude to <code>1.087e-27</code> (and the input gradient <code>||dL/dx_0||</code> drops from <code>1.159e+00</code> to <code>2.371e-29</code>), completely killing training at Layer 1. Without the identity term <code>I</code> from residual addition <code>x + F(x)</code>, gradients must multiply through 32 sequential projection Jacobians (<code>prod_{l=1}^{16} J_attn J_mlp</code>), vanishing exponentially with depth.</div></details>
+  <details class="q"><summary>Classic GPT-2 / Vaswani MLPs expand dimension d to d_ff = 4d using two matrices (W_up, W_down). Llama and Mistral use a 3-matrix SwiGLU MLP (W_gate, W_up, W_down) with d_ff = (8/3)d (rounded up to a multiple of 256). Why (8/3)d instead of 4d?</summary><div class="a">To keep total MLP parameters and FLOPs identical at <code>8 d^2</code>. A 2-matrix MLP with <code>d_ff = 4d</code> has <code>2 * d * (4d) = 8 d^2</code> parameters. A 3-matrix SwiGLU MLP has <code>3 * d * d_ff</code> parameters; setting <code>3 * d * d_ff = 8 d^2</code> gives <code>d_ff = (8/3) d = 2.67 d</code>.</div></details>
+  <details class="q"><summary>In our kata block (d=32, SwiGLU d_ff=86), what percentage of the block's trainable parameters live inside the SwiGLU MLP versus the 4 attention matrices (W_Q, W_K, W_V, W_O)?</summary><div class="a"><strong>66.8%</strong> live in the SwiGLU MLP (<code>8,256</code> parameters) and only <strong>33.2%</strong> live in Attention (<code>4,096</code> parameters). When you switch from Multi-Head Attention (MHA) to Grouped-Query Attention (GQA, where <code>W_K, W_V</code> are 4x to 8x smaller) and widen the MLP to <code>3.5d</code> as in Llama-3, the MLP holds nearly <strong>80%</strong> of every transformer block's parameters.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Think of a decoder-only transformer not as a chain of layers that overwrite a tensor, but as a single shared <strong>residual stream</strong> highway <code>x_0 -&gt; x_1 -&gt; ... -&gt; x_L</code> of fixed width <code>d_model</code>. Every transformer block has two sublayers that read from the highway through a normalization gate, compute a delta update, and add that update back onto the highway: first <strong>Causal Self-Attention</strong> (which routes information across token positions <code>t</code>), and second a position-wise <strong>SwiGLU Feed-Forward Network / MLP</strong> (which transforms each token's feature vector independently across channels <code>d</code>).</p>
+  <p>Two architectural shifts distinguish modern LLMs (Llama-3, Qwen, Mistral) from the 2017 Vaswani transformer. First, <strong>Pre-Norm with RMSNorm</strong> moves normalization off the main highway and places it on the branch input (<code>x + Sublayer(RMSNorm(x))</code>), leaving an unobstructed identity path <code>I</code> from the final loss straight back to Layer 0. Second, the 2-matrix ReLU MLP is replaced by a <strong>3-matrix SwiGLU</strong> gated bilinear unit (<code>(SiLU(x W_gate) * (x W_up)) W_down</code>), which acts as a input-dependent multiplicative filter and consistently lowers perplexity at matched parameter count <code>8 d^2</code>.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Inside the modern Pre-RMSNorm + GQA + SwiGLU Transformer Block</div>
+    <svg viewBox="0 0 500 235" role="img" aria-label="Four-step diagram of a Pre-Norm Transformer block showing the unobstructed residual stream highway, the Pre-RMSNorm Attention branch, the Pre-RMSNorm SwiGLU 3-matrix MLP branch, and the backward identity gradient highway.">
+      <g font-size="12">
+        <g data-step="1">
+          <path d="M25 45 H475" class="ink" stroke-width="3" data-hi="1"/>
+          <rect x="14" y="20" width="84" height="22" rx="4" class="c-accent"/>
+          <text x="56" y="35" text-anchor="middle">Stream x_l</text>
+          <rect x="394" y="20" width="92" height="22" rx="4" class="c-accent"/>
+          <text x="440" y="35" text-anchor="middle">Stream x_{l+1}</text>
+          <circle cx="215" cy="45" r="11" class="c-good"/>
+          <text x="215" y="49" text-anchor="middle">+</text>
+          <circle cx="430" cy="45" r="11" class="c-good"/>
+          <text x="430" y="49" text-anchor="middle">+</text>
+        </g>
+        <g data-step="2">
+          <path d="M65 45 V125 H215 V56" class="ink"/>
+          <rect x="74" y="80" width="64" height="28" rx="4" class="c-soft ln" data-hi="2"/>
+          <text x="106" y="98" text-anchor="middle">RMSNorm</text>
+          <rect x="144" y="80" width="64" height="28" rx="4" class="c-good" data-hi="2"/>
+          <text x="176" y="98" text-anchor="middle">GQA Attn</text>
+          <text x="142" y="145" text-anchor="middle" class="m">Mixes across tokens T</text>
+          <text x="142" y="161" text-anchor="middle" class="m">4,096 params (33.2%)</text>
+        </g>
+        <g data-step="3">
+          <path d="M255 45 V125 H430 V56" class="ink"/>
+          <rect x="262" y="80" width="62" height="28" rx="4" class="c-soft ln" data-hi="3"/>
+          <text x="293" y="98" text-anchor="middle">RMSNorm</text>
+          <rect x="330" y="68" width="90" height="22" rx="4" class="c-warn" data-hi="3"/>
+          <text x="375" y="83" text-anchor="middle">SiLU(Wg)*Wu</text>
+          <rect x="330" y="96" width="90" height="22" rx="4" class="c-accent" data-hi="3"/>
+          <text x="375" y="111" text-anchor="middle">Down Wd (8/3 d)</text>
+          <text x="348" y="145" text-anchor="middle" class="m">Mixes across channels d</text>
+          <text x="348" y="161" text-anchor="middle" class="m">8,256 params (66.8%)</text>
+        </g>
+        <g data-step="4">
+          <rect x="20" y="182" width="460" height="40" rx="6" class="c-paper ln" data-hi="4"/>
+          <text x="250" y="200" text-anchor="middle" font-weight="600">Backward Highway: dx_L / dx_0 = I + sum(dF_l / dx_0)</text>
+          <text x="250" y="216" text-anchor="middle" class="m">Pre-Norm ||dW_1|| = 1.516 vs No-Residual ||dW_1|| = 1.087e-27</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>The residual stream x_l flows horizontally along the top highway with two pure elementwise addition nodes (+) and zero normalization gates on the trunk.</li>
+      <li>Branch 1 forks x_l through Pre-RMSNorm into Causal Attention (33.2% of block params), routing context across tokens and adding the update to form h_l.</li>
+      <li>Branch 2 forks h_l through Pre-RMSNorm into the 3-matrix SwiGLU MLP (66.8% of params, d_ff = 8/3 d), gating channels via SiLU(x W_g) * (x W_u) before projecting down with W_d.</li>
+      <li>During backprop, gradients ride the top identity highway straight from Layer L to Layer 1 (||dW_1|| = 1.516); deleting the + nodes collapses Layer-1 gradients to 1.087e-27.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Pre-Norm keeps normalization off the residual trunk so gradients flow unhindered across depth, while Attention mixes across tokens (1/3 of params) and SwiGLU mixes across channels (2/3 of params).</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>R-A-R-S on the I-95 Highway</strong>: <strong>I</strong>dentity trunk stays completely unblocked; fork 1 runs <strong>R</strong>MSNorm -&gt; <strong>A</strong>ttention (<code>4d^2</code> params, mixes tokens) -&gt; Add; fork 2 runs <strong>R</strong>MSNorm -&gt; <strong>S</strong>wiGLU (<code>3 * d * (8/3)d = 8d^2</code> params, mixes channels) -&gt; Add.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. The residual stream and why Pre-Norm beat Post-Norm</h3>
+  <p>In the original 2017 Post-Norm block, normalization sat directly on the trunk: <code>x_{l+1} = LayerNorm(x_l + F_l(x_l))</code>. By the chain rule, the gradient reaching Layer 0 must multiply through every layer's normalization Jacobian <code>J_LN</code>. Because variance inside <code>x_l + F_l(x_l)</code> exceeds 1, each Post-Norm Jacobian attenuates the identity path while amplifying early-layer gradient coupling, requiring a delicate learning-rate warmup or training diverges on day one.</p>
+  <p>In a modern <strong>Pre-Norm block</strong>, RMSNorm sits inside each residual branch before the weight projection:</p>
+  <div class="codewrap"><pre>h_l     = x_l + Attention(RMSNorm_1(x_l))
+x_{l+1} = h_l + SwiGLU(RMSNorm_2(h_l))
+
+Unrolling L layers:  x_L = x_0 + sum_{l=0}^{L-1} [ Attn_l(RMSNorm(x_l)) + SwiGLU_l(RMSNorm(h_l)) ]
+Backward Jacobian:   d x_L / d x_0 = I + sum_{l=0}^{L-1} d F_l / d x_0</pre></div>
+  <p>Because the derivative of <code>x_0</code> with respect to itself is the identity matrix <code>I</code>, the upstream loss gradient <code>dL / dx_L</code> arrives at every single layer (including Layer 1) attenuated by <strong>zero</strong> intermediate normalizations or weight matrices. The price of Pre-Norm is that residual stream variance grows linearly with depth (<code>Var(x_L) ~ 1 + 2L * sigma^2</code>, reaching <code>1.869</code> at Layer 16 in our depth-scaled kata and <code>11.813</code> without <code>1/sqrt(2L)</code> output projection scaling), which is why a final <code>RMSNorm</code> is mandatory before the LM unembedding head.</p>
+
+  <h3>2. RMSNorm vs LayerNorm</h3>
+  <p>Standard LayerNorm centers and scales a vector: <code>LN(x) = ((x - mean(x)) / sqrt(var(x) + eps)) * gamma + beta</code>. Zhang &amp; Sennrich (2019) showed that mean-centering adds no accuracy benefit in transformers while wasting memory-bandwidth passes on computing <code>mean(x)</code> and storing bias <code>beta</code>. <strong>RMSNorm</strong> drops both mean-centering and <code>beta</code>:</p>
+  <div class="codewrap"><pre>RMS(x)     = sqrt( (1/d) * sum_{i=1}^d x_i^2 + eps )
+RMSNorm(x) = (x / RMS(x)) * gamma</pre></div>
+  <p>Each block has two RMSNorm layers (<code>2d</code> trainable scale parameters total per block), cutting normalization kernel latency by ~15-30% while remaining scale-invariant.</p>
+  <details class="q"><summary>Check: Since Pre-Norm allows stream variance Var(x_l) to grow across layers, how do GPT-2 and Llama prevent the residual stream from exploding at 80+ layers?</summary><div class="a">At initialization, they scale the output projection matrices that write directly into the residual stream (<code>W_O</code> in Attention and <code>W_down</code> in the MLP) by <code>1 / sqrt(2 * L)</code>, where <code>2L</code> is the total number of residual sublayers. Since <code>2L</code> independent zero-mean updates add variances linearly, scaling each sublayer's standard deviation by <code>1 / sqrt(2L)</code> keeps <code>Var(x_L)</code> bounded near <code>O(1)</code> regardless of depth <code>L</code>.</div></details>
+
+  <h3>3. SwiGLU vs standard 2-matrix MLP</h3>
+  <p>While Attention routes tokens across time, the MLP processes each token vector <code>z = RMSNorm(h_l) in R^d</code> independently. A classic transformer MLP uses two matrices with intermediate dimension <code>d_ff = 4d</code>: <code>MLP(z) = GELU(z W_1) W_2</code> (costing <code>2 * d * 4d = 8 d^2</code> parameters). Shazeer (2020) introduced <strong>SwiGLU</strong> (Swish/SiLU Gated Linear Unit), which uses <strong>three</strong> bias-free matrices <code>W_gate, W_up in R^(d x d_ff)</code> and <code>W_down in R^(d_ff x d)</code>:</p>
+  <div class="codewrap"><pre>SiLU(u)   = u * sigmoid(u) = u / (1 + exp(-u))
+SwiGLU(z) = ( SiLU(z W_gate) * (z W_up) ) W_down</pre></div>
+  <p>Here <code>*</code> is elementwise Hadamard multiplication. The bilinear product <code>SiLU(z W_gate) * (z W_up)</code> allows one learned projection to dynamically gate individual feature channels of the other projection, acting like a per-token content lookup table. To keep the parameter count at <code>8 d^2</code> across 3 matrices (<code>3 * d * d_ff = 8 d^2</code>), we set <code>d_ff = (8/3) d</code> (or slightly wider in modern GQA models, such as <code>3.5 d</code> in Llama-3-8B where GQA saves attention parameters).</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Block Parameter Split &amp; Layer-1 Gradient Highway Explorer</div>
+    <p class="ask">Predict first. When you switch from Multi-Head Attention (MHA, G=32) to Grouped-Query Attention (GQA, G=8) at d_model=4096 with Llama-3 SwiGLU (3.5d), does the MLP's share of block parameters stay at 67% or jump close to 80%?</p>
+    <div class="ctl">
+      <label><span>Hidden width d</span><select name="d" data-num><option value="32">32 (Kata tiny)</option><option value="2048">2,048 (1B-3B class)</option><option value="4096" selected>4,096 (7B-8B class)</option></select></label>
+      <label><span>Attention KV ratio</span><select name="gqa" data-num><option value="1">MHA (1:1 KV heads)</option><option value="0.25" selected>GQA 4:1 (8 KV / 32 Q)</option><option value="0.125">GQA 8:1 (4 KV / 32 Q)</option></select></label>
+      <label><span>MLP architecture</span><select name="mlp" data-num><option value="8">SwiGLU 8/3 d (3 * 2.67d = 8d^2)</option><option value="10.5" selected>SwiGLU 3.5 d (Llama-3: 10.5d^2)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> In modern GQA + SwiGLU blocks (like Llama-3 8B), the 3-matrix MLP holds 77.8% to 82.4% of every block's weights, while Attention holds only ~18-22%.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var d=v.d, p_qo=2*d*d, p_kv=2*d*d*v.gqa, p_attn=p_qo+p_kv;
+    var p_mlp=(d===32 && v.mlp===8)?(3*32*86):(v.mlp*d*d);
+    var tot=p_attn+p_mlp, s_attn=100*p_attn/tot, s_mlp=100*p_mlp/tot;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"Attention (Q,K,V,O)",value:s_attn,tone:"accent"},
+      {label:"SwiGLU MLP (Wg,Wu,Wd)",value:s_mlp,tone:"good"}
+    ]});
+    return {verdict:"At d="+tl.fmt(d,0)+": Attention = "+tl.fmt(p_attn,0)+" params ("+s_attn.toFixed(1)+"%) | SwiGLU MLP = "+tl.fmt(p_mlp,0)+" params ("+s_mlp.toFixed(1)+"%) | Total block = "+tl.fmt(tot,0)+" params."};
+  })});</script>
+  <details class="q"><summary>Check: In the explorer at d=4,096 with GQA 4:1 (8 KV heads / 32 Q heads) and SwiGLU 3.5d (Llama-3 8B config), how many parameters are in one block's Attention vs its SwiGLU MLP?</summary><div class="a">Attention has <code>W_Q, W_O</code> (<code>2 * 4096^2 = 33.55M</code>) plus 4:1 GQA <code>W_K, W_V</code> (<code>0.5 * 4096^2 = 8.39M</code>) = <code>41,943,040</code> parameters (<strong>21.2%</strong>). The SwiGLU 3.5d MLP has <code>3 * 4096 * 14336 = 176,160,768</code> parameters (<strong>80.8%</strong>), for a total of <code>218.1M</code> parameters per block.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>MHA + SwiGLU (<code>d_ff = 8/3 d</code>) parameter formula per block</td><td class="n">4d^2 (Attn) + 8d^2 (MLP) = 12d^2</td><td>Derived</td></tr>
+    <tr><td>Kata block parameter split (<code>d=32, d_ff=86</code>): Attention vs SwiGLU MLP</td><td class="n">4,096 (33.2%) vs 8,256 (66.8%)</td><td>Your own run</td></tr>
+    <tr><td>Llama-3 8B block (<code>d=4096, GQA 4:1, d_ff=14336</code>) MLP parameter share</td><td class="n">80.8% (176.2M of 218.1M)</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>16-layer stack Layer-1 weight gradient <code>||dL/dW_1||</code>: Pre-Norm vs No-Residual</td><td class="n">1.516e+00 vs 1.087e-27</td><td>Your own run</td></tr>
+    <tr><td>16-layer stack input gradient <code>||dL/dx_0||</code>: Pre-Norm vs Post-Norm vs No-Res</td><td class="n">1.159e+00 vs 8.327e-01 vs 2.371e-29</td><td>Your own run</td></tr>
+    <tr><td>16-layer stack output activation variance <code>Var(x_16)</code>: Pre-Norm vs Post-Norm</td><td class="n">1.869 vs 0.945</td><td>Your own run</td></tr>
+    <tr><td>Depth-scaled residual projection init multiplier (for <code>W_O</code> and <code>W_down</code>)</td><td class="n">1 / sqrt(2 * L)</td><td>Checked 2026-11-23</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Pre-RMSNorm (Llama, Mistral, Qwen)</td><td>Unobstructed identity gradient highway <code>I</code>; fast convergence without fragile warmup</td><td>Residual stream variance grows with depth (<code>Var(x_L) = 1.869</code> at L=16; higher without <code>1/sqrt(2L)</code> init)</td><td>Deep layers becoming slightly under-utilized ("representation dilution") if init is unscaled</td></tr>
+    <tr><td>Post-LayerNorm (Original 2017, BERT)</td><td>Trunk variance stays tightly normalized near <code>1.0</code> (<code>0.945</code> at L=16) after every sublayer</td><td>Gradients multiply through <code>2L</code> norm Jacobians; diverges at scale without warmup</td><td>Gradient norm spikes and loss NaNs in the first few thousand steps on 30+ layer models</td></tr>
+    <tr><td>Peri-Norm / QK-Norm + Sandwich Norm (Gemma-2, Cohere)</td><td>Bounds both attention logit growth and residual stream variance in ultra-deep or high-LR runs</td><td>Extra RMSNorm kernel launches per block (4-6 norms instead of 2)</td><td>Slight latency overhead at small batch sizes where norm kernels are memory-bandwidth bound</td></tr>
+    <tr><td>3-matrix SwiGLU (<code>d_ff = 8/3 d</code>) vs 2-matrix GELU (<code>4d</code>)</td><td>Lower validation perplexity at identical parameter count (<code>8d^2</code>) via multiplicative gating</td><td>3 GEMMs instead of 2 (though <code>W_gate</code> and <code>W_up</code> fuse into one <code>d x 2d_ff</code> GEMM)</td><td>Unfused <code>W_gate</code> and <code>W_up</code> projections wasting kernel launch overhead if not concatenated</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Assemble a 16-layer Pre-Norm + SwiGLU stack and remove the residuals</h2>
+  <p>Assemble a complete transformer block with analytic forward and backward passes for RMSNorm, Attention projections, and 3-matrix SwiGLU, run it across a 16-layer stack (<code>d=32, d_ff=86</code>), and compare activation variance and Layer-1 gradients across Pre-Norm, Post-Norm, and No-Residual configurations.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import math, random
+
+random.seed(7)
+
+def rmsnorm_fwd(x, eps=1e-6):
+    d = len(x)
+    ms = sum(v * v for v in x) / d
+    inv_rms = 1.0 / math.sqrt(ms + eps)
+    return [v * inv_rms for v in x], (x, inv_rms)
+
+def rmsnorm_bwd(dy, cache):
+    x, inv_rms = cache
+    d = len(x)
+    dot = sum(dy[i] * x[i] for i in range(d))
+    c = (inv_rms ** 2) * dot / d
+    return [inv_rms * (dy[i] - x[i] * c) for i in range(d)]
+
+def silu_fwd(z):
+    sig = [1.0 / (1.0 + math.exp(-max(-20.0, min(20.0, v)))) for v in z]
+    return [z[i] * sig[i] for i in range(len(z))], (z, sig)
+
+def silu_bwd(da, cache):
+    z, sig = cache
+    return [da[i] * (sig[i] + z[i] * sig[i] * (1.0 - sig[i])) for i in range(len(z))]
+
+def matvec(x, W):
+    d_in, d_out = len(W), len(W[0])
+    return [sum(x[i] * W[i][j] for i in range(d_in)) for j in range(d_out)]
+
+def matvec_T(dy, W):
+    d_in, d_out = len(W), len(W[0])
+    return [sum(dy[j] * W[i][j] for j in range(d_out)) for i in range(d_in)]
+
+def rand_mat(r, c, scale):
+    return [[random.gauss(0, scale) for _ in range(c)] for _ in range(r)]
+
+def vec_norm(v):
+    return math.sqrt(sum(x * x for x in v))
+
+def run_stack(mode, layers, x0):
+    x = list(x0)
+    caches = []
+    for lyr in layers:
+        if mode == "prenorm":
+            n1, c_n1 = rmsnorm_fwd(x)
+            av = matvec(n1, lyr["Wv"])
+            attn = matvec(av, lyr["Wo"])
+            h = [x[i] + attn[i] for i in range(len(x))]
+            n2, c_n2 = rmsnorm_fwd(h)
+            g, c_silu = silu_fwd(matvec(n2, lyr["Wg"]))
+            u = matvec(n2, lyr["Wu"])
+            gu = [g[i] * u[i] for i in range(len(g))]
+            mlp = matvec(gu, lyr["Wd"])
+            x_next = [h[i] + mlp[i] for i in range(len(h))]
+            caches.append((c_n1, n1, c_n2, n2, c_silu, g, u, av, lyr))
+        elif mode == "postnorm":
+            av = matvec(x, lyr["Wv"])
+            attn = matvec(av, lyr["Wo"])
+            h, c_n1 = rmsnorm_fwd([x[i] + attn[i] for i in range(len(x))])
+            g, c_silu = silu_fwd(matvec(h, lyr["Wg"]))
+            u = matvec(h, lyr["Wu"])
+            gu = [g[i] * u[i] for i in range(len(g))]
+            mlp = matvec(gu, lyr["Wd"])
+            x_next, c_n2 = rmsnorm_fwd([h[i] + mlp[i] for i in range(len(h))])
+            caches.append((c_n1, x, c_n2, h, c_silu, g, u, av, lyr))
+        elif mode == "no_residual":
+            n1, c_n1 = rmsnorm_fwd(x, eps=1e-4)
+            av = matvec(n1, lyr["Wv"])
+            h = matvec(av, lyr["Wo"])
+            n2, c_n2 = rmsnorm_fwd(h, eps=1e-4)
+            g, c_silu = silu_fwd(matvec(n2, lyr["Wg"]))
+            u = matvec(n2, lyr["Wu"])
+            gu = [g[i] * u[i] for i in range(len(g))]
+            x_next = matvec(gu, lyr["Wd"])
+            caches.append((c_n1, n1, c_n2, n2, c_silu, g, u, av, lyr))
+        x = x_next
+
+    mean_x = sum(x) / len(x)
+    out_var = sum((v - mean_x) ** 2 for v in x) / len(x)
+    dx = [1.0 / math.sqrt(len(x))] * len(x)  # unit-norm upstream gradient ||dL/dx_L|| = 1.0
+    dw1_norm = 0.0
+    for idx in reversed(range(len(layers))):
+        c_n1, a1, c_n2, a2, c_silu, g, u, av, lyr = caches[idx]
+        if mode == "postnorm":
+            dx = rmsnorm_bwd(dx, c_n2)
+        d_gu = matvec_T(dx, lyr["Wd"])
+        du = [d_gu[i] * g[i] for i in range(len(g))]
+        dg = silu_bwd([d_gu[i] * u[i] for i in range(len(u))], c_silu)
+        dn2_g = matvec_T(dg, lyr["Wg"])
+        dn2_u = matvec_T(du, lyr["Wu"])
+        dn2 = [dn2_g[i] + dn2_u[i] for i in range(len(a2))]
+        if mode in ("prenorm", "no_residual"):
+            dh_mlp = rmsnorm_bwd(dn2, c_n2) if mode == "prenorm" else dn2
+            dh = [dx[i] + dh_mlp[i] for i in range(len(dx))] if mode == "prenorm" else dh_mlp
+        else:
+            dh = rmsnorm_bwd([dx[i] + dn2[i] for i in range(len(dx))], c_n1)
+        d_av = matvec_T(dh, lyr["Wo"])
+        dn1 = matvec_T(d_av, lyr["Wv"])
+        if mode in ("prenorm", "no_residual"):
+            dx_attn = rmsnorm_bwd(dn1, c_n1) if mode == "prenorm" else dn1
+            dx = [dh[i] + dx_attn[i] for i in range(len(dh))] if mode == "prenorm" else dx_attn
+        else:
+            dx = [dh[i] + dn1[i] for i in range(len(dh))]
+        if idx == 0:
+            dw1_norm = vec_norm(a1) * vec_norm(d_av) + vec_norm(a2) * vec_norm(du)
+    return out_var, vec_norm(dx), dw1_norm
+
+L, d, d_ff = 16, 32, 86  # SwiGLU d_ff = ceil((8/3)*32) aligned = 86
+s_in = 0.14
+s_res = 0.14 / math.sqrt(2 * L)
+layers = [{"Wv": rand_mat(d, d, s_in), "Wo": rand_mat(d, d, s_res),
+           "Wg": rand_mat(d, d_ff, s_in), "Wu": rand_mat(d, d_ff, s_in),
+           "Wd": rand_mat(d_ff, d, s_res)} for _ in range(L)]
+x0 = [random.gauss(0, 1) for _ in range(d)]
+
+print(f"=== 16-Layer Transformer Block Stack (d={d}, SwiGLU d_ff={d_ff}) ===")
+p_attn, p_mlp = 4 * d * d, 3 * d * d_ff
+print(f"Params per block: Attention={p_attn:,} ({100*p_attn/(p_attn+p_mlp):.1f}%) | SwiGLU MLP={p_mlp:,} ({100*p_mlp/(p_attn+p_mlp):.1f}%)")
+for mode in ["prenorm", "postnorm", "no_residual"]:
+    var_L, dx0_norm, dw1_norm = run_stack(mode, layers, x0)
+    print(f"Mode={mode:11s} | Layer-16 Act Var={var_L:6.3f} | ||dL/dx_0||={dx0_norm:.3e} | Layer-1 ||dL/dW_1||={dw1_norm:.3e}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== 16-Layer Transformer Block Stack (d=32, SwiGLU d_ff=86) ===
+Params per block: Attention=4,096 (33.2%) | SwiGLU MLP=8,256 (66.8%)
+Mode=prenorm     | Layer-16 Act Var= 1.869 | ||dL/dx_0||=1.159e+00 | Layer-1 ||dL/dW_1||=1.516e+00
+Mode=postnorm    | Layer-16 Act Var= 0.945 | ||dL/dx_0||=8.327e-01 | Layer-1 ||dL/dW_1||=1.457e+00
+Mode=no_residual | Layer-16 Act Var= 0.008 | ||dL/dx_0||=2.371e-29 | Layer-1 ||dL/dW_1||=1.087e-27</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Layer-1 weight gradient norm ||dL/dW_1|| and input gradient ||dL/dx_0|| across 16 layers</div>
+    <div data-bars='{"unit":"","digits":3,"rows":[{"label":"Pre-Norm: ||dL/dW_1||","value":1.516,"tone":"good","text":"1.516e+00"},{"label":"Post-Norm: ||dL/dW_1||","value":1.457,"tone":"warn","text":"1.457e+00"},{"label":"No-Residual: ||dL/dW_1||","value":0.001,"tone":"bad","text":"1.087e-27"},{"label":"Pre-Norm: ||dL/dx_0||","value":1.159,"tone":"good","text":"1.159e+00"},{"label":"Post-Norm: ||dL/dx_0||","value":0.833,"tone":"warn","text":"8.327e-01"},{"label":"No-Residual: ||dL/dx_0||","value":0.001,"tone":"bad","text":"2.371e-29"}]}'></div>
+    <figcaption><b>Takeaway.</b> With residual connections intact, Pre-Norm delivers an unattenuated gradient norm of 1.159 to the input and 1.516 to Layer-1 weights; deleting the residual plus signs causes gradients to collapse by 27 to 29 orders of magnitude (1.087e-27).</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>The 1/3 vs 2/3 parameter rule:</strong> At <code>d=32, d_ff=86</code>, Attention uses <code>4,096</code> parameters (<code>33.2%</code>) while the 3-matrix SwiGLU MLP uses <code>8,256</code> parameters (<code>66.8%</code>), matching the theoretical <code>4d^2 : 8d^2</code> ratio.</li>
+    <li><strong>Why training dies without residuals:</strong> In <code>no_residual</code> mode, the Layer-1 weight gradient norm <code>||dL/dW_1||</code> collapses to <code>1.087e-27</code> and <code>||dL/dx_0||</code> collapses to <code>2.371e-29</code>. In IEEE-754 float16 or bfloat16, this underflows to exact <code>0.0</code>, freezing early layers completely.</li>
+    <li><strong>Pre-Norm vs Post-Norm gradient preservation:</strong> Pre-Norm delivers <code>||dL/dx_0|| = 1.159e+00</code> because the identity highway <code>I</code> bypasses every RMSNorm Jacobian, whereas Post-Norm attenuates <code>||dL/dx_0||</code> to <code>8.327e-01</code> after passing through 32 trunk normalizations.</li>
+    <li><strong>Residual stream variance growth:</strong> Post-Norm clamps Layer-16 output variance to <code>0.945</code>, whereas Pre-Norm accumulates sublayer updates along the trunk to variance <code>1.869</code> (and reaches <code>11.813</code> if you remove the <code>1/sqrt(2L)</code> depth scaling on <code>W_O</code> and <code>W_d</code>).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Remove the 1/sqrt(2L) depth scaling on residual projections.</strong> Change <code>s_res = 0.14 / math.sqrt(2 * L)</code> to <code>s_res = 0.14</code> in <code>kata.py</code>. Predict what happens to <code>Layer-16 Act Var</code> in Pre-Norm vs Post-Norm, then run it (you will see Pre-Norm variance jump from <code>1.869</code> to <code>11.813</code> while Post-Norm stays at <code>0.981</code>).</li>
+    <li><strong>Replace SwiGLU gating with a linear product.</strong> If you remove <code>silu_fwd</code> so the branch computes <code>(n2 @ Wg) * (n2 @ Wu)</code> without the sigmoid gate, what happens to activation variance across 16 layers when inputs have outliers?</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Fuse <code>Wg</code> and <code>Wu</code> into a single concatenated matrix <code>W_gate_up</code> of shape <code>(d, 2 * d_ff)</code>, slice the output in half before applying <code>SiLU</code> to the first half, and verify that forward activations and backward gradients match to machine precision while cutting matrix-multiply calls per MLP from 3 to 2.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Activation norms in final layers exceed 65,504 and cause FP16 overflow NaNs during pretraining</td><td>Pre-Norm residual stream accumulates unnormalized updates across 60+ layers, plus outlier feature channels in SwiGLU bilinear product</td><td>Train in BF16 (same dynamic range as FP32), initialize <code>W_O, W_down</code> with <code>1 / sqrt(2L)</code>, and add QK-Norm or sandwich RMSNorm if needed</td></tr>
+    <tr><td>SwiGLU MLP latency at batch=1 decode is 25% slower than expected for its byte count</td><td><code>W_gate</code> and <code>W_up</code> are executed as two separate matrix-vector kernel launches reading the same input <code>n2</code> twice</td><td>Concatenate <code>[W_gate | W_up]</code> offline into one <code>(d, 2*d_ff)</code> weight tensor and run a fused <code>silu_and_mul</code> epilogue kernel</td></tr>
+    <tr><td>Fine-tuning or quantized INT4/FP8 inference suffers massive accuracy drop in specific SwiGLU layers</td><td>The multiplicative gate <code>SiLU(z W_gate) * (z W_up)</code> squares the dynamic range of activation outliers before <code>W_down</code></td><td>Apply per-channel SmoothQuant / AWQ activation scaling onto <code>W_down</code> inputs or keep outlier channels in FP16</td></tr></table></div>
+  <p><strong>Monitor:</strong> Per-layer residual stream L2 norm and variance <code>Var(x_l)</code> from Layer 1 to Layer L, per-layer weight gradient norm ratio <code>||dL/dW_1|| / ||dL/dW_L||</code> (should stay near <code>O(1)</code> in Pre-Norm), and max absolute activation entering <code>W_down</code>.</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A modern decoder transformer block wires Causal Attention and a SwiGLU Feed-Forward Network around a shared Pre-Norm residual stream. This design gives gradients an unobstructed identity highway from the loss straight back to Layer 1 while concentrating two-thirds to four-fifths of every block's parameters inside the MLP.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Each block executes two residual updates: first, h equals x plus Attention of RMSNorm of x, which routes information across token positions; second, x_next equals h plus SwiGLU of RMSNorm of h, which transforms features per token across channels. Moving RMSNorm inside the branch before the projection creates the Jacobian identity d x_L over d x_0 equals I plus the sum of branch derivatives, preventing gradients from multiplying through 2L normalization Jacobians as in Post-Norm. Inside the MLP, SwiGLU uses three matrices, computing SiLU of x W_gate elementwise-multiplied by x W_up, then projected back to d by W_down.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>To match the 8 d-squared parameter budget of a classic 4d two-matrix MLP across three matrices, SwiGLU sets intermediate width d_ff to 8 thirds d, or 3.5d in GQA models like Llama-3. In our 16-layer kata, Pre-Norm maintains a Layer-1 gradient norm of 1.516, whereas removing the residual additions collapses Layer-1 gradients to 1.087e-27. Because Pre-Norm stream variance grows with depth, we scale W_O and W_down by 1 over root 2L and place a final RMSNorm before the LM head.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"A transformer block has attention, normalization, residual connections, and an MLP. Residual connections help gradients flow so deep networks can train, and modern models use RMSNorm and SwiGLU because they perform better."</p><p class="strong">"A modern Pre-Norm block updates a continuous residual stream via h = x + Attn(RMSNorm(x)) and x_next = h + SwiGLU(RMSNorm(h)). Putting RMSNorm on the branch instead of the trunk keeps the backward Jacobian d x_L / d x_0 = I + sum(dF_l / dx_0), whereas removing the residual addition causes Layer-1 gradients in a 16-layer stack to collapse from 1.516 to 1.087e-27. The SwiGLU MLP uses three matrices (W_gate, W_up, W_down) with d_ff = (8/3)d so total MLP parameters stay at 8d^2, accounting for 67% to 81% of block weights."</p><p>The strong answer writes the exact equations, proves why the identity term <code>I</code> survives in Pre-Norm, derives <code>d_ff = (8/3)d</code>, and quotes the quantitative gradient collapse.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"SwiGLU uses d_ff = (8/3)d because a narrow bottleneck acts as a regularizer that prevents overfitting compared to 4d."</summary><div class="a">False. The <code>(8/3)d</code> width has nothing to do with bottleneck regularization; it is pure parameter-and-FLOP accounting. A standard 2-matrix MLP (<code>W_1, W_2</code>) with width <code>4d</code> has <code>2 * d * 4d = 8 d^2</code> parameters. Because SwiGLU requires <strong>three</strong> matrices (<code>W_gate, W_up, W_down</code>), keeping the parameter budget at <code>8 d^2</code> requires <code>3 * d * d_ff = 8 d^2</code>, which solves to <code>d_ff = (8/3)d</code>.</div></details>
+  <details class="q"><summary>"Pre-Norm and Post-Norm have the exact same gradient flow because both include residual connections x + F(x)."</summary><div class="a">False. In Post-Norm (<code>x_{l+1} = Norm(x_l + F(x_l))</code>), the normalization wraps the entire sum on the trunk, so the backward pass multiplies the upstream gradient by the normalization Jacobian <code>J_Norm</code> at every single sublayer (<code>2L</code> times). Since <code>Var(x + F(x)) &gt; 1</code>, those <code>2L</code> Jacobians attenuate the identity path relative to local branch gradients. Only Pre-Norm (<code>x_{l+1} = x_l + F(Norm(x_l))</code>) leaves the trunk identity term <code>I</code> completely outside all normalization Jacobians.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Write the unrolled forward equation for Layer L in a Pre-Norm transformer and use it to derive d x_L / d x_0.</summary><div class="a">By induction on <code>x_{l+1} = x_l + F_l(RMSNorm(x_l))</code>, the final state is <code>x_L = x_0 + sum_{l=0}^{L-1} F_l(RMSNorm(x_l))</code>. Differentiating with respect to <code>x_0</code> gives <code>d x_L / d x_0 = I + sum_{l=0}^{L-1} d F_l(RMSNorm(x_l)) / d x_0</code>. The additive identity matrix <code>I</code> guarantees that gradients flow directly from Layer <code>L</code> to Layer <code>0</code> without vanishing.<div class="f"><b>Follow-up</b>What is the product form of <code>d x_L / d x_0</code> when the residual addition <code>x_l + ...</code> is removed? It becomes a pure product of <code>2L</code> sublayer Jacobians <code>prod_{l=0}^{L-1} J_{MLP,l} J_{Attn,l}</code>, which decays exponentially as <code>sigma^(2L)</code> (collapsing to <code>2.371e-29</code> at <code>L=16</code> in our kata).</div></div></details>
+  <details class="q"><summary>Why do modern LLMs use RMSNorm instead of standard LayerNorm, and how many trainable parameters does RMSNorm add per block?</summary><div class="a">RMSNorm omits mean subtraction (<code>x - mu</code>) and the additive bias vector <code>beta</code>, normalizing purely by the root-mean-square <code>sqrt((1/d) sum x_i^2 + eps)</code> and scaling by <code>gamma in R^d</code>. Because a block has two RMSNorm layers (pre-attention and pre-MLP), it adds only <code>2d</code> trainable parameters per block while cutting memory-bandwidth reduction passes in half.</div></details>
+  <details class="q"><summary>Derive the total parameter count of one transformer block with Multi-Head Attention and a SwiGLU MLP of width d_ff = (8/3)d (ignoring RMSNorm's 2d).</summary><div class="a">Multi-Head Attention has 4 square projection matrices <code>W_Q, W_K, W_V, W_O in R^(d x d)</code> = <code>4 d^2</code> parameters. SwiGLU has 3 matrices <code>W_gate, W_up in R^(d x (8/3)d)</code> and <code>W_down in R^((8/3)d x d)</code> = <code>3 * d * (8/3)d = 8 d^2</code> parameters. Total per block = <code>4 d^2 + 8 d^2 = 12 d^2</code> parameters (33.3% Attention, 66.7% MLP).<div class="f"><b>Follow-up</b>How do hardware engineers round <code>d_ff = (8/3)d</code> in practice? They round up to the nearest multiple of <code>256</code> (or <code>128</code>) so Tensor Core tile dimensions divide evenly without padding overhead (for example, at <code>d=4096</code>, <code>(8/3)*4096 = 10,922.67</code> rounds up to <code>11,008 = 43 * 256</code> in Llama-2 7B).</div></div></details>
+  <details class="q"><summary>Why does Pre-Norm require a final RMSNorm layer right before the LM unembedding head W_head, whereas Post-Norm did not?</summary><div class="a">In Pre-Norm, each sublayer adds an unnormalized vector directly onto the residual trunk, so the stream variance <code>Var(x_l)</code> grows monotonically with depth <code>l</code>. Without a final RMSNorm after Layer <code>L</code>, the logits <code>x_L W_head^T</code> would have huge scale and drift during training, causing softmax saturation and loss spikes.</div></details>
+  <details class="q"><summary>Explain how W_gate and W_up in a SwiGLU layer are fused during inference and why this matters for decode latency.</summary><div class="a">At batch=1 autoregressive decode, MLP execution is strictly memory-bandwidth bound. Because <code>z W_gate</code> and <code>z W_up</code> multiply the exact same normalized input vector <code>z = RMSNorm(h_l)</code>, concatenating <code>W_gate</code> and <code>W_up</code> into one <code>(d, 2 * d_ff)</code> matrix lets the GPU read <code>z</code> once, run a single larger GEMV, and apply a fused <code>SiLU(first_half) * second_half</code> kernel in SRAM before multiplying by <code>W_down</code>.</div></details>
+  <details class="q"><summary>Contrast the computational roles of the Attention sublayer and the SwiGLU MLP sublayer inside a transformer block.</summary><div class="a">Attention is the <strong>token-mixing</strong> operator: it computes dynamic routing weights across sequence positions <code>1..t</code> so token <code>t</code> can gather context from earlier tokens, operating in low-rank head subspaces <code>d_head</code>. The SwiGLU MLP is the <strong>channel-mixing</strong> operator: it applies zero cross-token interaction, expanding each token's vector independently into a wide <code>d_ff</code> gated feature space where factual associations and nonlinear transformations are stored.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its 4 steps, then write: (1) the two Pre-Norm block equations and the unrolled backward Jacobian <code>d x_L / d x_0</code>, (2) the RMSNorm and SwiGLU formulas with the derivation of <code>d_ff = (8/3)d</code> and the <code>4d^2 + 8d^2 = 12d^2</code> parameter split, and (3) the kata's Layer-1 weight gradient norms for Pre-Norm vs No-Residual.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 4-stage stepper: Top horizontal residual stream highway with two <code>+</code> nodes -&gt; Pre-RMSNorm + Attention branch (<code>33.2%</code> params, mixes tokens) -&gt; Pre-RMSNorm + 3-matrix SwiGLU branch (<code>66.8%</code> params, mixes channels) -&gt; Backward identity gradient highway <code>d x_L / d x_0 = I + sum(...)</code>.</li>
+    <li>Wrote <code>h_l = x_l + Attn(RMSNorm(x_l))</code> and <code>x_{l+1} = h_l + SwiGLU(RMSNorm(h_l))</code>, plus <code>RMSNorm(x) = (x / sqrt(mean(x^2) + eps)) * gamma</code>.</li>
+    <li>Wrote <code>SwiGLU(z) = (SiLU(z W_gate) * (z W_up)) W_down</code> and showed <code>3 * d * (8/3)d = 8 d^2</code> matches a 2-matrix <code>4d</code> MLP, giving <code>4d^2 + 8d^2 = 12d^2</code> per MHA block (or ~80% MLP in GQA models).</li>
+    <li>Quoted the 16-layer kata numbers: Pre-Norm <code>||dL/dW_1|| = 1.516e+00</code> (<code>||dL/dx_0|| = 1.159e+00</code>, <code>Var(x_16) = 1.869</code>) vs No-Residual collapse <code>||dL/dW_1|| = 1.087e-27</code> (<code>||dL/dx_0|| = 2.371e-29</code>), and the <code>1 / sqrt(2L)</code> init rule for <code>W_O</code> and <code>W_down</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D06: Why does RoPE apply 2D rotations to Queries and Keys at every attention layer, and why does it never rotate Values?</summary><div class="a">Rotating <code>Q</code> by <code>m * theta_i</code> and <code>K</code> by <code>n * theta_i</code> makes their dot product <code>q_m^T R_m^T R_n k_n = q_m^T R_{n-m} k_n</code> depend strictly on relative distance <code>n - m</code> at every layer. Values hold semantic content that is linearly summed after softmax; rotating <code>V</code> would corrupt content vectors with an uncancelled position phase.</div></details>
+  <details class="q"><summary>D05: What is the difference between Multi-Query Attention (MQA) and Grouped-Query Attention (GQA), and why did Llama-2 70B and Llama-3 8B choose GQA?</summary><div class="a">MQA shares a single Key and Value head (<code>G=1</code>) across all <code>H_q</code> query heads, which maximally shrinks the KV cache by <code>H_q</code> times but degrades quality and training stability. GQA partitions query heads into <code>G=8</code> groups (each group sharing 1 KV head), capturing nearly all of MQA's KV-cache bandwidth savings (4x to 8x reduction) with zero quality loss compared to MHA.</div></details>
+  <details class="q"><summary>D02: When embedding table W_E in R^(V x d) is tied to the output LM head W_head, how many parameters are saved in a model with V = 128,256 and d = 4,096?</summary><div class="a">Weight tying saves one full <code>V * d = 128,256 * 4,096 = 525,336,576</code> (~525M) parameter matrix, though large models (like Llama-3 70B) often untie them when <code>525M</code> is a tiny fraction of total weights so input and output spaces can specialize independently.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/2002.05202">Shazeer (2020): GLU Variants Improve Transformer</a><small>Introduces SwiGLU and GEGLU gated feed-forward layers and derives the 3-matrix d_ff = (8/3)d parameter-matching rule. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1910.07467">Zhang &amp; Sennrich (2019): Root Mean Square Layer Normalization (RMSNorm)</a><small>Shows that LayerNorm's re-centering invariance is dispensable and derives RMSNorm with 15-30% lower compute overhead. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2002.04745">Xiong et al. (2020): On Layer Normalization in the Transformer Architecture</a><small>Analyzes gradient norms at initialization in Pre-LN vs Post-LN transformers and proves why Pre-LN removes the warmup bottleneck. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2407.21783">Dubey et al. (2024): The Llama 3 Herd of Models</a><small>Documents the production Pre-RMSNorm + GQA + SwiGLU (3.5d) decoder block architecture across 8B, 70B, and 405B scales. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Residual stream &amp; Pre-Norm highway:</strong> Each block updates a continuous trunk via <code>h_l = x_l + Attn(RMSNorm(x_l))</code> and <code>x_{l+1} = h_l + SwiGLU(RMSNorm(h_l))</code>, giving an unobstructed backward identity highway <code>d x_L / d x_0 = I + sum(dF_l / dx_0)</code>.</li>
+    <li><strong>Why training dies without residuals:</strong> Removing the <code>+</code> nodes forces gradients to multiply through <code>2L</code> weight Jacobians; in our 16-layer kata, Layer-1 weight gradient norm <code>||dL/dW_1||</code> collapses from <code>1.516e+00</code> to <code>1.087e-27</code>.</li>
+    <li><strong>RMSNorm vs LayerNorm:</strong> RMSNorm drops mean subtraction and bias <code>beta</code>, computing <code>(x / sqrt(mean(x^2) + eps)) * gamma</code> with only <code>2d</code> parameters per block.</li>
+    <li><strong>SwiGLU 3-matrix MLP:</strong> Computes <code>(SiLU(z W_gate) * (z W_up)) W_down</code>; setting <code>d_ff = (8/3)d</code> matches the <code>8 d^2</code> parameter count of a 2-matrix <code>4d</code> MLP (66.7% of an MHA block, or ~80.8% of a Llama-3 GQA block).</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Parameter count per MHA + SwiGLU block:</strong> Attention = <code>4 d^2</code> (33.3%), SwiGLU MLP = <code>3 * d * (8/3)d = 8 d^2</code> (66.7%), Total = <code>12 d^2 + 2d</code>.</li>
+      <li><strong>Depth-scaled initialization:</strong> Because Pre-Norm adds unnormalized updates to the residual stream, initialize output projections <code>W_O</code> and <code>W_down</code> with standard deviation scaled by <code>1 / sqrt(2 * L)</code> and apply a final <code>RMSNorm</code> before the LM head.</li>
+      <li><strong>Inference kernel fusion:</strong> Concatenate <code>W_gate</code> and <code>W_up</code> into a single <code>(d, 2 * d_ff)</code> matrix and fuse <code>SiLU(gate) * up</code> in SRAM to save a global memory read during batch=1 decode.</li>
+      <li><strong>Division of labor:</strong> Attention mixes information <em>across token positions T</em>; the SwiGLU MLP mixes and gates features <em>across channel dimensions d</em> per token independently.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D07 T2 W02", "cards": [{"q": "Why does Pre-Norm (x + F(RMSNorm(x))) stabilize deep transformer training compared to Post-Norm (RMSNorm(x + F(x)))?", "a": "Pre-Norm creates an unobstructed identity gradient highway d x_L / d x_0 = I + sum(...), whereas Post-Norm multiplies gradients through 2L normalization Jacobians."}, {"q": "Why do SwiGLU MLPs set intermediate width d_ff to (8/3)d instead of the classic 4d used in 2-matrix GELU MLPs?", "a": "SwiGLU uses three matrices (W_gate, W_up, W_down) totaling 3 * d * d_ff parameters; setting d_ff = (8/3)d keeps total MLP parameters equal to 8d^2."}, {"q": "What happens to Layer-1 weight gradients and Layer-16 activation variance in a 16-layer block stack when residual connections are removed?", "a": "Without residual addition x + F(x), activations and gradients multiply through 32 weight matrices, collapsing Layer-1 gradient norm from 1.516 down to 1.087e-27."}, {"q": "How are parameters split between Attention and the SwiGLU MLP in a standard transformer block with d_ff = (8/3)d?", "a": "MHA uses 4d^2 parameters (33.3%) and SwiGLU MLP uses 8d^2 parameters (66.7%); with GQA, the MLP share rises above 75% of per-block weights."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

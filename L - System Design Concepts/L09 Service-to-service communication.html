@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L09 Service-to-service communication</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L09">
+<main>
+<header>
+  <div class="eyebrow"><b>L09</b><span>System design concepts</span><span>Tier 2</span><span>Week 2</span><span>45 min</span></div>
+  <h1>Service-to-service communication</h1>
+  <p class="lede">How to choose and engineer internal service protocols across REST/JSON, gRPC/Protobuf over HTTP/2, GraphQL, and TCP vs UDP/QUIC so east-west AI microservice hops do not burn your latency budget on text serialization or head-of-line blocking.</p>
+  <div class="chips"><span><em>Before</em>L08 API design contracts</span><span><em>After</em>L10 API gateway vs load balancer; L4 vs L7; consistent-hashing load balancing</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict JSON vs Protobuf payload bytes and SerDe CPU overhead on float32 embeddings</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea: walk the 4-step protocol framing stepper across REST, gRPC, GraphQL, and TCP/UDP</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism: inspect Protobuf TLV wire packing and run the embedding payload explorer</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: benchmark 16 x 768-dim float32 embedding RPC payloads in JSON vs binary Protobuf</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production and interview: debug HTTP/2 L4 load imbalance and speak the 90s answer</span><small>9 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>An internal RAG embedding service returns 16 chunks, each holding a 768-dimensional float32 vector (12,288 floats = 49,152 raw float bytes). How many bytes does REST/JSON take on the wire compared to gRPC/Protobuf packed float32, and how much faster is binary SerDe in Python?</summary><div class="a">REST/JSON takes <strong>96,390 bytes (94.1 KiB, 7.84 bytes/float)</strong> because every float is formatted as 6 to 9 ASCII characters plus commas. gRPC/Protobuf takes <strong>49,376 bytes (48.2 KiB, 4.02 bytes/float)</strong> - only 224 bytes of framing overhead above the 49,152 raw IEEE-754 float bytes (1.95x smaller) - and serializes/deserializes <strong>11.18x faster</strong> (272.4 ms vs 3,045.6 ms per 1,000 calls).</div></details>
+  <details class="q"><summary>Why does HTTP/2 multiplexing over a single TCP connection eliminate application-layer head-of-line (HOL) blocking, yet still suffer from transport-layer HOL blocking under packet loss?</summary><div class="a">HTTP/2 interleaves frames from hundreds of concurrent RPC streams over one TCP connection, so a slow response on Stream 1 does not block frames for Stream 2 at the HTTP layer. However, TCP enforces strict in-order byte delivery across the entire socket: if a single TCP segment carrying a frame for Stream 1 is dropped on the network, the OS kernel holds back all subsequent arrived segments (even those belonging to Streams 2 through 100) until the lost segment is retransmitted. QUIC (HTTP/3 over UDP) fixes this by moving stream multiplexing into the transport layer so packet loss blocks only the affected stream.</div></details>
+  <details class="q"><summary>When a BFF (Backend-for-Frontend) exposes a GraphQL query that fetches 20 conversation threads and their latest model runs, what causes the N+1 RPC storm to internal services, and what mechanism collapses it?</summary><div class="a">A naive GraphQL field resolver executes 1 RPC to fetch the 20 thread IDs and then fires 20 separate per-thread RPCs to the model-run service (<code>1 + 20 = 21</code> sequential or parallel RPCs). A <strong>DataLoader</strong> collects all child keys requested during a single event-loop tick and dispatches one batched RPC (<code>GetModelRuns(thread_ids=[1..20])</code>), reducing <code>N+1</code> calls to 2.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Every service-to-service call makes two coupled engineering choices: a <strong>wire serialization format</strong> (text JSON vs binary Protobuf) and a <strong>transport framing protocol</strong> (HTTP/1.1, HTTP/2 over TCP, or QUIC over UDP). Text-based REST/JSON and GraphQL optimize for browser compatibility, human readability, and flexible schema evolution at the edge. Inside an AI cluster where an orchestrator calls embedding, vector-search, feature-store, and reranker microservices tens of times per user prompt, parsing megabytes of UTF-8 floating-point arrays burns CPU cores and inflates p99 tail latency.</p>
+  <p>For internal east-west traffic, <strong>gRPC over HTTP/2 with Protocol Buffers</strong> replaces verbose field names and ASCII numbers with 1-byte field tags, base-128 varints, and contiguous IEEE-754 binary float arrays, while multiplexing thousands of concurrent RPCs and bidirectional token streams over persistent connections.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Wire framing and transport behavior across REST, gRPC, GraphQL, and TCP vs UDP</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Comparison of REST JSON over HTTP/1.1, gRPC Protobuf over HTTP/2 multiplexed streams, GraphQL DataLoader batching, and TCP vs UDP/QUIC head-of-line blocking">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="14" width="476" height="44" rx="6" class="c-soft" data-hi="1"/>
+          <text x="22" y="32" font-weight="600">1. REST/JSON over HTTP/1.1 (North-South Edge APIs)</text>
+          <text x="22" y="49" class="m">Text UTF-8: {"vec":[-0.498,0.124,...]} -&gt; 7.84 B/float (96.4 KB), 1 req/conn</text>
+        </g>
+        <g data-step="2">
+          <rect x="12" y="66" width="476" height="44" rx="6" class="c-accent" data-hi="2"/>
+          <text x="22" y="84" fill="#fff" font-weight="600">2. gRPC/Protobuf over HTTP/2 (East-West AI Microservices)</text>
+          <text x="22" y="101" fill="#fff">[Tag 0x1A][Varint Len][Packed IEEE-754 f32] -&gt; 4.02 B/float (49.4 KB), 11.2x faster</text>
+        </g>
+        <g data-step="3">
+          <rect x="12" y="118" width="476" height="44" rx="6" class="c-paper" stroke="var(--ink)" data-hi="3"/>
+          <text x="22" y="136" font-weight="600">3. GraphQL at BFF Aggregation Layer</text>
+          <text x="22" y="153" class="m">Client picks exact fields; DataLoader batches N+1 resolver calls into 2 RPCs</text>
+        </g>
+        <g data-step="4">
+          <rect x="12" y="170" width="232" height="44" rx="6" class="c-warn" data-hi="4"/>
+          <text x="20" y="188" fill="#fff" font-weight="600">4a. TCP (HTTP/2): Packet Loss</text>
+          <text x="20" y="205" fill="#fff">1 lost packet blocks ALL streams</text>
+          <rect x="256" y="170" width="232" height="44" rx="6" class="c-good" data-hi="4"/>
+          <text x="264" y="188" fill="#fff" font-weight="600">4b. UDP/QUIC or RTP Audio</text>
+          <text x="264" y="205" fill="#fff">Independent streams; zero HOL block</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>REST over HTTP/1.1 encodes numbers as UTF-8 text strings (7.84 bytes per float32 in our 16x768 benchmark = 96,390 bytes) and allows only one active in-flight request per TCP connection without pipelining.</li>
+      <li>gRPC over HTTP/2 packs vectors as raw 4-byte IEEE-754 float32 blocks prefixed by a 1-byte tag and varint byte length (49,376 bytes total, 1.95x smaller and 11.18x faster CPU SerDe) while multiplexing streams on one connection.</li>
+      <li>GraphQL sits at the client-facing BFF so UI clients fetch nested resources in one round trip, using per-tick DataLoader batching to collapse N+1 downstream gRPC calls into a single batch RPC.</li>
+      <li>At the transport layer, a single dropped TCP packet stalls every multiplexed HTTP/2 stream until retransmission, whereas UDP-based QUIC isolates loss per stream and raw UDP/WebRTC drops late voice packets to keep latency under 50 ms.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Use REST or GraphQL at the external client boundary, gRPC/Protobuf for internal high-QPS or tensor-heavy hops, and UDP/WebRTC/QUIC when transport head-of-line blocking breaks real-time budgets.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>R-G-Q-U (REST-Edge, gRPC-East-West, Query-BFF, UDP-RealTime):</strong> REST for external simplicity, gRPC for binary internal speed, GraphQL + DataLoader for BFF fan-out, UDP/QUIC to kill TCP head-of-line blocking.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Protobuf TLV binary encoding vs JSON text parsing</h3>
+  <p>JSON repeats every field name as a UTF-8 string on every object and converts 32-bit IEEE-754 floats into base-10 ASCII text, requiring slow lexical scanning (<code>strtod</code>) on the receiver. Protocol Buffers uses a schema-compiled <strong>Tag-Length-Value (TLV)</strong> wire layout. Each field header is a single varint combining field number and wire type: <code>tag = (field_num &lt;&lt; 3) | wire_type</code>. Integers use base-128 <strong>varints</strong> (7 payload bits per byte; MSB <code>1</code> means more bytes follow). Repeated <code>float32</code> vectors use wire type <code>2</code> (length-delimited packed array): one tag byte (<code>0x1A</code> for field 3), a varint byte length (<code>3072</code> for 768 floats), and <code>3072</code> contiguous IEEE-754 bytes copied directly into a tensor buffer with zero text parsing.</p>
+  <div class="codewrap"><pre>Protobuf packed float32 field 3:  [0x1A] [0x80 0x18 (len=3072)] [768 x 4-byte IEEE-754 floats]
+Total per 768-dim chunk:          14 bytes framing + 3,072 float bytes = 3,086 bytes (4.02 B/float)</pre></div>
+
+  <h3>2. HTTP/1.1 vs HTTP/2 multiplexing and gRPC streaming</h3>
+  <p>HTTP/1.1 uses text headers and processes one request at a time per TCP connection; handling 200 concurrent RPCs requires a pool of 200 TCP sockets. HTTP/2 splits messages into binary <code>HEADERS</code> and <code>DATA</code> frames tagged with a 31-bit Stream ID, multiplexing hundreds of concurrent RPCs over a single TCP connection and compressing repetitive headers with HPACK. This framing unlocks four gRPC call patterns: unary RPC, server streaming (LLM token generation), client streaming (audio chunk upload), and bidirectional streaming (full-duplex voice AI agents).</p>
+
+  <h3>3. GraphQL N+1 problem and TCP vs UDP transport</h3>
+  <p>GraphQL shifts field selection to the client but creates two server hazards: deeply nested cyclic queries and the <strong>N+1 resolver problem</strong>, which must be guarded by query depth limits, persisted query allowlists, and per-request <code>DataLoader</code> batching. Underneath HTTP, <strong>TCP</strong> provides reliable, ordered, congestion-controlled byte streams via a 3-way SYN/SYN-ACK/ACK handshake (1 RTT + 1 TLS RTT), whereas <strong>UDP</strong> adds only an 8-byte header with no handshake, retransmission, or ordering delay - vital for voice AI WebRTC media and QUIC's 0-RTT/1-RTT independent streams.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: REST/JSON vs gRPC/Protobuf wire size and CPU SerDe cost across embedding batches</div>
+    <p class="ask">Predict first. If you double the embedding dimension from 768 to 1536 at 16 chunks per batch, how many kilobytes does REST/JSON consume versus gRPC/Protobuf, and how much CPU serialization time do you save per 1,000 requests?</p>
+    <div class="ctl">
+      <label><span>Chunks per RPC</span><input type="range" name="chunks" min="4" max="64" step="4" value="16"><output data-for="chunks" data-unit=" chunks"></output></label>
+      <label><span>Embedding dim</span><select name="dim" data-num><option value="384">384 floats (MiniLM)</option><option value="768" selected>768 floats (BGE-base)</option><option value="1536">1536 floats (text-embedding-3)</option><option value="3072">3072 floats (large)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Protobuf stays locked at 4.02 bytes/float (raw float32 + 14 B/chunk framing), cutting wire bandwidth by nearly half and CPU SerDe latency by 11.2x compared to JSON.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var n=v.chunks*v.dim;
+    var jsonB=Math.round(n*7.8442), protoB=n*4 + v.chunks*14;
+    var jsonMs=n*0.24785, protoMs=n*0.02217;
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" KiB",digits:1,rows:[
+      {label:"REST/JSON wire size",value:jsonB/1024,tone:"warn"},
+      {label:"gRPC/Protobuf wire size",value:protoB/1024,tone:"good"},
+      {label:"JSON CPU ms / 1k RPC (x10 KiB scale)",value:jsonMs/100,tone:"bad",text:tl.fmt(jsonMs,1)+" ms/1k"},
+      {label:"Protobuf CPU ms / 1k RPC (x10 KiB scale)",value:protoMs/100,tone:"good",text:tl.fmt(protoMs,1)+" ms/1k"}
+    ]});
+    return {verdict:tl.fmt(n,0)+" floats: JSON = "+tl.fmt(jsonB,0)+" B ("+tl.fmt(jsonB/1024,1)+" KiB) vs Protobuf = "+tl.fmt(protoB,0)+" B ("+tl.fmt(protoB/1024,1)+" KiB, 1.95x smaller) | CPU per 1k RPCs: "+tl.fmt(jsonMs,1)+" ms vs "+tl.fmt(protoMs,1)+" ms (11.18x faster)"};
+  })});</script>
+
+  <details class="q"><summary>Check: What are the three golden rules for backward-compatible Protobuf schema evolution?</summary><div class="a">Never change the numeric field tag of an existing field; never reuse a deleted field's tag number (mark both the tag number and field name as <code>reserved</code>); and give new fields new tag numbers so old readers safely skip unknown tags and new readers apply default values when reading old messages.</div></details>
+  <details class="q"><summary>Check: Why would a clinical voice AI agent use WebRTC over UDP for the patient's audio stream, gRPC bidirectional streaming internally between the VAD/ASR and LLM workers, and REST/JSON for the clinic's EHR webhook?</summary><div class="a">Patient audio requires sub-100 ms jitter-free media transport where retransmitting a dropped 20 ms audio packet over TCP would stall live speech (UDP wins). Internal ASR-to-LLM streaming requires reliable ordered token/audio frames with strict binary schemas over persistent connections (gRPC over HTTP/2 wins). External third-party EHR integrations require universal curl/webhook debuggability without custom client stubs (REST/JSON wins).</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Raw float32 vs JSON text vs Protobuf bytes per float (16 x 768 benchmark)</td><td class="n">4.00 B vs 7.84 B vs 4.02 B</td><td>Your own run</td></tr>
+    <tr><td>Wire payload for 16 chunks x 768-dim float32: REST/JSON vs gRPC/Protobuf</td><td class="n">96,390 B vs 49,376 B (1.95x smaller)</td><td>Your own run</td></tr>
+    <tr><td>Protobuf TLV framing overhead for 16 chunks (49,376 - 49,152 raw bytes)</td><td class="n">224 B total (14.0 B / chunk)</td><td>Your own run</td></tr>
+    <tr><td>Python SerDe CPU time per 1,000 calls (16 x 768 batch): JSON vs Protobuf</td><td class="n">3,045.6 ms vs 272.4 ms (11.18x faster)</td><td>Your own run</td></tr>
+    <tr><td>Protobuf varint encoding range for 1-byte vs 2-byte field tags</td><td class="n">Fields 1-15 = 1 B; 16-2047 = 2 B</td><td>Derived</td></tr>
+    <tr><td>Transport handshake round trips: UDP vs TCP+TLS 1.3 vs QUIC (HTTP/3)</td><td class="n">0 RTT vs 2 RTT vs 1 RTT (0-RTT resume)</td><td>Checked 2026-11-23</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>REST / JSON over HTTP/1.1 or HTTP/2</td><td>Universal browser/curl tooling, human-readable payloads, zero codegen pipeline</td><td>1.95x to 4x larger payloads on numeric/tensor data; 10x+ higher CPU parse cost</td><td>CPU saturation and GC pressure when passing float embeddings or large batches east-west</td></tr>
+    <tr><td>gRPC / Protobuf over HTTP/2</td><td>Compact binary TLV wire format (4.02 B/float), strict codegen contracts, native bi-di streaming</td><td>Requires <code>.proto</code> build pipeline, grpc-web proxy for browsers, L7 load balancing</td><td>L4 TCP load balancers pin all multiplexed HTTP/2 RPCs from one client onto a single backend pod</td></tr>
+    <tr><td>GraphQL over HTTP</td><td>Client-selected fields prevent over-fetching and multi-endpoint waterfall round trips</td><td>Complex server caching (POST bodies bypass CDN URL caches), N+1 database/RPC query storms</td><td>Unbounded nested queries causing DoS without query depth/cost limits and DataLoader batching</td></tr>
+    <tr><td>UDP / QUIC (HTTP/3) / WebRTC</td><td>Zero transport head-of-line blocking across streams; 0-RTT/1-RTT handshake; no retransmit stall on live audio</td><td>Higher kernel/CPU packet processing cost; enterprise firewalls occasionally block or throttle UDP</td><td>Must implement or configure application-level congestion/loss handling for raw UDP media</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: REST/JSON vs Protobuf binary wire benchmark</h2>
+  <p>Encode and decode an internal AI reranker/embedding payload (16 chunks, each with an integer ID, relevance score, and 768-dim <code>float32</code> vector) in both UTF-8 JSON and binary Protobuf TLV wire format (<code>varint</code> + packed IEEE-754 <code>struct</code> floats) to measure exact byte size and CPU serialization throughput.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import json
+import struct
+import time
+
+# Build deterministic payload: 16 document chunks, each with 768-dim float32 embedding + metadata
+N_CHUNKS, DIM, N_ITER = 16, 768, 500
+chunks = [{
+    "id": idx + 1001,
+    "score": round(0.985 - idx * 0.012, 4),
+    "vec": [round(((idx + 1) * 0.0013 + d * 0.0007) % 1.0 - 0.5, 6) for d in range(DIM)]
+} for idx in range(N_CHUNKS)]
+
+# 1. REST JSON encoding (UTF-8 text floats)
+json_bytes = json.dumps({"chunks": chunks}, separators=(",", ":")).encode("utf-8")
+
+# 2. Protobuf binary wire encoding (varint tags/lengths + packed IEEE-754 float32)
+def encode_varint(n):
+    out = bytearray()
+    while n &gt; 0x7F:
+        out.append((n &amp; 0x7F) | 0x80)
+        n &gt;&gt;= 7
+    out.append(n &amp; 0x7F)
+    return bytes(out)
+
+def encode_proto_batch(items):
+    buf = bytearray()
+    for item in items:
+        msg = bytearray()
+        # field 1: id (tag = (1&lt;&lt;3)|0 = 0x08, varint)
+        msg.append(0x08)
+        msg.extend(encode_varint(item["id"]))
+        # field 2: score (tag = (2&lt;&lt;3)|5 = 0x15, float32)
+        msg.append(0x15)
+        msg.extend(struct.pack("&lt;f", item["score"]))
+        # field 3: packed repeated float32 vec (tag = (3&lt;&lt;3)|2 = 0x1A, length + 4*DIM bytes)
+        packed_floats = struct.pack(f"&lt;{len(item['vec'])}f", *item["vec"])
+        msg.append(0x1A)
+        msg.extend(encode_varint(len(packed_floats)))
+        msg.extend(packed_floats)
+        # outer field 1: repeated Chunk (tag = 0x0A, length + submessage)
+        buf.append(0x0A)
+        buf.extend(encode_varint(len(msg)))
+        buf.extend(msg)
+    return bytes(buf)
+
+def decode_proto_batch(raw, dim=DIM):
+    pos, out = 0, []
+    stride = 4 * dim
+    while pos &lt; len(raw):
+        pos += 1  # outer tag 0x0A
+        while raw[pos] &amp; 0x80:
+            pos += 1
+        pos += 1
+        pos += 1  # id tag 0x08
+        cid, shift = 0, 0
+        while True:
+            b = raw[pos]; pos += 1
+            cid |= (b &amp; 0x7F) &lt;&lt; shift
+            if not (b &amp; 0x80): break
+            shift += 7
+        pos += 1  # score tag 0x15
+        score = struct.unpack_from("&lt;f", raw, pos)[0]; pos += 4
+        pos += 1  # vec tag 0x1A
+        while raw[pos] &amp; 0x80:
+            pos += 1
+        pos += 1
+        vec = struct.unpack_from(f"&lt;{dim}f", raw, pos); pos += stride
+        out.append((cid, score, vec))
+    return out
+
+proto_bytes = encode_proto_batch(chunks)
+decoded_check = decode_proto_batch(proto_bytes)
+raw_f32_bytes = N_CHUNKS * DIM * 4
+
+# 3. Benchmark CPU encode + decode time for 500 calls
+t0 = time.perf_counter()
+for _ in range(N_ITER):
+    b = json.dumps({"chunks": chunks}, separators=(",", ":")).encode("utf-8")
+    _ = json.loads(b.decode("utf-8"))
+json_ms_per_1k = (time.perf_counter() - t0) * 1000.0 * (1000.0 / N_ITER)
+
+t0 = time.perf_counter()
+for _ in range(N_ITER):
+    b = encode_proto_batch(chunks)
+    _ = decode_proto_batch(b)
+proto_ms_per_1k = (time.perf_counter() - t0) * 1000.0 * (1000.0 / N_ITER)
+
+print(f"Batch: {N_CHUNKS} chunks x {DIM}-dim float32 ({N_CHUNKS*DIM:,} floats = {raw_f32_bytes:,} raw float bytes)")
+print(f"REST/JSON payload     : {len(json_bytes):7,d} bytes ({len(json_bytes)/1024:.1f} KiB) | {len(json_bytes)/(N_CHUNKS*DIM):.2f} B/float")
+print(f"gRPC/Protobuf payload : {len(proto_bytes):7,d} bytes ({len(proto_bytes)/1024:.1f} KiB) | {len(proto_bytes)/(N_CHUNKS*DIM):.2f} B/float")
+print(f"Wire reduction        : {len(json_bytes)/len(proto_bytes):.2f}x smaller ({100*(1 - len(proto_bytes)/len(json_bytes)):.1f}% saved)")
+print(f"PROTO framing overhead: {len(proto_bytes) - raw_f32_bytes} bytes total ({(len(proto_bytes)-raw_f32_bytes)/N_CHUNKS:.1f} B/chunk)")
+print(f"CPU SerDe (per 1k RPC): JSON = {json_ms_per_1k:.1f} ms | Protobuf = {proto_ms_per_1k:.1f} ms ({json_ms_per_1k/proto_ms_per_1k:.2f}x faster)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">Batch: 16 chunks x 768-dim float32 (12,288 floats = 49,152 raw float bytes)
+REST/JSON payload     :  96,390 bytes (94.1 KiB) | 7.84 B/float
+gRPC/Protobuf payload :  49,376 bytes (48.2 KiB) | 4.02 B/float
+Wire reduction        : 1.95x smaller (48.8% saved)
+PROTO framing overhead: 224 bytes total (14.0 B/chunk)
+CPU SerDe (per 1k RPC): JSON = 3045.6 ms | Protobuf = 272.4 ms (11.18x faster)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Measured wire payload (KiB) and CPU SerDe latency (ms per 1,000 RPCs)</div>
+    <div data-bars='{"unit":"","digits":1,"rows":[{"label":"REST/JSON payload (KiB)","value":94.1,"tone":"warn","text":"94.1 KiB (96,390 B)"},{"label":"gRPC/Protobuf payload (KiB)","value":48.2,"tone":"good","text":"48.2 KiB (49,376 B)"},{"label":"REST/JSON SerDe (ms / 100 RPCs)","value":304.6,"tone":"bad","text":"3,045.6 ms / 1k"},{"label":"gRPC/Protobuf SerDe (ms / 100 RPCs)","value":27.2,"tone":"good","text":"272.4 ms / 1k"}]}'></div>
+    <figcaption><b>Takeaway.</b> On 12,288 float32 values, binary Protobuf cuts wire payload from 96,390 B to 49,376 B (only 224 B above raw IEEE-754 memory) and speeds up CPU SerDe by 11.18x.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Only 14 bytes of Protobuf framing per 768-float chunk:</strong> Raw memory for <code>16 * 768</code> float32 numbers is <code>49,152 bytes</code>. Protobuf's TLV wire format takes <code>49,376 bytes</code> (<code>4.02 B/float</code>), adding just <code>224 bytes</code> across all 16 submessages, whereas JSON balloons to <code>96,390 bytes</code> (<code>7.84 B/float</code>).</li>
+    <li><strong>11.18x CPU serialization speedup:</strong> Converting 12,288 floats to and from decimal ASCII strings in JSON takes <code>3,045.6 ms</code> per 1,000 RPCs (3.05 ms of pure CPU per call), while packing and unpacking contiguous IEEE-754 floats takes <code>272.4 ms</code> per 1,000 RPCs (0.27 ms per call).</li>
+    <li><strong>Varint tag efficiency:</strong> Field tags 1 (<code>0x08</code>), 2 (<code>0x15</code>), and 3 (<code>0x1A</code>) each fit in a single byte because their field numbers are <code>&lt;= 15</code> (4 bits for field number + 3 bits for wire type + MSB <code>0</code>).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Unpack the repeated float field (remove packed encoding).</strong> Instead of writing one length-delimited block (<code>0x1A</code> + length + 768 floats), write a 1-byte tag before every single float (<code>768 * 5 bytes</code>). Predict how much the Protobuf payload grows: it adds <code>16 * 768 = 12,288 bytes</code> of tag overhead (rising from 49.4 KB to 61.6 KB), proving why Protobuf v3 enables <code>packed=true</code> by default on repeated numeric fields.</li>
+    <li><strong>Increase decimal precision in JSON from 6 digits to full float64 string representation.</strong> Remove <code>round(..., 6)</code> when generating <code>vec</code>. Predict the JSON byte count: Python formats IEEE-754 floats with 17-19 ASCII characters (<code>-0.49800000000000005</code>), inflating JSON above 230 KB (nearly 5x larger than Protobuf).</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add <code>zlib.compress</code> (gzip) on top of both payloads and measure the CPU-versus-bandwidth tradeoff: compressing random or high-entropy float32 mantissas saves under 15% bandwidth while doubling CPU latency.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>One gRPC backend pod runs at 95% CPU after autoscale while 4 new pods sit at 0% traffic</td><td>Kubernetes Service uses L4 TCP load balancing; HTTP/2 multiplexes all RPCs over the single pre-existing pinned TCP connection</td><td>Use an L7 HTTP/2-aware proxy (Envoy / Istio), gRPC client-side round-robin load balancing (<code>dns:///service</code>), or periodic connection <code>MAX_CONNECTION_AGE</code> recycling</td></tr>
+    <tr><td>Silent data corruption after deploying a new <code>.proto</code> version across services</td><td>A developer reused a deleted integer field's numeric tag for a new field or renumbered existing fields</td><td>Add <code>reserved 4, 8; reserved "old_field";</code> in <code>.proto</code> and run <code>buf breaking</code> in CI against the main branch</td></tr>
+    <tr><td>BFF GraphQL endpoint p99 spikes from 25 ms to 650 ms on list views</td><td>Field resolver fires N+1 sequential downstream RPCs for each item in the parent list</td><td>Wrap downstream RPC clients in a request-scoped <code>DataLoader</code> that coalesces keys per event-loop tick into one batch RPC</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Per-RPC serialization CPU share (flamegraph % in <code>json.loads</code>/<code>protobuf</code>), RPC payload byte distribution (warn near gRPC's 4 MB default max message limit), HTTP/2 active streams per TCP connection, and TCP retransmission rate (<code>TCPExtTCPLostRetransmit</code> causing HTTP/2 HOL stalls).</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Service-to-service communication splits into external north-south traffic and internal east-west traffic. Use REST/JSON or GraphQL at the client edge for universal compatibility and flexible UI aggregation, use gRPC with Protocol Buffers over HTTP/2 for internal microservice hops, and use UDP, WebRTC, or QUIC when TCP head-of-line blocking breaks real-time latency budgets.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>REST/JSON serializes data into human-readable UTF-8 text, which costs almost eight bytes per float32 and forces slow string parsing on every hop. gRPC compiles a strict proto schema into binary Tag-Length-Value frames using base-128 varints and packed IEEE-754 float arrays; in our 16-by-768 embedding benchmark, Protobuf cut wire size from 96.4 kilobytes to 49.4 kilobytes (just 14 bytes of framing per chunk) and accelerated CPU serialization by 11.2x. At the transport layer, gRPC multiplexes concurrent streams and bidirectional token flows over a single HTTP/2 connection, while GraphQL at the BFF layer relies on per-tick DataLoader batching to collapse N-plus-one resolver fan-out into two batch RPCs.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Two operational limits trip production systems: first, HTTP/2 multiplexes over one TCP socket, so a standard Layer-4 load balancer pins all RPCs to one backend pod unless you use Layer-7 proxying or client-side round-robin; second, a single dropped TCP packet stalls every multiplexed HTTP/2 stream at the OS kernel level, which is why lossy networks or live voice agents move to QUIC or WebRTC over UDP.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"We use gRPC between our backend services because it is modern and faster than REST, and we use GraphQL for the frontend so mobile apps can query what they want."</p><p class="strong">"For internal embedding and reranker hops we use gRPC/Protobuf over HTTP/2: packed IEEE-754 float32 vectors take 4.02 B/float vs 7.84 B/float in JSON (1.95x smaller) and cut SerDe CPU time 11.2x, though we pair it with L7 Envoy balancing so long-lived HTTP/2 TCP connections do not pin traffic to one pod."</p><p>The strong answer quantifies the wire and CPU win from packed binary floats and immediately flags the L4-vs-L7 HTTP/2 connection-pinning failure mode.</p></div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Because HTTP/2 multiplexes streams, moving from HTTP/1.1 to gRPC over HTTP/2 completely eliminates head-of-line blocking."</summary><div class="a">Wrong. HTTP/2 only eliminates <em>application-layer</em> head-of-line blocking (a slow handler on Stream 1 does not block frames on Stream 2). Because all HTTP/2 streams share a single TCP byte stream, a single lost TCP packet on the network causes the OS TCP stack to hold back delivery of all subsequent packets across every multiplexed stream until the lost packet is retransmitted. Eliminating transport-layer HOL blocking requires QUIC (HTTP/3 over UDP).</div></details>
+  <details class="q"><summary>"Putting a standard Kubernetes ClusterIP (L4 TCP) load balancer in front of gRPC pods evenly distributes RPC requests across replicas."</summary><div class="a">Wrong. An L4 load balancer balances at TCP connection establishment (<code>SYN</code>). Because a gRPC client opens one long-lived HTTP/2 TCP connection and multiplexes thousands of RPCs over that single socket, every RPC lands on whichever pod accepted the initial TCP connection. You must balance per-request at L7 (Envoy, Linkerd) or enable gRPC client-side load balancing with <code>MAX_CONNECTION_AGE</code>.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>How does Protocol Buffers encode a field tag and a packed float32 array on the wire, and why should frequent fields use tag numbers 1 through 15?</summary><div class="a">A Protobuf tag byte stores <code>(field_number &lt;&lt; 3) | wire_type</code> as a base-128 varint. Because 3 bits hold the wire type and 1 MSB bit is the varint continuation flag, field numbers 1 through 15 fit in the remaining 4 bits of a single byte; field numbers 16 through 2047 require 2 bytes. A packed <code>float32</code> array uses wire type <code>2</code> (length-delimited): 1 tag byte, a varint byte count (<code>4 * N</code>), and <code>4 * N</code> raw IEEE-754 bytes.<div class="f"><b>Follow-up</b>Why is <code>packed=true</code> useless or harmful for an array of string embeddings? Strings are already length-delimited (<code>wire_type=2</code>), whereas <code>packed</code> eliminates repeated tag bytes across fixed-width or varint numeric primitives.</div></div></details>
+  <details class="q"><summary>Compare the payload size and CPU SerDe cost of 16 x 768-dim float32 embeddings in REST/JSON vs gRPC/Protobuf from our kata.</summary><div class="a">The 12,288 raw <code>float32</code> values occupy 49,152 bytes in memory. REST/JSON encodes them as 96,390 bytes (<code>7.84 B/float</code>) and takes 3,045.6 ms per 1,000 SerDe cycles. Binary Protobuf encodes them as 49,376 bytes (<code>4.02 B/float</code>, only 224 bytes of TLV framing) and takes 272.4 ms per 1,000 cycles - a 1.95x bandwidth reduction and 11.18x CPU speedup.</div></details>
+  <details class="q"><summary>When should you use GraphQL, and what two server-side safeguards are mandatory before exposing a GraphQL endpoint in production?</summary><div class="a">Use GraphQL at a BFF (Backend-for-Frontend) when diverse web/mobile views need flexible subsets of nested entities in a single network round trip. You must enforce (1) request-scoped <code>DataLoader</code> batching so nested field resolvers do not trigger N+1 RPC storms to internal microservices, and (2) query depth/complexity limits (or persisted query allowlists) so malicious deeply nested queries cannot exhaust server CPU.<div class="f"><b>Follow-up</b>Why is HTTP CDN caching harder with GraphQL than REST? GraphQL sends queries inside a <code>POST /graphql</code> JSON body rather than distinct <code>GET /resource/{id}</code> URLs, bypassing standard URL-keyed HTTP caches unless Automatic Persisted Queries (APQ) with GET hashes are enabled.</div></div></details>
+  <details class="q"><summary>Explain the four gRPC RPC streaming modes and map each to a real AI system component.</summary><div class="a">(1) <strong>Unary</strong> (<code>Req -&gt; Resp</code>): synchronous reranker or embedding lookup. (2) <strong>Server streaming</strong> (<code>Req -&gt; stream Resp</code>): LLM token-by-token generation stream from an inference worker. (3) <strong>Client streaming</strong> (<code>stream Req -&gt; Resp</code>): streaming audio frames into a batch transcription utterance endpoint. (4) <strong>Bidirectional streaming</strong> (<code>stream Req &lt;-&gt; stream Resp</code>): full-duplex real-time voice AI session with barge-in interruption.</div></details>
+  <details class="q"><summary>Why does live voice AI (such as a clinic phone agent) use RTP/WebRTC over UDP at the client edge instead of gRPC over TCP?</summary><div class="a">Live conversation requires mouth-to-ear latency under 200-300 ms. Over TCP, a single lost packet on a cellular link halts the entire audio stream for 1 to 3 RTTs (50-250 ms) while the kernel waits for retransmission, causing audible robotic freezes. UDP delivers every arriving 20 ms opus audio frame immediately without retransmission stalls, letting the jitter buffer interpolate a single missing frame imperceptibly.</div></details>
+  <details class="q"><summary>What happens if you pass a 12 MB tensor or image batch through a default gRPC channel, and how should large blobs be transferred?</summary><div class="a">gRPC enforces a default 4 MB (<code>4 * 1024 * 1024</code> bytes) maximum inbound message size and rejects the call with <code>RESOURCE_EXHAUSTED</code> to prevent OOM buffer allocations. Either chunk the payload across a gRPC stream (64 KB to 1 MB frames), raise <code>grpc.max_receive_message_length</code> cautiously for bounded tensors, or pass large media via pre-signed object storage / shared memory pointers.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the exact bytes/float and CPU speedup numbers for JSON vs Protobuf on 16 x 768 float32 embeddings, (2) why HTTP/2 still has transport HOL blocking and L4 load-balancing pinning, and (3) the three Protobuf schema evolution rules.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 4-layer comparison: REST/JSON over HTTP/1.1 (edge), gRPC/Protobuf over HTTP/2 (east-west), GraphQL + DataLoader (BFF), and TCP vs UDP/QUIC (transport).</li>
+    <li>Stated the kata benchmark numbers: 16 x 768 float32 = 49,152 raw bytes; JSON takes 96,390 B (<code>7.84 B/float</code>, 3,045.6 ms/1k RPCs) vs Protobuf 49,376 B (<code>4.02 B/float</code>, 224 B framing, 272.4 ms/1k RPCs = 1.95x smaller, 11.18x faster).</li>
+    <li>Explained HTTP/2 transport HOL blocking (1 lost TCP segment stalls all multiplexed streams) and L4 connection pinning (all multiplexed RPCs stick to 1 pod without L7 proxying).</li>
+    <li>Listed the 3 Protobuf compatibility rules: never change field tag numbers, reserve deleted tags/names (<code>reserved</code>), and keep fields 1-15 for 1-byte tags.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L08: Why should a paginated list API under concurrent writes use cursor/keyset pagination (WHERE created_at &lt; :cursor_ts) instead of OFFSET/LIMIT?</summary><div class="a"><code>OFFSET N</code> forces the database to scan and discard <code>N</code> rows (O(N) latency at deep pages) and shifts row positions whenever a new row is inserted at the top, causing clients to see duplicate items or skip items across pages. Keyset pagination seeks directly to the B-tree index position in O(log N) time with zero drift.</div></details>
+  <details class="q"><summary>A12: Why does omitting zero_grad() before loss.backward() break standard SGD training, yet deliberately omitting it for K steps enables large-batch training on a single GPU?</summary><div class="a">Because autograd VJPs use <code>+=</code> accumulation into <code>p.grad</code>, omitting <code>zero_grad()</code> across optimizer steps compounds stale gradients from old weights. However, running <code>K</code> micro-batch backward passes (each scaled by <code>1/K</code>) before calling <code>optimizer.step()</code> and <code>zero_grad()</code> sums the exact full-batch gradient while freeing each micro-batch's activation DAG immediately.</div></details>
+  <details class="q"><summary>A11: Why is the gradient grad f(x) always orthogonal to the level set (contour line) {x : f(x) = c}?</summary><div class="a">For any smooth curve <code>x(t)</code> moving along the level set <code>f(x(t)) = c</code>, differentiating with respect to <code>t</code> by the chain rule gives <code>d/dt f(x(t)) = grad f(x) . x'(t) = 0</code>. Since the dot product with every tangent vector <code>x'(t)</code> is zero, <code>grad f(x)</code> is perpendicular to the contour and points in the direction of steepest ascent.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://protobuf.dev/programming-guides/encoding/">Google Protocol Buffers Documentation: Encoding (Wire Format)</a><small>Supports base-128 varints, (field_number &lt;&lt; 3) | wire_type tags, and length-delimited packed repeated float32 encoding. Checked 2026-11-23.</small></li>
+    <li><a href="https://grpc.io/docs/what-is-grpc/core-concepts/">gRPC Documentation: Core Concepts, Architecture and Lifecycle</a><small>Supports unary, server/client/bidirectional streaming modes over HTTP/2 and 4 MB default message limits. Checked 2026-11-23.</small></li>
+    <li><a href="https://datatracker.ietf.org/doc/html/rfc9113">IETF RFC 9113: HTTP/2 and RFC 9000: QUIC Transport Protocol</a><small>Supports HTTP/2 binary stream framing over TCP versus QUIC independent stream multiplexing over UDP. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>REST/JSON vs gRPC/Protobuf on Float Embeddings:</strong> On 16 x 768 <code>float32</code> vectors (49,152 raw bytes), JSON takes <code>96,390 B</code> (<code>7.84 B/float</code>, <code>3,045.6 ms/1k</code> SerDe) while packed Protobuf takes <code>49,376 B</code> (<code>4.02 B/float</code>, only <code>224 B</code> framing, <code>272.4 ms/1k</code> SerDe) - <strong>1.95x smaller</strong> and <strong>11.18x faster</strong>.</li>
+    <li><strong>Protobuf TLV Wire Layout:</strong> Tag byte <code>= (field_num &lt;&lt; 3) | wire_type</code>; fields 1-15 fit in 1 byte. Packed <code>float32</code> uses wire type <code>2</code> (length-delimited contiguous IEEE-754 array) to avoid per-element tags and text parsing.</li>
+    <li><strong>HTTP/2 Multiplexing &amp; gRPC Streaming:</strong> Binary frames tagged by Stream ID allow concurrent unary, server-stream (LLM tokens), client-stream, and bi-di stream (voice AI) RPCs over one TCP socket, but require L7 load balancing so one pinned TCP socket does not overload a single pod.</li>
+    <li><strong>GraphQL &amp; DataLoader Batching:</strong> Best for BFF client-driven field selection; must pair with per-tick <code>DataLoader</code> batching to collapse <code>N+1</code> downstream RPC storms into 2 calls and enforce query depth/cost limits.</li>
+    <li><strong>TCP vs UDP / QUIC:</strong> TCP guarantees in-order byte delivery across the whole socket, so 1 lost packet stalls all multiplexed HTTP/2 streams (transport HOL blocking); QUIC (HTTP/3 over UDP) isolates loss per stream, and WebRTC/RTP over UDP skips retransmission for sub-200 ms live voice audio.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Spine (R-G-Q-U):</strong> REST at external north-south edge; gRPC/Protobuf for internal east-west microservices; GraphQL + DataLoader at BFF; UDP/WebRTC/QUIC to eliminate TCP HOL blocking.</li>
+      <li><strong>Protobuf evolution rules:</strong> Never change or reuse numeric field tags; mark deleted tags/names <code>reserved</code>; keep hot fields in tags 1-15.</li>
+      <li><strong>Production gRPC trap:</strong> Kubernetes L4 <code>ClusterIP</code> balances TCP connections, not HTTP/2 streams - always use L7 Envoy/Istio or gRPC client-side round-robin.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L09 T2 W02", "cards": [{"q": "How much wire bandwidth and CPU SerDe time does gRPC/Protobuf save over REST/JSON on 16 x 768-dim float32 embeddings?", "a": "Protobuf packs contiguous IEEE-754 floats at 4.02 B/float (49.4 KB) vs JSON's 7.84 B/float (96.4 KB), cutting payload 1.95x and running CPU SerDe 11.18x faster."}, {"q": "Why does an L4 TCP load balancer fail to distribute gRPC traffic evenly across scaled backend pods?", "a": "L4 balances only at TCP connection setup, while gRPC multiplexes all HTTP/2 RPC streams over one long-lived TCP socket, pinning traffic to a single pod without L7 proxying."}, {"q": "Why does HTTP/2 still suffer from transport-layer head-of-line blocking under packet loss, and how does QUIC fix it?", "a": "All HTTP/2 streams share one kernel TCP byte stream, so one dropped packet stalls every stream until retransmission; QUIC moves independent stream multiplexing onto UDP."}, {"q": "What causes the N+1 RPC storm in a GraphQL BFF gateway, and what mechanism collapses it?", "a": "Child field resolvers firing one downstream RPC per parent list item; a request-scoped DataLoader batches all keys requested in one event-loop tick into one batch RPC."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

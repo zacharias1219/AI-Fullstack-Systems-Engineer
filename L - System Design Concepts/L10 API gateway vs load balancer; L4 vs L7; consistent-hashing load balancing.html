@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L10 API gateway vs load balancer; L4 vs L7; consistent-hashing load balancing</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L10">
+<main>
+<header>
+  <div class="eyebrow"><b>L10</b><span>System design concepts</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>API gateway vs load balancer; L4 vs L7; consistent-hashing load balancing</h1>
+  <p class="lede">How packets traverse an L4 transport load balancer, an L7 reverse proxy, and an API gateway, and how a consistent-hashing ring with virtual nodes and bounded load keeps LLM KV-prefix caches warm across autoscaling GPU pools.</p>
+  <div class="chips"><span><em>Before</em>L09 Service-to-service communication</span><span><em>After</em>L12 Retries, timeouts and idempotency</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict modulo vs consistent-hashing cache churn when scaling 8 -> 9 GPUs</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea: walk the 5-step L4 -> L7 -> API Gateway -> Consistent Hash Ring stepper</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism: derive 1/(N+1) movement, virtual nodes, bounded load, and test the explorer</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run the 10,000-prefix consistent hash ring benchmark with V=1..150 and bounded load</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production and interview: debug hot-tenant KV cache stampedes and speak the 90s answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Recall: redraw the ingress-to-ring architecture from a blank page and import Anki cards</span><small>7 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You route 10,000 active multi-turn LLM sessions across N = 8 GPU workers so each worker keeps its sessions' KV prefix caches in HBM. Traffic spikes and autoscaling adds a 9th GPU (N = 8 -> 9). How many sessions move to a different GPU under naive modulo hashing hash(key) % N versus consistent hashing?</summary><div class="a">Under modulo hashing <code>hash(key) % N</code>, <strong>8,929 of 10,000 sessions (89.29%)</strong> move to a different GPU (matching the theoretical formula <code>(N - 1)/N = 8/9 = 88.89%</code>), triggering a cluster-wide KV cache miss storm and prefill recomputation spike. Under consistent hashing with 150 virtual nodes per GPU, only <strong>1,029 of 10,000 sessions (10.29%)</strong> move (matching theoretical <code>1/(N + 1) = 1/9 = 11.11%</code>), keeping <strong>7,900 additional sessions warm</strong> on their original GPU.</div></details>
+  <details class="q"><summary>If you place each of N = 8 physical GPU nodes at only V = 1 point on a 32-bit consistent hash ring, how uneven is the key distribution across the 8 GPUs (ideal mean = 1,250 keys/GPU), and what happens when you raise V to 150 virtual nodes per GPU?</summary><div class="a">At <code>V = 1</code>, random gap lengths between 8 points on the circle vary wildly: our kata measures a minimum load of <strong>330 keys</strong> and a maximum of <strong>2,376 keys</strong> (a 7.2x spread, standard deviation <strong>611.7 keys or 48.9%</strong> of the mean). At <code>V = 150</code> virtual nodes per GPU (1,200 points on the ring), variance averages out by the law of large numbers (<code>O(1/sqrt(V))</code>), shrinking the range to <strong>1,085 to 1,465 keys</strong> and dropping standard deviation to <strong>114.0 keys (9.1% of the mean)</strong>.</div></details>
+  <details class="q"><summary>Why can an L4 transport load balancer not route requests by HTTP header X-Tenant-ID or enforce per-API-key token rate limits, and what happens if one enterprise tenant generates 35% of all requests on a pure consistent-hashing ring?</summary><div class="a">An L4 load balancer operates at the TCP/UDP transport layer and sees only the 5-tuple (<code>src_ip, dst_ip, src_port, dst_port, protocol</code>) without terminating TLS or parsing HTTP headers; reading <code>X-Tenant-ID</code> or enforcing token-bucket quotas requires an L7 load balancer / API gateway. On a pure consistent hash ring, a single hot prefix generating 35% of traffic hashes to one point and sends <strong>4,359 of 10,000 requests (3.49x average load)</strong> to a single GPU, overloading it unless you enforce <strong>Consistent Hashing with Bounded Load</strong> (capping each GPU at <code>c = 1.25x</code> average load = <strong>1,563 requests</strong> and spilling excess along the ring).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Modern production traffic passes through three distinct ingress tiers, each operating at a different layer of the network stack with a different state and CPU budget. At the outer edge, an <strong>L4 Load Balancer</strong> (OSI Layer 4, TCP/UDP) forwards packets at millions of packets per second using a fast 5-tuple hash (<code>ECMP</code> / Maglev) without inspecting payloads. Behind it, an <strong>L7 Load Balancer</strong> terminates TLS, parses HTTP/1.1 or HTTP/2 frames, and routes individual requests across healthy backend pools. An <strong>API Gateway</strong> is a policy-heavy L7 proxy that enforces business and security concerns: JWT/OAuth authentication, per-tenant token-bucket rate limiting, request validation, and usage billing.</p>
+  <p>For stateless microservices, L7 least-outstanding-requests (<code>P2C</code>, Power of Two Choices) works well. For stateful AI workloads like <strong>LLM KV-prefix caching</strong>, routing the same conversation or system-prompt prefix to the same GPU worker avoids recomputing prefill attention across tens of thousands of tokens. Naive modulo hashing (<code>hash(key) % N</code>) invalidates nearly the entire cluster cache (<code>(N-1)/N</code> keys) whenever a node joins or leaves. <strong>Consistent hashing</strong> maps both nodes and request keys onto a 32-bit unit circle <code>[0, 2^32 - 1]</code>, assigning each key to the first node clockwise so scaling from <code>N</code> to <code>N+1</code> nodes moves only <code>1/(N+1)</code> of the keys.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Ingress path from L4 LB -> L7 LB &amp; API Gateway -> Consistent Hash Ring</div>
+    <svg viewBox="0 0 500 225" role="img" aria-label="Request flow through L4 TCP load balancer, L7 proxy and API gateway, onto a consistent hashing ring with virtual nodes routing session prefixes to GPU workers">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="20" width="115" height="62" rx="6" class="c-soft" data-hi="1"/>
+          <text x="67" y="42" text-anchor="middle" font-weight="600">1. L4 TCP/UDP LB</text>
+          <text x="67" y="59" text-anchor="middle" class="m">5-tuple ECMP/NAT</text>
+          <text x="67" y="74" text-anchor="middle" class="m">No TLS decrypt</text>
+        </g>
+
+        <g data-step="2">
+          <path d="M125 51 H152" class="ink"/>
+          <rect x="152" y="20" width="142" height="62" rx="6" class="c-accent" data-hi="2"/>
+          <text x="223" y="42" text-anchor="middle" fill="#fff" font-weight="600">2. L7 LB + API GW</text>
+          <text x="223" y="59" text-anchor="middle" fill="#fff">TLS term, JWT auth</text>
+          <text x="223" y="74" text-anchor="middle" fill="#fff">Rate limit, HTTP/2</text>
+        </g>
+
+        <g data-step="3">
+          <path d="M294 51 H330" class="ink"/>
+          <circle cx="408" cy="108" r="68" class="ln" stroke-width="3" data-hi="3"/>
+          <circle cx="408" cy="40" r="7" class="c-good"/>
+          <text x="408" y="27" text-anchor="middle">gpu-0#v1</text>
+          <circle cx="476" cy="108" r="7" class="c-good"/>
+          <text x="462" y="128" text-anchor="middle">gpu-1#v4</text>
+          <circle cx="408" cy="176" r="7" class="c-good"/>
+          <text x="408" y="196" text-anchor="middle">gpu-2#v9</text>
+          <circle cx="340" cy="108" r="7" class="c-good"/>
+          <text x="355" y="94" text-anchor="middle">gpu-3#v2</text>
+          <text x="408" y="106" text-anchor="middle" font-weight="600">3. Hash Ring</text>
+          <text x="408" y="122" text-anchor="middle" class="m">V=150 vnodes/GPU</text>
+        </g>
+
+        <g data-step="4">
+          <circle cx="458" cy="62" r="7" class="c-warn" data-hi="4"/>
+          <text x="455" y="48" text-anchor="middle" data-hi="4">+gpu-8 joins</text>
+          <rect x="10" y="100" width="305" height="52" rx="6" class="c-good" data-hi="4"/>
+          <text x="20" y="121" fill="#fff" font-weight="600">4. Scale N=8 -&gt; 9: Only 10.29% keys move</text>
+          <text x="20" y="140" fill="#fff">Modulo moves 89.29% (7,900 KV caches saved!)</text>
+        </g>
+
+        <g data-step="5">
+          <rect x="10" y="164" width="305" height="48" rx="6" class="c-warn" data-hi="5"/>
+          <text x="20" y="184" fill="#fff" font-weight="600">5. Bounded Load (c=1.25, cap=1,563 reqs)</text>
+          <text x="20" y="201" fill="#fff">35% hot prefix spills clockwise (4,359 -&gt; 1,563)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>External TCP/UDP packets hit the L4 Load Balancer first: it hashes the 5-tuple (IPs, ports, protocol) at line rate without decrypting TLS and forwards packets to an L7 proxy pool.</li>
+      <li>The L7 Load Balancer / API Gateway terminates TLS, validates JWT/API keys, enforces token-bucket quotas, and extracts the L7 routing key (such as X-Session-Prefix or tenant ID).</li>
+      <li>To preserve GPU KV-prefix caches across turns, the L7 router hashes each session key onto a 32-bit ring populated with V = 150 virtual nodes per GPU and binary-searches clockwise in O(log(N*V)) time.</li>
+      <li>When autoscaling adds a 9th GPU (N = 8 to 9), only keys landing immediately counter-clockwise of gpu-8's new vnodes move: 10.29% (1,029/10,000) vs 89.29% (8,929/10,000) under hash(k) % N.</li>
+      <li>If a single hot tenant drives 35% of traffic onto one prefix (4,359 requests on one GPU), Bounded-Load consistent hashing caps each GPU at c = 1.25x mean load (1,563 requests) and spills excess clockwise.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Separate L4 packet distribution, L7 policy enforcement, and L7 consistent-hash ring routing so scaling GPU pools neither bottlenecks the edge nor wipes out warm KV-prefix caches.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>4-7-G-R-B (L4-Tuple, L7-Frame, Gateway-Policy, Ring-1/(N+1), Bounded-Cap):</strong> L4 routes 5-tuples, L7 parses HTTP frames, API Gateway enforces auth/quotas, Consistent Ring moves <code>1/(N+1)</code> keys with <code>V=150</code> vnodes, Bounded Load caps hot spots at <code>c * L/N</code>.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. L4 vs L7 load balancing vs API Gateway</h3>
+  <p>An <strong>L4 Load Balancer</strong> (AWS NLB, Linux IPVS, Google Maglev) operates on TCP/UDP segments. It maps the 5-tuple to a backend via consistent flow tables, rewriting IP headers (NAT) or encapsulating packets (DSR, Direct Server Return) so response packets bypass the load balancer entirely. Because it never buffers payloads or decrypts TLS, L4 handles millions of concurrent connections with microseconds of overhead, but it cannot inspect URLs, headers, or multiplexed HTTP/2 streams. An <strong>L7 Load Balancer</strong> (Envoy, NGINX, AWS ALB) terminates the client TLS connection, parses HTTP headers/paths/gRPC frames, and opens pooled backend connections. An <strong>API Gateway</strong> (Kong, Apigee, Envoy AI Gateway) layers control-plane policy onto L7: authn/authz, per-tenant token-rate limits, canary splitting, and billing telemetry.</p>
+
+  <h3>2. Why modulo hashing fails and consistent hashing moves only 1/(N+1)</h3>
+  <p>Under modulo hashing <code>node = hash(key) % N</code>, changing the divisor from <code>N</code> to <code>N + 1</code> shifts the remainder of almost every integer: the probability that <code>h % N == h % (N + 1)</code> over a large hash space approaches <code>1 / N</code>, meaning a fraction <code>(N - 1) / N</code> of all keys change owners (<code>8/9 = 88.89%</code> when scaling 8 to 9 nodes). Consistent hashing fixes the modulus at <code>2^32</code> (a fixed ring <code>[0, 2^32 - 1]</code>). Both nodes and keys are hashed onto the ring, and a key routes to the first node at <code>pos &gt;= hash(key)</code> using binary search (<code>bisect_left</code>) in <code>O(log(N * V))</code> time. Adding an <code>(N+1)</code>-th node steals only the keys landing in the <code>V</code> arc segments immediately preceding its virtual nodes - an expected fraction of exactly <code>1 / (N + 1)</code> (<code>1/9 = 11.11%</code>).</p>
+  <div class="codewrap"><pre>Modulo hashing churn (N -&gt; N+1):      fraction moved = (N - 1) / N      (8 -&gt; 9: 88.89% theory, 89.29% run)
+Consistent hashing churn (N -&gt; N+1):  fraction moved = 1 / (N + 1)      (8 -&gt; 9: 11.11% theory, 10.29% run)
+Virtual node load std-dev scaling:    sigma / mean   ~ 1 / sqrt(V)      (V=1: 48.9% -&gt; V=150: 9.1%)</pre></div>
+
+  <h3>3. Virtual nodes (vnodes) and Bounded-Load consistent hashing</h3>
+  <p>With only <code>V = 1</code> position per physical node, random Poisson spacing on the circle produces severe load skew (<code>std / mean ~ 49%</code>). Assigning each physical node <code>V = 100..200</code> virtual labels (<code>gpu-0#v0 .. gpu-0#v149</code>) interleaves every node's arcs uniformly around the ring, reducing load standard deviation by <code>1 / sqrt(V)</code> (<code>9.1%</code> at <code>V = 150</code>) and ensuring that when one GPU crashes, its keys spread evenly across all <code>N - 1</code> survivors instead of dumping 100% onto a single clockwise neighbor. Still, virtual nodes cannot split a single <strong>hot key</strong> (for example, one enterprise customer whose shared system prompt accounts for 35% of all requests). <strong>Consistent Hashing with Bounded Load</strong> (Mirrokni et al., 2017) sets a capacity ceiling per node for a window of <code>L</code> active requests:</p>
+  <div class="codewrap"><pre>Node capacity cap = ceil((L / N) * c)     where balance factor c = 1.25 (25% headroom above mean)</pre></div>
+  <p>When a key's primary clockwise node reaches <code>cap</code>, the router walks clockwise to the next non-full node on the ring, bounding maximum GPU queue depth while keeping overflow deterministic so the secondary GPU also warms its KV cache.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Consistent hashing churn, vnode load imbalance, and KV-prefix cache hit rate</div>
+    <p class="ask">Predict first. In a cluster of N = 8 GPUs scaling to 9 GPUs with V = 10 virtual nodes, what percentage of KV prefix caches survive on their original GPU compared to modulo hashing, and how much does load imbalance drop when you increase V from 10 to 150?</p>
+    <div class="ctl">
+      <label><span>Cluster size N</span><input type="range" name="n" min="4" max="32" step="1" value="8"><output data-for="n" data-unit=" GPUs"></output></label>
+      <label><span>Virtual nodes V</span><select name="v" data-num><option value="1">1 vnode / GPU (no vnodes)</option><option value="10">10 vnodes / GPU</option><option value="50">50 vnodes / GPU</option><option value="150" selected>150 vnodes / GPU (production)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Scaling N -&gt; N+1 moves (N-1)/N keys under modulo hashing vs 1/(N+1) on a consistent hash ring, while raising V from 1 to 150 cuts per-node load standard deviation as 1/sqrt(V).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var modMoved=100*(v.n-1)/v.n;
+    var ringMoved=100/(v.n+1);
+    var ringWarm=100-ringMoved;
+    var stdPct=v.v===1?48.9:(v.v===10?21.2:(v.v===50?14.1:9.1));
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"Modulo hash(k)%N keys moved (cache miss)",value:modMoved,tone:"bad"},
+      {label:"Consistent ring keys moved (cache miss)",value:ringMoved,tone:"good"},
+      {label:"Consistent ring KV caches kept warm",value:ringWarm,tone:"good"},
+      {label:"Per-GPU load std-dev (% of mean load)",value:stdPct,tone:stdPct>20?"warn":"good"}
+    ]});
+    return {verdict:"Scale "+v.n+" -> "+(v.n+1)+" GPUs: Modulo invalidates "+tl.fmt(modMoved,1)+"% of KV caches vs Consistent Ring "+tl.fmt(ringMoved,1)+"% ("+tl.fmt(ringWarm,1)+"% stay warm) | At V="+v.v+", load std-dev = "+tl.fmt(stdPct,1)+"% of mean"};
+  })});</script>
+
+  <details class="q"><summary>Check: What are the lookup time complexity and memory footprint of a consistent hash ring with N physical nodes and V virtual nodes per physical node?</summary><div class="a">The sorted ring array stores <code>M = N * V</code> 32-bit or 64-bit positions. Each key lookup runs a binary search (<code>bisect_left</code>) in <strong>O(log(N * V))</strong> time, and adding or removing a node inserts or deletes <code>V</code> entries. Even for <code>N = 100</code> nodes and <code>V = 150</code> vnodes (<code>M = 15,000</code> entries), the ring occupies under 250 KB (fitting entirely in L2 CPU cache) and binary search takes at most 14 comparisons.</div></details>
+  <details class="q"><summary>Check: Besides adding a node, what happens on a consistent hash ring with V = 1 vs V = 150 when one physical GPU node crashes?</summary><div class="a">When a node fails, all keys on its arc segments roll clockwise to the next node on the ring (only <code>1/N</code> of total keys move). However, at <code>V = 1</code>, the dead node occupied a single contiguous arc, so <strong>100% of its traffic</strong> dumps onto its single clockwise neighbor, doubling that neighbor's load to <code>2x</code> and often triggering a cascading OOM collapse. At <code>V = 150</code>, the dead node's 150 small arcs are scattered randomly ahead of all remaining <code>N - 1</code> nodes, so each surviving GPU absorbs an even <code>1 / (N - 1)</code> share of the failed node's traffic.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Theoretical fraction of keys moved when scaling N -&gt; N+1: Modulo vs Consistent Ring</td><td class="n">(N-1)/N vs 1/(N+1)</td><td>Derived</td></tr>
+    <tr><td>Measured keys moved scaling 8 -&gt; 9 GPUs (10,000 prefixes): Modulo vs Consistent Ring</td><td class="n">8,929 (89.29%) vs 1,029 (10.29%)</td><td>Your own run</td></tr>
+    <tr><td>KV-prefix sessions saved from cache eviction on 8 -&gt; 9 scale-out</td><td class="n">7,900 of 10,000 sessions</td><td>Your own run</td></tr>
+    <tr><td>Load std-dev across 8 GPUs (mean 1,250 keys) at V = 1 vs V = 10 vs V = 150 vnodes</td><td class="n">611.7 (48.9%) -&gt; 264.4 (21.2%) -&gt; 114.0 (9.1%)</td><td>Your own run</td></tr>
+    <tr><td>Min / Max keys per GPU at V = 1 vs V = 150 (ideal 1,250)</td><td class="n">330..2,376 (V=1) vs 1,085..1,465 (V=150)</td><td>Your own run</td></tr>
+    <tr><td>Hot-tenant (35% traffic) max single-GPU load: Unbounded vs Bounded-Load (c=1.25)</td><td class="n">4,359 reqs vs 1,563 reqs (2.79x peak drop)</td><td>Your own run</td></tr>
+    <tr><td>Consistent hash ring lookup complexity for N nodes and V vnodes</td><td class="n">O(log(N * V)) binary search</td><td>Derived</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>L4 Transport Load Balancer (TCP/UDP 5-tuple)</td><td>Multi-million PPS throughput, microsecond latency, Direct Server Return (DSR) support</td><td>Blind to HTTP headers, URLs, JWT claims, and multiplexed HTTP/2 streams</td><td>Long-lived gRPC/HTTP/2 or WebSocket connections pin uneven load onto individual pods</td></tr>
+    <tr><td>L7 Application Load Balancer / Reverse Proxy</td><td>Per-request HTTP/2 stream balancing, path/header routing, TLS termination, active retries</td><td>2x TCP connections (client-to-LB and LB-to-backend), payload buffering CPU/memory</td><td>Proxy CPU becoming the bottleneck on high-throughput streaming or large tensor payloads</td></tr>
+    <tr><td>API Gateway (L7 + Policy Control Plane)</td><td>Centralized JWT/OAuth auth, per-tenant token rate limiting, schema validation, billing</td><td>Highest per-request latency (1-5 ms if hitting external Redis/auth DB on cache miss)</td><td>Hard dependency on external rate-limit/auth store creating a single point of failure</td></tr>
+    <tr><td>Consistent Hashing Ring (V=150 vnodes)</td><td>Sticky prefix/cache affinity with only 1/(N+1) churn on scale events and even failure spread</td><td>Does not factor in real-time server queue depth; single hot key still hits one node</td><td>Hot-tenant or viral-prompt traffic spikes overloading one worker unless Bounded Load is enabled</td></tr>
+    <tr><td>Bounded-Load Consistent Hashing (c=1.25)</td><td>Guarantees no node exceeds ceil(c * L/N) load while keeping 80%+ cache locality</td><td>Router must track in-flight load per node; spillover hops warm a secondary cache</td><td>Setting c too close to 1.0 (e.g. 1.02) causes excessive ring hopping (O(N*V) scan under high load)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Consistent hashing ring with virtual nodes and bounded load</h2>
+  <p>Simulate an L7 LLM prefix-cache router across 10,000 active sessions and 8 GPU workers: compare key movement when scaling <code>N = 8 -&gt; 9</code> under modulo hashing versus a 32-bit MD5 consistent hash ring, measure load standard deviation across <code>V in [1, 10, 150]</code> virtual nodes, and cap a 35% hot-tenant spike using Bounded-Load consistent hashing (<code>c = 1.25</code>).</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import bisect
+import hashlib
+import math
+
+def h32(s):
+    return int.from_bytes(hashlib.md5(s.encode("utf-8")).digest()[:4], "big")
+
+class ConsistentHashRing:
+    def __init__(self, nodes, vnodes=150):
+        self.vnodes = vnodes
+        self.ring = []
+        self.owner = {}
+        for n in nodes:
+            self.add_node(n)
+
+    def add_node(self, node):
+        for v in range(self.vnodes):
+            pos = h32(f"{node}#v{v}")
+            bisect.insort(self.ring, pos)
+            self.owner[pos] = node
+
+    def get_node(self, key):
+        pos = h32(key)
+        idx = bisect.bisect_left(self.ring, pos) % len(self.ring)
+        return self.owner[self.ring[idx]]
+
+    def route_bounded(self, keys, cap_factor=1.25):
+        nodes = sorted(set(self.owner.values()))
+        cap = math.ceil((len(keys) / len(nodes)) * cap_factor)
+        counts = {n: 0 for n in nodes}
+        hops = 0
+        for k in keys:
+            pos = h32(k)
+            idx = bisect.bisect_left(self.ring, pos) % len(self.ring)
+            while counts[self.owner[self.ring[idx]]] &gt;= cap:
+                idx = (idx + 1) % len(self.ring)
+                hops += 1
+            counts[self.owner[self.ring[idx]]] += 1
+        return counts, cap, hops
+
+N_KEYS = 10_000
+keys = [f"prefix_session_{i}" for i in range(N_KEYS)]
+nodes_8 = [f"gpu-{i}" for i in range(8)]
+nodes_9 = [f"gpu-{i}" for i in range(9)]
+
+# 1. Scale-out N=8 -&gt; N=9 key movement (KV prefix cache invalidation)
+mod_moved = sum(1 for k in keys if (h32(k) % 8) != (h32(k) % 9))
+ring8 = ConsistentHashRing(nodes_8, vnodes=150)
+map8 = {k: ring8.get_node(k) for k in keys}
+ring8.add_node("gpu-8")
+ring_moved = sum(1 for k in keys if map8[k] != ring8.get_node(k))
+
+print(f"Scale-out N=8 -&gt; N=9 across {N_KEYS:,} active LLM session prefixes:")
+print(f"  Modulo hash(k)%N moved : {mod_moved:4d}/{N_KEYS} ({100*mod_moved/N_KEYS:5.2f}%) | Theory (N-1)/N = 88.89%")
+print(f"  Consistent ring moved  : {ring_moved:4d}/{N_KEYS} ({100*ring_moved/N_KEYS:5.2f}%) | Theory 1/(N+1) = 11.11%")
+print(f"  KV prefix cache saved  : {mod_moved - ring_moved:,} sessions stayed warm on their original GPU")
+
+# 2. Virtual node count vs load balance standard deviation across 8 GPUs (ideal = 1,250 keys/GPU)
+print("\nVirtual nodes (V) vs Load Balance across 8 GPU workers (ideal = 1250.0 keys/node):")
+for v in (1, 10, 150):
+    r = ConsistentHashRing(nodes_8, vnodes=v)
+    counts = {n: 0 for n in nodes_8}
+    for k in keys:
+        counts[r.get_node(k)] += 1
+    vals = list(counts.values())
+    mean = N_KEYS / len(nodes_8)
+    std = math.sqrt(sum((c - mean) ** 2 for c in vals) / len(vals))
+    print(f"  V={v:3d} vnodes/GPU | min={min(vals):4d} max={max(vals):4d} | std={std:6.1f} ({100*std/mean:4.1f}% of mean)")
+
+# 3. Hot-tenant spike (35% traffic on one prefix) with and without Bounded-Load (c=1.25)
+skew_keys = ["tenant_hot_prefix"] * 3500 + keys[:6500]
+r_hot = ConsistentHashRing(nodes_8, vnodes=150)
+unbounded_max = max(sum(1 for k in skew_keys if r_hot.get_node(k) == n) for n in nodes_8)
+b_counts, cap, hops = r_hot.route_bounded(skew_keys, cap_factor=1.25)
+print(f"\nHot-tenant spike (35% single prefix): Unbounded max GPU load = {unbounded_max} reqs")
+print(f"Bounded-load (c=1.25, cap={cap})      : Bounded max GPU load   = {max(b_counts.values())} reqs (spilled {hops} vnode hops)")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">Scale-out N=8 -&gt; N=9 across 10,000 active LLM session prefixes:
+  Modulo hash(k)%N moved : 8929/10000 (89.29%) | Theory (N-1)/N = 88.89%
+  Consistent ring moved  : 1029/10000 (10.29%) | Theory 1/(N+1) = 11.11%
+  KV prefix cache saved  : 7,900 sessions stayed warm on their original GPU
+
+Virtual nodes (V) vs Load Balance across 8 GPU workers (ideal = 1250.0 keys/node):
+  V=  1 vnodes/GPU | min= 330 max=2376 | std= 611.7 (48.9% of mean)
+  V= 10 vnodes/GPU | min= 739 max=1726 | std= 264.4 (21.2% of mean)
+  V=150 vnodes/GPU | min=1085 max=1465 | std= 114.0 ( 9.1% of mean)
+
+Hot-tenant spike (35% single prefix): Unbounded max GPU load = 4359 reqs
+Bounded-load (c=1.25, cap=1563)      : Bounded max GPU load   = 1563 reqs (spilled 4545 vnode hops)</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Scale-out cache churn (N=8 -&gt; 9) and virtual-node load imbalance (% of mean)</div>
+    <div data-bars='{"unit":"%","digits":2,"max":100,"rows":[{"label":"Modulo hash(k)%N keys moved (N=8->9)","value":89.29,"tone":"bad"},{"label":"Consistent ring keys moved (N=8->9)","value":10.29,"tone":"good"},{"label":"Load std-dev at V=1 vnode (% mean)","value":48.94,"tone":"bad"},{"label":"Load std-dev at V=10 vnodes (% mean)","value":21.15,"tone":"warn"},{"label":"Load std-dev at V=150 vnodes (% mean)","value":9.12,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> Consistent hashing with V=150 vnodes cuts scale-out KV cache invalidation from 89.29% to 10.29% (saving 7,900 sessions) while compressing per-GPU load standard deviation from 48.9% down to 9.1%.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>8.68x reduction in KV-prefix cache eviction on scale-out:</strong> Scaling from 8 to 9 GPUs moves <code>8,929 / 10,000</code> keys (<code>89.29%</code>) under modulo hashing versus <code>1,029 / 10,000</code> (<code>10.29%</code>) on the consistent ring, closely tracking theoretical <code>(N-1)/N = 88.89%</code> and <code>1/(N+1) = 11.11%</code>.</li>
+    <li><strong>Why virtual nodes are mandatory:</strong> At <code>V = 1</code>, the busiest GPU receives <code>2,376</code> sessions while the quietest gets <code>330</code> (a <code>7.2x</code> imbalance, std-dev <code>611.7</code>). Raising <code>V</code> to <code>150</code> tightens the spread to <code>1,085..1,465</code> (std-dev <code>114.0</code>, or <code>9.1%</code> of the 1,250 mean).</li>
+    <li><strong>Bounded-load rescues the hot-tenant GPU:</strong> When one hot prefix drives 35% of traffic (3,500 requests + ~859 background requests = <code>4,359</code> requests on a single GPU), setting <code>c = 1.25</code> caps every GPU at <code>ceil(1250 * 1.25) = 1,563</code> requests and spills excess clockwise across 2 additional GPUs.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Replace MD5 with Python's sequential string prefix or poor hash <code>sum(ord(c) for c in s)</code>.</strong> Predict what happens to the ring distribution even at <code>V = 150</code>: all keys cluster into a tiny integer interval <code>[1400, 1700]</code> on the <code>[0, 2^32]</code> ring, routing 100% of all 10,000 sessions onto a single virtual node (<code>std = 3,291</code>). Consistent hashing requires a uniform avalanche hash (MurmurHash3, xxHash, or MD5/SHA).</li>
+    <li><strong>Tighten the bounded-load factor from <code>c = 1.25</code> to <code>c = 1.001</code>.</strong> Run <code>route_bounded(skew_keys, cap_factor=1.001)</code> and check <code>hops</code>. Predict the probe cost: as the last few nodes fill up to <code>cap = 1,252</code>, the router must step through tens of thousands of full virtual nodes (<code>hops &gt; 60,000</code>), turning <code>O(log M)</code> lookup into <code>O(M)</code> linear scanning.</li>
+    <li><strong>Simulate node failure (<code>N = 8 -&gt; 7</code>) at <code>V = 1</code> vs <code>V = 150</code>.</strong> Remove <code>gpu-3</code> and count which surviving GPUs receive its former keys. At <code>V = 1</code>, 100% of <code>gpu-3</code>'s keys land on a single neighbor; at <code>V = 150</code>, all 7 surviving GPUs share the load within <code>+-3%</code>.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Implement <strong>Prefix-Aware Load Balancing (Cache-Aware P2C)</strong>: check the first 2 distinct physical GPUs clockwise on the ring (<code>primary</code> and <code>secondary</code>) and route to <code>secondary</code> only when <code>queue_len(primary) - queue_len(secondary) &gt; threshold</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>TTFT (Time-To-First-Token) jumps 4x across the whole LLM cluster every time Kubernetes HPA adds a GPU pod</td><td>Ingress router uses modulo hashing or round-robin, destroying KV-prefix cache locality on scale events</td><td>Switch L7 router (Envoy / vLLM router) to consistent ring hashing or Maglev hashing keyed on system-prompt / conversation prefix hash</td></tr>
+    <tr><td>Cascading OOM crash: GPU-2 dies, then 15 seconds later GPU-3 dies, then GPU-4 dies</td><td>Consistent hash ring configured with too few virtual nodes (<code>V &lt; 10</code>), dumping 100% of the dead node's traffic onto its single clockwise neighbor</td><td>Configure <code>V &gt;= 100..200</code> virtual nodes per backend so a failed node's traffic distributes uniformly across all <code>N - 1</code> survivors</td></tr>
+    <tr><td>Multiple L7 proxy replicas route the same conversation ID to different GPU pods</td><td>Each L7 proxy built its ring using non-deterministic iteration order or slightly out-of-sync service discovery pod lists</td><td>Sort backend node identifiers deterministically, use a seed-fixed non-cryptographic hash (<code>xxHash64</code> / <code>Murmur3</code>), and propagate membership via consensus/EDS</td></tr>
+    <tr><td>One GPU worker hits 100% KV cache eviction and high latency while 7 other GPUs sit at 40% utilization</td><td>A single viral prompt or batch enterprise tenant hashes to one point on the ring (hot-key skew)</td><td>Enable Bounded-Load consistent hashing (<code>c = 1.25</code>) or prefix-aware Power-of-Two-Choices (<code>P2C</code>) spillover across the top-K ring nodes</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Per-worker KV-prefix cache hit rate (<code>vllm:gpu_prefix_cache_hit_rate</code>), request load ratio <code>max(node_qps) / mean(node_qps)</code> across workers (alert if <code>&gt; 1.3</code>), ring membership churn count per minute, and bounded-load spillover hop rate.</p>
+  <details class="q"><summary>Scenario: You run a 16-GPU vLLM inference cluster behind an L7 Envoy gateway using consistent hashing on the first 512 tokens of each prompt. During an enterprise batch job, 40% of all incoming requests share the exact same 4,000-token legal contract prefix. GPU-7's queue depth spikes to 180 seconds while the other 15 GPUs are 80% idle. Design the routing fix so latency drops immediately without losing prefix caching.</summary><div class="a"><ol>
+    <li><strong>Diagnose why virtual nodes did not help:</strong> Virtual nodes (<code>V = 150</code>) only balance load across <em>distinct</em> hash keys. Because 40% of requests share the identical 512-token prefix string, they produce the exact same 32-bit hash integer and land on GPU-7.</li>
+    <li><strong>Enable Bounded-Load spillover (<code>c = 1.25</code>) or K-choice ring replication:</strong> Configure the L7 consistent hash policy with <code>hash_balance_factor = 125</code> (1.25x mean load). Once GPU-7 reaches <code>1.25 * (L / 16)</code> active requests (<code>7.8%</code> of total traffic), subsequent requests with that legal prefix walk clockwise to the next 5 distinct physical GPUs on the ring.</li>
+    <li><strong>Resulting cache and latency behavior:</strong> Instead of 1 GPU drowning under 40% of cluster traffic, 6 GPUs (<code>ceil(0.40 / 0.078) = 6</code>) each warm a copy of the 4,000-token legal KV prefix in HBM and share the hot tenant at <code>1.25x</code> load, while the remaining 10 GPUs serve normal multi-tenant traffic with zero prefix-cache thrashing.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Production ingress separates packet forwarding, application routing, and policy enforcement across Layer-4 load balancers, Layer-7 proxies, and API gateways. When routing stateful AI workloads like LLM KV-prefix caches, replacing modulo hashing with a consistent-hashing ring reduces cache invalidation during autoscaling from nearly ninety percent down to one over N plus one.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>An L4 load balancer hashes the TCP or UDP five-tuple at line rate without terminating TLS, while an L7 load balancer terminates TLS and parses HTTP or gRPC frames, and an API gateway layers on authentication, token-bucket rate limiting, and billing. To keep GPU prefix caches warm at L7, consistent hashing hashes both backend nodes and request prefixes onto a 32-bit ring and binary-searches clockwise in logarithmic time. Placing each GPU at 150 virtual node positions interleaves arc lengths around the circle, cutting per-node load standard deviation in our ten-thousand-session benchmark from 48.9 percent down to 9.1 percent and saving 7,900 sessions when scaling from eight to nine GPUs.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Virtual nodes solve random arc variance and spread a crashed node's traffic across all N minus one survivors, but they cannot split a single hot key that hashes to one point. To prevent a viral tenant from overloading one GPU, production routers enforce Consistent Hashing with Bounded Load at a 1.25 capacity factor, spilling excess requests clockwise to warm a bounded set of secondary nodes.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p class="weak">"An API gateway handles security and rate limiting, while a load balancer spreads traffic across servers. We use consistent hashing so that when we add servers we don't clear the cache."</p><p class="strong">"L4 balances TCP 5-tuples without TLS termination; L7 and the API Gateway terminate TLS to enforce JWT auth and token-bucket quotas and route prefix hashes on a 32-bit consistent ring with V=150 vnodes and c=1.25 bounded load, cutting 8-to-9 GPU scale-out cache churn from 89.3% to 10.3% while capping hot-prefix skew."</p><p>The strong answer contrasts L4 5-tuple vs L7 payload visibility, cites the exact <code>(N-1)/N</code> vs <code>1/(N+1)</code> churn numbers, and pairs virtual nodes (<code>V=150</code>) with bounded load (<code>c=1.25</code>).</p></div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Adding more virtual nodes (e.g. V = 200 per physical server) prevents a single viral prompt or hot tenant key from overloading one server on a consistent hash ring."</summary><div class="a">Wrong. Virtual nodes only smooth out load variance across <em>many distinct keys</em> by subdividing the ring into smaller interleaved arcs. Every request carrying the exact same key <code>K</code> computes the exact same hash <code>h(K)</code> and lands on the exact same single virtual node. Preventing single-key hot spots requires <strong>Bounded-Load consistent hashing</strong> (<code>c = 1.25</code>) or key-salting across <code>K</code> replicas.</div></details>
+  <details class="q"><summary>"An L4 load balancer is strictly faster than an L7 load balancer, so you should always use L4 for internal gRPC and LLM inference routing."</summary><div class="a">Wrong. While L4 has lower per-packet overhead, it balances only at TCP connection setup (<code>5-tuple</code>). Because gRPC/HTTP/2 multiplexes thousands of RPCs over one long-lived TCP socket and L4 cannot read HTTP headers or prompt prefixes, L4 pins connections unevenly and achieves <code>1/N</code> random prefix-cache hit rate instead of <code>~90%</code> L7 prefix-affinity hit rate.</div></details>
+  <details class="q"><summary>"When one server in an N-node consistent hash ring crashes, its traffic only affects one neighbor, which is safer than modulo hashing."</summary><div class="a">Half-true and dangerous if <code>V = 1</code>. Without virtual nodes (<code>V = 1</code>), 100% of the crashed node's traffic dumps onto its single clockwise neighbor, immediately doubling that neighbor's load to <code>2x</code> and triggering a cascading domino collapse around the ring. Only with <code>V &gt;= 100</code> virtual nodes does the crashed node's <code>1/N</code> share disperse evenly (<code>1/(N-1)</code> each) across all surviving nodes.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Contrast an L4 Load Balancer, an L7 Load Balancer, and an API Gateway by OSI layer, what fields they inspect, and where each sits in an AI inference platform.</summary><div class="a">An <strong>L4 LB</strong> (Layer 4, TCP/UDP) inspects only the 5-tuple (<code>src_ip, dst_ip, src_port, dst_port, proto</code>) without decrypting TLS; it sits at the outer internet edge to distribute raw TCP flows across L7 proxies. An <strong>L7 LB</strong> (Layer 7, HTTP/gRPC) terminates TLS, parses headers/paths/HTTP/2 streams, and balances per request. An <strong>API Gateway</strong> is a policy-focused L7 proxy at the north-south boundary that adds JWT/OAuth auth, per-tenant token-bucket rate limiting, and billing.<div class="f"><b>Follow-up</b>What is Direct Server Return (DSR) at L4, and why is it impossible for standard L7 HTTP proxying? In DSR, the L4 LB forwards packets by rewriting only the MAC address (or IP-in-IP encapsulation) while keeping the client's source IP, so the backend sends large response packets directly back to the client bypassing the LB. An L7 proxy terminates the client's TCP/TLS session and opens a separate backend TCP socket, so return traffic must traverse the L7 proxy to be encrypted with the client TLS session key.</div></div></details>
+  <details class="q"><summary>Prove why scaling from N to N+1 nodes moves (N-1)/N keys under hash(k) % N, but only 1/(N+1) keys on a consistent hash ring.</summary><div class="a">Under modulo hashing, a key with uniform integer hash <code>H</code> stays on the same node <code>i in [0, N-1]</code> only if <code>H % N == H % (N + 1)</code>. Within each period <code>N(N+1)</code>, only the first <code>N</code> integers <code>[0..N-1]</code> have identical remainders across both divisors, which is a fraction <code>N / (N(N+1)) = 1/(N+1)</code> staying put (or roughly <code>1/N</code>), so <code>~ (N-1)/N</code> move (<code>88.89%</code> for <code>8 -&gt; 9</code>). On a consistent hash ring of fixed circumference <code>2^32</code>, adding the <code>(N+1)</code>-th node with <code>V</code> uniform virtual nodes claims an expected <code>1/(N+1)</code> fraction of the circle's perimeter from existing arcs, leaving <code>N/(N+1)</code> of the ring untouched.</div></details>
+  <details class="q"><summary>In our kata, how did increasing virtual nodes from V = 1 to V = 150 affect load balance across 8 GPUs (10,000 keys), and what is the algorithmic cost of higher V?</summary><div class="a">At <code>V = 1</code>, per-GPU load ranged from <code>330</code> to <code>2,376</code> keys with a standard deviation of <code>611.7</code> (<code>48.9%</code> of the 1,250 mean). At <code>V = 150</code>, load tightened to <code>1,085..1,465</code> keys with a standard deviation of <code>114.0</code> (<code>9.1%</code> of mean). The cost is memory <code>O(N * V)</code> entries on the ring (<code>1,200</code> integers for <code>8 * 150</code>) and binary search lookup time <code>O(log(N * V))</code> (<code>~11</code> comparisons instead of <code>3</code>).<div class="f"><b>Follow-up</b>At what point do extra virtual nodes hit diminishing returns? Because standard deviation decays as <code>1 / sqrt(V)</code>, quadrupling <code>V</code> from <code>150</code> to <code>600</code> only halves the remaining imbalance from <code>~9%</code> to <code>~4.5%</code> while quadrupling ring rebuild and membership gossip overhead. Production systems (Envoy, Cassandra, Dynamo) typically use <code>V = 100..256</code>.</div></div></details>
+  <details class="q"><summary>Explain Consistent Hashing with Bounded Load (Mirrokni et al.) and quote our kata's numbers for a 35% hot-tenant spike with c = 1.25.</summary><div class="a">For <code>L</code> active requests across <code>N</code> nodes and balance factor <code>c &gt; 1</code> (e.g. <code>c = 1.25</code>), each node is given a hard cap <code>cap = ceil((L / N) * c)</code>. When routing key <code>k</code>, the router finds the first clockwise node on the ring whose current load is <code>&lt; cap</code>, walking clockwise along the ring if the primary node is full. In our kata (<code>L = 10,000, N = 8</code>), a 35% hot prefix sent <code>4,359</code> requests to one GPU without bounds; with <code>c = 1.25</code>, max GPU load was capped at <code>1,563</code> requests (<code>2.79x</code> reduction).</div></details>
+  <details class="q"><summary>How does Rendezvous Hashing (Highest Random Weight, HRW) work, and how does it compare to a Consistent Hash Ring with virtual nodes?</summary><div class="a">In Rendezvous Hashing, to route key <code>k</code> across nodes <code>n_1..n_N</code>, the router computes a combined hash score <code>score_i = hash(k, n_i)</code> for every node and picks <code>argmax_i score_i</code>. Like a consistent ring, adding or removing a node moves only <code>1/(N+1)</code> keys, and it achieves perfect uniform load balance without needing virtual nodes (<code>O(N)</code> memory instead of <code>O(N * V)</code>). Its drawback is <code>O(N)</code> lookup time per request instead of <code>O(log(N * V))</code>, though <code>O(N)</code> can be reduced to <code>O(log N)</code> using a binary tree of node groups (Skeleton HRW).<div class="f"><b>Follow-up</b>When is Rendezvous Hashing preferred over a ring? When <code>N</code> is moderate (<code>N &lt;= 64</code> GPU workers or storage shards) and you want zero virtual-node memory overhead and trivial top-K replica selection (just pick the top <code>K</code> highest <code>hash(k, n_i)</code> scores).</div></div></details>
+  <details class="q"><summary>What is Google Maglev hashing, and why do high-speed L4 software load balancers use it instead of a binary-search ring?</summary><div class="a">Maglev precomputes a fixed-size lookup table of prime length <code>M</code> (for example, <code>M = 65,537</code> slots) where each backend node takes turns filling its preferred free slots via two permutation hashes until all <code>M</code> slots are populated. Packet lookup is an <code>O(1)</code> array index <code>table[hash(5_tuple) % M]</code> (a single L1/L2 cache read) instead of an <code>O(log(N*V))</code> pointer/binary search, while maintaining consistent-hashing minimal disruption when rebuilding the table.</div></details>
+  <details class="q"><summary>Why does sticky consistent hashing alone sometimes degrade p99 TTFT on LLM inference clusters with variable prompt lengths, and how do modern routers (like vLLM / SGLang routers) combine cache locality with load awareness?</summary><div class="a">Two requests may have the same QPS rate, but a 64,000-token prefill prompt locks a GPU for seconds while a 128-token prompt finishes in 15 ms. Pure hash-ring routing ignores actual GPU KV-cache occupancy and running token queue depth. Modern LLM routers compute a composite score <code>alpha * prefix_match_ratio - beta * pending_token_load</code> (or use Bounded-Load / Power-of-Two-Choices over the primary ring node and a random fallback node).</div></details>
+  <details class="q"><summary>If you deploy 4 stateless L7 Envoy gateway pods in front of 16 GPU workers, what must be true for all 4 Envoy pods to route the same conversation ID to the exact same GPU worker?</summary><div class="a">Consistent hashing is deterministic: if all 4 Envoy pods use the exact same hash function + seed (<code>xxHash64</code>), the same virtual node multiplier <code>V</code>, the same canonical node naming string (<code>ip:port#v</code>), and have converged on the same active health-check membership list via service discovery (EDS), they construct bit-identical rings in memory without needing inter-proxy coordination on each request.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the L4 vs L7 vs API Gateway comparison, (2) the exact formulas and kata numbers for modulo vs consistent-ring key movement (<code>N=8-&gt;9</code>) and vnode std-dev (<code>V=1, 10, 150</code>), and (3) the Bounded-Load cap formula <code>ceil((L/N)*c)</code>.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Redrew the 5-part architecture: L4 TCP/UDP LB (5-tuple) -&gt; L7 LB &amp; API Gateway (TLS, JWT auth, rate limits) -&gt; 32-bit Consistent Hash Ring (<code>V=150</code> vnodes) -&gt; Scale <code>8-&gt;9</code> churn comparison -&gt; Bounded-Load spillover.</li>
+    <li>Wrote the churn formulas and kata numbers: Modulo moves <code>(N-1)/N = 88.89%</code> (<code>8,929 / 10,000 = 89.29%</code>), Consistent Ring moves <code>1/(N+1) = 11.11%</code> (<code>1,029 / 10,000 = 10.29%</code>), saving <code>7,900</code> KV prefix caches.</li>
+    <li>Quoted virtual node load balance across 8 GPUs (mean 1,250): <code>V=1</code> std <code>611.7</code> (<code>48.9%</code>, range <code>330..2376</code>), <code>V=10</code> std <code>264.4</code> (<code>21.2%</code>), <code>V=150</code> std <code>114.0</code> (<code>9.1%</code>, range <code>1085..1465</code>).</li>
+    <li>Wrote the Bounded-Load capacity formula <code>cap = ceil((L / N) * c)</code> and cited the 35% hot-tenant spike reduction from <code>4,359</code> to <code>1,563</code> requests at <code>c = 1.25</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L09: In our 16 x 768 float32 embedding benchmark, why was binary Protobuf 1.95x smaller and 11.18x faster to serialize than REST/JSON?</summary><div class="a">JSON formats every 4-byte float32 into 6-9 ASCII characters plus delimiters (<code>7.84 B/float</code>, <code>96,390 B</code>) and parses decimal strings on decode. Protobuf copies raw packed IEEE-754 float32 bytes (<code>4.00 B/float</code>) with a 1-byte field tag and varint byte length (<code>4.02 B/float</code>, <code>49,376 B</code>, only <code>224 B</code> framing).</div></details>
+  <details class="q"><summary>A12: Why does an autograd engine need both reverse topological order and += accumulation when computing gradients on a computational DAG?</summary><div class="a">When a node fans out to multiple consumers, the multivariable chain rule requires summing the Vector-Jacobian Products from every outgoing branch (<code>+=</code>). Reverse topological order guarantees all downstream consumers have finished adding into <code>node.grad</code> before <code>node._backward()</code> propagates that total upstream.</div></details>
+  <details class="q"><summary>L08: What is the difference between HTTP 401 Unauthorized, 403 Forbidden, and 429 Too Many Requests at an API Gateway?</summary><div class="a"><code>401</code> means unauthenticated (missing, expired, or invalid credentials/JWT); <code>403</code> means authenticated identity lacks permission (RBAC/scope denial; re-authenticating will not help); <code>429</code> means rate-limit quota exceeded (must include a <code>Retry-After</code> header).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://dl.acm.org/doi/10.1145/258533.258660">Karger et al. (1997): Consistent Hashing and Random Trees: Distributed Caching Protocols for Relieving Hot Spots on the World Wide Web (STOC '97)</a><small>Foundational derivation of the consistent hash ring, 1/(N+1) key movement bound, and logarithmic virtual nodes. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1608.01350">Mirrokni et al. (2017): Consistent Hashing with Bounded Loads (SODA '18 / Google Research)</a><small>Supports the ceil(c * L / N) capacity cap and clockwise spillover guarantee under heavy hot-key skew. Checked 2026-11-23.</small></li>
+    <li><a href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/load_balancers">Envoy Proxy Documentation: Load Balancers (Ring Hash and Maglev)</a><small>Supports production L7 ring-hash vnode defaults, hash_balance_factor (bounded load), and Maglev O(1) lookup tables. Checked 2026-11-23.</small></li>
+    <li><a href="https://research.google/pubs/maglev-a-fast-and-reliable-software-network-load-balancer/">Eisenbud et al. (2016): Maglev: A Fast and Reliable Software Network Load Balancer (USENIX NSDI '16)</a><small>Supports L4 5-tuple ECMP packet forwarding and O(1) permutation table consistent hashing. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>L4 vs L7 Load Balancer vs API Gateway:</strong> L4 routes TCP/UDP packets by 5-tuple hash (<code>src/dst IP, port, proto</code>) at multi-million PPS without TLS termination; L7 terminates TLS and routes individual HTTP/gRPC frames; API Gateway adds JWT/OAuth auth, per-tenant token-bucket rate limits, and billing.</li>
+    <li><strong>Modulo vs Consistent Hashing Scale Churn:</strong> Scaling <code>N -&gt; N+1</code> nodes moves <code>(N-1)/N</code> keys under <code>hash(k) % N</code> (<code>89.29%</code> in our <code>8 -&gt; 9</code> run) vs <code>1/(N+1)</code> keys on a 32-bit consistent hash ring (<code>10.29%</code> in our run, keeping <code>7,900 / 10,000</code> GPU KV-prefix caches warm).</li>
+    <li><strong>Virtual Nodes (<code>vnodes</code>):</strong> Placing each physical node at <code>V</code> random points interleaves arcs so load standard deviation drops as <code>1/sqrt(V)</code> (from <code>48.9%</code> at <code>V=1</code> down to <code>9.1%</code> at <code>V=150</code>) and disperses a crashed node's traffic evenly across all <code>N - 1</code> survivors instead of overloading one neighbor.</li>
+    <li><strong>Consistent Hashing with Bounded Load:</strong> Virtual nodes cannot split a single hot key; setting a per-node cap <code>ceil((L / N) * c)</code> (<code>c = 1.25</code>) spills excess hot-prefix traffic clockwise, cutting our 35% hot-tenant peak GPU load from <code>4,359</code> down to <code>1,563</code> requests.</li>
+    <li><strong>Rendezvous (HRW) &amp; Maglev Alternatives:</strong> Rendezvous picks <code>argmax_i hash(k, node_i)</code> in <code>O(N)</code> time with zero vnode memory; Maglev builds an <code>M = 65,537</code> prime lookup table for <code>O(1)</code> array-indexed consistent hashing at L4/L7.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Spine (4-7-G-R-B):</strong> L4 5-tuple packet forward -&gt; L7 HTTP/2 frame proxy -&gt; API Gateway auth/quotas -&gt; Consistent Ring (<code>1/(N+1)</code> churn, <code>V=150</code> vnodes, <code>O(log(N*V))</code> lookup) -&gt; Bounded Load (<code>cap = ceil(c * L / N)</code>).</li>
+      <li><strong>Cold numbers (<code>N=8 -&gt; 9</code>, 10k keys):</strong> Modulo moves <code>89.29%</code> (<code>8,929</code> keys) vs Ring <code>10.29%</code> (<code>1,029</code> keys); <code>V=1</code> std-dev <code>48.9%</code> (<code>330..2376</code>) vs <code>V=150</code> std-dev <code>9.1%</code> (<code>1085..1465</code>).</li>
+      <li><strong>Interview trap:</strong> Virtual nodes fix random arc variance and failure dominoes, but only <strong>Bounded Load</strong> (<code>c = 1.25</code>) or key replication fixes a single hot key.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L10 T1 W02", "cards": [{"q": "How do an L4 Load Balancer, an L7 Load Balancer, and an API Gateway differ in what network fields they inspect?", "a": "L4 hashes TCP/UDP 5-tuples without decrypting TLS; L7 terminates TLS to route HTTP/gRPC frames; an API Gateway adds auth, token-bucket rate limits, and billing."}, {"q": "What fraction of keys move when scaling from N to N+1 nodes under modulo hashing hash(k)%N versus consistent hashing?", "a": "Modulo hashing moves (N-1)/N keys (89.29% scaling 8 to 9 GPUs), whereas consistent hashing moves only 1/(N+1) keys (10.29%, saving 7,900 of 10,000 KV caches)."}, {"q": "What two failure modes occur on a consistent hash ring if you use V=1 node position instead of V=150 virtual nodes?", "a": "Severe load skew across random arc sizes (48.9% std-dev vs 9.1% at V=150) and cascading failure when one crashed node dumps 100% of its keys onto one neighbor."}, {"q": "Why do virtual nodes fail to prevent a single viral prompt or hot tenant key from overloading one GPU worker?", "a": "Identical keys always produce the exact same 32-bit hash integer and land on the same single virtual node regardless of how many virtual nodes populate the ring."}, {"q": "How does Consistent Hashing with Bounded Load prevent a single hot key from overloading one worker?", "a": "It caps each node at ceil((L/N)*c) active requests (e.g. c=1.25); once the primary clockwise node hits cap, excess requests spill clockwise to the next non-full node."}, {"q": "What are the lookup time complexity and space complexity of a consistent hash ring with N nodes and V virtual nodes?", "a": "Space is O(N*V) sorted ring entries; lookup takes O(log(N*V)) time via binary search (bisect_left) to find the first virtual node clockwise."}, {"q": "How does Google Maglev consistent hashing achieve O(1) packet lookup instead of O(log(N*V)) binary search?", "a": "Maglev precomputes a prime-sized lookup table (e.g. M=65,537 slots) via node permutation hashes so routing is a single O(1) array index table[hash(key)%M]."}, {"q": "What five stages form the 4-7-G-R-B ingress and sticky-routing spine for stateful LLM inference?", "a": "L4 5-tuple forwarding, L7 HTTP/2 framing, API Gateway auth/quotas, Consistent Ring routing (1/(N+1) churn, V=150 vnodes), and Bounded-Load cap ceil(c*L/N)."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

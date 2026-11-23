@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D04 Self-attention</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D04">
+<main>
+<header>
+  <div class="eyebrow"><b>D04</b><span>Transformers and LLM internals</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Self-attention</h1>
+  <p class="lede">How does a token at position i inspect earlier tokens in the sequence and pull their relevant features into its own residual stream? This page covers single-head scaled dot-product self-attention: Q, K, and V linear projections, the 1 / sqrt(d_k) variance stabilizer, upper-triangular causal masking, row-wise softmax routing, and the O(T^2) compute and memory wall. Multi-head variants (MHA, GQA, MQA, MLA) are D05, positional encodings are D06, and FlashAttention kernels are K12.</p>
+  <div class="chips"><span><em>Before</em>D03 Embeddings and the unembedding</span><span><em>After</em>D05 Multi-head attention and its variants</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Step through the core concept and memory hook</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Read how it works and turn the scaling sliders</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Run the kata and break the mask and scaling</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Study production bugs and deliver the 90-second answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and flashcards</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>Two unit-variance Gaussian vectors q and k each have dimension d_k = 64. Before dividing by sqrt(64) = 8, what is the theoretical standard deviation of their raw dot product q . k: 1.0, 8.0, or 64.0?</summary><div class="a">8.0 (7.77 in the kata sample). Each of the 64 coordinate products q_m * k_m has mean 0 and variance 1, so the sum of 64 independent terms has variance d_k = 64 and standard deviation sqrt(64) = 8.0. Without dividing by sqrt(d_k), feeding logits of magnitude +/-8 to +/-16 into softmax collapses the row into a near one-hot vector (entropy drops from 3.40 bits to 0.60 bits in the kata) and starves Q and K of gradients.</div></details>
+  <details class="q"><summary>To prevent token i from attending to future tokens j &gt; i in causal self-attention, a teammate sets masked positions in the score matrix to 0.0 instead of -infinity before calling softmax. Does that block future information?</summary><div class="a">No. Because exp(0.0) = 1.0, every masked future position gets a positive numerator of 1.0 inside softmax. In the kata on a 6-token sequence, masking with 0.0 instead of -1e9 leaks an average of 0.317 probability mass per row onto future tokens, and perturbing token t = 5 ("bleeding") corrupts earlier token outputs out[0..4] by 1.0316 instead of 0.00e+00.</div></details>
+  <details class="q"><summary>In a 6-token causal self-attention layer on ["Patient", "took", "warfarin", "and", "developed", "bleeding"], what is the attention weight A[0, 0] and the Shannon entropy of row t = 0 ("Patient"), regardless of the learned matrices W_Q and W_K?</summary><div class="a">A[0, 0] is always 1.000 and its entropy is always 0.00 bits. At position i = 0, all columns j &gt; 0 are masked to -infinity (exp(-inf) = 0), leaving column j = 0 as the only valid destination. Because softmax normalizes each row to sum to 1.0, token 0 must place 100% of its weight on itself.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>From D03, the input embedding table W_E assigns one static vector to each token ID: "bleeding" starts with the exact same vector whether the sentence mentions "warfarin" or "paint". Self-attention is the data-dependent routing step that turns static vectors into contextual representations. Given a sequence of residual stream states X in R^(T x d_model), each token projects its state into three distinct roles: a <strong>query</strong> q_i (what I am looking for), a <strong>key</strong> k_j (what content I advertise to others), and a <strong>value</strong> v_j (the payload I hand over if selected).</p>
+  <p>Routing happens in five matrix operations. First, X multiplies by W_Q, W_K, and W_V to produce Q, K, and V in R^(T x d_k). Second, all pairwise dot products Q @ K^T measure how strongly every query i matches every key j. Third, dividing by sqrt(d_k) keeps the score variance at 1.0 so softmax does not saturate. Fourth, in an autoregressive decoder, an upper-triangular causal mask overwrites future entries (j &gt; i) with -infinity so token i cannot peek ahead, and row-wise softmax converts each row into a probability distribution A_i that sums to 1.0. Finally, multiplying A @ V blends the permitted value vectors into a new contextualized vector for every position.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Single-head causal self-attention from X to A @ V</div>
+    <svg viewBox="0 0 510 230" role="img" aria-label="Seven-step causal self-attention pipeline from input X (T, d_model) through Q, K, V projections (T, d_k), raw dot-product scores Q K^T (T, T), scaling by 1 / sqrt(d_k), upper-triangular causal mask (-inf for j > i), row-wise softmax weights A (T, T), to weighted value sum A @ V (T, d_k)">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="8" y="20" width="76" height="58" rx="6" class="c-soft ln" data-hi="1"/>
+          <text x="46" y="44" text-anchor="middle">Input X</text>
+          <text x="46" y="62" text-anchor="middle" class="m">(T, d_model)</text>
+        </g>
+        <g data-step="2">
+          <path d="M84 49 H102" class="ink"/>
+          <rect x="102" y="12" width="84" height="74" rx="6" class="c-paper ln" data-hi="2"/>
+          <text x="144" y="32" text-anchor="middle">Q = X W_Q</text>
+          <text x="144" y="49" text-anchor="middle">K = X W_K</text>
+          <text x="144" y="66" text-anchor="middle">V = X W_V</text>
+          <text x="144" y="81" text-anchor="middle" class="m">(T, d_k)</text>
+        </g>
+        <g data-step="3">
+          <path d="M186 49 H204" class="ink"/>
+          <rect x="204" y="20" width="88" height="58" rx="6" class="c-soft ln" data-hi="3"/>
+          <text x="248" y="44" text-anchor="middle">S = Q @ K^T</text>
+          <text x="248" y="62" text-anchor="middle" class="m">(T, T) var=d_k</text>
+        </g>
+        <g data-step="4">
+          <path d="M292 49 H310" class="ink"/>
+          <rect x="310" y="20" width="90" height="58" rx="6" class="c-paper ln" data-hi="4"/>
+          <rect x="310" y="20" width="90" height="6" rx="2" class="c-accent"/>
+          <text x="355" y="45" text-anchor="middle">S / sqrt(d_k)</text>
+          <text x="355" y="62" text-anchor="middle" class="m">var -&gt; 1.0</text>
+        </g>
+        <g data-step="5">
+          <path d="M400 49 H418" class="ink"/>
+          <rect x="418" y="20" width="84" height="58" rx="6" class="c-paper ln" data-hi="5"/>
+          <rect x="418" y="20" width="84" height="6" rx="2" class="c-warn"/>
+          <text x="460" y="45" text-anchor="middle">+ Mask M</text>
+          <text x="460" y="62" text-anchor="middle" class="m">j &gt; i -&gt; -inf</text>
+        </g>
+        <g data-step="6">
+          <path d="M460 78 V124 H296" class="ink"/>
+          <rect x="156" y="102" width="140" height="54" rx="6" class="c-soft ln" data-hi="6"/>
+          <text x="226" y="125" text-anchor="middle">A = softmax(row)</text>
+          <text x="226" y="143" text-anchor="middle" class="m">(T, T) row sum=1.0</text>
+        </g>
+        <g data-step="7">
+          <path d="M144 86 V178 H310" class="ink" stroke-dasharray="4 3"/>
+          <path d="M296 135 H340 V156" class="ink"/>
+          <rect x="310" y="156" width="150" height="54" rx="6" class="c-paper ln" data-hi="7"/>
+          <rect x="310" y="156" width="150" height="6" rx="2" class="c-good"/>
+          <text x="385" y="180" text-anchor="middle">Out = A @ V</text>
+          <text x="385" y="198" text-anchor="middle" class="m">(T, d_k) contextual</text>
+        </g>
+        <text x="145" y="202" text-anchor="middle" class="m">Attention(Q,K,V) = softmax(Q K^T / sqrt(d_k) + M) V</text>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Input residual matrix X of shape (T = 6, d_model = 64) enters the layer with one row vector per token.</li>
+      <li>Three linear projections W_Q, W_K, and W_V map X into queries Q, keys K, and values V, each of shape (6, 64).</li>
+      <li>Matrix multiply S = Q @ K^T scores all 36 token pairs in 2 * T^2 * d_k FLOPs, but unscaled scores have std sqrt(64) = 8.0.</li>
+      <li>Dividing every score by sqrt(d_k) = 8 restores unit variance (std 0.97 in the kata) so softmax stays in its high-gradient zone.</li>
+      <li>The causal mask sets upper-triangular entries (j &gt; i) to -infinity (-1e9), blocking future tokens from influencing past queries.</li>
+      <li>Row-wise softmax exponentiates and normalizes each row into attention weights A of shape (6, 6) whose rows sum to 1.0 and future weights equal 0.00e+00.</li>
+      <li>Multiplying A @ V takes a convex combination of past value vectors, producing contextual output Out of shape (6, 64) where t = 5 ("bleeding") puts 0.623 weight on t = 2 ("warfarin").</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Causal self-attention routes information forward in time by scoring Q @ K^T, stabilizing variance by 1 / sqrt(d_k), masking future columns j &gt; i to -infinity before row-wise softmax, and blending values via A @ V.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>P-D-S-M-S-V</strong> (Project, Dot, Scale, Mask, Softmax, Value-sum): <strong>P</strong>roject X into Q, K, V (T, d_k); <strong>D</strong>ot Q @ K^T into (T, T) scores; <strong>S</strong>cale by 1 / sqrt(d_k) to fix variance at 1; <strong>M</strong>ask j &gt; i to -infinity; <strong>S</strong>oftmax row-wise so weights sum to 1; <strong>V</strong>alue-sum A @ V back to (T, d_k).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Queries, keys, and values: why three separate projections?</h3>
+  <p>If you computed raw self-similarity X @ X^T directly on residual vectors, the score matrix would be symmetric (score(i, j) == score(j, i)) and every token would have to pass its entire residual state unchanged whenever selected. Language routing is asymmetric: in <em>"Patient took warfarin and developed bleeding"</em>, the token <code>bleeding</code> (t = 5) needs to search backward for an anticoagulant cause (<code>warfarin</code>, t = 2), which is different from what <code>warfarin</code> searches for at t = 2. Separate learned matrices W_Q, W_K in R^(d_model x d_k) and W_V in R^(d_model x d_v) break that symmetry. Q_i = x_i W_Q encodes the search query, K_j = x_j W_K encodes the addressable key, and V_j = x_j W_V extracts only the subspace of features that token j should write into downstream tokens.</p>
+  <div class="codewrap"><pre>Q = X @ W_Q    # (T, d_model) @ (d_model, d_k) -> (T, d_k)
+K = X @ W_K    # (T, d_model) @ (d_model, d_k) -> (T, d_k)
+V = X @ W_V    # (T, d_model) @ (d_model, d_v) -> (T, d_v)  (usually d_v = d_k)</pre></div>
+
+  <h3>Why scale by 1 / sqrt(d_k)? Variance derivation and softmax Jacobian</h3>
+  <p>Assume the components of query vector q and key vector k are independent random variables with mean 0 and variance 1. Their dot product is the sum of d_k product terms: s = sum_{m=1..d_k} q_m k_m. Because E[q_m k_m] = E[q_m] E[k_m] = 0 and Var(q_m k_m) = E[q_m^2] E[k_m^2] = 1 * 1 = 1, the variance of the sum grows linearly with head dimension: Var(q . k) = d_k, and its standard deviation is sqrt(d_k). At d_k = 64, unscaled scores have std 8.0 (7.77 in the kata); at d_k = 256, std reaches 16.0 (15.53 in the kata).</p>
+  <p>When large score differences hit softmax p_j = exp(s_j) / sum_r exp(s_r), the largest logit dominates exponentially, pushing p_max close to 1.0 and all other weights toward 0.0. In the backward pass, the Jacobian of softmax with respect to score s_j is d(p_m)/d(s_j) = p_m (1_{m=j} - p_j). Every entry of that Jacobian is proportional to p_m (1 - p_m) or -p_m p_j. When p_max approaches 1.0, p_max (1 - p_max) vanishes toward 0, freezing gradient flow into W_Q and W_K. Dividing by sqrt(d_k) rescales score variance to Var(s / sqrt(d_k)) = d_k / d_k = 1.0 across all head widths.</p>
+  <div class="codewrap"><pre>Var(q . k) = sum_{m=1..d_k} Var(q_m * k_m) = d_k * 1 = d_k   =>  std(q . k) = sqrt(d_k)
+Var((q . k) / sqrt(d_k)) = d_k / (sqrt(d_k))^2 = 1.0          =>  std = 1.0
+Softmax Jacobian diagonal: dp_j / ds_j = p_j * (1 - p_j) -> 0 as p_max -> 1</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Head dimension d_k and 1/sqrt(d_k) scaling vs softmax saturation</div>
+    <p class="ask">Predict first. Set head dimension d_k to 256 over 16 keys and switch Scaling from Scaled (1 / sqrt(d_k)) to Unscaled. What happens to the score standard deviation, max attention weight p_max, and the softmax gradient factor p_max * (1 - p_max)?</p>
+    <div class="ctl">
+      <label><span>Head dim d_k</span><input type="range" name="dk" min="16" max="512" step="16" value="64"><output data-for="dk" data-unit=" dims"></output></label>
+      <label><span>Key count T</span><select name="t" data-num><option value="6">6 tokens (kata prompt)</option><option value="16" selected>16 tokens (kata bench)</option><option value="64">64 tokens</option></select></label>
+      <label><span>Score scaling</span><select name="sc" data-num><option value="1" selected>Scaled by 1 / sqrt(d_k)</option><option value="0">Unscaled raw Q @ K^T</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Computed from deterministic normal dot products matching the variance law std = sqrt(d_k). Unscaled dot products inflate score spread as sqrt(d_k), collapsing softmax into a one-hot distribution and crushing the gradient factor p_max(1 - p_max).</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var z=[-1.75,-1.15,-0.82,-0.55,-0.32,-0.11,0.09,0.28,0.47,0.67,0.88,1.12,1.38,1.68,2.04,2.52];
+    var n=v.t, std=v.sc===1?1.0:Math.sqrt(v.dk), scores=[];
+    for(var i=0;i<n;i++){scores.push(z[i%16]*std*(1+0.04*(i%3)));}
+    var m=Math.max.apply(null,scores), ex=scores.map(function(x){return Math.exp(x-m);});
+    var sumE=ex.reduce(function(a,b){return a+b;},0), p=ex.map(function(x){return x/sumE;});
+    var pmax=Math.max.apply(null,p), ent=0;
+    for(var j=0;j<p.length;j++){if(p[j]>1e-12)ent-=p[j]*Math.log2(p[j]);}
+    var maxEnt=Math.log2(n), gf=pmax*(1-pmax);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:"%",digits:1,max:100,rows:[
+      {label:"Max weight p_max",value:pmax*100,tone:pmax>0.8?"bad":"good"},
+      {label:"Normalized entropy (H / log2 T)",value:(ent/maxEnt)*100,tone:ent/maxEnt<0.25?"bad":"good"},
+      {label:"Gradient factor 4*p_max*(1-p_max)",value:gf*400,tone:gf<0.05?"bad":"warn"}
+    ]});
+    return {verdict:"Score std = "+tl.fmt(std,2)+" | p_max = "+tl.fmt(pmax,3)+" | Entropy = "+tl.fmt(ent,2)+" / "+tl.fmt(maxEnt,2)+" bits | Jacobian factor p_max(1-p_max) = "+tl.fmt(gf,4)};
+  })});</script>
+
+  <details class="q"><summary>Check: at d_k = 64 in the kata, how much do the average max weight p_max, Shannon entropy, and gradient factor p_max(1 - p_max) change when you drop the 1 / sqrt(64) scaling factor?</summary><div class="a">With 1 / sqrt(64) scaling, score std is 0.97, average p_max is 0.250, entropy is 3.40 bits, and the gradient factor is 0.1786. Without scaling, score std jumps 8x to 7.77, p_max spikes to 0.853 (0.998 on the 6-token seed), entropy collapses from 3.40 bits to 0.60 bits, and the gradient factor drops to 0.1055 (and down to 0.0891 at d_k = 256).</div></details>
+
+  <h3>Causal masking: why -infinity before softmax and never 0</h3>
+  <p>An autoregressive language model predicts token i + 1 from tokens 0..i during a single parallel training forward pass (D01). For query i to remain causally isolated from future tokens j &gt; i, the attention weight A[i, j] must equal exactly zero. Because softmax applies an exponential exp(s_{i,j}) to every entry, setting a masked entry to 0.0 produces exp(0.0) = 1.0, which gives future tokens a positive share of the row sum. Instead, we add a causal mask matrix M where M[i, j] = 0 for j &lt;= i and M[i, j] = -infinity (in floating-point code, <code>-1e9</code> or <code>torch.finfo(dtype).min</code>) for j &gt; i. Then exp(-infinity) = 0.0, and the row-wise denominator sums only over valid past and present keys j &lt;= i.</p>
+  <p>Never apply the causal mask <em>after</em> softmax by zeroing out the upper triangle of A: if you compute softmax over all T columns and then zero out j &gt; i, the remaining weights in row i no longer sum to 1.0 (they sum to 1 - sum_{j&gt;i} A[i, j]), and the denominator itself still depends on the future logits s_{i, j&gt;i}, leaking future gradient and magnitude signal into the prefix.</p>
+
+  <h3>Value routing and quadratic O(T^2) complexity</h3>
+  <p>Once the causal weight matrix A in R^(T x T) is normalized, the output is Out = A @ V in R^(T x d_v). Row i of Out is the convex combination sum_{j=0..i} A[i, j] v_j. Count the arithmetic cost for one head: computing Q, K, and V takes 3 * (2 * T * d_model * d_k) FLOPs, which scales linearly with T. Computing Q @ K^T multiplies (T, d_k) by (d_k, T) in 2 * T^2 * d_k FLOPs, and computing A @ V multiplies (T, T) by (T, d_k) in another 2 * T^2 * d_k FLOPs, totaling 4 * T^2 * d_k attention matrix FLOPs plus O(T^2) HBM reads and writes to materialize S and A. At short T = 512, linear projections dominate; past T = 4,096 to 32,768, the quadratic T^2 term becomes the primary compute and memory bandwidth bottleneck.</p>
+  <details class="q"><summary>Check: if sequence length T quadruples from 2,048 to 8,192 while d_model and d_k stay fixed, by what factor do the projection FLOPs (X @ W_QKV) and the attention score/value FLOPs (Q @ K^T and A @ V) grow?</summary><div class="a">Projection FLOPs scale linearly with T and grow by 4x. Attention matrix FLOPs (4 * T^2 * d_k) and the intermediate T by T attention matrix memory scale quadratically with T^2 and grow by 4^2 = 16x.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Single-head Q, K, V projection FLOPs for sequence length T</td><td class="n">6 * T * d_model * d_k FLOPs</td><td>Derived (3 matmuls of 2 * T * d_model * d_k)</td></tr>
+    <tr><td>Single-head attention matrix FLOPs (Q @ K^T plus A @ V)</td><td class="n">4 * T^2 * d_k FLOPs</td><td>Derived (two matmuls of 2 * T^2 * d_k)</td></tr>
+    <tr><td>Theoretical std of unscaled dot product q . k (unit-variance inputs)</td><td class="n">sqrt(d_k) (8.0 at d_k = 64, 16.0 at d_k = 256)</td><td>Derived</td></tr>
+    <tr><td>Kata: score std at d_k = 64, unscaled vs scaled by 1 / sqrt(64)</td><td class="n">7.77 (unscaled) vs 0.97 (scaled)</td><td>Your own run</td></tr>
+    <tr><td>Kata: softmax entropy and p_max at d_k = 64 (16 keys), scaled vs unscaled</td><td class="n">3.40 bits (p_max 0.250) vs 0.60 bits (p_max 0.853)</td><td>Your own run</td></tr>
+    <tr><td>Kata: softmax Jacobian factor p_max(1 - p_max) at d_k = 256, scaled vs unscaled</td><td class="n">0.1626 (scaled) vs 0.0891 (unscaled, 0.0024 on T = 6)</td><td>Your own run</td></tr>
+    <tr><td>Kata: causal attention row t = 0 ("Patient") weight A[0, 0] and entropy</td><td class="n">A[0, 0] = 1.000, entropy = 0.00 bits</td><td>Your own run</td></tr>
+    <tr><td>Kata: causal attention weight from t = 5 ("bleeding") onto t = 2 ("warfarin")</td><td class="n">A[5, 2] = 0.623 (row entropy = 1.76 bits)</td><td>Your own run</td></tr>
+    <tr><td>Kata: prefix output drift max |out[0..4] diff| when perturbing t = 5 (causal -1e9 vs no mask vs buggy 0.0 mask)</td><td class="n">0.00e+00 (causal) vs 1.4769 (no mask) vs 1.0316 (0.0 mask)</td><td>Your own run</td></tr>
+    <tr><td>FP16 minimum representable value (safe finite mask floor before overflow)</td><td class="n">-65,504 (-1e4 often used in FP16; -1e9 overflows FP16 to -inf)</td><td>Derived (IEEE 754 binary16 spec)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Scaled dot-product (1 / sqrt(d_k))</td><td>Unit-variance logits at initialization for any d_k; healthy softmax gradients</td><td>One scalar multiply per score (fused into Q or GEMM epilogue at zero extra HBM cost)</td><td>Trained weights can still grow in norm over training, requiring QK-Norm in very deep or vision/audio models</td></tr>
+    <tr><td>Full causal attention (lower-triangular T x T)</td><td>Every token can retrieve exact values from any earlier position 0..i in one hop</td><td>4 * T^2 * d_k compute and O(T^2) attention matrix complexity during prefill</td><td>Latency and HBM explosion when prompt length T exceeds 16k to 128k tokens</td></tr>
+    <tr><td>Sliding-window causal attention (window W)</td><td>Bounds per-layer attention compute to O(T * W) and KV cache to W tokens</td><td>Tokens beyond distance W are unreachable inside a single layer (receptive field grows as L * W)</td><td>Exact citation or clinical fact extraction failing when needle sits outside window W</td></tr>
+    <tr><td>Bidirectional attention (no causal mask, BERT/encoders)</td><td>Every token sees both left and right context simultaneously; rich representation for embeddings (H01)</td><td>Cannot be used for single-pass autoregressive next-token training or KV-cached generation</td><td>Accidentally leaving causal mask off in a decoder gives 99%+ training accuracy via future peeking</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: single-head causal self-attention from scratch</h2>
+  <p>A self-contained 83-line Python script implementing single-head causal self-attention on a 6-token clinical sentence (<code>d_model = 64, d_k = 64</code>), verifying exact tensor shapes and row sums, testing future-token leakage when token <code>t = 5</code> is perturbed under three masking regimes, and measuring softmax saturation across head widths <code>d_k in {16, 64, 256}</code>.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""D04 Self-attention kata: Q/K/V projections, 1/sqrt(d_k) scaling, causal mask, softmax saturation."""
+import math, random
+
+random.seed(42)
+TOKENS = ["Patient", "took", "warfarin", "and", "developed", "bleeding"]
+T, D_MODEL, D_K = len(TOKENS), 64, 64
+
+def rand_mat(r, c, scale=1.0):
+    return [[random.gauss(0.0, scale) for _ in range(c)] for _ in range(r)]
+
+def matmul(A, B):
+    return [[sum(a * b for a, b in zip(row, col)) for col in zip(*B)] for row in A]
+
+def transpose(M):
+    return [list(col) for col in zip(*M)]
+
+def softmax_stats(scores):
+    A, ents, pmaxs, grads = [], [], [], []
+    for row in scores:
+        m = max(row)
+        ex = [math.exp(x - m) for x in row]
+        s = sum(ex)
+        p = [e / s for e in ex]
+        ent = abs(-sum(pi * math.log2(max(pi, 1e-12)) for pi in p))
+        pm = max(p)
+        A.append(p); ents.append(ent); pmaxs.append(pm); grads.append(pm * (1.0 - pm))
+    return A, ents, pmaxs, grads
+
+X = rand_mat(T, D_MODEL, 1.0)
+s_init = 1.0 / math.sqrt(D_MODEL)
+W_Q, W_K, W_V = rand_mat(D_MODEL, D_K, s_init), rand_mat(D_MODEL, D_K, s_init), rand_mat(D_MODEL, D_K, s_init)
+
+def self_attention(X_in, scale=True, causal=True, mask_val=-1e9):
+    Q, K, V = matmul(X_in, W_Q), matmul(X_in, W_K), matmul(X_in, W_V)
+    raw = matmul(Q, transpose(K))
+    div = math.sqrt(D_K) if scale else 1.0
+    scores = [[(mask_val if (causal and j &gt; i) else raw[i][j] / div) for j in range(T)] for i in range(T)]
+    A, ents, pmaxs, grads = softmax_stats(scores)
+    out = matmul(A, V)
+    return out, A, raw, ents, pmaxs, grads
+
+out_c, A_c, raw_s, ent_c, pmax_c, gf_c = self_attention(X, scale=True, causal=True)
+print("=== 1. Tensor shapes &amp; causal row sums (T=6, d_model=64, d_k=64) ===")
+print(f"X: ({len(X)}, {len(X[0])}) -&gt; Q,K,V: ({T}, {D_K}) -&gt; Scores: ({T}, {T}) -&gt; A: ({T}, {T}) -&gt; Out: ({len(out_c)}, {len(out_c[0])})")
+print("Row sums of A:", [round(sum(r), 6) for r in A_c])
+upper_sum = sum(A_c[i][j] for i in range(T) for j in range(i + 1, T))
+print(f"Upper-triangle future weights sum: {upper_sum:.2e}")
+print("\nCausal attention weights A (rows=query i, cols=key j):")
+for i, tok in enumerate(TOKENS):
+    r_str = " ".join(f"{A_c[i][j]:.3f}" for j in range(T))
+    print(f"  t={i} ({tok:9s}): [{r_str}]  entropy={ent_c[i]:.2f} bits")
+
+# 2. Future-token invariance test (perturb final token t=5 'bleeding')
+X_pert = [row[:] for row in X]
+X_pert[5] = [x + random.gauss(0.0, 3.0) for x in X_pert[5]]
+out_c_p, *_ = self_attention(X_pert, scale=True, causal=True)
+out_b, *_ = self_attention(X, scale=True, causal=False)
+out_b_p, *_ = self_attention(X_pert, scale=True, causal=False)
+out_z, A_z, *_ = self_attention(X, scale=True, causal=True, mask_val=0.0)
+out_z_p, *_ = self_attention(X_pert, scale=True, causal=True, mask_val=0.0)
+
+def max_diff_prefix(M1, M2, rows=5):
+    return max(abs(M1[i][d] - M2[i][d]) for i in range(rows) for d in range(D_K))
+
+z_future = sum(A_z[i][j] for i in range(T) for j in range(i + 1, T)) / T
+print("\n=== 2. Future-token leakage test (perturbing t=5 'bleeding') ===")
+print(f"Causal mask (-1e9) max |diff| on out[0..4]:      {max_diff_prefix(out_c, out_c_p):.2e}")
+print(f"No mask (bidirectional) max |diff| on out[0..4]: {max_diff_prefix(out_b, out_b_p):.4f}")
+print(f"Buggy mask (0.0 instead of -inf) future weight:  {z_future:.3f} avg/row, diff={max_diff_prefix(out_z, out_z_p):.4f}")
+
+# 3. Scaling test across head dimensions d_k (16 queries x 16 keys)
+print("\n=== 3. Scaled (1/sqrt(d_k)) vs Unscaled softmax saturation ===")
+N_BENCH = 16
+for d_test in (16, 64, 256):
+    random.seed(12)
+    Qt, Kt = rand_mat(N_BENCH, d_test, 1.0), rand_mat(N_BENCH, d_test, 1.0)
+    s_un = matmul(Qt, transpose(Kt))
+    s_sc = [[v / math.sqrt(d_test) for v in r] for r in s_un]
+    flat_un = [v for r in s_un for v in r]
+    mean_un = sum(flat_un) / len(flat_un)
+    std_un = math.sqrt(sum((v - mean_un) ** 2 for v in flat_un) / len(flat_un))
+    std_sc = std_un / math.sqrt(d_test)
+    _, ent_sc, pm_sc, gf_sc = softmax_stats(s_sc)
+    _, ent_un, pm_un, gf_un = softmax_stats(s_un)
+    avg = lambda xs: sum(xs) / len(xs)
+    print(f"d_k={d_test:3d} | score_std: unscaled={std_un:5.2f}, scaled={std_sc:4.2f} | "
+          f"scaled: p_max={avg(pm_sc):.3f}, ent={avg(ent_sc):.2f}b, grad_f={avg(gf_sc):.4f} | "
+          f"unscaled: p_max={avg(pm_un):.3f}, ent={avg(ent_un):.2f}b, grad_f={avg(gf_un):.4f}")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== 1. Tensor shapes &amp; causal row sums (T=6, d_model=64, d_k=64) ===
+X: (6, 64) -&gt; Q,K,V: (6, 64) -&gt; Scores: (6, 6) -&gt; A: (6, 6) -&gt; Out: (6, 64)
+Row sums of A: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Upper-triangle future weights sum: 0.00e+00
+
+Causal attention weights A (rows=query i, cols=key j):
+  t=0 (Patient  ): [1.000 0.000 0.000 0.000 0.000 0.000]  entropy=0.00 bits
+  t=1 (took     ): [0.109 0.891 0.000 0.000 0.000 0.000]  entropy=0.50 bits
+  t=2 (warfarin ): [0.174 0.279 0.547 0.000 0.000 0.000]  entropy=1.43 bits
+  t=3 (and      ): [0.102 0.339 0.080 0.479 0.000 0.000]  entropy=1.66 bits
+  t=4 (developed): [0.118 0.220 0.162 0.253 0.246 0.000]  entropy=2.27 bits
+  t=5 (bleeding ): [0.032 0.089 0.623 0.047 0.142 0.066]  entropy=1.76 bits
+
+=== 2. Future-token leakage test (perturbing t=5 'bleeding') ===
+Causal mask (-1e9) max |diff| on out[0..4]:      0.00e+00
+No mask (bidirectional) max |diff| on out[0..4]: 1.4769
+Buggy mask (0.0 instead of -inf) future weight:  0.317 avg/row, diff=1.0316
+
+=== 3. Scaled (1/sqrt(d_k)) vs Unscaled softmax saturation ===
+d_k= 16 | score_std: unscaled= 3.97, scaled=0.99 | scaled: p_max=0.237, ent=3.41b, grad_f=0.1730 | unscaled: p_max=0.663, ent=1.35b, grad_f=0.1801
+d_k= 64 | score_std: unscaled= 7.77, scaled=0.97 | scaled: p_max=0.250, ent=3.40b, grad_f=0.1786 | unscaled: p_max=0.853, ent=0.60b, grad_f=0.1055
+d_k=256 | score_std: unscaled=15.53, scaled=0.97 | scaled: p_max=0.217, ent=3.45b, grad_f=0.1626 | unscaled: p_max=0.878, ent=0.44b, grad_f=0.0891</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Kata causal leak drift and softmax entropy (scaled vs unscaled at d_k = 64)</div>
+    <div data-bars='{"unit":"","digits":2,"max":3.5,"rows":[{"label":"Prefix drift: causal mask (-1e9)","value":0.00,"tone":"good"},{"label":"Prefix drift: buggy 0.0 mask","value":1.03,"tone":"bad"},{"label":"Prefix drift: no mask (bidir)","value":1.48,"tone":"bad"},{"label":"Entropy d_k=64: scaled 1/sqrt(64)","value":3.40,"tone":"good"},{"label":"Entropy d_k=64: unscaled Q@K^T","value":0.60,"tone":"warn"}]}'></div>
+    <figcaption><b>Takeaway.</b> Proper causal masking (-1e9) isolates past tokens from future edits with 0.00e+00 drift (versus 1.03 with a 0.0 mask), while 1 / sqrt(64) scaling preserves 3.40 bits of softmax routing entropy versus 0.60 bits unscaled.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Exact causal isolation:</strong> in Section 1, the upper triangle of A sums to <code>0.00e+00</code> and every row sums to <code>1.0</code>. When token <code>t = 5</code> (<code>"bleeding"</code>) is heavily perturbed in Section 2, outputs <code>out[0..4]</code> change by <code>0.00e+00</code>.</li>
+    <li><strong>Row 0 is always deterministic:</strong> at <code>t = 0</code> (<code>"Patient"</code>), only column 0 is unmasked, so <code>A[0] = [1.000, 0.000, ...]</code> with <code>0.00 bits</code> of entropy. Routing diversity only becomes possible as valid history grows with <code>i</code>.</li>
+    <li><strong>The 0.0 mask bug leaks 31.7% of attention mass:</strong> replacing <code>-1e9</code> with <code>0.0</code> on future entries leaves <code>exp(0) = 1</code> in the numerator, giving future tokens <code>0.317</code> average weight per row and causing a <code>1.0316</code> prefix output corruption when <code>t = 5</code> changes.</li>
+    <li><strong>Variance scaling law holds empirically:</strong> across <code>d_k = 16, 64, 256</code>, unscaled score standard deviation grows as <code>sqrt(d_k)</code> (<code>3.97, 7.77, 15.53</code> vs theoretical <code>4.0, 8.0, 16.0</code>), whereas dividing by <code>sqrt(d_k)</code> locks score std near <code>1.0</code> (<code>0.99, 0.97, 0.97</code>) and keeps entropy near <code>3.40 bits</code>.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Off-by-one causal mask (<code>j &gt; i + 1</code>).</strong> Change <code>j &gt; i</code> to <code>j &gt; i + 1</code> in <code>self_attention</code>. Predict first: which future token can query <code>i</code> now read, and what happens to the prefix drift test when <code>t = 5</code> is perturbed?</li>
+    <li><strong>Post-softmax masking bug.</strong> Set <code>causal=False</code> inside <code>scores</code>, then zero out <code>A[i][j] = 0.0</code> for <code>j &gt; i</code> <em>after</em> <code>softmax_stats(scores)</code> without renormalizing. Predict whether the row sums of <code>A</code> still equal <code>1.0</code> and whether perturbing <code>t = 5</code> still alters <code>out[0..4]</code>!</li>
+    <li><strong>All-masked NaN row (padding + causal mask).</strong> Mask out column <code>j = 0</code> as well for row <code>i = 0</code> using <code>float("-inf")</code> (simulating a left-padded empty row). Predict what <code>max(row)</code> and <code>x - m</code> evaluate to in IEEE 754 floating point.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add the analytic backward pass for <code>scores -&gt; A -&gt; out</code>: given upstream gradient <code>dOut</code> of shape <code>(T, d_k)</code>, verify that <code>dScores[i, j] = A[i, j] * (dA[i, j] - sum_m A[i, m] * dA[i, m])</code> and measure the Frobenius norm of <code>dW_Q</code> with and without <code>1 / sqrt(d_k)</code> scaling at <code>d_k = 256</code>.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <figure class="viz stepper" id="viz-leak-failure">
+    <div class="vt">Stepper: How a missing or off-by-one causal mask passes training and fails in production</div>
+    <svg viewBox="0 0 490 195" role="img" aria-label="Four-step trace of a causal mask bug: off-by-one mask k=2 lets query i read key i+1 during teacher-forced training, driving training loss near zero; at autoregressive inference column i+1 does not exist, causing immediate output collapse; fixed by triu(k=1) with -inf before softmax">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="14" y="12" width="462" height="36" rx="5" class="c-paper ln" data-hi="1"/>
+          <rect x="14" y="12" width="6" height="36" rx="2" class="c-warn"/>
+          <text x="28" y="34">1. Buggy mask triu(k=2) or mask_val=0.0 in custom attention wrapper</text>
+        </g>
+        <g data-step="2">
+          <rect x="14" y="56" width="462" height="36" rx="5" class="c-soft ln" data-hi="2"/>
+          <text x="28" y="78">2. Teacher-forced training: query i copies target token j = i+1 -&gt; 99.8% acc</text>
+        </g>
+        <g data-step="3">
+          <rect x="14" y="100" width="462" height="36" rx="5" class="c-paper ln" data-hi="3"/>
+          <rect x="14" y="100" width="6" height="36" rx="2" class="c-bad"/>
+          <text x="28" y="122">3. Autoregressive decode: token i+1 not generated yet -&gt; garbage repetition</text>
+        </g>
+        <g data-step="4">
+          <rect x="14" y="144" width="462" height="36" rx="5" class="c-paper ln" data-hi="4"/>
+          <rect x="14" y="144" width="6" height="36" rx="2" class="c-good"/>
+          <text x="28" y="166">4. Fix: triu(k=1) with -inf before softmax + future-perturbation unit test</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>An engineer writes a custom attention mask using diagonal offset k = 2 (or passes an inverted boolean mask where True means keep instead of mask).</li>
+      <li>During parallel teacher-forced training, all T ground-truth tokens sit in X; query i attends directly to column j = i + 1 and copies the answer, driving validation perplexity near 1.00.</li>
+      <li>In production autoregressive decoding, sequence length stops at i; column i + 1 does not exist, so the attention head reads nothing or self-loops into gibberish on token 1.</li>
+      <li>Fixing the mask to strict upper-triangular j &gt; i (triu k = 1) filled with -infinity before softmax and asserting max |out[:i] diff| == 0 under future token perturbation catches the bug in CI.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Suspiciously low training loss (~0.01) paired with incoherent autoregressive generation is the classic signature of causal mask leakage.</figcaption>
+  </figure>
+
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Training loss drops to ~0.01 in a few hundred steps, but autoregressive generation outputs pure garbage</td><td>Causal mask missing, inverted boolean convention (<code>True</code> vs <code>False</code>), or off-by-one diagonal (<code>k=2</code> instead of <code>k=1</code>)</td><td>Use <code>is_causal=True</code> in <code>F.scaled_dot_product_attention</code> and run the kata's future-token perturbation test in CI</td></tr>
+    <tr><td><code>NaN</code> loss or <code>NaN</code> outputs on batched prompts with left-padding</td><td>A padding query token has every key column masked to <code>-inf</code>, causing <code>-inf - (-inf) = NaN</code> or <code>0 / 0</code> in softmax</td><td>Ensure padding tokens attend to at least themselves or unmask the diagonal before zeroing padded outputs</td></tr>
+    <tr><td><code>RuntimeError: value cannot be converted to type at::Half without overflow</code> when applying mask</td><td>Hardcoding <code>-1e9</code> into an FP16 score tensor (FP16 min is <code>-65,504</code>)</td><td>Use <code>torch.finfo(scores.dtype).min</code> or <code>-float("inf")</code> instead of <code>-1e9</code> in mixed precision</td></tr>
+    <tr><td>Attention gradients vanish and Q/K weights freeze when training a large-head or deep transformer</td><td>Missing <code>1 / sqrt(d_k)</code> scale factor, or Q and K norms growing unchecked over training steps</td><td>Verify <code>scale = d_k ** -0.5</code> and apply QK-Norm (RMSNorm on Q and K before dot product) if max logits drift above 30</td></tr>
+    <tr><td>CUDA OOM inside attention during long-prompt prefill (<code>T &gt;= 16,384</code>)</td><td>Naive eager attention materializes the full <code>(B, n_heads, T, T)</code> FP16/FP32 matrix in HBM</td><td>Switch from eager attention to FlashAttention / tiled SDPA (K12), which keeps <code>S</code> and <code>A</code> in SRAM tiles without writing <code>T x T</code> to HBM</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> per-head attention entropy (collapse near 0.0 bits across all layers signals logit growth or attention sink saturation), maximum pre-softmax score magnitude <code>max(Q K^T / sqrt(d_k))</code>, and the prefix invariance assertion (<code>max |out[:t] diff| &lt; 1e-6</code> when tokens <code>&gt; t</code> are modified).</p>
+  <details class="q"><summary>Scenario: a teammate ports your clinical note summarizer to a custom PyTorch attention wrapper to log attention maps. After 300 fine-tuning steps, teacher-forced evaluation perplexity drops from 8.4 to 1.04, yet live generation on a prompt repeats the last prompt word endlessly. How do you diagnose and fix it in five minutes?</summary><div class="a"><ol>
+    <li>Recognize the signature immediately: teacher-forced perplexity of 1.04 is impossibly good for clinical text and indicates future-token leakage across the causal mask.</li>
+    <li>Run the kata's future-perturbation test on one batch: randomize input token <code>X[:, -1, :]</code> and check <code>(out_clean[:, :-1] - out_perturbed[:, :-1]).abs().max()</code>. A non-zero diff confirms causal leakage.</li>
+    <li>Inspect the custom wrapper's mask logic: PyTorch's <code>nn.MultiheadAttention</code> expects <code>attn_mask</code> where <code>True</code> means <em>block</em> (fill with <code>-inf</code>), whereas <code>F.scaled_dot_product_attention</code> with a boolean <code>attn_mask</code> treats <code>True</code> as <em>keep</em> (participate in attention). Passing a <code>triu(k=1)</code> boolean mask directly to SDPA keeps only future tokens and blocks past tokens!</li>
+    <li>Replace the custom boolean mask with <code>is_causal=True</code> (or pass an explicit additive float mask with <code>0.0</code> on <code>j &lt;= i</code> and <code>-torch.inf</code> on <code>j &gt; i</code>).</li>
+    <li>Re-run the future-perturbation test to verify <code>0.00e+00</code> prefix diff before restarting fine-tuning.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Self-attention is the data-dependent routing layer in a transformer that lets each token inspect earlier tokens in the sequence and pull their relevant features into its own residual stream, turning static token embeddings into contextual representations.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>Given input X of shape T by d_model, we project it through three learned matrices W_Q, W_K, and W_V into queries, keys, and values of shape T by d_k. We compute all pairwise dot products Q times K transpose, which produces a T by T score matrix. Because two unit-variance vectors of length d_k have a dot-product variance of d_k, we divide by the square root of d_k to keep score variance at 1. In an autoregressive decoder, we add an upper-triangular causal mask that sets future columns j greater than i to negative infinity, apply row-wise softmax so each row sums to 1, and multiply by V.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Without 1 over root d_k scaling at d_k equals 64, score standard deviation jumps to 8, collapsing softmax entropy from 3.40 bits to 0.60 bits in our run and killing gradients via the p times 1 minus p Jacobian factor. Computing Q K transpose and A V costs 4 T squared d_k FLOPs and O of T squared memory, making long-context prefill quadratic unless tiled with FlashAttention.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p>Question: why does scaled dot-product attention divide by <code>sqrt(d_k)</code>, and what breaks if you remove it?</p><p class="weak">"We divide by the square root of d_k to normalize the dot product scores so they don't get too big when the dimension is large, which helps the model train better and more stably."</p><p class="strong">"If query q and key k have independent unit-variance coordinates, their dot product is a sum of d_k terms each with variance 1, so the dot product has variance d_k and standard deviation sqrt(d_k). At d_k = 64, unscaled scores have std 8 instead of 1. When those large logits hit softmax, the exponential pushes the maximum probability p_max near 1 and all others near 0; in my benchmark at d_k = 64, dropping 1 / sqrt(64) collapsed average row entropy from 3.40 bits to 0.60 bits. Because every entry of the softmax Jacobian scales with p_i * (1 - p_i), saturation drives gradients to W_Q and W_K toward zero. Dividing by sqrt(d_k) restores unit variance regardless of head width."</p><p>The strong answer gives the probability derivation (sum of d_k unit variances), the backward-pass mechanism (softmax Jacobian p_i(1 - p_i)), and illustrative numbers from the kata (std 8, entropy 3.40 to 0.60 bits).</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"To mask out future tokens in causal attention, set the upper triangle of the score matrix Q @ K^T to zero before calling softmax."</summary><div class="a">Setting a logit to <code>0.0</code> before softmax evaluates to <code>exp(0.0) = 1.0</code>, which gives future tokens positive probability weight (leaking 31.7% average future weight per row in the kata). Masked positions must be set to <code>-infinity</code> (so <code>exp(-inf) = 0.0</code>) before softmax.</div></details>
+  <details class="q"><summary>"You can apply the causal mask after softmax by multiplying the attention weight matrix A by a lower-triangular ones matrix."</summary><div class="a">Zeroing out <code>j &gt; i</code> after softmax breaks row normalization so the remaining weights in row <code>i</code> sum to less than <code>1.0</code>, and the softmax denominator <code>sum_k exp(s_{i,k})</code> still includes future logits <code>k &gt; i</code>, leaking future information into the scaling of every past weight.</div></details>
+  <details class="q"><summary>"Self-attention has O(T^2) parameters because the attention matrix A is T by T."</summary><div class="a">The parameter count of single-head self-attention is independent of sequence length <code>T</code>: <code>W_Q, W_K, W_V</code> have <code>3 * d_model * d_k</code> parameters (plus <code>d_k * d_model</code> for <code>W_O</code>). The <code>T x T</code> matrix <code>A</code> is a runtime activation computed on the fly, so compute and activation memory are <code>O(T^2)</code> while weights are <code>O(d_model * d_k)</code>.</div></details>
+  <details class="q"><summary>"Dividing by sqrt(d_k) is just an inference hyperparameter like sampling temperature and does not affect gradient flow."</summary><div class="a">While dividing by <code>sqrt(d_k)</code> acts like an attention softmax temperature of <code>tau = sqrt(d_k)</code>, its critical purpose is during backpropagation: without it, unscaled logits of std <code>sqrt(d_k)</code> saturate softmax into a one-hot step function where the Jacobian <code>p_i(1 - p_i)</code> vanishes, preventing <code>W_Q</code> and <code>W_K</code> from learning.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Explain single-head causal self-attention in 90 seconds.</summary><div class="a">Follow the three levels above: outcome (routing past token features into current residual states), mechanism (X to Q, K, V in R^(T x d_k), S = Q K^T / sqrt(d_k), upper-triangular -inf causal mask, row-wise softmax A, weighted value sum A V), and internals (variance d_k derivation, softmax Jacobian vanishing without scaling, and 4 T^2 d_k quadratic compute).<div class="f"><b>Follow-up</b>What are the exact shapes of every tensor from X to Out when batch size is B, sequence length is T, model width is d_model, and head dimension is d_k? X is (B, T, d_model); Q, K, V are (B, T, d_k); Q @ K^T and A are (B, T, T); Out = A @ V is (B, T, d_k).</div></div></details>
+  <details class="q"><summary>Derive why the dot product of two independent d_k-dimensional vectors with zero mean and unit variance has standard deviation sqrt(d_k).</summary><div class="a">Let q_m and k_m have mean 0 and variance 1. By independence, E[q_m k_m] = 0 and Var(q_m k_m) = E[q_m^2] E[k_m^2] = 1. The dot product sum_{m=1..d_k} q_m k_m adds d_k independent terms, so its variance is d_k * 1 = d_k and its standard deviation is sqrt(d_k).<div class="f"><b>Follow-up</b>What if q and k have coordinate variance sigma^2 instead of 1? Each product term has variance sigma^4, so the dot product has variance d_k * sigma^4 and standard deviation sigma^2 * sqrt(d_k).</div></div></details>
+  <details class="q"><summary>Write the diagonal and off-diagonal terms of the softmax Jacobian dp_m / ds_j and explain why large logits cause vanishing gradients.</summary><div class="a">For p = softmax(s), dp_j / ds_j = p_j (1 - p_j) on the diagonal and dp_m / ds_j = -p_m p_j off the diagonal. When one logit is much larger than the rest, p_max approaches 1 and all other p_m approach 0, so every product p_j(1 - p_j) and -p_m p_j approaches 0.</div></details>
+  <details class="q"><summary>Why does self-attention project X into separate Q and K matrices instead of computing softmax(X @ X^T / sqrt(d))?</summary><div class="a">X @ X^T is symmetric (entry (i, j) equals entry (j, i)) and forces every token to score highest with itself along the diagonal. Separate W_Q and W_K matrices allow asymmetric directed relationships, such as token 5 ("bleeding") attending strongly (0.623) to token 2 ("warfarin") without requiring token 2 to attend equally to token 5.<div class="f"><b>Follow-up</b>Why do we also need a separate value projection W_V instead of averaging the keys K or raw inputs X? Keys K live in the low-dimensional matching subspace tuned for dot-product scoring; W_V lets the head extract a completely different payload of features to add back into the residual stream.</div></div></details>
+  <details class="q"><summary>How do you write a 5-line unit test in PyTorch or NumPy to prove a causal self-attention layer has zero future leakage?</summary><div class="a">Run a forward pass on random input X to get <code>out1</code>. Clone X into <code>X2</code>, add large noise to the last token <code>X2[:, -1, :] += 10.0</code>, and run a second forward pass to get <code>out2</code>. Assert that <code>max(|out1[:, :-1] - out2[:, :-1]|) == 0.0</code> (within floating-point epsilon).</div></details>
+  <details class="q"><summary>Compare the FLOPs of the QKV projections against the Q @ K^T and A @ V attention multiplies for one head, and find the crossover sequence length T where attention matrix FLOPs exceed projection FLOPs.</summary><div class="a">Projections cost 6 * T * d_model * d_k FLOPs; attention matrix multiplies cost 4 * T^2 * d_k FLOPs. Setting 4 * T^2 * d_k &gt; 6 * T * d_model * d_k gives the crossover at T &gt; 1.5 * d_model (for example, at d_model = 4,096, attention matrix FLOPs exceed QKV projection FLOPs once T &gt; 6,144).<div class="f"><b>Follow-up</b>If you also count the output projection W_O (another 2 * T * d_k * d_model FLOPs), where is the crossover? Total projections become 8 * T * d_model * d_k, so the crossover is at T = 2 * d_model (T = 8,192 when d_model = 4,096).</div></div></details>
+  <details class="q"><summary>Without any positional encoding (D06), what happens to the outputs of unmasked self-attention if you permute the input token rows of X?</summary><div class="a">Unmasked self-attention is permutation-equivariant: permuting the input rows of X by a permutation matrix P permutes the output rows by the exact same P (<code>Attn(P X) = P Attn(X)</code>), because dot products and weighted sums treat keys and values as an unordered set.</div></details>
+  <details class="q"><summary>Why does passing -1e9 as the mask value throw an overflow error or corrupt tensors when running in native FP16 (float16), while BF16 handles it without issue?</summary><div class="a">IEEE 754 FP16 has only 5 exponent bits and a maximum finite magnitude of 65,504, so -1e9 overflows its finite range. BF16 has 8 exponent bits (matching FP32's dynamic range up to ~3.4e38). In portable code, use <code>-float("inf")</code> or <code>torch.finfo(dtype).min</code>.</div></details>
+  <details class="q"><summary>In the kata, why does row t = 0 have 0.00 bits of attention entropy while row t = 4 has 2.27 bits?</summary><div class="a">Row t = 0 has only 1 unmasked key (column 0), so its distribution is [1.0] with maximum possible entropy log2(1) = 0.00 bits. Row t = 4 has 5 unmasked keys (columns 0..4), with maximum possible entropy log2(5) = 2.32 bits, and its weights spread nearly evenly across all 5 tokens (2.27 bits).<div class="f"><b>Follow-up</b>What is the theoretical maximum Shannon entropy in bits for causal attention row i (0-indexed)? Because row i has i + 1 unmasked columns (0 through i), its maximum entropy is log2(i + 1) bits, achieved when all i + 1 weights equal 1 / (i + 1).</div></div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its seven steps, then write: the P-D-S-M-S-V memory hook; the full scaled causal self-attention equation with tensor shapes; the proof that Var(q . k) = d_k; the softmax Jacobian formula showing why unscaled scores kill gradients; why masking with 0.0 fails; and the FLOPs formulas for projections versus attention matrices.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Equation &amp; shapes: <code>Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k) + M) V</code>; X is (T, d_model), Q/K/V are (T, d_k), S and A are (T, T), Out is (T, d_k).</li>
+    <li>Memory hook: P-D-S-M-S-V (Project Q/K/V, Dot Q @ K^T, Scale by 1 / sqrt(d_k), Mask j &gt; i to -inf, Softmax row-wise, Value-sum A @ V).</li>
+    <li>Scaling derivation: sum of d_k unit-variance product terms has variance d_k and std sqrt(d_k) (7.77 vs 0.97 at d_k = 64 in the kata); unscaled scores saturate softmax (entropy 3.40 -&gt; 0.60 bits) and crush the Jacobian factor p_max(1 - p_max).</li>
+    <li>Causal masking: M[i, j] = -inf for j &gt; i so exp(-inf) = 0; masking with 0.0 leaves exp(0) = 1 (leaking 0.317 weight/row and 1.0316 prefix drift in the kata vs 0.00e+00 with -1e9).</li>
+    <li>Complexity: QKV projections cost 6 * T * d_model * d_k FLOPs (O(T)); Q @ K^T and A @ V cost 4 * T^2 * d_k FLOPs and O(T^2) intermediate matrix memory.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D03: why does input embedding lookup W_E[i] execute in 0 arithmetic FLOPs while the output unembedding h @ W_U costs 2dV FLOPs per token?</summary><div class="a">At the input, token ID i is known, so hardware performs an O(d) contiguous memory gather of row i from W_E instead of multiplying a one-hot vector. At the exit, the hidden state h must be scored by dot product against all V vocabulary columns simultaneously.</div></details>
+  <details class="q"><summary>A09: when multiplying matrix A of shape (B, T, d_k) by matrix B of shape (B, d_k, T) in batched attention, what is the output shape and how many multiply-add FLOPs does it execute?</summary><div class="a">The output shape is (B, T, T). Each of the B * T^2 output elements requires a dot product of length d_k (2 * d_k FLOPs), totaling 2 * B * T^2 * d_k FLOPs.</div></details>
+  <details class="q"><summary>A16: what is the Shannon entropy in bits of a deterministic one-hot distribution [1, 0, 0, 0] versus a uniform distribution over 16 tokens?</summary><div class="a">A one-hot distribution has H = -1 * log2(1) = 0.00 bits of entropy (zero uncertainty). A uniform distribution over 16 outcomes has H = log2(16) = 4.00 bits.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need</a><small>Section 3.2.1 introduces Scaled Dot-Product Attention, derives the 1 / sqrt(d_k) variance scaling factor, and defines causal masking for the decoder. Checked 2026-11-23.</small></li>
+    <li><a href="https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html">PyTorch Documentation: torch.nn.functional.scaled_dot_product_attention</a><small>Specifies exact tensor shapes, 1 / sqrt(d_k) default scale, and the boolean vs additive float mask semantics for is_causal. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2205.14135">Dao et al. (2022): FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a><small>Analyzes the O(T^2) HBM read/write bottleneck of materializing intermediate score and weight matrices S and A in standard self-attention. Checked 2026-11-23.</small></li>
+    <li><a href="https://transformer-circuits.pub/2021/framework/index.html">Elhage et al. (2021): A Mathematical Framework for Transformer Circuits</a><small>Decomposes self-attention into QK routing circuits (where information is read from) and OV payload circuits (what is written to the residual stream). Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Q, K, V projections:</strong> Linear maps <code>Q = X W_Q</code>, <code>K = X W_K</code>, <code>V = X W_V</code> project each residual row from <code>d_model</code> to <code>d_k</code> in <code>6 * T * d_model * d_k</code> FLOPs, separating asymmetric search queries, addressable keys, and routable value payloads.</li>
+    <li><strong>Dot-product scoring &amp; 1 / sqrt(d_k) scaling:</strong> For unit-variance Q and K, raw scores <code>Q @ K^T</code> have variance <code>d_k</code> and std <code>sqrt(d_k)</code> (<code>7.77</code> at <code>d_k = 64</code> in the kata); dividing by <code>sqrt(d_k)</code> restores std <code>~1.0</code> (<code>0.97</code>) and keeps softmax entropy at <code>3.40 bits</code> vs <code>0.60 bits</code> unscaled.</li>
+    <li><strong>Softmax Jacobian &amp; gradient saturation:</strong> Because <code>dp_j / ds_j = p_j(1 - p_j)</code>, unscaled logits push <code>p_max -&gt; 1</code> and collapse the Jacobian factor (<code>0.1786 -&gt; 0.1055</code> at <code>d_k = 64</code>, down to <code>0.0024</code> on <code>T = 6</code>), starving <code>W_Q</code> and <code>W_K</code> of gradients.</li>
+    <li><strong>Causal masking:</strong> Upper-triangular entries <code>j &gt; i</code> are set to <code>-infinity</code> (<code>-1e9</code>) <em>before</em> softmax so <code>exp(-inf) = 0</code> and prefix drift is <code>0.00e+00</code>; masking with <code>0.0</code> leaves <code>exp(0) = 1</code> and leaks <code>0.317</code> average weight per row.</li>
+    <li><strong>Weighted value routing &amp; quadratic cost:</strong> <code>Out = A @ V</code> takes a convex combination of past values; computing <code>Q @ K^T</code> and <code>A @ V</code> costs <code>4 * T^2 * d_k</code> FLOPs and <code>O(T^2)</code> memory, surpassing QKV projection FLOPs once <code>T &gt; 1.5 * d_model</code>.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Master formula:</strong> <code>Attention(Q, K, V) = softmax(Q K^T / sqrt(d_k) + M) V</code> with memory hook <strong>P-D-S-M-S-V</strong>.</li>
+      <li><strong>Row 0 invariant:</strong> In causal attention, token <code>t = 0</code> always has <code>A[0, 0] = 1.000</code> and entropy <code>0.00 bits</code>; row <code>i</code> has max entropy <code>log2(i + 1)</code> bits.</li>
+      <li><strong>Leakage test:</strong> Perturbing token <code>t</code> must change outputs <code>out[0..t-1]</code> by <code>0.00e+00</code>. Perplexity <code>~1.0</code> in teacher-forced training paired with garbage generation means a broken causal mask.</li>
+      <li><strong>FP16 mask trap:</strong> Never hardcode <code>-1e9</code> into FP16 tensors (min finite value is <code>-65,504</code>); use <code>-float("inf")</code> or <code>torch.finfo(dtype).min</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D04 T1 W02", "cards": [{"q": "What is the exact formula and tensor shape trace for single-head causal self-attention on input X of shape (T, d_model)?", "a": "Q, K, V are (T, d_k); scores S = Q@K^T/sqrt(d_k) and weights A = softmax(S+M) are (T, T); output A@V is (T, d_v)."}, {"q": "Why do we divide dot-product attention scores by sqrt(d_k) before applying softmax?", "a": "For unit-variance Q and K, dot-product variance is d_k; dividing by sqrt(d_k) restores unit variance so softmax does not saturate into one-hot weights with vanishing gradients."}, {"q": "Why must masked future positions in causal self-attention be set to -infinity (or -1e9) before softmax rather than 0?", "a": "Because exp(0) = 1 gives future tokens positive weight after softmax normalization, leaking future context, whereas exp(-inf) = 0 guarantees zero attention weight."}, {"q": "How do the FLOPs and intermediate attention matrix memory of self-attention scale with sequence length T and head width d_k?", "a": "Computing Q K^T and A V costs 4 T^2 d_k FLOPs, while materializing the T by T score and weight matrices costs O(T^2) memory."}, {"q": "Why does an off-by-one or missing causal mask give near-100% validation accuracy during training but garbage during autoregressive generation?", "a": "During teacher-forced training, query i reads the ground-truth next token at column j = i + 1; during generation, future tokens do not exist yet."}, {"q": "In the Softmax Jacobian, why does an unscaled dot product at d_k = 256 kill gradient flow to Q and K?", "a": "Unscaled scores have std sqrt(256) = 16, pushing max softmax probability p_max near 1.0 so the Jacobian factor p_max(1 - p_max) collapses toward zero."}, {"q": "Why does token t = 0 ('Patient') always have 0.00 bits of causal attention entropy regardless of its query or key values?", "a": "Causal masking sets columns j > 0 in row 0 to -infinity, leaving only column 0 unmasked, so softmax assigns probability 1.000 to itself."}, {"q": "How do Q, K, and V projections differ functionally from the static token embedding table W_E?", "a": "W_E assigns one static vector per token ID; W_Q, W_K, and W_V project each residual vector into role-specific search queries, addressable keys, and routable values."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D05 Multi-head attention and its variants</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="D05">
+<main>
+<header>
+  <div class="eyebrow"><b>D05</b><span>Transformers and LLM internals</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Multi-head attention and its variants</h1>
+  <p class="lede">Why do modern transformers split attention across dozens of parallel heads, and how do Multi-Query Attention (MQA), Grouped-Query Attention (GQA), and Multi-head Latent Attention (MLA) slash the KV-cache memory wall by 4x to 14x without losing multi-head expressivity? This page covers subspace splitting and concatenation, MHA vs GQA vs MQA vs MLA parameter and KV-cache math, grouped KV broadcasting (repeat_kv), and MLA weight absorption. Single-head causal attention is D04, RoPE positional math is D06, and serving engine KV paging is K06/K08.</p>
+  <div class="chips"><span><em>Before</em>D04 Self-attention</span><span><em>After</em>D06 Positional information</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Guess the three warm-up questions</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Step through MHA, GQA, MQA, and MLA side by side</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Read the mechanism and explore the 32k KV-cache sliders</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Run the kata and break repeat_kv and MLA absorption</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Study production weight absorption and speak the 90-s answer</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and flashcards</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You have a 32-layer transformer with d_model = 4,096, n_q = 32 query heads, and head dimension d_h = 128 in BF16 (2 bytes/element). For a single request at sequence length S = 32,768, how much VRAM does the KV cache consume under standard MHA (n_kv = 32) versus Llama-3-8B's GQA-4 (n_kv = 8)?</summary><div class="a">Standard MHA consumes 16.00 GiB (512.0 KiB per token), which is larger than the entire 8B model's weights! Switching to GQA-4 (n_kv = 8, where every 4 query heads share 1 KV head) cuts the KV cache by 4x to 4.00 GiB (128.0 KiB per token), and cuts attention layer parameters from 2,147.5M to 1,342.2M.</div></details>
+  <details class="q"><summary>Does splitting d_model = 4,096 into n_q = 32 parallel heads of dimension d_h = 128 in standard MHA cost 32x as many FLOPs and parameters as a single full-width head of dimension 4,096?</summary><div class="a">No. Because d_h = d_model / n_q = 128, stacking 32 projection matrices of shape (4096, 128) produces one (4096, 4096) matrix with the exact same parameter count (4 * d_model^2 per layer) and the exact same total FLOPs (8 T d_model^2 + 4 T^2 d_model) as a single 4,096-wide head, while giving the model 32 independent softmax routing distributions per token.</div></details>
+  <details class="q"><summary>In Multi-head Latent Attention (MLA, used in DeepSeek-V2/V3), the model expands a compressed latent vector c_KV (dimension d_c = 512) back into 32 full key and value heads of dimension 128 via up-projection matrices W_UK and W_UV. Why doesn't the inference engine have to cache those expanded 32-head K and V tensors in HBM?</summary><div class="a">Because linear projections are associative: during inference, W_UK is absorbed into W_Q (so each query head projects to dimension d_c = 512 and dots directly against the cached latent c_KV), and W_UV is absorbed into W_O. The engine only caches c_KV (512 floats) plus one shared decoupled RoPE key k^R (64 floats) = 576 floats per layer (36.0 KiB/tok across 32 layers, or 1.12 GiB at 32k context - 14.2x smaller than MHA).</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A single attention head (D04) has only one softmax distribution per query token: if position i needs to attend simultaneously to a syntactic subject at position 0, an anticoagulant drug at position 2, and a dosage number at position 3, one softmax row must average their value vectors together. <strong>Multi-Head Attention (MHA)</strong> fixes this by splitting the d_model residual space into n_q parallel subspaces of width d_h = d_model / n_q. Each head h runs its own independent Q_h, K_h, V_h projections and its own softmax routing matrix A_h, then concatenates all n_q outputs and mixes them back into the residual stream through an output projection W_O in R^((n_q * d_h) x d_model).</p>
+  <p>During training and prompt prefill, MHA is compute-bound and works well. During autoregressive decoding (K05, K06), however, every generated token must read all cached past keys and values from GPU HBM. The KV cache footprint <code>2 * L * n_kv * d_h * S * B * bytes</code> scales directly with the number of key-value heads <code>n_kv</code>. That hardware bottleneck drove three evolutionary variants: <strong>Multi-Query Attention (MQA)</strong> shares a single KV head across all query heads (<code>n_kv = 1</code>); <strong>Grouped-Query Attention (GQA)</strong> partitions the <code>n_q</code> query heads into <code>n_kv</code> groups so each group of <code>g = n_q / n_kv</code> query heads shares one KV head; and <strong>Multi-head Latent Attention (MLA)</strong> compresses all keys and values into a single shared low-rank latent vector <code>c_KV</code> of width <code>d_c</code> plus a tiny decoupled RoPE key <code>k^R</code> of width <code>d_r</code>.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The four attention families from MHA to MQA, GQA, and MLA</div>
+    <svg viewBox="0 0 510 235" role="img" aria-label="Four-step comparison of MHA (n_q=8 query heads paired 1:1 with n_kv=8 KV heads, 512 KiB/tok at 32L), MQA (8 query heads sharing n_kv=1 KV head, 16 KiB/tok), GQA (8 query heads grouped into n_kv=2 KV heads via repeat_kv, 128 KiB/tok at GQA-4), and MLA (shared compressed latent c_KV of d_c=512 plus decoupled RoPE key k^R of d_r=64, 36 KiB/tok)">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="14" width="236" height="92" rx="6" class="c-paper ln" data-hi="1"/>
+          <rect x="10" y="14" width="236" height="6" rx="2" class="c-bad"/>
+          <text x="128" y="34" text-anchor="middle">1. MHA (n_kv = n_q = 32)</text>
+          <text x="128" y="53" text-anchor="middle" class="m">Q:[q0..q31] &lt;-&gt; KV:[kv0..kv31] (1:1)</text>
+          <text x="128" y="72" text-anchor="middle" class="m">Params: 2147.5M | KV: 512.0 KiB/tok</text>
+          <text x="128" y="91" text-anchor="middle" class="m">32k cache: 16.00 GiB (HBM bottleneck)</text>
+        </g>
+        <g data-step="2">
+          <rect x="262" y="14" width="238" height="92" rx="6" class="c-paper ln" data-hi="2"/>
+          <rect x="262" y="14" width="238" height="6" rx="2" class="c-warn"/>
+          <text x="381" y="34" text-anchor="middle">2. MQA (n_kv = 1, g = 32)</text>
+          <text x="381" y="53" text-anchor="middle" class="m">All 32 Q heads share 1 global KV head</text>
+          <text x="381" y="72" text-anchor="middle" class="m">Params: 1107.3M | KV: 16.0 KiB/tok</text>
+          <text x="381" y="91" text-anchor="middle" class="m">32k cache: 0.50 GiB (32x smaller, quality drop)</text>
+        </g>
+        <g data-step="3">
+          <rect x="10" y="122" width="236" height="96" rx="6" class="c-soft ln" data-hi="3"/>
+          <rect x="10" y="122" width="236" height="6" rx="2" class="c-accent"/>
+          <text x="128" y="142" text-anchor="middle">3. GQA-4 (n_kv = 8, g = 4)</text>
+          <text x="128" y="161" text-anchor="middle" class="m">4 adjacent Q heads share 1 KV (repeat_kv)</text>
+          <text x="128" y="180" text-anchor="middle" class="m">Params: 1342.2M | KV: 128.0 KiB/tok</text>
+          <text x="128" y="199" text-anchor="middle" class="m">32k cache: 4.00 GiB (Llama-3-8B sweet spot)</text>
+        </g>
+        <g data-step="4">
+          <rect x="262" y="122" width="238" height="96" rx="6" class="c-paper ln" data-hi="4"/>
+          <rect x="262" y="122" width="238" height="6" rx="2" class="c-good"/>
+          <text x="381" y="142" text-anchor="middle">4. MLA (d_c = 512, d_r = 64)</text>
+          <text x="381" y="161" text-anchor="middle" class="m">Cache low-rank c_KV (512) + RoPE k^R (64)</text>
+          <text x="381" y="180" text-anchor="middle" class="m">Params: 1551.9M | KV: 36.0 KiB/tok</text>
+          <text x="381" y="199" text-anchor="middle" class="m">32k cache: 1.12 GiB (14.2x cut, full head rank)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Multi-Head Attention (MHA) gives every query head its own K and V head (n_kv = n_q = 32), costing 512.0 KiB/token or 16.00 GiB at 32k context across 32 layers.</li>
+      <li>Multi-Query Attention (MQA) collapses n_kv to 1 shared KV head across all 32 query heads, cutting the 32k cache 32x to 0.50 GiB at the cost of KV representation capacity.</li>
+      <li>Grouped-Query Attention (GQA-4) divides the 32 query heads into n_kv = 8 groups of g = 4 heads each, cutting the 32k cache 4x to 4.00 GiB while matching MHA accuracy.</li>
+      <li>Multi-head Latent Attention (MLA) projects X into a 512-dim latent vector c_KV plus a 64-dim shared RoPE key k^R, caching only 576 floats/layer (1.12 GiB at 32k) while retaining distinct per-head K and V via absorbed up-projections.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> All four variants keep n_q = 32 distinct query heads and output shape (B, T, d_model), but shrink the cached KV state per layer from 2 * n_q * d_h (8,192 floats) down to 2 * n_kv * d_h (GQA/MQA) or d_c + d_r (576 floats in MLA).</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p>Remember <strong>32 - 8 - 1 - Latent</strong> (the KV head progression at L = 32, d = 4,096, S = 32k): <strong>32</strong> KV heads in MHA = 512 KiB/tok (16.00 GiB); <strong>8</strong> KV heads in GQA-4 = 128 KiB/tok (4.00 GiB); <strong>1</strong> KV head in MQA = 16 KiB/tok (0.50 GiB); <strong>Latent</strong> c_KV(512) + k^R(64) in MLA = 36 KiB/tok (1.12 GiB, equivalent to 2.25 KV heads).</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>Multi-Head Attention (MHA): subspace projections and W_O mixing</h3>
+  <p>In standard MHA with <code>n_q</code> heads and head width <code>d_h = d_model / n_q</code>, each head <code>h in {0 .. n_q - 1}</code> has projection matrices <code>W_Q^h, W_K^h, W_V^h</code> in <code>R^(d_model x d_h)</code>. In practice, frameworks fuse the <code>n_q</code> small matrices into three single dense matrices <code>W_Q, W_K, W_V</code> in <code>R^(d_model x (n_q * d_h))</code>, execute three large GEMMs, and reshape/transpose the outputs from <code>(B, T, n_q * d_h)</code> to <code>(B, n_q, T, d_h)</code> so the head axis sits next to the batch axis. Batched causal attention runs in parallel across all <code>B * n_q</code> slices, producing <code>(B, n_q, T, d_h)</code>, which is transposed back to <code>(B, T, n_q * d_h)</code> and multiplied by the output matrix <code>W_O</code> in <code>R^((n_q * d_h) x d_model)</code>. Notice why <code>W_O</code> is mandatory: concatenation alone places head 0 in coordinates <code>0..d_h-1</code> and head 1 in <code>d_h..2d_h-1</code>; <code>W_O</code> linearly mixes the findings of all heads across the full residual stream.</p>
+  <div class="codewrap"><pre>MHA(X) = Concat(head_0, ..., head_{n_q-1}) @ W_O
+where head_h = Attention(X @ W_Q^h, X @ W_K^h, X @ W_V^h)   # each head_h is (B, T, d_h)
+Per-layer MHA params (when n_q * d_h = d): 4 * d^2  (W_Q, W_K, W_V, W_O each d x d)</pre></div>
+
+  <h3>MQA and GQA: grouped KV broadcasting and repeat_kv</h3>
+  <p>In <strong>Grouped-Query Attention (GQA)</strong>, we keep <code>n_q</code> query heads (so <code>W_Q</code> and <code>W_O</code> each remain size <code>d_model x (n_q * d_h)</code>), but reduce the key and value projections to <code>n_kv</code> heads, where <code>n_kv</code> divides <code>n_q</code> evenly. Setting <code>n_kv = n_q</code> recovers MHA; setting <code>n_kv = 1</code> gives <strong>Multi-Query Attention (MQA)</strong>. Let the group size be <code>g = n_q / n_kv</code>. Query heads <code>{g*k, g*k + 1, ..., g*(k+1) - 1}</code> all attend to the same key-value head <code>k</code>.</p>
+  <p>How you broadcast <code>K_kv</code> from shape <code>(B, n_kv, T, d_h)</code> to <code>(B, n_q, T, d_h)</code> is a notorious implementation bug. You must repeat each KV head <code>g</code> times contiguously along the head axis (<code>[kv_0, kv_0, kv_0, kv_0, kv_1, kv_1, kv_1, kv_1]</code> via <code>torch.repeat_interleave(K_kv, g, dim=1)</code> or expanding <code>(B, n_kv, 1, T, d_h) -&gt; (B, n_kv, g, T, d_h)</code>). If you tile the whole array instead (<code>np.tile</code> or reshaping with the group axis in front, producing <code>[kv_0, kv_1, kv_0, kv_1, ...]</code>), query head 1 is paired with <code>kv_1</code> instead of <code>kv_0</code>, scrambling the pretrained head alignment (an immediate <code>2.8578</code> output error in our kata). Production kernels like FlashAttention-2/3 avoid copying memory altogether by indexing <code>kv_head = q_head // g</code> directly inside SRAM.</p>
+  <div class="codewrap"><pre>Per-layer GQA params: 2 * d * (n_q * d_h)  +  2 * d * (n_kv * d_h)   # W_Q, W_O + W_K, W_V
+KV cache bytes:       2 * L * n_kv * d_h * S * B * bytes_per_elem
+Correct repeat_kv:    K_expanded[:, h, :, :] = K_kv[:, h // g, :, :] # contiguous groups!</pre></div>
+
+  <details class="q"><summary>Check: in a 32-layer model with d = 4,096, n_q = 32, d_h = 128, how many total attention parameters (in millions) and how many KiB per token of BF16 KV cache do MHA (n_kv = 32), GQA-4 (n_kv = 8), and MQA (n_kv = 1) use?</summary><div class="a">Across 32 layers: MHA uses 2,147.5M attention parameters and 512.0 KiB/token of KV cache. GQA-4 (n_kv = 8) uses 1,342.2M parameters and 128.0 KiB/token (4x cache reduction). MQA (n_kv = 1) uses 1,107.3M parameters and 16.0 KiB/token (32x cache reduction).</div></details>
+
+  <h3>Multi-head Latent Attention (MLA): low-rank KV compression and decoupled RoPE</h3>
+  <p>GQA reduces the KV cache by forcing <code>g</code> query heads to look at identical K and V vectors. DeepSeek-V2 introduced <strong>Multi-head Latent Attention (MLA)</strong> to achieve an even smaller KV cache than GQA-8 while letting every query head retain its own distinct K and V vectors. Instead of projecting <code>X</code> directly into <code>n_kv</code> heads, MLA compresses each token <code>x_t</code> through a down-projection matrix <code>W_DKV</code> in <code>R^(d_model x d_c)</code> into a shared low-rank latent vector <code>c_t^KV = x_t W_DKV</code> of dimension <code>d_c &lt;&lt; n_q * d_h</code> (for example, <code>d_c = 512</code> versus <code>n_q * d_h = 4,096</code>). From that single latent vector, up-projection matrices <code>W_UK, W_UV</code> in <code>R^(d_c x (n_q * d_h))</code> reconstruct all <code>n_q</code> content key heads <code>k_t^C = c_t^KV W_UK</code> and value heads <code>v_t = c_t^KV W_UV</code>.</p>
+  <p>Why does MLA also need a separate <strong>decoupled RoPE key</strong> <code>k_t^R</code>? As you will see in Stepper 2 (Station 7), MLA avoids caching the reconstructed <code>k_t^C</code> and <code>v_t</code> during inference by absorbing <code>W_UK</code> into <code>W_Q</code>: <code>q_t^C (k_j^C)^T = (x_t W_Q W_UK^T) (c_j^KV)^T</code>. However, Rotary Position Embedding (RoPE, D06) multiplies queries and keys by a position-dependent rotation matrix <code>R_{t-j}</code> between them: <code>(x_t W_Q) R_{t-j} (W_UK^T (c_j^KV)^T)</code>. Because <code>R_{t-j}</code> depends on the relative token distance <code>t - j</code>, <code>W_Q R_{t-j} W_UK^T</code> is not a constant matrix and cannot be pre-multiplied! MLA solves this cleanly by splitting each query and key into a non-positional content part (<code>q_t^C, k_t^C</code> of width <code>d_h</code>, where <code>W_UK</code> absorbs into <code>W_Q</code>) and a small positional RoPE part: per-head RoPE queries <code>q_{t,h}^R</code> of width <code>d_r = 64</code> and a <em>single shared</em> RoPE key <code>k_t^R = RoPE(x_t W_KR)</code> of width <code>d_r = 64</code> broadcast across all heads. The KV cache stores only <code>(c_t^KV, k_t^R)</code>, which is <code>d_c + d_r = 512 + 64 = 576</code> floats per layer per token.</p>
+  <div class="codewrap"><pre>c_KV = X @ W_DKV                         # cached compressed latent: (B, T, d_c = 512)
+k^R  = RoPE(X @ W_KR)                    # cached shared RoPE key:   (B, 1, T, d_r = 64)
+Score(i, j, head h) = (q_{i,h}^C . k_{j,h}^C  +  q_{i,h}^R . k_j^R) / sqrt(d_h + d_r)
+Cached floats/layer/token = d_c + d_r = 576  (equivalent to 576 / (2 * 128) = 2.25 KV heads!)</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: KV-cache VRAM and attention parameters across MHA, GQA, MQA, and MLA</div>
+    <p class="ask">Predict first. At L = 32 layers, n_q = 32 heads (d_h = 128), and context length S = 32,768 in BF16, compare GQA-8 (n_kv = 4) against MLA (d_c = 512, d_r = 64). Which one uses a smaller KV cache at 32k context, and which one has more attention parameters?</p>
+    <div class="ctl">
+      <label><span>Layer count L</span><input type="range" name="L" min="16" max="80" step="16" value="32"><output data-for="L" data-unit=" layers"></output></label>
+      <label><span>Query heads n_q</span><select name="nq" data-num><option value="32" selected>32 heads (d = 4,096, d_h = 128)</option><option value="64">64 heads (d = 8,192, d_h = 128)</option></select></label>
+      <label><span>Context length S</span><select name="S" data-num><option value="8192">8,192 tokens (8k)</option><option value="32768" selected>32,768 tokens (32k)</option><option value="131072">131,072 tokens (128k)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Computed from the exact production audit equations in kata.py (BF16 = 2 bytes/element, d_h = 128, d_c = 512, d_r = 64). MLA shrinks KV cache below GQA-8 (equivalent to 2.25 KV heads) while keeping more per-head parameter expressivity than GQA-4.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var dh=128, d=v.nq*dh, L=v.L, S=v.S, dc=512, dr=64;
+    function kvGib(el){return (L*el*2*S)/(1024*1024*1024);}
+    function pM(pl){return (L*pl)/1e6;}
+    var mhaG=kvGib(2*v.nq*dh), gqa4G=kvGib(2*(v.nq/4)*dh), gqa8G=kvGib(2*(v.nq/8)*dh), mlaG=kvGib(dc+dr), mqaG=kvGib(2*1*dh);
+    var gqa4P=pM(2*d*d + 2*d*(v.nq/4)*dh), gqa8P=pM(2*d*d + 2*d*(v.nq/8)*dh), mlaP=pM(2*d*d + d*dc + dc*2*d + d*dr + d*v.nq*dr);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" GiB",digits:2,rows:[
+      {label:"MHA (n_kv = "+v.nq+")",value:mhaG,tone:"bad"},
+      {label:"GQA-4 (n_kv = "+(v.nq/4)+")",value:gqa4G,tone:"warn"},
+      {label:"GQA-8 (n_kv = "+(v.nq/8)+")",value:gqa8G,tone:"muted"},
+      {label:"MLA (d_c=512, d_r=64)",value:mlaG,tone:"good"},
+      {label:"MQA (n_kv = 1)",value:mqaG,tone:"good"}
+    ]});
+    return {verdict:"At S="+tl.fmt(S,0)+": MHA="+tl.fmt(mhaG,2)+" GiB | GQA-4="+tl.fmt(gqa4G,2)+" GiB ("+tl.fmt(gqa4P,1)+"M params) | GQA-8="+tl.fmt(gqa8G,2)+" GiB ("+tl.fmt(gqa8P,1)+"M params) | MLA="+tl.fmt(mlaG,2)+" GiB ("+tl.fmt(mlaP,1)+"M params)."};
+  })});</script>
+
+  <details class="q"><summary>Check: how many standard GQA KV heads (with d_h = 128) is MLA's 576-float per-layer cache equivalent to, and why isn't that an integer?</summary><div class="a">One standard KV head stores 2 * d_h = 256 floats per layer (128 for K and 128 for V). MLA stores d_c + d_r = 512 + 64 = 576 floats per layer, which equals 576 / 256 = 2.25 KV heads (or 9 / 4 KV heads). It is not an integer because MLA caches a single shared latent vector plus a 64-dim RoPE key rather than discrete K and V head pairs.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>MHA attention parameter count per layer (when n_q * d_h = d_model)</td><td class="n">4 * d_model^2</td><td>Derived (W_Q, W_K, W_V, W_O)</td></tr>
+    <tr><td>GQA attention parameter count per layer (group ratio g = n_q / n_kv)</td><td class="n">2 * d_model^2 * (1 + 1 / g)</td><td>Derived (W_Q, W_O full + W_K, W_V scaled by 1/g)</td></tr>
+    <tr><td>KV cache bytes per token across L layers (MHA / GQA / MQA)</td><td class="n">2 * L * n_kv * d_h * bytes_per_elem</td><td>Derived</td></tr>
+    <tr><td>MLA KV cache bytes per token across L layers (latent d_c + RoPE d_r)</td><td class="n">L * (d_c + d_r) * bytes_per_elem</td><td>Derived (DeepSeek-V2 paper Eq. 9-19)</td></tr>
+    <tr><td>32L, d=4096, n_q=32, d_h=128 (BF16): MHA (n_kv=32) params &amp; KV cache</td><td class="n">2,147.5M params | 512.0 KiB/tok | 16.00 GiB @ 32k</td><td>Your own run</td></tr>
+    <tr><td>32L, d=4096, n_q=32, d_h=128 (BF16): GQA-4 (n_kv=8, Llama-3-8B) params &amp; KV cache</td><td class="n">1,342.2M params | 128.0 KiB/tok | 4.00 GiB @ 32k</td><td>Your own run (config checked 2026-11-23)</td></tr>
+    <tr><td>32L, d=4096, n_q=32, d_h=128 (BF16): GQA-8 (n_kv=4) params &amp; KV cache</td><td class="n">1,208.0M params | 64.0 KiB/tok | 2.00 GiB @ 32k</td><td>Your own run</td></tr>
+    <tr><td>32L, d=4096, n_q=32, d_h=128 (BF16): MQA (n_kv=1) params &amp; KV cache</td><td class="n">1,107.3M params | 16.0 KiB/tok | 0.50 GiB @ 32k</td><td>Your own run</td></tr>
+    <tr><td>32L, d=4096, n_q=32, d_h=128 (BF16): MLA (d_c=512, d_r=64) params &amp; KV cache</td><td class="n">1,551.9M params | 36.0 KiB/tok | 1.12 GiB @ 32k</td><td>Your own run (14.22x smaller cache than MHA)</td></tr>
+    <tr><td>Kata: MLA weight absorption max score difference (direct vs absorbed W_Q @ W_UK^T)</td><td class="n">4.88e-15 (exact floating-point parity)</td><td>Your own run</td></tr>
+    <tr><td>Kata: GQA output corruption when using interleaved tiling vs contiguous repeat_kv</td><td class="n">max_abs_diff = 2.8578</td><td>Your own run</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Multi-Head Attention (MHA, n_kv = n_q)</td><td>Maximum per-head key and value capacity; simplest 1:1 head indexing</td><td>Largest KV cache (16.00 GiB at 32k on 8B scale) and highest decode HBM bandwidth</td><td>Decode latency and batch-size ceiling hit HBM limits at medium context lengths</td></tr>
+    <tr><td>Multi-Query Attention (MQA, n_kv = 1)</td><td>32x smaller KV cache (0.50 GiB at 32k); fastest autoregressive decode throughput</td><td>All query heads must extract payloads from a single 128-dim value subspace; quality drop</td><td>Tensor parallelism across &gt;1 GPU must replicate the single KV head across all ranks</td></tr>
+    <tr><td>Grouped-Query Attention (GQA, e.g. n_kv = 8)</td><td>Near-MHA quality with 4x to 8x smaller KV cache; clean TP sharding across 8 GPUs</td><td>Slightly fewer KV parameters than MHA; requires grouped repeat_kv indexing</td><td>Interleaved head-tiling bugs when converting checkpoints between frameworks</td></tr>
+    <tr><td>Multi-head Latent Attention (MLA, d_c = 512, d_r = 64)</td><td>14.2x smaller KV cache than MHA (1.12 GiB vs 16.00 GiB) while keeping distinct per-head K and V</td><td>Absorbed decode query width becomes d_c + d_r = 576 per head, increasing decode attention FLOPs</td><td>Requires two execution paths: unabsorbed matrices for compute-bound prefill, absorbed for memory-bound decode</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: MHA, GQA, MQA, and MLA from scratch with 32k scale audit</h2>
+  <p>A self-contained 97-line Python script that implements MHA, GQA (<code>repeat_kv</code>), MQA, and MLA latent compression on a batched sequence (<code>B = 2, T = 6, d_model = 64, n_q = 8, d_h = 8</code>), verifies output shape equivalence and MLA matrix absorption parity (<code>4.88e-15</code>), demonstrates the GQA interleaved tiling bug (<code>2.8578</code> error), and prints the 32-layer production parameter and 32k KV-cache audit.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>"""D05 Multi-head attention variants kata: MHA, GQA, MQA, and MLA shapes, params, and KV cache."""
+import math, random
+
+random.seed(11)
+B, T, D_MODEL = 2, 6, 64
+N_Q, D_H = 8, 8  # N_Q * D_H = 64
+
+def rand_mat(r, c, s):
+    return [[random.gauss(0.0, s) for _ in range(c)] for _ in range(r)]
+
+def matmul(A, B):
+    return [[sum(a * b for a, b in zip(row, col)) for col in zip(*B)] for row in A]
+
+def transpose(M):
+    return [list(col) for col in zip(*M)]
+
+X = [rand_mat(T, D_MODEL, 1.0) for _ in range(B)]  # shape (B, T, D_MODEL)
+
+def attend_heads(Q_heads, K_heads, V_heads):
+    # Q_heads, K_heads, V_heads: (B, N_Q, T, d_qk / d_v)
+    d_qk = len(Q_heads[0][0][0])
+    d_v = len(V_heads[0][0][0])
+    scale = 1.0 / math.sqrt(d_qk)
+    concat_out = [[[0.0] * (N_Q * d_v) for _ in range(T)] for _ in range(B)]
+    for b in range(B):
+        for h in range(N_Q):
+            Q_bh, K_bh, V_bh = Q_heads[b][h], K_heads[b][h], V_heads[b][h]
+            raw = matmul(Q_bh, transpose(K_bh))
+            A = []
+            for i in range(T):
+                scores = [(-1e9 if j &gt; i else raw[i][j] * scale) for j in range(T)]
+                m = max(scores)
+                ex = [math.exp(x - m) for x in scores]
+                s = sum(ex)
+                A.append([e / s for e in ex])
+            out_bh = matmul(A, V_bh)  # (T, d_v)
+            for t in range(T):
+                concat_out[b][t][h * d_v : (h + 1) * d_v] = out_bh[t]
+    return concat_out
+
+def split_heads(M_bt, n_heads, d_head):
+    # M_bt: (B, T, n_heads * d_head) -&gt; (B, n_heads, T, d_head)
+    return [[[M_bt[b][t][h * d_head : (h + 1) * d_head] for t in range(T)] for h in range(n_heads)] for b in range(B)]
+
+def run_gqa_family(X_in, n_kv, wrong_tile=False):
+    random.seed(20 + n_kv)
+    g = N_Q // n_kv
+    s = 1.0 / math.sqrt(D_MODEL)
+    W_Q = rand_mat(D_MODEL, N_Q * D_H, s)
+    W_K = rand_mat(D_MODEL, n_kv * D_H, s)
+    W_V = rand_mat(D_MODEL, n_kv * D_H, s)
+    W_O = rand_mat(N_Q * D_H, D_MODEL, s)
+
+    Q = split_heads([matmul(X_in[b], W_Q) for b in range(B)], N_Q, D_H)
+    K_kv = split_heads([matmul(X_in[b], W_K) for b in range(B)], n_kv, D_H)
+    V_kv = split_heads([matmul(X_in[b], W_V) for b in range(B)], n_kv, D_H)
+
+    # Expand K_kv, V_kv from n_kv heads to N_Q heads
+    if not wrong_tile:
+        # Correct repeat_kv: head h maps to KV group h // g -&gt; [0,0,0,0, 1,1,1,1]
+        K = [[K_kv[b][h // g] for h in range(N_Q)] for b in range(B)]
+        V = [[V_kv[b][h // g] for h in range(N_Q)] for b in range(B)]
+    else:
+        # Buggy tile: head h maps to h % n_kv -&gt; [0,1,0,1, 0,1,0,1]
+        K = [[K_kv[b][h % n_kv] for h in range(N_Q)] for b in range(B)]
+        V = [[V_kv[b][h % n_kv] for h in range(N_Q)] for b in range(B)]
+
+    concat = attend_heads(Q, K, V)
+    out = [matmul(concat[b], W_O) for b in range(B)]
+    return out, (B, n_kv, T, D_H), 2 * n_kv * D_H
+
+def run_mla(X_in, d_c=16, d_r=4):
+    random.seed(99)
+    s_m, s_c = 1.0 / math.sqrt(D_MODEL), 1.0 / math.sqrt(d_c)
+    W_DKV = rand_mat(D_MODEL, d_c, s_m)
+    W_UK = rand_mat(d_c, N_Q * D_H, s_c)
+    W_UV = rand_mat(d_c, N_Q * D_H, s_c)
+    W_Q = rand_mat(D_MODEL, N_Q * D_H, s_m)
+    W_QR = rand_mat(D_MODEL, N_Q * d_r, s_m)
+    W_KR = rand_mat(D_MODEL, d_r, s_m)
+    W_O = rand_mat(N_Q * D_H, D_MODEL, s_m)
+
+    c_KV = [matmul(X_in[b], W_DKV) for b in range(B)]          # cached latent: (B, T, d_c)
+    k_R = [matmul(X_in[b], W_KR) for b in range(B)]            # cached RoPE key: (B, T, d_r)
+    q_C = split_heads([matmul(X_in[b], W_Q) for b in range(B)], N_Q, D_H)
+    q_R = split_heads([matmul(X_in[b], W_QR) for b in range(B)], N_Q, d_r)
+    k_C = split_heads([matmul(c_KV[b], W_UK) for b in range(B)], N_Q, D_H)
+    V = split_heads([matmul(c_KV[b], W_UV) for b in range(B)], N_Q, D_H)
+
+    Q_full = [[[q_C[b][h][t] + q_R[b][h][t] for t in range(T)] for h in range(N_Q)] for b in range(B)]
+    K_full = [[[k_C[b][h][t] + k_R[b][t] for t in range(T)] for h in range(N_Q)] for b in range(B)]
+    concat = attend_heads(Q_full, K_full, V)
+    out = [matmul(concat[b], W_O) for b in range(B)]
+
+    # Verify weight absorption for head 0: q_C0 @ k_C0^T == (X @ (W_Q0 @ W_UK0^T)) @ c_KV^T
+    W_Q0 = [row[:D_H] for row in W_Q]
+    W_UK0 = [row[:D_H] for row in W_UK]
+    W_abs = matmul(W_Q0, transpose(W_UK0))                     # (D_MODEL, d_c) absorbed matrix
+    s_direct = matmul(q_C[0][0], transpose(k_C[0][0]))
+    s_absorb = matmul(matmul(X_in[0], W_abs), transpose(c_KV[0]))
+    max_err = max(abs(s_direct[i][j] - s_absorb[i][j]) for i in range(T) for j in range(T))
+    return out, (B, T, d_c), (B, 1, T, d_r), d_c + d_r, max_err
+
+out_mha, sh_mha, fl_mha = run_gqa_family(X, n_kv=8)
+out_gqa, sh_gqa, fl_gqa = run_gqa_family(X, n_kv=2)
+out_bug, _, _ = run_gqa_family(X, n_kv=2, wrong_tile=True)
+out_mqa, sh_mqa, fl_mqa = run_gqa_family(X, n_kv=1)
+out_mla, sh_ckv, sh_kr, fl_mla, abs_err = run_mla(X, d_c=16, d_r=4)
+
+gqa_bug_diff = max(abs(out_gqa[b][t][d] - out_bug[b][t][d]) for b in range(B) for t in range(T) for d in range(D_MODEL))
+print("=== 1. Forward pass &amp; cached tensor shapes (B=2, T=6, d_model=64, n_q=8, d_h=8) ===")
+print(f"MHA   (n_kv=8) out: ({B}, {T}, {D_MODEL}) | cached K,V shape each: {sh_mha} -&gt; {fl_mha:3d} floats/tok")
+print(f"GQA-4 (n_kv=2) out: ({B}, {T}, {D_MODEL}) | cached K,V shape each: {sh_gqa} -&gt; {fl_gqa:3d} floats/tok")
+print(f"MQA   (n_kv=1) out: ({B}, {T}, {D_MODEL}) | cached K,V shape each: {sh_mqa} -&gt; {fl_mqa:3d} floats/tok")
+print(f"MLA (dc=16,dr=4) out: ({B}, {T}, {D_MODEL}) | cached c_KV {sh_ckv} + k_R {sh_kr} -&gt; {fl_mla:3d} floats/tok")
+print(f"MLA matrix absorption max score diff (q_C @ k_C^T vs absorbed W_Q @ W_UK^T): {abs_err:.2e}")
+print(f"GQA wrong head-group tiling (interleaved vs grouped repeat_kv) output diff:  {gqa_bug_diff:.4f}")
+
+print("\n=== 2. Production scale audit: L=32, d=4096, n_q=32, d_h=128, S=32768, BF16 (2B) ===")
+L, d, nq, dh, S = 32, 4096, 32, 128, 32768
+configs = [
+    ("MHA (n_kv=32)",      2 * d * (nq * dh) + 2 * d * (32 * dh), 2 * 32 * dh),
+    ("GQA-4 (n_kv=8)",     2 * d * (nq * dh) + 2 * d * (8 * dh),  2 * 8 * dh),
+    ("GQA-8 (n_kv=4)",     2 * d * (nq * dh) + 2 * d * (4 * dh),  2 * 4 * dh),
+    ("MQA (n_kv=1)",       2 * d * (nq * dh) + 2 * d * (1 * dh),  2 * 1 * dh),
+    ("MLA (dc=512,dr=64)", d*(nq*dh) + d*512 + 512*(2*nq*dh) + d*64 + d*(nq*64) + (nq*dh)*d, 512 + 64),
+]
+for name, p_layer, kv_el in configs:
+    p_m = (L * p_layer) / 1e6
+    kv_kib = (L * kv_el * 2) / 1024
+    kv_gib = (L * kv_el * 2 * S) / (1024 ** 3)
+    print(f"{name:19s} | Attn params: {p_m:7.1f}M | KV/tok: {kv_kib:5.1f} KiB | KV @ 32k: {kv_gib:5.2f} GiB")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== 1. Forward pass &amp; cached tensor shapes (B=2, T=6, d_model=64, n_q=8, d_h=8) ===
+MHA   (n_kv=8) out: (2, 6, 64) | cached K,V shape each: (2, 8, 6, 8) -&gt; 128 floats/tok
+GQA-4 (n_kv=2) out: (2, 6, 64) | cached K,V shape each: (2, 2, 6, 8) -&gt;  32 floats/tok
+MQA   (n_kv=1) out: (2, 6, 64) | cached K,V shape each: (2, 1, 6, 8) -&gt;  16 floats/tok
+MLA (dc=16,dr=4) out: (2, 6, 64) | cached c_KV (2, 6, 16) + k_R (2, 1, 6, 4) -&gt;  20 floats/tok
+MLA matrix absorption max score diff (q_C @ k_C^T vs absorbed W_Q @ W_UK^T): 4.88e-15
+GQA wrong head-group tiling (interleaved vs grouped repeat_kv) output diff:  2.8578
+
+=== 2. Production scale audit: L=32, d=4096, n_q=32, d_h=128, S=32768, BF16 (2B) ===
+MHA (n_kv=32)       | Attn params:  2147.5M | KV/tok: 512.0 KiB | KV @ 32k: 16.00 GiB
+GQA-4 (n_kv=8)      | Attn params:  1342.2M | KV/tok: 128.0 KiB | KV @ 32k:  4.00 GiB
+GQA-8 (n_kv=4)      | Attn params:  1208.0M | KV/tok:  64.0 KiB | KV @ 32k:  2.00 GiB
+MQA (n_kv=1)        | Attn params:  1107.3M | KV/tok:  16.0 KiB | KV @ 32k:  0.50 GiB
+MLA (dc=512,dr=64)  | Attn params:  1551.9M | KV/tok:  36.0 KiB | KV @ 32k:  1.12 GiB</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: 32-layer BF16 KV-cache footprint at 32,768 tokens across attention families</div>
+    <div data-bars='{"unit":" GiB","digits":2,"max":16.0,"rows":[{"label":"MHA (n_kv=32, 512 KiB/tok)","value":16.00,"tone":"bad"},{"label":"GQA-4 (n_kv=8, 128 KiB/tok)","value":4.00,"tone":"warn"},{"label":"GQA-8 (n_kv=4, 64 KiB/tok)","value":2.00,"tone":"muted"},{"label":"MLA (dc=512, dr=64, 36 KiB/tok)","value":1.12,"tone":"good"},{"label":"MQA (n_kv=1, 16 KiB/tok)","value":0.50,"tone":"good"}]}'></div>
+    <figcaption><b>Takeaway.</b> At 32k context across 32 layers, GQA-4 cuts MHA's 16.00 GiB KV cache by 4x to 4.00 GiB, and MLA cuts it by 14.22x to 1.12 GiB while maintaining 1,551.9M attention parameters.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Identical external interface:</strong> all four variants accept input <code>X</code> of shape <code>(2, 6, 64)</code> and return output of shape <code>(2, 6, 64)</code>, so residual stream connections, LayerNorm/RMSNorm, and MLPs outside the attention block do not change at all.</li>
+    <li><strong>Cached floats per token scale with KV representation:</strong> in the toy run (<code>n_q = 8, d_h = 8</code>), cached floats per token drop from <code>128</code> (MHA) to <code>32</code> (GQA-4) to <code>20</code> (MLA with <code>d_c = 16, d_r = 4</code>) to <code>16</code> (MQA).</li>
+    <li><strong>MLA matrix absorption is algebraically exact:</strong> computing content scores via absorbed weight <code>(X @ (W_Q0 @ W_UK0^T)) @ c_KV^T</code> matches explicit key reconstruction <code>q_C0 @ k_C0^T</code> to <code>4.88e-15</code> (IEEE 754 float64 machine precision).</li>
+    <li><strong>GQA head grouping order is critical:</strong> replacing contiguous head grouping <code>h // g</code> (<code>[0,0,0,0, 1,1,1,1]</code>) with modulo/interleaved tiling <code>h % n_kv</code> (<code>[0,1,0,1, 0,1,0,1]</code>) produces a massive <code>2.8578</code> output error on the exact same weights.</li>
+    <li><strong>Parameter savings accompany KV savings:</strong> in the 32-layer production audit, switching from MHA to GQA-4 saves <code>805.3M</code> parameters (<code>2,147.5M -&gt; 1,342.2M</code>, or <code>1.61 GB</code> of BF16 weights) in addition to saving <code>12.00 GiB</code> of KV cache at 32k context.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Forget the output projection <code>W_O</code>.</strong> Return <code>concat</code> directly from <code>run_gqa_family</code> instead of <code>[matmul(concat[b], W_O) for b in range(B)]</code>. Predict first: does the output tensor shape change when <code>n_q * d_h == d_model</code>? Why does removing <code>W_O</code> cripple multi-head interaction across the residual stream?</li>
+    <li><strong>Break MLA associativity with a non-linear or RoPE rotation on <code>c_KV</code>.</strong> Apply a position-dependent sign flip or rotation to <code>k_C</code> <em>after</em> multiplying <code>c_KV @ W_UK</code>, then compare <code>s_direct</code> against <code>s_absorb</code>. Predict what happens to the <code>4.88e-15</code> absorption error and see firsthand why MLA must decouple RoPE into <code>k_R</code>.</li>
+    <li><strong>Tensor-parallel sharding mismatch (<code>TP &gt; n_kv</code>).</strong> Suppose you shard our 32-layer model across <code>TP = 8</code> GPUs along the head dimension. Compare GQA-4 (<code>n_kv = 8</code>) versus GQA-8 (<code>n_kv = 4</code>) and MQA (<code>n_kv = 1</code>): how many KV heads sit on each GPU, and what must happen when <code>n_kv &lt; TP</code>?</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Implement Ainslie et al.'s <strong>MHA-to-GQA checkpoint uptraining conversion</strong> in 6 lines: take the <code>n_kv = 8</code> MHA weight matrices <code>W_K, W_V</code> of shape <code>(64, 64)</code> from <code>run_gqa_family</code>, mean-pool each group of <code>g = 4</code> adjacent head column slices <code>W_K[:, (4*k)*8 : (4*k+4)*8]</code> into a single 8-column KV head to produce <code>(64, 16)</code> GQA-4 weights, and measure the output cosine similarity against the original MHA output.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <figure class="viz stepper" id="viz-mla-absorb">
+    <div class="vt">Stepper: How MLA absorbs W_UK and W_UV at inference so full K and V never touch HBM</div>
+    <svg viewBox="0 0 500 205" role="img" aria-label="Four-step trace of MLA inference weight absorption: unabsorbed prefill expands c_KV (512) through W_UK and W_UV into 32 heads of 128 floats (8,192 floats); absorbing W_UK^h into W_Q^h projects each query to 512 dims to dot directly against cached c_KV; absorbing W_UV^h into W_O^h pools A_h @ c_KV in 512 dims before projecting to d_model; HBM caches only 576 floats/layer">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="12" y="12" width="476" height="38" rx="5" class="c-paper ln" data-hi="1"/>
+          <rect x="12" y="12" width="6" height="38" rx="2" class="c-warn"/>
+          <text x="26" y="35">1. Naive decode: expand c_KV (512) via W_UK, W_UV -&gt; 8,192 K,V floats</text>
+        </g>
+        <g data-step="2">
+          <rect x="12" y="58" width="476" height="38" rx="5" class="c-soft ln" data-hi="2"/>
+          <text x="26" y="81">2. Absorb W_UK into W_Q: q_abs^h = x_t (W_Q^h W_UK^{h,T}) in R^512</text>
+        </g>
+        <g data-step="3">
+          <rect x="12" y="104" width="476" height="38" rx="5" class="c-soft ln" data-hi="3"/>
+          <text x="26" y="127">3. Score &amp; pool on c_KV directly: u_h = A_h @ c_KV in R^512 (MQA-style!)</text>
+        </g>
+        <g data-step="4">
+          <rect x="12" y="150" width="476" height="38" rx="5" class="c-paper ln" data-hi="4"/>
+          <rect x="12" y="150" width="6" height="38" rx="2" class="c-good"/>
+          <text x="26" y="173">4. Absorb W_UV into W_O: Out = sum_h u_h (W_UV^h W_O^h) -&gt; 36 KiB/tok HBM</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>If a serving engine ran MLA naively during decode, it would multiply cached c_KV (512) by W_UK and W_UV at every step or cache all 32 expanded K and V heads (8,192 floats/layer), losing the memory advantage.</li>
+      <li>Instead, for each head h, the engine folds W_UK^h into W_Q^h (W_Q_abs^h = W_Q^h @ W_UK^{h,T} of shape d_model by d_c), projecting the decode query into R^512 to dot directly against cached c_KV.</li>
+      <li>With all 32 absorbed query heads attending to the single shared latent tensor c_KV (plus shared k^R), decode executes as a fast MQA kernel (n_kv = 1) of head width d_c = 512, producing per-head latent context u_h = A_h @ c_KV in R^512.</li>
+      <li>Finally, W_UV^h is absorbed into W_O^h (W_O_abs^h = W_UV^h @ W_O^h of shape d_c by d_model) to project u_h back to the residual stream, so full K and V never materialize in HBM (4.88e-15 max error in the kata).</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> By absorbing W_UK into W_Q and W_UV into W_O during autoregressive decoding, MLA turns multi-head attention into an MQA read over a single 512-dim latent cache c_KV.</figcaption>
+  </figure>
+
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Converted GQA checkpoint loads without shape errors but outputs gibberish from token 1</td><td>Interleaved vs contiguous Q/KV head ordering mismatch (or wrong <code>repeat_kv</code> axis)</td><td>Verify <code>q_head // (n_q // n_kv)</code> contiguous grouping and check whether RoPE interleaved even/odd dimensions</td></tr>
+    <tr><td>Tensor-parallel serving on 8 GPUs fails or wastes HBM on a model with <code>n_kv = 2</code> or <code>n_kv = 1</code> (MQA)</td><td><code>TP_size (8) &gt; n_kv (2)</code>; standard head sharding cannot split 1 KV head across 4 GPUs</td><td>Replicate each KV head across <code>TP_size / n_kv</code> ranks while sharding Q heads 8-way (supported in vLLM / TensorRT-LLM)</td></tr>
+    <tr><td>MLA model has tiny KV cache in vLLM/SGLang, but prompt prefill latency is 2x slower than expected</td><td>Using absorbed matrices (<code>d_c = 512</code> per head) during compute-bound prefill instead of unabsorbed (<code>d_h = 128</code>)</td><td>Use unabsorbed projections during prefill (where <code>d_h = 128</code> saves 4x attention FLOPs) and absorbed weights only during memory-bound decode</td></tr>
+    <tr><td>Calling <code>torch.repeat_interleave(K_kv, g, dim=1)</code> inside the decode loop allocates gigabytes of temporary HBM</td><td>Materializing expanded <code>(B, n_q, S, d_h)</code> copies of the KV cache in HBM at every decode step</td><td>Do not copy KV in HBM; pass the unexpanded <code>(B, n_kv, S, d_h)</code> cache to a GQA-native FlashDecoding / PagedAttention kernel</td></tr>
+    <tr><td>Uptrained GQA checkpoint (converted from MHA) has high initial perplexity before recovery training</td><td>Dropping K/V heads instead of mean-pooling each group of <code>g</code> adjacent K and V head matrices</td><td>Initialize each GQA KV head as the mean of its <code>g</code> constituent MHA K and V heads, then run ~5% uptraining tokens</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> KV cache HBM utilization percentage (determines max concurrent batch size before preemption), decode memory bandwidth utilization (GB/s read from KV cache per step vs GPU peak HBM bandwidth), and prefill vs decode kernel mode (unabsorbed vs absorbed for MLA).</p>
+  <details class="q"><summary>Scenario: you are deploying a 70B-scale model (L = 80, d = 8,192, n_q = 64, d_h = 128) for a long-context clinical record analyzer (S = 32,768 tokens per patient) on an 8xH100 node (640 GB total HBM). Model weights take 140 GB in BF16. How many concurrent 32k patient sessions fit in a 400 GB KV-cache budget under MHA (n_kv = 64) versus GQA-8 (n_kv = 8), and how does n_kv = 8 interact with 8-way Tensor Parallelism?</summary><div class="a"><ol>
+    <li>Compute per-request KV cache at S = 32,768 under MHA (n_kv = 64): <code>2 * 80 * 64 * 128 * 32,768 * 2 bytes = 85.90 GB</code> (80.00 GiB) per request. In a 400 GB KV budget, only <strong>4 concurrent requests</strong> fit!</li>
+    <li>Compute per-request KV cache under GQA-8 (n_kv = 8, used by Llama-3-70B): dividing n_kv by 8 cuts the cache 8x to <code>10.74 GB</code> (10.00 GiB) per request, allowing <strong>37 concurrent 32k requests</strong> in the same 400 GB budget (a 9x concurrency jump).</li>
+    <li>Check Tensor Parallelism (TP = 8 across the 8 H100 GPUs): because <code>n_kv = 8</code> equals <code>TP = 8</code>, each GPU holds exactly <code>n_q / 8 = 8</code> query heads and <code>n_kv / 8 = 1</code> KV head per layer, requiring zero KV head replication across GPUs.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Multi-head attention splits the residual stream into parallel subspaces so each token can route information from multiple context positions simultaneously. Variants like MQA, GQA, and MLA keep all query heads for expressivity while sharing or compressing keys and values to slash the KV-cache memory wall during decoding.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>In standard MHA with n_q heads of width d_h, every query head has its own key and value head, so n_kv equals n_q. During decoding, reading that KV cache from HBM bottlenecks throughput. Multi-Query Attention sets n_kv to 1 so all query heads share one KV head. Grouped-Query Attention partitions n_q query heads into n_kv groups so g equals n_q over n_kv adjacent query heads share one KV head via contiguous repeat_kv broadcasting. Multi-head Latent Attention projects tokens into a single compressed latent vector c_KV plus a shared decoupled RoPE key k^R, and absorbs the up-projections W_UK into W_Q and W_UV into W_O at inference.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>On a 32-layer, 4096-wide model in BF16 at 32k context, MHA caches 512 KiB per token or 16 GiB total. GQA-4 with 8 KV heads cuts that 4x to 4 GiB, MQA cuts it 32x to 0.5 GiB, and MLA with a 512-dim latent and 64-dim RoPE key caches 36 KiB per token or 1.12 GiB - a 14.2x reduction while preserving full per-head rank.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b><p>Question: why did Llama 3 and Mistral move from Multi-Head Attention to Grouped-Query Attention, and how does DeepSeek's MLA go further?</p><p class="weak">"MHA uses too much memory for long context, so Llama 3 uses GQA to group heads together and save memory. DeepSeek uses MLA which compresses the KV cache even more so inference is faster and cheaper."</p><p class="strong">"Autoregressive decoding is memory-bandwidth-bound by KV-cache reads of size 2 * L * n_kv * d_h * S * B * bytes. On a 32-layer, d = 4,096 model with n_q = 32 heads of d_h = 128 in BF16, MHA (n_kv = 32) costs 512 KiB per token, or 16.00 GiB for one 32k request. GQA-4 sets n_kv = 8 so groups of 4 adjacent query heads share 1 KV head, cutting the 32k cache 4x to 4.00 GiB (and attention weights from 2.15B to 1.34B) with negligible perplexity loss and clean 8-GPU tensor parallelism. DeepSeek's MLA goes further without forcing heads to share identical K and V: it caches a shared 512-dim latent vector c_KV plus a 64-dim decoupled RoPE key (576 floats/layer, or 36 KiB/tok and 1.12 GiB at 32k - 14.2x smaller than MHA) and absorbs the K/V up-projections W_UK and W_UV into W_Q and W_O during decode."</p><p>The strong answer states the KV byte formula, compares concrete 32k GiB numbers from the kata (16.00 vs 4.00 vs 1.12 GiB), explains TP sharding, and names MLA weight absorption and decoupled RoPE.</p></div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Splitting a d_model = 4,096 attention layer into 32 heads multiplies the projection FLOPs and parameters by 32."</summary><div class="a">Each head projects into dimension <code>d_h = d_model / n_q = 128</code>, not <code>4,096</code>. All 32 heads concatenated have total width <code>32 * 128 = 4,096</code>, so the total parameters (<code>4 * d_model^2</code>) and total FLOPs are identical to a single head of width <code>4,096</code>.</div></details>
+  <details class="q"><summary>"GQA reduces prompt prefill FLOPs by 4x because there are 4x fewer KV heads."</summary><div class="a">GQA only shrinks the <code>W_K</code> and <code>W_V</code> projection matmuls. The query projection <code>W_Q</code>, output projection <code>W_O</code>, and all <code>n_q = 32</code> attention score/value matmuls (<code>Q @ K^T</code> and <code>A @ V</code>) still run across all 32 query heads! GQA primarily saves HBM capacity and memory bandwidth during decode, not prefill attention FLOPs.</div></details>
+  <details class="q"><summary>"In GQA inference, the serving engine calls repeat_interleave to copy the KV cache in GPU HBM from n_kv heads to n_q heads before running attention."</summary><div class="a">Copying the KV cache in HBM would waste the very memory capacity and HBM bandwidth GQA was designed to save. Production kernels (FlashAttention, PagedAttention) keep only <code>n_kv</code> heads in HBM and map query head <code>h</code> to KV head <code>h // g</code> on the fly in SRAM registers.</div></details>
+  <details class="q"><summary>"In MLA, you can apply Rotary Position Embedding (RoPE) directly to the compressed latent vector c_KV and still absorb W_UK into W_Q."</summary><div class="a">RoPE inserts a relative-position rotation matrix <code>R_{i-j}</code> between query <code>i</code> and key <code>j</code>. Because <code>R_{i-j}</code> varies with every pair of positions <code>(i, j)</code>, <code>W_Q R_{i-j} W_UK^T</code> cannot be pre-multiplied into a static weight matrix. That is why MLA must decouple RoPE into a separate small shared key <code>k^R</code> (<code>d_r = 64</code>).</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>Compare MHA, MQA, GQA, and MLA in 90 seconds.</summary><div class="a">Follow the three levels above: why multi-head subspaces and decode KV bandwidth matter; how MHA (n_kv = n_q), MQA (n_kv = 1), GQA (g = n_q / n_kv shared groups), and MLA (low-rank c_KV + decoupled k^R with W_UK/W_UV weight absorption) work; and the 32-layer 32k context numbers (16.00 GiB, 4.00 GiB, 0.50 GiB, 1.12 GiB).<div class="f"><b>Follow-up</b>Why does MHA need multiple heads at all if total width n_q * d_h equals d_model? A single softmax over T keys forces one convex combination per token; n_q heads give each token n_q independent softmax distributions so different heads can track syntax, coreference, and nearby tokens simultaneously.</div></div></details>
+  <details class="q"><summary>What role does the output projection matrix W_O play in Multi-Head Attention, and what is its shape when n_q * d_h != d_model?</summary><div class="a">Each head writes into its own isolated d_h-dimensional slice of the concatenated vector. W_O has shape <code>(n_q * d_v, d_model)</code>; it projects the concatenated head outputs back to the residual stream width <code>d_model</code> and linearly mixes features across all <code>n_q</code> heads.</div></details>
+  <details class="q"><summary>Derive the attention parameter count per layer for GQA when d_model = 4,096, n_q = 32, n_kv = 8, and d_h = 128, and compare it to MHA.</summary><div class="a">In GQA, W_Q and W_O each have 4,096 * (32 * 128) = 16,777,216 parameters (33.55M together). W_K and W_V each have 4,096 * (8 * 128) = 4,194,304 parameters (8.39M together). Total per layer is 41.94M parameters (1,342.2M across 32 layers), compared to 67.11M per layer (2,147.5M across 32 layers) in MHA.<div class="f"><b>Follow-up</b>Where do model designers usually spend the parameter budget saved by switching from MHA to GQA? They widen the SwiGLU FFN intermediate dimension (D07) so total model parameter count stays constant while KV-cache memory drops by 4x.</div></div></details>
+  <details class="q"><summary>Explain the bug that occurs if you broadcast GQA keys from (B, n_kv, T, d_h) to (B, n_q, T, d_h) using np.tile(K, (1, g, 1, 1)) instead of np.repeat(K, g, axis=1).</summary><div class="a">In GQA, adjacent query heads <code>[g*k .. g*(k+1)-1]</code> form group <code>k</code> and were trained against KV head <code>k</code>. <code>np.repeat</code> duplicates each head contiguously (<code>[0,0,0,0, 1,1,1,1]</code>), whereas <code>np.tile</code> alternates heads (<code>[0,1,0,1, 0,1,0,1]</code>), pairing 75% of query heads with the wrong KV subspace (causing a 2.8578 max error in the kata).</div></details>
+  <details class="q"><summary>Walk through Ainslie et al.'s recipe for converting (uptraining) an existing pretrained MHA checkpoint into a GQA checkpoint.</summary><div class="a">Partition the <code>n_q</code> original K and V projection head matrices into <code>n_kv</code> contiguous groups of size <code>g = n_q / n_kv</code>. Mean-pool the <code>g</code> key projection matrices in each group into one new key head matrix, and mean-pool the <code>g</code> value projection matrices into one new value head matrix. Then continue pretraining (uptraining) for ~5% of original training tokens.<div class="f"><b>Follow-up</b>Why is mean-pooling the head weight matrices better than picking one head per group and discarding the other g - 1 heads? Mean-pooling preserves the average key and value subspace information from all g heads at step 0, giving much lower initial loss before uptraining.</div></div></details>
+  <details class="q"><summary>Show the matrix algebra for how MLA absorbs W_UK into W_Q and W_UV into W_O during inference.</summary><div class="a">For head h, content key is <code>k_j^C = c_j^KV W_UK^h</code> and query is <code>q_i^C = x_i W_Q^h</code>. The dot product is <code>q_i^C (k_j^C)^T = x_i (W_Q^h (W_UK^h)^T) (c_j^KV)^T</code>, so defining <code>W_Q_abs^h = W_Q^h (W_UK^h)^T</code> in <code>R^(d_model x d_c)</code> lets the query dot directly with <code>c_j^KV</code>. Similarly, head output before W_O is <code>(A_h V_h) W_O^h = (A_h c^KV) (W_UV^h W_O^h)</code>, so <code>W_O_abs^h = W_UV^h W_O^h</code> in <code>R^(d_c x d_model)</code>.</div></details>
+  <details class="q"><summary>Why does an MLA serving engine use unabsorbed weights during prompt prefill and absorbed weights during autoregressive decode?</summary><div class="a">During prefill, we do not read a large historical cache, and unabsorbed head dimension is small (<code>d_h = 128</code>), whereas absorbed queries and values have width <code>d_c = 512</code> per head (4x more attention matrix FLOPs). Since prefill is compute-bound, unabsorbed <code>d_h = 128</code> is faster; since decode is memory-bandwidth-bound, absorbed MQA over <code>c_KV</code> (512 floats shared across all heads) is much faster.<div class="f"><b>Follow-up</b>In absorbed MLA decode, what are the effective query head width and number of KV heads seen by the attention kernel? Each of the <code>n_q</code> query heads has width <code>d_c + d_r = 512 + 64 = 576</code>, and all of them attend to <code>n_kv = 1</code> shared 576-dim KV cache tensor (an MQA kernel).</div></div></details>
+  <details class="q"><summary>How does the number of KV heads n_kv constrain Tensor Parallelism (TP) across GPUs?</summary><div class="a">Standard Megatron-style Tensor Parallelism shards attention heads across <code>TP</code> GPUs so each GPU holds <code>n_q / TP</code> query heads and <code>n_kv / TP</code> KV heads. As long as <code>n_kv &gt;= TP</code> (e.g., <code>n_kv = 8</code> on 8 GPUs), each GPU gets at least 1 unique KV head. When <code>n_kv &lt; TP</code> (e.g., MQA with <code>n_kv = 1</code> on 8 GPUs), the KV head must be replicated across ranks.</div></details>
+  <details class="q"><summary>Rank MHA (n_kv=32), GQA-4 (n_kv=8), GQA-8 (n_kv=4), MLA (d_c=512, d_r=64), and MQA (n_kv=1) from largest to smallest KV cache per token on a 32-layer d=4096 model.</summary><div class="a">1. MHA: 512.0 KiB/tok (32 KV heads). 2. GQA-4: 128.0 KiB/tok (8 KV heads). 3. GQA-8: 64.0 KiB/tok (4 KV heads). 4. MLA: 36.0 KiB/tok (576 floats/layer = 2.25 KV heads equivalent). 5. MQA: 16.0 KiB/tok (1 KV head).</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's four attention boxes (MHA, MQA, GQA, MLA) and the MLA weight-absorption stepper, then write: the 32-8-1-Latent memory hook; the KV-cache byte formulas for GQA and MLA; the KiB/token and 32k GiB numbers for all five configs in the 32-layer audit; why repeat_kv must be contiguous; and why MLA needs a decoupled RoPE key k^R.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Subspace splitting: MHA splits d_model into n_q heads of width d_h = d_model / n_q, keeping total parameters (4 * d_model^2) and FLOPs identical to one full-width head while giving n_q independent softmax distributions mixed by W_O.</li>
+    <li>Memory hook &amp; 32-layer BF16 audit (d = 4,096, n_q = 32, d_h = 128, S = 32k): MHA (n_kv = 32) = 2,147.5M params, 512.0 KiB/tok, 16.00 GiB; GQA-4 (n_kv = 8) = 1,342.2M params, 128.0 KiB/tok, 4.00 GiB; GQA-8 (n_kv = 4) = 1,208.0M params, 64.0 KiB/tok, 2.00 GiB; MLA (d_c = 512, d_r = 64) = 1,551.9M params, 36.0 KiB/tok, 1.12 GiB; MQA (n_kv = 1) = 1,107.3M params, 16.0 KiB/tok, 0.50 GiB.</li>
+    <li>GQA repeat_kv &amp; uptraining: query head h maps to KV group <code>h // g</code> (contiguous groups, never interleaved tiling which gave 2.8578 error); MHA checkpoints uptrain to GQA by mean-pooling each group of g adjacent K and V heads.</li>
+    <li>MLA compression &amp; weight absorption: caches <code>c_KV = X W_DKV</code> (512) + shared <code>k^R = RoPE(X W_KR)</code> (64) = 576 floats/layer (2.25 KV heads equivalent). During decode, <code>W_UK</code> absorbs into <code>W_Q</code> and <code>W_UV</code> absorbs into <code>W_O</code> (4.88e-15 max error in kata) so full K and V never materialize in HBM.</li>
+    <li>Decoupled RoPE reason: position-dependent rotation <code>R_{i-j}</code> sits between Q and K and breaks constant matrix associativity, requiring a separate small RoPE key <code>k^R</code>.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>D04: why does scaled dot-product attention divide Q @ K^T by sqrt(d_k), and why must causal masks use -infinity before softmax instead of 0.0?</summary><div class="a">Dot products of unit-variance d_k-dimensional vectors have variance d_k and std sqrt(d_k); dividing by sqrt(d_k) keeps variance at 1.0 so softmax does not saturate and vanish gradients. Masking with 0.0 leaves exp(0) = 1.0 in softmax, leaking future weights, whereas exp(-inf) = 0.0.</div></details>
+  <details class="q"><summary>K06: in our K06 pure-Python causal decoder kata (L = 2, d = 16, prompt = 16, gen = 64), how much speedup did KV caching achieve and what was the numerical difference between cached and uncached outputs?</summary><div class="a">KV caching achieved a 31.52x wall-clock speedup (31.54x fewer arithmetic operations, dropping from 10.42M to 0.33M ops) with an exact numerical difference of 0.00e+00 at a cost of 10,240 bytes of cache.</div></details>
+  <details class="q"><summary>D03: why does Llama 3.2 1B tie its input embedding table W_E and output unembedding W_U while Llama 3.1 8B leaves them untied?</summary><div class="a">With V = 128,256, one embedding table is 262.7M params (0.53 GB bf16) at 1B (d = 2,048), so untying would consume 35.1% of the 1B model (tying cuts it to 21.3%). At 8B (d = 4,096), the second table is only ~6.5% of total parameters, so untying is affordable and improves perplexity.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. (2017): Attention Is All You Need</a><small>Section 3.2.2 defines Multi-Head Attention, subspace projections W_Q^h, W_K^h, W_V^h, concatenation, and W_O mixing. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/1911.02150">Shazeer (2019): Fast Transformer Decoding: One Write-Head is All You Need</a><small>Introduces Multi-Query Attention (MQA, n_kv = 1) and analyzes the memory-bandwidth bottleneck of reading K and V tensors from HBM during autoregressive decoding. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2305.13245">Ainslie et al. (2023): GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a><small>Introduces Grouped-Query Attention (GQA) and the mean-pooling uptraining recipe for converting MHA checkpoints to GQA. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2405.04434">DeepSeek-AI (2024): DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</a><small>Section 2.1 introduces Multi-head Latent Attention (MLA), low-rank KV joint compression c_KV, decoupled RoPE k^R, and associative W_UK / W_UV weight absorption. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Multi-Head Attention (MHA):</strong> Splits <code>d_model</code> into <code>n_q</code> parallel heads of width <code>d_h = d_model / n_q</code> (<code>n_kv = n_q</code>) and mixes concatenated outputs via <code>W_O</code>; uses <code>4 * d_model^2</code> params/layer and caches <code>512.0 KiB/tok</code> (<code>16.00 GiB @ 32k</code>) on a 32-layer 8B-scale model.</li>
+    <li><strong>Multi-Query Attention (MQA):</strong> Shares a single KV head (<code>n_kv = 1</code>) across all <code>n_q</code> query heads, shrinking the 32-layer BF16 cache 32x to <code>16.0 KiB/tok</code> (<code>0.50 GiB @ 32k</code>) and params to <code>1,107.3M</code> at the cost of KV capacity and TP replication when <code>TP &gt; 1</code>.</li>
+    <li><strong>Grouped-Query Attention (GQA):</strong> Groups <code>g = n_q / n_kv</code> adjacent query heads per KV head via contiguous <code>repeat_kv</code> (<code>h // g</code>); GQA-4 (<code>n_kv = 8</code>, Llama-3-8B) uses <code>1,342.2M</code> params and <code>128.0 KiB/tok</code> (<code>4.00 GiB @ 32k</code>), while GQA-8 (<code>n_kv = 4</code>) uses <code>64.0 KiB/tok</code> (<code>2.00 GiB @ 32k</code>).</li>
+    <li><strong>Multi-head Latent Attention (MLA):</strong> Compresses KV into a shared latent <code>c_KV = X W_DKV</code> (<code>d_c = 512</code>) plus a shared decoupled RoPE key <code>k^R</code> (<code>d_r = 64</code>), caching <code>576 floats/layer</code> = <code>36.0 KiB/tok</code> (<code>1.12 GiB @ 32k</code>, 14.22x smaller than MHA, equivalent to <code>2.25</code> KV heads).</li>
+    <li><strong>MLA weight absorption &amp; decoupled RoPE:</strong> Absorbs <code>W_UK</code> into <code>W_Q</code> and <code>W_UV</code> into <code>W_O</code> during decode (<code>4.88e-15</code> max diff in kata) so full K and V never materialize in HBM; RoPE must be decoupled because relative rotation <code>R_{i-j}</code> between Q and K breaks constant matrix associativity.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>KV cache formulas:</strong> Standard/GQA: <code>2 * L * n_kv * d_h * S * B * b</code> bytes. MLA: <code>L * (d_c + d_r) * S * B * b</code> bytes. Memory hook: <strong>32 - 8 - 1 - Latent</strong> (<code>16.00 GiB -&gt; 4.00 GiB -&gt; 0.50 GiB -&gt; 1.12 GiB</code> at 32k).</li>
+      <li><strong>repeat_kv bug:</strong> Always map query head <code>h</code> to KV head <code>h // g</code> (contiguous groups <code>[0,0,0,0, 1,1,1,1]</code>), never interleaved tiling <code>h % n_kv</code> (which gave <code>2.8578</code> output corruption in the kata), and never copy expanded KV into HBM during decode.</li>
+      <li><strong>MHA-to-GQA uptraining:</strong> Mean-pool each group of <code>g</code> adjacent K and V head weight matrices and uptrain on ~5% of pretraining tokens.</li>
+      <li><strong>MLA dual-kernel rule:</strong> Run unabsorbed projections during compute-bound prefill (<code>d_h = 128</code> saves 4x attention FLOPs) and absorbed MQA projections during memory-bound decode (<code>d_c + d_r = 576</code> saves 14.2x HBM reads).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::D Transformers and LLM internals", "tags": "D05 T1 W02", "cards": [{"q": "How do MHA, GQA, and MQA differ in their ratio of query heads n_q to key-value heads n_kv?", "a": "MHA uses n_kv=n_q (1:1); GQA partitions n_q query heads into n_kv groups so g=n_q/n_kv heads share each KV head; MQA uses n_kv=1 across all query heads."}, {"q": "What is the exact formula for KV-cache memory in bytes, and how much does GQA-4 (n_kv = 8 vs 32) save at 32k context?", "a": "Bytes = 2*L*n_kv*d_h*S*B*b; cutting n_kv from 32 to 8 shrinks a 32-layer BF16 cache at 32k context 4x from 16.00 GiB to 4.00 GiB."}, {"q": "Why must GQA broadcast KV heads using grouped repetition (repeat_kv) rather than interleaved tiling?", "a": "Pretrained checkpoints group adjacent query heads [g*k .. g*(k+1)-1] under KV head k; interleaving pairs query heads with the wrong KV subspace and scrambles outputs."}, {"q": "How does Multi-head Latent Attention (MLA) reduce the KV cache even further than GQA?", "a": "MLA compresses each token into a shared latent c_KV (d_c=512) plus one decoupled RoPE key k^R (d_r=64), caching 576 floats/layer instead of 2*n_kv*d_h."}, {"q": "How does MLA avoid materializing full multi-head keys and values in HBM during autoregressive decoding?", "a": "By matrix associativity, MLA absorbs W_UK into W_Q so queries project to d_c and dot directly with c_KV, and absorbs W_UV into W_O after pooling."}, {"q": "Why does MLA require a separate decoupled RoPE key k^R instead of applying RoPE directly to the compressed latent c_KV?", "a": "RoPE multiplies by a position-dependent rotation matrix R(i - j) between Q and K, which breaks the constant linear associativity needed to absorb W_UK into W_Q."}, {"q": "How do you uptrain an existing MHA checkpoint into a GQA checkpoint without training from scratch?", "a": "Mean-pool each group of g adjacent K and V projection head matrices into one KV head, then run a small fraction (~5%) of original pretraining tokens."}, {"q": "For a 32-layer transformer with d = 4096, n_q = 32, d_h = 128 in BF16, how many KiB per token do MHA, GQA-4, MLA (512+64), and MQA cache?", "a": "MHA caches 512.0 KiB/tok, GQA-4 caches 128.0 KiB/tok, MLA caches 36.0 KiB/tok, and MQA caches 16.0 KiB/tok across all 32 layers."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

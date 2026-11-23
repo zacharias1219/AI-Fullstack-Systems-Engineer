@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K08 Inference metrics</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="K08">
+<main>
+<header>
+  <div class="eyebrow"><b>K08</b><span>Inference engineering and hardware</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Inference metrics</h1>
+  <p class="lede">How to measure and decompose streaming LLM performance into TTFT, ITL, TPOT, end-to-end latency, and per-user versus system throughput without getting fooled by averages.</p>
+  <div class="chips"><span><em>Before</em>K07 Memory math</span><span><em>After</em>K09 Benchmark design</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up guesses</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea, timeline stepper, and mechanism</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Numbers, tradeoffs, and streaming benchmark kata</span><small>20 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Production stalls and interview drill</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Blank-page recall and Anki import</span><small>10 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A request has TTFT = 8.00 ms and generates N_out = 128 tokens at a mean TPOT = 8.68 ms. Why is End-to-End (E2E) latency 1,110.41 ms instead of 8.00 + 128 * 8.68 = 1,119.04 ms?</summary><div class="a">Because the <strong>first output token is already emitted at TTFT</strong>. Only <code>N_out - 1 = 127</code> decode steps follow the first token, so <code>E2E = TTFT + (N_out - 1) * TPOT = 8.00 + 127 * 8.68 = 1,110.41 ms</code>. Forgetting the <code>- 1</code> double-counts the first token.</div></details>
+  <details class="q"><summary>In our kata, 8 active chat streams are joined by two 4,096-token RAG prompts. Mean TPOT barely shifts from 10.16 ms to 12.06 ms (+18.7%), yet users complain the stream freezes mid-sentence. Which metric caught the freeze, and how big was it?</summary><div class="a"><strong>p99 Inter-Token Latency (ITL)</strong> jumped <strong>13.4x</strong> from <strong>10.31 ms to 138.13 ms</strong>. An unchunked 4,096-token prefill monopolizes the GPU for 128 ms mid-generation; averaged across 127 decode steps it adds only ~1.9 ms to mean TPOT, hiding the stall.</div></details>
+  <details class="q"><summary>When batch concurrency B rises from 1 to 8 in steady chat decode, does token throughput go up or down?</summary><div class="a">Both, depending on which throughput you name: <strong>per-user decode speed drops 14.6%</strong> (from <strong>115.20 tok/s</strong> to <strong>98.39 tok/s</strong> as TPOT rises from 8.68 ms to 10.16 ms), while <strong>total system throughput jumps 6.7x</strong> (from <strong>115.27 tok/s</strong> to <strong>771.81 tok/s</strong>). Saying "throughput" without specifying per-user or system-wide is an interview red flag.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>A traditional REST endpoint returns one payload at the end, so a single latency distribution (p50, p99 response time) describes user experience. A streaming LLM request is fundamentally different: it has a compute-bound startup phase that processes the entire prompt before emitting a single syllable, followed by a memory-bandwidth-bound loop that emits one token at a time over seconds. A request with a 2-second total duration can feel instantaneous if the first token arrives in 40 ms and tokens stream at 90 tok/s, or sluggish if the user stares at a blank spinner for 1.8 seconds before 128 tokens dump all at once.</p>
+  <p>To engineer or benchmark an inference service, you must track five distinct metrics across two axes. Along the <strong>single-stream time axis</strong>, you separate initial responsiveness (<strong>TTFT</strong>: Time To First Token), individual step smoothness (<strong>ITL</strong>: Inter-Token Latency for each step), average generation cadence (<strong>TPOT</strong>: Time Per Output Token, the mean of ITLs), and total completion time (<strong>E2E</strong>: End-to-End latency). Across the <strong>system capacity axis</strong>, you separate what one user feels (<code>1000 / TPOT</code> tok/s) from what the GPU fleet delivers across all concurrent requests (system output tok/s and completed req/s).</p>
+
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: The streaming token timeline and the 5 inference metrics</div>
+    <svg viewBox="0 0 500 245" role="img" aria-label="Streaming request timeline from arrival t_0 through queue and prefill to first token t_1 (TTFT), then decode steps t_2 to t_N with individual gaps ITL averaging to TPOT, summing to E2E = TTFT + (N_out - 1) * TPOT, contrasted with system throughput across B concurrent streams.">
+      <g font-size="12">
+        <line x1="20" y1="72" x2="480" y2="72" class="ln" stroke-width="2"/>
+        <g data-step="1">
+          <circle cx="28" cy="72" r="5" class="c-accent"/>
+          <text x="28" y="92" text-anchor="middle">t_0</text>
+          <rect x="28" y="30" width="58" height="28" rx="4" class="c-warn" data-hi="1"/>
+          <text x="57" y="48" text-anchor="middle">Queue</text>
+          <rect x="86" y="30" width="84" height="28" rx="4" class="c-accent" data-hi="1"/>
+          <text x="128" y="48" text-anchor="middle">Prefill N_in</text>
+        </g>
+        <g data-step="2">
+          <circle cx="170" cy="72" r="5" class="c-good"/>
+          <text x="170" y="92" text-anchor="middle">t_1 (Tok 1)</text>
+          <path d="M28 18 H170" class="ink" stroke-width="2"/>
+          <text x="99" y="13" text-anchor="middle" font-weight="600">TTFT = t_1 - t_0 (8.00 ms)</text>
+        </g>
+        <g data-step="3">
+          <circle cx="245" cy="72" r="5" class="c-good"/>
+          <text x="245" y="92" text-anchor="middle">t_2</text>
+          <circle cx="320" cy="72" r="5" class="c-good"/>
+          <text x="320" y="92" text-anchor="middle">t_3</text>
+          <circle cx="462" cy="72" r="5" class="c-good"/>
+          <text x="462" y="92" text-anchor="middle">t_N (Tok N)</text>
+          <rect x="174" y="34" width="67" height="22" rx="3" class="c-soft" data-hi="3"/>
+          <text x="207" y="49" text-anchor="middle">ITL_1</text>
+          <rect x="249" y="34" width="67" height="22" rx="3" class="c-soft" data-hi="3"/>
+          <text x="282" y="49" text-anchor="middle">ITL_2</text>
+          <text x="390" y="49" text-anchor="middle" class="m">... (N_out - 1 steps)</text>
+        </g>
+        <g data-step="4">
+          <path d="M170 112 H462" class="ink" stroke-width="2"/>
+          <rect x="210" y="118" width="212" height="24" rx="4" class="c-good" data-hi="4"/>
+          <text x="316" y="134" text-anchor="middle">TPOT = mean(ITL) = 8.68 ms</text>
+        </g>
+        <g data-step="5">
+          <path d="M28 156 H462" class="ink" stroke-width="2"/>
+          <rect x="70" y="162" width="350" height="26" rx="4" class="c-accent" data-hi="5"/>
+          <text x="245" y="179" text-anchor="middle">E2E = TTFT + (N_out - 1) * TPOT = 1110.41 ms</text>
+        </g>
+        <g data-step="6">
+          <rect x="20" y="200" width="220" height="36" rx="4" class="c-soft" data-hi="6"/>
+          <text x="130" y="222" text-anchor="middle">1 User: 1000/TPOT = 115.2 tok/s</text>
+          <rect x="255" y="200" width="225" height="36" rx="4" class="c-good" data-hi="6"/>
+          <text x="367" y="222" text-anchor="middle">System (B=8): 771.8 tok/s</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>A request arrives at t_0, waits in the scheduler queue, and runs parallel prefill over all N_in prompt tokens.</li>
+      <li>Prefill finishes and emits the first output token at t_1; the elapsed duration t_1 - t_0 is Time To First Token (TTFT = 8.00 ms at B=1).</li>
+      <li>Autoregressive decode runs N_out - 1 sequential steps, emitting tokens at t_2 .. t_N with individual step gaps ITL_k = t_{k+1} - t_k.</li>
+      <li>Time Per Output Token (TPOT = 8.68 ms) is the arithmetic mean of all N_out - 1 ITLs for that request: (t_N - t_1) / (N_out - 1).</li>
+      <li>End-to-End latency is the exact sum of startup and decode: E2E = TTFT + (N_out - 1) * TPOT (8.00 + 127 * 8.68 = 1,110.41 ms).</li>
+      <li>Batching B=8 concurrent streams nudges per-user speed from 115.2 to 98.4 tok/s while multiplying total system output throughput to 771.8 tok/s.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Every streaming request splits at the first token: TTFT captures queuing plus prompt prefill, (N_out - 1) * TPOT captures sequential decode, and ITL percentiles expose mid-stream stalls that mean TPOT hides.</figcaption>
+  </figure>
+
+  <div class="box hook"><b>Memory hook</b><p><strong>"FTD-ET: First-token, Token-gap, Decode-mean, End-to-end, Throughput."</strong> Rebuild the exact timeline identity from left to right: <code>TTFT</code> emits token 1, <code>N_out - 1</code> individual <code>ITL</code> gaps average to <code>TPOT</code>, their sum is <code>E2E = TTFT + (N_out - 1) * TPOT</code>, and <code>1000 / TPOT</code> is per-user tok/s while <code>sum(N_out) / wall_time</code> is system tok/s.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+
+  <h3>1. Time To First Token (TTFT): queue plus prefill</h3>
+  <p><strong>Time To First Token (TTFT)</strong> is the elapsed wall time from the moment the client sends the request (<code>t_0</code>) to the moment the client receives the first streamed token chunk (<code>t_1</code>). Inside the server, TTFT decomposes into four terms: network round-trip time, scheduler queue wait time while current GPU batches finish, optional KV prefix-cache lookup, and the parallel forward pass over all <code>N_in</code> prompt tokens (which also produces the first output token's logits).</p>
+  <div class="codewrap"><pre>TTFT = t_1 - t_0 = T_net + T_queue(B) + T_prefill(N_in)</pre></div>
+  <p>Because prefill is compute-bound (matrix-matrix multiplications over <code>N_in</code> tokens), <code>T_prefill</code> scales linearly with uncached prompt length <code>N_in</code> at short contexts and quadratically <code>O(N_in^2)</code> once attention dominates at long contexts (32k+ tokens). Under heavy traffic, <code>T_queue</code> dominates TTFT: a 256-token prompt that takes 8 ms of GPU compute can suffer a 400 ms TTFT if queued behind a batch of long RAG prompts.</p>
+
+  <h3>2. ITL vs TPOT: why averages hide generation stalls</h3>
+  <p>After token 1 arrives at <code>t_1</code>, the model generates tokens <code>2 .. N_out</code> one step at a time. The wall-clock gap between consecutive tokens <code>k</code> and <code>k + 1</code> is the <strong>Inter-Token Latency</strong> (<code>ITL_k = t_{k+1} - t_k</code> for <code>k = 1 .. N_out - 1</code>). The request's <strong>Time Per Output Token (TPOT)</strong> is the mean of those <code>N_out - 1</code> gaps:</p>
+  <div class="codewrap"><pre>ITL_k = t_{k+1} - t_k     (for k = 1 .. N_out - 1)
+TPOT  = (t_{N_out} - t_1) / (N_out - 1) = (1 / (N_out - 1)) * sum_{k=1}^{N_out-1} ITL_k</pre></div>
+  <p>Notice the difference: <strong>TPOT is one average per request</strong>, whereas <strong>ITL is a distribution of every step gap</strong> across all tokens. Human reading speed is roughly 4 to 6 words per second (5 to 8 tok/s, or ~125 to 200 ms/tok), and voice AI pipelines need smooth audio frames every 20 to 40 ms. If 126 decode steps take 10 ms each and one step stalls for 138 ms while the scheduler prefills a new request, mean TPOT is a healthy 11.0 ms (90.8 tok/s), yet p99 ITL is 138 ms - a visible UI stutter or an audible voice glitch.</p>
+
+  <details class="q"><summary>Check: Why do we divide by (N_out - 1) instead of N_out when computing exact TPOT from (E2E - TTFT)?</summary><div class="a">Because token 1 is generated at the end of the prefill pass and its latency is already counted inside <code>TTFT = t_1 - t_0</code>. The remaining time window <code>E2E - TTFT = t_{N_out} - t_1</code> contains exactly <code>N_out - 1</code> decode steps (tokens <code>2 .. N_out</code>). Some benchmark tools approximate TPOT as <code>(E2E - TTFT) / N_out</code>; for short outputs like <code>N_out = 5</code>, that off-by-one error understates true per-step decode latency by 20%.</div></details>
+
+  <h3>3. End-to-End latency (E2E) and dominant regimes</h3>
+  <p><strong>End-to-End latency (E2E)</strong>, also called Request Latency or Time To Last Token (TTLT), is the total time from request submission to final token delivery: <code>E2E = t_{N_out} - t_0</code>. Substituting the definition of TPOT yields the fundamental streaming latency identity:</p>
+  <div class="codewrap"><pre>E2E = TTFT + (N_out - 1) * TPOT</pre></div>
+  <p>This equation immediately tells you which optimization moves the needle for a given workload. For a classification or router call with <code>N_in = 4,000</code> and <code>N_out = 1</code>, <code>(N_out - 1) = 0</code>, so <code>E2E = TTFT</code>: only prompt caching, chunked prefill, or higher FLOP/s reduces latency. For a reasoning or code-generation call with <code>N_in = 256</code> and <code>N_out = 1,024</code>, decode accounts for over 99% of E2E, so only HBM memory bandwidth, weight quantization, or speculative decoding reduces latency.</p>
+
+  <h3>4. Per-user decode speed vs system throughput and goodput</h3>
+  <p>Throughput is measured in three ways that move in opposite directions when you increase batch size <code>B</code>:</p>
+  <ul>
+    <li><strong>Per-user output token throughput (<code>tok/s/user</code>):</strong> <code>1000 / TPOT_ms</code>. Because decode is memory-bandwidth-bound (reading model weights plus growing KV caches from HBM on every step), adding more concurrent requests to the active batch slightly increases each step's duration, nudging TPOT up and per-user tok/s down.</li>
+    <li><strong>System output token throughput (<code>total out tok/s</code>):</strong> total output tokens generated across all users divided by wall-clock elapsed time. In steady state with batch concurrency <code>B</code>, one decode step of duration <code>TPOT</code> emits <code>B</code> tokens simultaneously, so system decode throughput scales as <code>B * (1000 / TPOT_ms)</code> until the GPU transitions from memory-bound to compute-bound.</li>
+    <li><strong>Request throughput (<code>req/s</code>) and Goodput:</strong> completed requests per second (<code>total_requests / wall_time_s</code>). <strong>Goodput</strong> is the maximum request throughput <code>req/s</code> that simultaneously satisfies your Service Level Objectives (SLOs), such as <code>p95 TTFT &lt;= 200 ms</code> and <code>p99 ITL &lt;= 40 ms</code>. Raw throughput at <code>B = 128</code> is useless if 80% of requests breach the SLO.</li>
+  </ul>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Workload shape and batch concurrency vs the 5 metrics</div>
+    <p class="ask">Predict first. If you keep N_in = 256 and N_out = 128 fixed and raise batch concurrency B from 1 to 16, which grows faster: per-request E2E latency or total system output tok/s?</p>
+    <div class="ctl">
+      <label><span>Prompt tokens (N_in)</span><input type="range" name="nin" min="128" max="4096" step="128" value="256"><output data-for="nin" data-unit=" tok"></output></label>
+      <label><span>Output tokens (N_out)</span><input type="range" name="nout" min="16" max="512" step="16" value="128"><output data-for="nout" data-unit=" tok"></output></label>
+      <label><span>Batch concurrency (B)</span><input type="range" name="b" min="1" max="32" step="1" value="8"><output data-for="b" data-unit=" req"></output></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Using our kata's H100-8B hardware model, raising batch concurrency B slightly increases TPOT and E2E latency but multiplies system tok/s because all B requests share the same weight reads per decode step.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var ttft = v.nin * 0.03125;
+    var avgCtx = v.nin + (v.nout - 1) / 2;
+    var tpot = 8.5 + 0.18 * v.b + 0.0012 * v.b * (avgCtx / 1024);
+    var decMs = (v.nout - 1) * tpot;
+    var e2e = ttft + decMs;
+    var userTps = 1000 / tpot;
+    var sysTps = (v.b * v.nout) / (e2e / 1000);
+    tl.bars(fig.querySelector("[data-chart]"),{unit:" ms",digits:1,rows:[
+      {label:"TTFT (prefill)",value:ttft,tone:"warn"},
+      {label:"Decode (N_out-1)*TPOT",value:decMs,tone:"good"},
+      {label:"Total E2E latency",value:e2e,tone:"muted"}
+    ]});
+    return {verdict:"TTFT = " + ttft.toFixed(1) + " ms | TPOT = " + tpot.toFixed(2) + " ms | E2E = " + e2e.toFixed(1) + " ms | User: " + userTps.toFixed(1) + " tok/s | System (B=" + v.b + "): " + sysTps.toFixed(1) + " tok/s"};
+  })});</script>
+
+  <h3>5. Client-side vs server-side measurement</h3>
+  <p>A production streaming client measures timestamps over Server-Sent Events (SSE, <code>text/event-stream</code>). Three measurement pitfalls corrupt client benchmarks:</p>
+  <ol>
+    <li><strong>HTTP/proxy buffering:</strong> if nginx, an ingress proxy, or the Python client buffers chunks before yielding, multiple tokens arrive in a single socket read. The client sees <code>ITL = 0 ms</code> for buffered tokens followed by a fake spike.</li>
+    <li><strong>Chunk token count (&gt;1 tok/chunk):</strong> speculative decoding or server-side detokenization can emit <code>k &gt; 1</code> tokens in one SSE frame. Per-step latency is chunk gap, while per-token TPOT must divide by actual generated token count from the usage footer.</li>
+    <li><strong>Tokenizer mismatch:</strong> counting whitespace words or UTF-8 characters instead of using the model's exact BPE tokenizer distorts TPOT and tok/s by 20% to 40%.</li>
+  </ol>
+
+  <details class="q"><summary>Check: At B = 8 in our kata, per-user decode speed is 98.39 tok/s (TPOT = 10.16 ms), yet total system throughput is 771.81 tok/s instead of 8 * 98.39 = 787.12 tok/s. Where did the missing 15.3 tok/s go?</summary><div class="a">System throughput is <code>total_out_tokens / total_wall_time</code> across the full window from the first request's arrival to the 8th request's completion. That wall window includes the <strong>initial prefill TTFT (8.00 ms) and the 8 ms arrival stagger</strong> across requests before all 8 streams are decoding simultaneously.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table>
+    <tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Fundamental E2E latency identity</td><td class="n">E2E = TTFT + (N_out - 1) * TPOT</td><td>Derived</td></tr>
+    <tr><td>Per-user decode speed from TPOT</td><td class="n">User tok/s = 1000 / TPOT_ms</td><td>Derived</td></tr>
+    <tr><td>Kata Scenario 1 (B=1, 256-&gt;128): TTFT / TPOT / E2E</td><td class="n">8.00 ms / 8.68 ms / 1,110.41 ms</td><td>Your own run</td></tr>
+    <tr><td>Kata Scenario 1 vs Scenario 2 (B=1 vs B=8): User tok/s</td><td class="n">115.20 tok/s -&gt; 98.39 tok/s (-14.6%)</td><td>Your own run</td></tr>
+    <tr><td>Kata Scenario 1 vs Scenario 2 (B=1 vs B=8): System tok/s</td><td class="n">115.27 tok/s -&gt; 771.81 tok/s (6.70x)</td><td>Your own run</td></tr>
+    <tr><td>Kata Scenario 3a (unchunked 4096-tok prefill stall): mean TPOT vs p99 ITL</td><td class="n">12.06 ms mean TPOT vs 138.13 ms p99 ITL (11.5x)</td><td>Your own run</td></tr>
+    <tr><td>Kata Scenario 3b (512-tok chunked prefill fix): p99 ITL reduction</td><td class="n">138.13 ms -&gt; 19.58 ms (7.05x lower p99 ITL)</td><td>Your own run</td></tr>
+    <tr><td>Human reading speed vs interactive chat TPOT target</td><td class="n">~6-8 tok/s reading; &lt;= 20-35 ms TPOT (&gt;= 30-50 tok/s)</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Real-time voice AI pipeline TTFT budget (LLM portion)</td><td class="n">&lt;= 150-250 ms TTFT, &lt;= 25 ms p99 ITL</td><td>Checked 2026-11-23</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table>
+    <tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Higher batch concurrency (B=1 -&gt; B=32)</td><td>6x-15x higher system output tok/s and lower cost per 1M tokens</td><td>Higher TPOT (slower per-user tok/s) and longer queue wait in TTFT</td><td>Queue buildup pushing p95 TTFT past your interactive SLO</td></tr>
+    <tr><td>Prefill-prioritized scheduling (unchunked)</td><td>Fastest possible TTFT for newly arriving requests (32.66 ms in Scenario 3a)</td><td>Massive mid-generation stalls (p99 ITL = 138.13 ms) for active decode streams</td><td>Spikes in p99 ITL whenever a long RAG prompt enters the server</td></tr>
+    <tr><td>Chunked prefill (e.g. 512-token chunks)</td><td>Cuts p99 ITL stall 7.05x (to 19.58 ms) by piggybacking decode tokens on each chunk</td><td>Slightly higher TTFT for long prompts (32.66 ms -&gt; 46.23 ms in Scenario 3b)</td><td>Chunk size too small (&lt;256) underutilizing GPU Tensor Cores during prefill</td></tr>
+    <tr><td>Disaggregated prefill / decode nodes</td><td>Isolates prefill FLOP spikes from decode HBM loops; both TTFT and p99 ITL stay low</td><td>Network bandwidth overhead to transfer the prompt's KV cache from prefill GPU to decode GPU</td><td>KV transfer saturating PCIe/RoCE links on ultra-long prompts (32k+ tokens)</td></tr>
+  </table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Streaming benchmark client and prefill-stall simulator</h2>
+  <p>Simulate a continuous-batching LLM server and streaming client across single-user chat (<code>B=1</code>), batched chat (<code>B=8</code>), and a mixed RAG prefill-stall workload (<code>B=8</code> plus two 4,096-token arrivals) with and without chunked prefill, computing all five metrics from per-chunk timestamps.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import statistics
+
+# Deterministic simulation of a continuous-batching LLM server and streaming client
+# Hardware model: H100-80GB class serving Llama-3-8B FP16
+# Prefill compute speed: 32,000 prompt tok/s (0.03125 ms/token)
+# Decode step latency (memory-bandwidth bound + batch slope):
+#   step_ms(B, ctx_avg) = 8.5 + 0.18 * B + 0.0012 * B * (ctx_avg / 1024)
+
+def simulate_scenario(name, reqs, chunk_prefill=None):
+    pending = [dict(r, prefill_left=r["n_in"], out_left=r["n_out"],
+                    ctx=0, chunks=[]) for r in reqs]
+    now = 0.0
+    active = []
+    done = []
+
+    while len(done) &lt; len(pending):
+        for r in pending:
+            if r not in active and r not in done and r["arrive_ms"] &lt;= now:
+                active.append(r)
+        if not active:
+            now = min(r["arrive_ms"] for r in pending if r not in done)
+            continue
+
+        prefilling = [r for r in active if r["prefill_left"] &gt; 0]
+        decoding = [r for r in active if r["prefill_left"] == 0 and r["out_left"] &gt; 0]
+
+        if prefilling:
+            r = prefilling[0]
+            if not chunk_prefill:
+                # Unchunked prefill monopolizes the GPU: active decode streams stall!
+                step_ms = r["prefill_left"] * 0.03125
+                now += step_ms
+                r["ctx"] += r["prefill_left"]
+                r["prefill_left"] = 0
+                r["chunks"].append(now)
+                r["out_left"] -= 1
+            else:
+                # Chunked prefill piggybacks active decode tokens in the same iteration
+                take = min(chunk_prefill, r["prefill_left"])
+                B_dec = len(decoding)
+                step_ms = take * 0.03125 + (2.5 + 0.12 * B_dec if B_dec else 0.0)
+                now += step_ms
+                r["prefill_left"] -= take
+                r["ctx"] += take
+                if r["prefill_left"] == 0:
+                    r["chunks"].append(now)
+                    r["out_left"] -= 1
+                for d in decoding:
+                    d["ctx"] += 1
+                    d["chunks"].append(now)
+                    d["out_left"] -= 1
+        else:
+            B = len(decoding)
+            avg_ctx = sum(d["ctx"] for d in decoding) / B
+            step_ms = 8.5 + 0.18 * B + 0.0012 * B * (avg_ctx / 1024.0)
+            now += step_ms
+            for d in decoding:
+                d["ctx"] += 1
+                d["chunks"].append(now)
+                d["out_left"] -= 1
+
+        for r in list(active):
+            if r["out_left"] == 0:
+                active.remove(r)
+                done.append(r)
+
+    ttfts, tpots, e2es, all_itls = [], [], [], []
+    for r in done:
+        t0 = r["arrive_ms"]
+        c = r["chunks"]
+        ttft = c[0] - t0
+        e2e = c[-1] - t0
+        itls = [c[i] - c[i - 1] for i in range(1, len(c))]
+        tpot = (e2e - ttft) / (len(c) - 1)
+        ttfts.append(ttft)
+        tpots.append(tpot)
+        e2es.append(e2e)
+        all_itls.extend(itls)
+
+    wall_s = (max(r["chunks"][-1] for r in done) - min(r["arrive_ms"] for r in done)) / 1000.0
+    total_out = sum(r["n_out"] for r in done)
+    all_itls.sort()
+    p50_itl = all_itls[len(all_itls) // 2]
+    p99_itl = all_itls[int(len(all_itls) * 0.99)]
+    max_itl = all_itls[-1]
+    user_tps = 1000.0 / statistics.mean(tpots)
+    sys_tps = total_out / wall_s
+    req_s = len(done) / wall_s
+
+    print(f"=== {name} (n_req={len(done)}, total_out={total_out} tok) ===")
+    print(f"  Mean TTFT : {statistics.mean(ttfts):7.2f} ms | Mean TPOT : {statistics.mean(tpots):6.2f} ms")
+    print(f"  ITL p50   : {p50_itl:7.2f} ms | ITL p99   : {p99_itl:6.2f} ms | Max ITL: {max_itl:6.2f} ms")
+    print(f"  Mean E2E  : {statistics.mean(e2es):7.2f} ms | Identity TTFT+(N-1)*TPOT = {statistics.mean(ttfts)+(done[0]['n_out']-1)*statistics.mean(tpots):.2f} ms")
+    print(f"  User speed: {user_tps:7.2f} tok/s | Sys tput  : {sys_tps:7.2f} tok/s ({req_s:.2f} req/s)\n")
+
+if __name__ == "__main__":
+    # 1. Interactive single-user short chat (B=1, N_in=256, N_out=128)
+    s1 = [{"id": 0, "arrive_ms": 0.0, "n_in": 256, "n_out": 128}]
+    simulate_scenario("1. Single-User Chat (B=1, 256-&gt;128)", s1)
+
+    # 2. Batched RAG steady decode (B=8 staggered by 8ms, N_in=256, N_out=128)
+    s2 = [{"id": i, "arrive_ms": i * 8.0, "n_in": 256, "n_out": 128} for i in range(8)]
+    simulate_scenario("2. Batched Chat Steady (B=8, 256-&gt;128)", s2)
+
+    # 3. Mid-decode prefill stall: 8 active decoders hit by two 4096-token RAG arrivals
+    s3 = [{"id": i, "arrive_ms": i * 8.0, "n_in": 256, "n_out": 128} for i in range(8)]
+    s3.append({"id": 8, "arrive_ms": 250.0, "n_in": 4096, "n_out": 128})
+    s3.append({"id": 9, "arrive_ms": 600.0, "n_in": 4096, "n_out": 128})
+    simulate_scenario("3a. Prefill Stall Unchunked (B=8 + 2x4096-tok prefills)", s3, chunk_prefill=None)
+    simulate_scenario("3b. Chunked Prefill Fix (B=8 + 2x4096-tok in 512-tok chunks)", s3, chunk_prefill=512)</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">=== 1. Single-User Chat (B=1, 256-&gt;128) (n_req=1, total_out=128 tok) ===
+  Mean TTFT :    8.00 ms | Mean TPOT :   8.68 ms
+  ITL p50   :    8.68 ms | ITL p99   :   8.68 ms | Max ITL:   8.68 ms
+  Mean E2E  : 1110.41 ms | Identity TTFT+(N-1)*TPOT = 1110.41 ms
+  User speed:  115.20 tok/s | Sys tput  :  115.27 tok/s (0.90 req/s)
+
+=== 2. Batched Chat Steady (B=8, 256-&gt;128) (n_req=8, total_out=1024 tok) ===
+  Mean TTFT :    8.00 ms | Mean TPOT :  10.16 ms
+  ITL p50   :    9.94 ms | ITL p99   :   9.94 ms | Max ITL:  65.94 ms
+  Mean E2E  : 1298.76 ms | Identity TTFT+(N-1)*TPOT = 1298.76 ms
+  User speed:   98.39 tok/s | Sys tput  :  771.81 tok/s (6.03 req/s)
+
+=== 3a. Prefill Stall Unchunked (B=8 + 2x4096-tok prefills) (n_req=10, total_out=1280 tok) ===
+  Mean TTFT :   32.66 ms | Mean TPOT :  12.06 ms
+  ITL p50   :   10.31 ms | ITL p99   : 138.13 ms | Max ITL: 138.31 ms
+  Mean E2E  : 1564.03 ms | Identity TTFT+(N-1)*TPOT = 1564.03 ms
+  User speed:   82.93 tok/s | Sys tput  :  647.05 tok/s (5.06 req/s)
+
+=== 3b. Chunked Prefill Fix (B=8 + 2x4096-tok in 512-tok chunks) (n_req=10, total_out=1280 tok) ===
+  Mean TTFT :   46.23 ms | Mean TPOT :  11.14 ms
+  ITL p50   :   10.31 ms | ITL p99   :  19.58 ms | Max ITL:  19.58 ms
+  Mean E2E  : 1461.09 ms | Identity TTFT+(N-1)*TPOT = 1461.09 ms
+  User speed:   89.76 tok/s | Sys tput  :  645.39 tok/s (5.04 req/s)</pre></div>
+
+  <figure class="viz">
+    <div class="vt">Chart: Mean TPOT vs p99 ITL across the four kata runs (ms, lower is smoother)</div>
+    <div data-bars='{"unit":" ms","digits":2,"rows":[{"label":"1. B=1 Chat: Mean TPOT","value":8.68,"tone":"good"},{"label":"1. B=1 Chat: p99 ITL","value":8.68,"tone":"good"},{"label":"2. B=8 Steady: Mean TPOT","value":10.16,"tone":"good"},{"label":"2. B=8 Steady: p99 ITL","value":9.94,"tone":"good"},{"label":"3a. Unchunked Stall: Mean TPOT","value":12.06,"tone":"warn"},{"label":"3a. Unchunked Stall: p99 ITL","value":138.13,"tone":"bad"},{"label":"3b. Chunked Fix: Mean TPOT","value":11.14,"tone":"good"},{"label":"3b. Chunked Fix: p99 ITL","value":19.58,"tone":"warn"}]}'></div>
+    <figcaption><b>Takeaway.</b> In Scenario 3a, mean TPOT looks completely normal (12.06 ms), while p99 ITL exposes the 138.13 ms mid-stream freeze caused by unchunked 4,096-token prefills; 512-token chunked prefill cuts p99 ITL by 7.05x to 19.58 ms.</figcaption>
+  </figure>
+
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>The E2E identity holds to the microsecond:</strong> in Scenario 1, <code>TTFT = 8.00 ms</code>, <code>TPOT = 8.68 ms</code>, and <code>N_out = 128</code>, giving <code>8.00 + 127 * 8.68039 = 1,110.41 ms</code>, matching measured mean E2E (<code>1,110.41 ms</code>) identically.</li>
+    <li><strong>Batching trades 14.6% per-user speed for 6.70x system throughput:</strong> moving from <code>B=1</code> (Scenario 1) to <code>B=8</code> (Scenario 2) increases mean TPOT from <code>8.68 ms</code> to <code>10.16 ms</code> (per-user speed drops from <code>115.20</code> to <code>98.39 tok/s</code>), while total system output throughput jumps from <code>115.27 tok/s</code> (<code>0.90 req/s</code>) to <code>771.81 tok/s</code> (<code>6.03 req/s</code>).</li>
+    <li><strong>Mean TPOT is blind to rare prefill stalls:</strong> in Scenario 3a, two 4,096-token prompts arrive at <code>t=250 ms</code> and <code>t=600 ms</code>. Each unchunked prefill takes <code>4096 * 0.03125 = 128.00 ms</code>, freezing all 8 active decoders for <code>138.13 ms</code>. Yet averaged over 127 steps, mean TPOT is only <code>12.06 ms</code> (82.93 tok/s). Only <strong>p99 ITL (138.13 ms vs 10.31 ms p50)</strong> reveals the 13.4x stall.</li>
+    <li><strong>Chunked prefill trades a small TTFT bump for 7.05x smoother streaming:</strong> splitting the 4,096-token prompts into eight 512-token chunks (Scenario 3b) lets active decode streams emit a token every <code>19.58 ms</code> instead of waiting <code>138.13 ms</code>, while mean TTFT rises modestly from <code>32.66 ms</code> to <code>46.23 ms</code> and total system throughput stays flat at <code>~646 tok/s</code>.</li>
+  </ol>
+
+  <div class="box break"><b>Break it</b>
+    <ol>
+      <li><strong>Off-by-one TPOT bug.</strong> Change <code>tpot = (e2e - ttft) / (len(c) - 1)</code> to divide by <code>len(c)</code> and set <code>n_out = 4</code> on Scenario 1. Predict how much the identity check <code>TTFT + (N-1)*TPOT</code> misses E2E before running (it understates decode time by 25%).</li>
+      <li><strong>Queue explosion above saturation.</strong> Change Scenario 2 to launch <code>64</code> requests arriving every <code>2.0 ms</code> with <code>n_in = 1024</code>. Predict which metric degrades more: mean TTFT (from queuing) or p50 ITL.</li>
+      <li><strong>Tiny chunk overhead.</strong> In Scenario 3b, set <code>chunk_prefill = 32</code> instead of <code>512</code>. Predict what happens to mean TTFT and total system throughput when the 2.5 ms per-chunk decode overhead runs 128 times per 4,096-token prompt.</li>
+    </ol>
+  </div>
+  <p><strong>Stretch.</strong> Add an SLO filter (<code>goodput</code>) to <code>simulate_scenario</code> that counts only requests meeting both <code>TTFT &lt;= 100 ms</code> and <code>max(ITL) &lt;= 25 ms</code>, and compare goodput req/s between Scenario 3a (0% goodput for the 8 stalled streams) and Scenario 3b (100% goodput).</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+
+  <figure class="viz stepper" id="viz-stall">
+    <div class="vt">Stepper: How an unchunked prefill causes a p99 ITL spike and how chunking fixes it</div>
+    <svg viewBox="0 0 490 210" role="img" aria-label="Comparison of unchunked prefill blocking 8 active decode streams for 128 ms (spiking p99 ITL to 138.13 ms) versus 512-token chunked prefill interleaving decode tokens every 19.58 ms.">
+      <g font-size="12">
+        <text x="14" y="20" font-weight="600">Unchunked schedule (Scenario 3a)</text>
+        <g data-step="1">
+          <rect x="14" y="28" width="48" height="30" rx="3" class="c-good" data-hi="1"/>
+          <text x="38" y="47" text-anchor="middle">D1</text>
+          <rect x="66" y="28" width="48" height="30" rx="3" class="c-good" data-hi="1"/>
+          <text x="90" y="47" text-anchor="middle">D2</text>
+          <text x="64" y="73" text-anchor="middle" class="m">ITL = 10.3 ms</text>
+        </g>
+        <g data-step="2">
+          <rect x="118" y="28" width="230" height="30" rx="3" class="c-bad" data-hi="2"/>
+          <text x="233" y="47" text-anchor="middle">4096-tok Prefill blocks GPU (128 ms)</text>
+          <rect x="352" y="28" width="48" height="30" rx="3" class="c-good" data-hi="2"/>
+          <text x="376" y="47" text-anchor="middle">D3</text>
+          <path d="M90 80 H376" class="ink" stroke-width="2"/>
+          <text x="233" y="96" text-anchor="middle" font-weight="600">p99 ITL spike = 138.13 ms (mean TPOT still 12.06 ms!)</text>
+        </g>
+        <g data-step="3">
+          <text x="14" y="128" font-weight="600">Chunked prefill schedule (Scenario 3b: 512-tok chunks)</text>
+          <rect x="14" y="136" width="84" height="30" rx="3" class="c-accent" data-hi="3"/>
+          <text x="56" y="155" text-anchor="middle">P1(512)+D</text>
+          <rect x="104" y="136" width="84" height="30" rx="3" class="c-accent" data-hi="3"/>
+          <text x="146" y="155" text-anchor="middle">P2(512)+D</text>
+          <rect x="194" y="136" width="84" height="30" rx="3" class="c-accent" data-hi="3"/>
+          <text x="236" y="155" text-anchor="middle">P3(512)+D</text>
+          <text x="340" y="155" text-anchor="middle" class="m">... x8 chunks</text>
+        </g>
+        <g data-step="4">
+          <path d="M56 174 H146" class="ink" stroke-width="2"/>
+          <rect x="14" y="180" width="460" height="24" rx="4" class="c-good" data-hi="4"/>
+          <text x="244" y="196" text-anchor="middle">Decode piggybacks every chunk: p99 ITL drops 7.05x to 19.58 ms</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>Eight chat streams decode smoothly at B=8, emitting one token per stream every 10.31 ms (p50 ITL).</li>
+      <li>A 4,096-token RAG request arrives; unchunked prefill seizes the GPU for 128 ms, freezing all 8 chat streams for 138.13 ms (p99 ITL).</li>
+      <li>Enabling chunked prefill splits the 4,096-token prompt into eight 512-token chunks and fuses the 8 active decode tokens into each chunk iteration.</li>
+      <li>Active streams now emit a token every 19.58 ms (7.05x lower p99 ITL), while the long prompt completes prefill in 46.23 ms mean TTFT.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Always alert on p99 ITL alongside p95 TTFT: unchunked prefills create 10x+ generation stalls that mean TPOT completely masks.</figcaption>
+  </figure>
+
+  <div class="scroll"><table>
+    <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>p95 TTFT spikes from 40 ms to 2+ seconds while TPOT stays flat at 12 ms</td><td>Scheduler admission queue saturation (<code>num_waiting_requests &gt; 0</code>) or KV cache full forcing request queuing</td><td>Scale replicas horizontally on waiting-queue depth, enable prefix caching (G01), or cap <code>max_num_seqs</code> with admission shedding</td></tr>
+    <tr><td>Mean TPOT is 12 ms but p99 ITL spikes to 140+ ms and voice/UI stutters mid-sentence</td><td>Head-of-line blocking from unchunked long-prompt prefills or KV cache swap/recomputation preemption</td><td>Enable chunked prefill (<code>--enable-chunked-prefill</code> with <code>max_num_batched_tokens=512..2048</code>) or disaggregate prefill and decode instances</td></tr>
+    <tr><td>Client-side TTFT equals E2E and all tokens appear at once</td><td>Reverse proxy (nginx/ALB) or HTTP client response buffering coalescing SSE chunks</td><td>Set <code>X-Accel-Buffering: no</code>, <code>proxy_buffering off</code>, and iterate unbuffered over the raw SSE stream</td></tr>
+    <tr><td>Both p50 ITL and mean TPOT degrade linearly over the course of a conversation</td><td>Growing KV cache context length increasing HBM bytes read per decode step, or KV block fragmentation</td><td>Enforce sliding-window / history compaction, use FP8 KV cache quantization (K07), and check PagedAttention block utilization (K15)</td></tr>
+  </table></div>
+  <p><strong>Monitor:</strong> Export separate histograms for <strong>TTFT (p50, p95, p99)</strong>, <strong>ITL (p50, p99, max)</strong>, and <strong>E2E</strong>, stratified by prompt length bucket (<code>&lt;1k</code>, <code>1k-8k</code>, <code>&gt;8k</code>), plus <strong>waiting queue depth</strong>, <strong>active batch size B</strong>, <strong>KV cache % utilization</strong>, and <strong>SLO goodput req/s</strong>.</p>
+  <details class="q"><summary>Scenario: You run a clinic voice-AI agent where TTS needs a first clause within 200 ms and smooth tokens every 25 ms. At 9 AM when doctors open patient chart summaries (8,192-token prompts) on the same vLLM cluster, live phone calls start stuttering mid-word, even though cluster GPU utilization is 65% and mean TPOT is 14 ms. Walk through your diagnosis and fix.</summary><div class="a"><ol>
+    <li><strong>Separate p99 ITL from mean TPOT:</strong> pull the per-step ITL histogram on the voice endpoint. Confirm that while p50 ITL is ~11 ms and mean TPOT is 14 ms, p99 ITL spikes to 250+ ms whenever an 8,192-token chart summary runs an unchunked prefill pass on the shared GPU.</li>
+    <li><strong>Immediate scheduler mitigation:</strong> enable chunked prefill (<code>max_num_batched_tokens = 512</code>) so each prefill step takes ~18-20 ms and piggybacks the active voice decode tokens, bringing p99 ITL back under the 25 ms TTS buffer threshold.</li>
+    <li><strong>Workload isolation for hard real-time SLOs:</strong> separate the batch/chart-summary pool from the real-time voice pool (or use disaggregated prefill/decode routing) so bursty 8k-token chart prefills cannot contend with low-latency voice decode queues.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>A single response-time number cannot describe a streaming LLM because user experience splits at the first token. We track five metrics: Time To First Token for initial responsiveness, Inter-Token Latency and its average Time Per Output Token for streaming smoothness, End-to-End latency for total completion, and per-user versus system throughput for capacity planning.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>When a request arrives at t_0, TTFT measures t_1 minus t_0, capturing scheduler queue wait plus the compute-bound parallel prefill over all N_in prompt tokens, which also emits the first token. The remaining N_out minus 1 tokens are generated sequentially during memory-bandwidth-bound decode. Each step gap t_{k+1} minus t_k is an Inter-Token Latency, and TPOT is the mean of those N_out minus 1 gaps. That gives the exact identity E2E equals TTFT plus N_out minus 1 times TPOT. Per-user speed is 1000 divided by TPOT, while system throughput is total output tokens across all concurrent batch requests divided by wall time.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>In production, mean TPOT hides generation stalls. In my benchmark at batch 8, two 4,096-token prefills nudged mean TPOT from 10.16 to 12.06 milliseconds, but spiked p99 ITL 13.4x to 138.13 milliseconds. Chunked prefill in 512-token chunks cut p99 ITL 7x to 19.58 milliseconds, while batching 1 to 8 scaled system throughput 6.7x to 771.8 tokens per second.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We monitor latency and throughput on our LLM API to make sure responses feel fast for users and we get good ROI on our GPUs by batching requests together."</p>
+    <p class="strong">"We decompose streaming latency via E2E = TTFT + (N_out - 1) * TPOT and gate capacity on goodput under dual SLOs: p95 TTFT under 150 ms and p99 ITL under 25 ms. In our H100 benchmark, raising batch concurrency from 1 to 8 lifted system throughput 6.7x from 115.3 to 771.8 tok/s while per-user speed dipped only 14.6% to 98.4 tok/s, and enabling 512-token chunked prefill cut p99 ITL stalls 7x from 138.1 ms to 19.6 ms."</p>
+    <p>The strong answer states the exact equation, distinguishes mean TPOT from p99 ITL, separates per-user tok/s from system tok/s, and anchors every tradeoff with measured numbers.</p>
+  </div>
+
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"End-to-End latency is simply TTFT + N_out * TPOT."</summary><div class="a">Wrong by one decode step: the <strong>first output token is emitted at the end of prefill</strong> and its time is already inside <code>TTFT</code>. Only <code>N_out - 1</code> decode steps follow, so <code>E2E = TTFT + (N_out - 1) * TPOT</code>. At <code>N_out = 1</code> (classification), decode time is zero and <code>E2E = TTFT</code>.</div></details>
+  <details class="q"><summary>"If a request's average TPOT is 12 ms (83 tok/s), the user experiences smooth 83 tok/s streaming with no stutters."</summary><div class="a">Wrong because <strong>TPOT averages across all N_out - 1 steps in the request</strong>. In our kata's Scenario 3a, 126 decode steps ran at 10.31 ms and one step stalled for 138.13 ms during a 4,096-token prefill. Mean TPOT was 12.06 ms (82.93 tok/s), completely hiding the 138 ms freeze that only <strong>p99 ITL</strong> catches.</div></details>
+  <details class="q"><summary>"Increasing batch size always degrades token throughput because each decode step takes longer."</summary><div class="a">Confuses <strong>per-user throughput</strong> with <strong>system throughput</strong>. Raising <code>B</code> from 1 to 8 increases step time slightly (8.68 ms to 10.16 ms), so per-user speed drops 14.6% (115.2 to 98.4 tok/s), but all 8 requests emit a token on each weight read, multiplying <strong>system throughput 6.7x</strong> from 115.3 to 771.8 tok/s.</div></details>
+  <details class="q"><summary>"You can measure TTFT and TPOT accurately from standard server request logs or a non-streaming HTTP client."</summary><div class="a">A non-streaming client only records total response time (<code>E2E</code>) after the last token arrives; it cannot separate <code>TTFT</code> from <code>(N_out - 1) * TPOT</code>. And server-side logs miss network transit, reverse-proxy buffering, and client SSE queueing delays.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+
+  <details class="q"><summary>1. Derive the exact formula relating E2E latency, TTFT, TPOT, and N_out from token arrival timestamps t_0 .. t_{N_out}.</summary><div class="a">Let <code>t_0</code> be request submission and <code>t_1 .. t_{N_out}</code> be the arrival timestamps of tokens <code>1 .. N_out</code>. By definition, <code>TTFT = t_1 - t_0</code>, <code>ITL_k = t_{k+1} - t_k</code> for <code>k = 1 .. N_out - 1</code>, and <code>TPOT = (1 / (N_out - 1)) * sum(ITL_k) = (t_{N_out} - t_1) / (N_out - 1)</code>. Since <code>E2E = t_{N_out} - t_0 = (t_1 - t_0) + (t_{N_out} - t_1)</code>, substituting yields <code>E2E = TTFT + (N_out - 1) * TPOT</code>.<div class="f"><b>Follow-up</b>What happens to this equation when N_out = 1, and what workload has N_out = 1? For N_out = 1, (N_out - 1) = 0, so E2E = TTFT and TPOT is undefined; this occurs in single-token classification, guardrails, and logprob scoring.</div></div></details>
+
+  <details class="q"><summary>2. What is the difference between TPOT and ITL, and when do their p99 values diverge sharply?</summary><div class="a"><strong>ITL</strong> is the per-step latency sample <code>t_{k+1} - t_k</code> measured on every individual token transition, whereas <strong>TPOT</strong> is a per-request summary statistic equal to the arithmetic mean of all <code>N_out - 1</code> ITLs in that request. Their p99 values diverge whenever transient mid-stream stalls occur (such as unchunked long-prompt prefills or KV block preemption): the stall spikes one ITL sample to 138 ms (p99 ITL = 138.13 ms) but gets diluted by 126 fast steps inside the request's mean TPOT (12.06 ms).<div class="f"><b>Follow-up</b>Which metric matters more for a live voice-AI TTS stream vs a background document summarizer? Voice-AI TTS depends on p99 ITL because a single 140 ms gap starves the audio buffer, whereas background summarization cares only about E2E and system throughput.</div></div></details>
+
+  <details class="q"><summary>3. Why does TTFT scale differently with prompt length N_in than TPOT scales with output length N_out?</summary><div class="a">TTFT is dominated by the parallel prefill pass over all <code>N_in</code> tokens at once, which is compute-bound: latency scales linearly <code>O(N_in)</code> with prompt tokens for linear layers and quadratically <code>O(N_in^2)</code> for attention at long contexts. TPOT is a single decode step generating 1 token while reading fixed model weights plus the current KV cache from HBM: each step is memory-bandwidth-bound and grows only slowly with context length <code>O(N_in + t)</code>, though total decode time <code>(N_out - 1) * TPOT</code> scales linearly with <code>N_out</code>.</div></details>
+
+  <details class="q"><summary>4. Why does increasing batch concurrency B from 1 to 8 raise system tok/s by 6.7x while reducing per-user tok/s by only 14.6%?</summary><div class="a">During autoregressive decode at low batch size, the GPU spends most of each step reading model weights from HBM into SRAM (e.g., ~16 GB for an 8B FP16 model) while Tensor Cores sit underutilized. Batching <code>B = 8</code> requests reuses that single weight read across 8 tokens simultaneously. Step time increases only slightly (from 8.68 ms to 10.16 ms due to larger KV cache reads and compute slope), so per-user speed drops 14.6%, while 8 tokens emitted per step lifts system throughput 6.7x to 771.81 tok/s.<div class="f"><b>Follow-up</b>What happens if you keep increasing B past the roofline ridge point (e.g., B = 128 or 256)? Decode becomes compute-bound or HBM-capacity-bound: TPOT begins scaling linearly with B, so system tok/s plateaus while per-user TPOT and queuing TTFT explode.</div></div></details>
+
+  <details class="q"><summary>5. Explain how chunked prefill works and cite the exact tradeoff it makes between TTFT and p99 ITL in our kata.</summary><div class="a">Without chunked prefill, a newly scheduled 4,096-token prompt runs its entire prefill in one 128 ms GPU iteration, pausing all active decode requests and pushing p99 ITL to 138.13 ms. Chunked prefill slices that 4,096-token prompt into eight 512-token chunks and batches the active decode tokens alongside each chunk. In our kata, this cuts p99 ITL 7.05x (from 138.13 ms to 19.58 ms) at the cost of raising mean TTFT from 32.66 ms to 46.23 ms.<div class="f"><b>Follow-up</b>Why does piggybacking decode tokens onto a prefill chunk improve GPU utilization? Prefill chunks are compute-bound while decode steps are memory-bandwidth-bound; fusing them lets decode piggyback on weights already loaded into SRAM for the prefill chunk.</div></div></details>
+
+  <details class="q"><summary>6. Define "goodput" for an LLM inference service and explain why maximizing raw tok/s is dangerous without it.</summary><div class="a"><strong>Goodput</strong> is the rate of completed requests per second (or tokens/s) that satisfy all latency SLO thresholds (for example, <code>TTFT &lt;= 200 ms</code> and <code>p99 ITL &lt;= 30 ms</code>). If you crank batch concurrency to maximize raw system tok/s, queuing delay pushes TTFT to seconds and batch slope pushes TPOT above the user threshold, causing valid SLO goodput to collapse toward zero even while GPU tok/s looks high.</div></details>
+
+  <details class="q"><summary>7. A colleague benchmarks a streaming endpoint using Python `requests.post(url, json=payload)` without `stream=True`, or behind an nginx proxy with default settings. What happens to their measured TTFT and ITL?</summary><div class="a">Without <code>stream=True</code> (or when nginx buffers the upstream response), the client blocks until the entire HTTP body finishes and receives all SSE chunks at once at <code>t_{N_out}</code>. Measured TTFT erroneously equals full E2E latency, and every subsequent chunk appears to arrive with <code>ITL ~ 0 ms</code>.</div></details>
+
+  <details class="q"><summary>8. How does speculative decoding (emitting 3 to 5 accepted tokens per verification step) affect ITL, TPOT, and client benchmarking?</summary><div class="a">A single verification step takes slightly longer than one standard decode step (higher per-chunk ITL), but emits <code>k</code> tokens at once in a single SSE chunk. Therefore, <strong>Time Per Output Token (TPOT)</strong> must be computed as <code>(t_{last} - t_1) / (total_output_tokens - 1)</code> rather than mean time per SSE chunk, or you will underestimate the 2x-3x token speedup.<div class="f"><b>Follow-up</b>How should you compute ITL when one SSE frame contains multiple tokens? Record both inter-chunk latency (what the network/UI buffer sees) and normalized per-token ITL (chunk gap divided by tokens in that chunk).</div></div></details>
+
+  <details class="q"><summary>9. Two workloads hit your cluster: Workload A is an agent router (N_in = 3,000, N_out = 2) and Workload B is a coding assistant (N_in = 300, N_out = 800). Which metric dominates E2E for each, and which hardware resource bounds each?</summary><div class="a">For Workload A (<code>3000 -&gt; 2</code>), <code>TTFT</code> accounts for ~99% of E2E and is bound by GPU Tensor Core FLOP/s (and prefix cache hit rate). For Workload B (<code>300 -&gt; 800</code>), <code>799 * TPOT</code> accounts for ~99% of E2E and is bound by GPU HBM memory bandwidth.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's final picture and narrate its steps, then write: (1) the exact equations for TTFT, ITL_k, TPOT, E2E, and per-user vs system tok/s, (2) the kata numbers for B=1 vs B=8 and unchunked vs chunked prefill (TTFT, TPOT, p99 ITL, user tok/s, system tok/s), and (3) three client-side measurement pitfalls.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li>Timeline drawn with <code>t_0</code> (arrival), queue + prefill to <code>t_1</code> (<code>TTFT = t_1 - t_0</code>), and <code>N_out - 1</code> decode steps to <code>t_{N_out}</code>.</li>
+    <li>Exact definitions: <code>ITL_k = t_{k+1} - t_k</code>, <code>TPOT = (t_{N_out} - t_1) / (N_out - 1) = mean(ITL)</code>, and <code>E2E = TTFT + (N_out - 1) * TPOT</code>.</li>
+    <li>Throughput formulas: per-user speed = <code>1000 / TPOT_ms</code>; system tok/s = <code>sum(N_out) / wall_s</code>; goodput = completed req/s meeting TTFT and p99 ITL SLOs.</li>
+    <li>Kata numbers: B=1 -> TTFT 8.00 ms, TPOT 8.68 ms, E2E 1,110.41 ms, 115.20 user tok/s, 115.27 sys tok/s; B=8 -> TPOT 10.16 ms, 98.39 user tok/s (-14.6%), 771.81 sys tok/s (6.70x).</li>
+    <li>Prefill stall numbers: unchunked 4096-tok prefill gives 12.06 ms mean TPOT but 138.13 ms p99 ITL (13.4x over 10.31 ms p50); 512-tok chunked prefill cuts p99 ITL 7.05x to 19.58 ms.</li>
+    <li>Three client pitfalls: HTTP/proxy buffering, multi-token chunks (speculative decode), and word/char count vs model tokenizer count.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>K05: Why is prompt prefill compute-bound while autoregressive decode at small batch sizes is memory-bandwidth-bound?</summary><div class="a">Prefill processes all <code>N_in</code> prompt tokens in parallel using matrix-matrix multiplications (GEMMs), reusing each weight byte loaded from HBM across <code>N_in</code> tokens (high arithmetic intensity). Decode at <code>B=1</code> generates one token per step using matrix-vector multiplies (GEMVs), reading the entire model weight matrix from HBM for just 2 FLOPs per weight byte.</div></details>
+  <details class="q"><summary>K06: Why does the KV cache store K and V tensors for past tokens but never store past Q (Query) tensors?</summary><div class="a">Under causal masking, decode step <code>t</code> only computes attention for the newest token's query <code>q_t</code> against all past keys <code>k_0 .. k_t</code> and values <code>v_0 .. v_t</code>. Past queries <code>q_0 .. q_{t-1}</code> are never referenced again in future steps.</div></details>
+  <details class="q"><summary>K07: Write the exact formula for KV cache bytes per token across all layers of a transformer with GQA, and compute it for Llama-3-8B in FP16 (L=32, n_kv_heads=8, d_head=128).</summary><div class="a"><code>Bytes/tok = 2 (K and V) * L * n_kv_heads * d_head * bytes_per_elem</code>. For Llama-3-8B in FP16 (2 bytes): <code>2 * 32 * 8 * 128 * 2 = 131,072 bytes = 128 KiB per token</code> (or 128 MiB per 1,024 tokens).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://docs.vllm.ai/en/latest/serving/metrics.html">vLLM Documentation: Production Metrics and Benchmarking (TTFT, TPOT, ITL)</a><small>Supports official Prometheus histogram definitions for time_to_first_token_seconds, time_per_output_token_seconds, and inter_token_latency_seconds. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2403.02310">Agrawal et al. (OSDI 2024): Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve</a><small>Supports chunked prefill mechanism, prefill-induced generation stalls, and p99 ITL tail latency vs mean TPOT analysis. Checked 2026-11-23.</small></li>
+    <li><a href="https://arxiv.org/abs/2406.06669">Zhong et al. (OSDI 2024): DistServe - Disaggregating Prefill and Decoding for Goodput-Optimized Large Language Model Serving</a><small>Supports formal definition of SLO-constrained goodput (TTFT and TPOT/ITL percentiles) and prefill-decode interference. Checked 2026-11-23.</small></li>
+    <li><a href="https://github.com/ray-project/llmperf">Anyscale / Ray Project: LLMPerf Streaming Benchmark Client Specification</a><small>Supports client-side SSE timestamp measurement of TTFT, ITL, TPOT, E2E latency, and request/token throughput. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Time To First Token (TTFT):</strong> elapsed time <code>t_1 - t_0</code> from request arrival to first token chunk; sums network transit, scheduler queue wait, and compute-bound parallel prompt prefill over <code>N_in</code> tokens (<code>8.00 ms</code> at B=1, 256 prompt tokens in kata).</li>
+    <li><strong>Inter-Token Latency (ITL):</strong> per-step wall gap <code>ITL_k = t_{k+1} - t_k</code> between consecutive streamed tokens (<code>k = 1 .. N_out - 1</code>); its p99 exposes mid-stream generation freezes (<code>138.13 ms</code> during unchunked 4096-tok prefill).</li>
+    <li><strong>Time Per Output Token (TPOT):</strong> per-request arithmetic mean of all <code>N_out - 1</code> ITL steps, <code>(t_{N_out} - t_1) / (N_out - 1)</code>; measures average decode cadence (<code>8.68 ms</code> at B=1, <code>10.16 ms</code> at B=8) and determines per-user speed <code>1000 / TPOT_ms</code>.</li>
+    <li><strong>End-to-End Latency (E2E):</strong> total request duration <code>t_{N_out} - t_0</code> governed by the exact identity <code>E2E = TTFT + (N_out - 1) * TPOT</code> (<code>8.00 + 127 * 8.68 = 1,110.41 ms</code>).</li>
+    <li><strong>Per-User vs System Throughput &amp; Goodput:</strong> raising batch concurrency <code>B</code> from 1 to 8 slightly lowers per-user speed (<code>115.20 -&gt; 98.39 tok/s</code>) while multiplying total system output throughput 6.7x (<code>115.27 -&gt; 771.81 tok/s</code>); goodput counts only req/s meeting both TTFT and p99 ITL SLOs.</li>
+    <li><strong>Chunked Prefill &amp; Client Measurement:</strong> slicing 4,096-token prefills into 512-token chunks cuts p99 ITL stalls 7.05x (<code>138.13 -&gt; 19.58 ms</code>); streaming clients must disable HTTP/proxy buffering and divide by actual BPE token counts.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Exact latency identity:</strong> <code>E2E = TTFT + (N_out - 1) * TPOT</code>. Never multiply TPOT by <code>N_out</code> because token 1 is emitted at the end of prefill inside TTFT.</li>
+      <li><strong>Why mean TPOT lies:</strong> one 138 ms prefill stall averaged across 127 steps shifts mean TPOT by less than 2 ms (<code>10.16 -&gt; 12.06 ms</code>). Always monitor <strong>p99 ITL</strong> to catch user-visible stutters.</li>
+      <li><strong>Always qualify "throughput":</strong> state both per-user decode speed (<code>1000 / TPOT</code>) and total system output throughput (<code>sum(N_out) / wall_s</code>), plus SLO-constrained goodput (<code>req/s</code>).</li>
+      <li><strong>Memory hook (FTD-ET):</strong> First-token (TTFT), Token-gap (ITL), Decode-mean (TPOT), End-to-end (E2E), Throughput (user vs system tok/s).</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::K Inference engineering and hardware", "tags": "K08 T1 W02", "cards": [{"q": "How does End-to-End (E2E) latency decompose into TTFT, TPOT, and output length N_out?", "a": "E2E = TTFT + (N_out - 1) * TPOT, because the first output token is emitted at TTFT and N_out - 1 decode steps follow."}, {"q": "What is the mathematical relationship between Inter-Token Latency (ITL) and Time Per Output Token (TPOT) for a single request?", "a": "ITL_i = t_i - t_{i-1} is the individual gap between consecutive streamed tokens; TPOT is the request's arithmetic mean of all N_out - 1 ITL gaps."}, {"q": "Why can a streaming LLM session look smooth on average TPOT while users complain of mid-sentence freezes?", "a": "A single 138 ms prefill stall among 127 fast 10 ms decode steps barely moves mean TPOT (12.06 ms) but spikes p99 ITL 13.4x."}, {"q": "What two phases sum to produce Time To First Token (TTFT) from the client's perspective?", "a": "Network and scheduler queuing delay (t_sched - t_arrive) plus the parallel prefill forward pass across all N_in prompt tokens."}, {"q": "How does increasing continuous batch concurrency B from 1 to 8 affect per-user tok/s versus total system throughput tok/s?", "a": "Per-user speed drops slightly (115.2 to 98.4 tok/s as TPOT rises), while total system throughput scales nearly linearly (115.3 to 771.8 tok/s)."}, {"q": "Why does chunked prefill reduce p99 ITL in a mixed short-chat and long-RAG workload?", "a": "Splitting a 4096-token prefill into 512-token chunks lets active decode tokens piggyback every ~20 ms instead of waiting 128 ms for the full prompt."}, {"q": "Why must a streaming benchmark client disable HTTP response buffering and parse SSE chunks as they arrive?", "a": "Buffered reads collapse all chunk arrival timestamps into the final response timestamp, falsely reporting TTFT equal to E2E and TPOT near zero."}, {"q": "What are the five core inference metrics in the FTD-ET spine?", "a": "First-token latency (TTFT), Token gap (ITL), Decode average (TPOT), End-to-end latency (E2E), and Throughput (per-user tok/s vs system tok/s and req/s)."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

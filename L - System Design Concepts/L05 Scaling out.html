@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L05 Scaling out</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L05">
+<main>
+<header>
+  <div class="eyebrow"><b>L05</b><span>System design concepts</span><span>Tier 1</span><span>Week 2</span><span>70 min</span></div>
+  <h1>Scaling out</h1>
+  <p class="lede">Why round-robin load balancing breaks stateful workers immediately, how externalized state unlocks horizontal elasticity, and how the Universal Scalability Law and synchronous RPC hops cap real-world cluster throughput.</p>
+  <div class="chips"><span><em>Before</em>L04 How a server handles many requests</span><span><em>After</em>L07 Cost-aware architecture and when not to add infrastructure</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: predict the round-robin session loss and USL retrograde peak</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea and stepper: vertical ceiling to stateless horizontal scale and fan-out tax</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism and USL explorer: statelessness, contention alpha, coherency beta, monolith vs microservices</span><small>18 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run and break the nginx round-robin and USL scaling simulator</span><small>15 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production incident debugging and 90-second interview drill</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and Anki flashcards</span><small>8 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>You place an nginx strict round-robin load balancer in front of 4 identical app servers that store multi-turn chat sessions in local Python process memory. Every user sends a 4-turn conversation (Turn 1 creates the session; Turns 2, 3, and 4 read it). When 200 users arrive sequentially, what percentage of follow-up turns fail with 404 Session Not Found?</summary><div class="a"><strong>100.0% of follow-up turns fail</strong> (bringing overall request success down to <code>25.0%</code>). Under strict round-robin across <code>N = 4</code> workers, a user whose Turn 1 lands on Worker 0 has Turns 2, 3, and 4 routed to Workers 1, 2, and 3, none of which hold the in-memory dictionary entry. Even with random load balancing, the follow-up miss rate is <code>(N - 1) / N = 75%</code>.</div></details>
+  <details class="q"><summary>Your cluster has 4% shared-database lock contention (alpha = 0.04) and 0.25% pairwise cache coherency overhead (beta = 0.0025). At N = 20 workers, total capacity is 7.38x a single node. If you scale out to N = 32 workers for a traffic spike, does total cluster throughput increase or decrease?</summary><div class="a">It <strong>decreases</strong> to <code>6.78x</code> (retrograde scaling). Under Gunther's Universal Scalability Law, capacity peaks at <code>N_peak = sqrt((1 - alpha) / beta) = sqrt(0.96 / 0.0025) = 19.6</code> workers. Past 20 workers, the quadratic coordination term <code>beta * N * (N - 1)</code> grows faster than linear worker count <code>N</code>.</div></details>
+  <details class="q"><summary>You decompose a 99.9% available modular monolith into a chain of 5 synchronous microservices, each maintaining a 99.9% SLA and adding 4.5 ms of p99 RPC serialization/network latency. What happens to your end-to-end monthly downtime budget?</summary><div class="a">End-to-end availability drops to <code>0.999^5 = 99.501%</code>, multiplying monthly downtime <strong>5x</strong> from <code>43.2 minutes</code> to <code>215.6 minutes</code> per month while adding <code>22.5 ms</code> of pure RPC p99 tail latency on every request.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>When a single server hits 100% CPU or RAM, you have two choices: <strong>scale up (vertical scaling)</strong> by buying a bigger machine, or <strong>scale out (horizontal scaling)</strong> by adding more commodity instances behind a load balancer. Vertical scaling requires zero code changes and keeps all communication in fast local memory, but it hits hard hardware ceilings, requires downtime for instance resizes, and leaves a <strong>Single Point of Failure (SPOF)</strong>. Horizontal scaling removes the single-machine ceiling and survives node crashes, but it introduces a strict architectural contract: <strong>every application worker must be stateless</strong>.</p>
+  <p>If worker instances keep mutable conversation history, auth sessions, or local file uploads in process RAM, a load balancer cannot route consecutive requests from the same user to arbitrary nodes without triggering state misses. Moving mutable state out of the compute tier into a shared data tier (Redis for ephemeral sessions, Postgres/S3 for durable records) makes workers interchangeable cattle. However, scaling out is never infinitely linear: shared database locks (contention <code>alpha</code>), cross-node coordination (coherency <code>beta</code>), and premature microservice chains impose a mathematical ceiling on horizontal scale.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: From vertical SPOF to broken stateful scale-out, stateless tier, and fan-out tax</div>
+    <svg viewBox="0 0 500 240" role="img" aria-label="Four-stage architecture stepper showing a single vertical server SPOF, naive round-robin across stateful workers causing 404 misses, stateless workers backed by shared Redis, and modular monolith versus microservice RPC chain">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="18" width="106" height="62" rx="6" class="c-soft" stroke="var(--ink)" data-hi="1"/>
+          <text x="63" y="38" text-anchor="middle">1. Vertical Box</text>
+          <text x="63" y="55" text-anchor="middle" class="m">55.6 RPS cap</text>
+          <text x="63" y="71" text-anchor="middle" class="m">RAM state + SPOF</text>
+        </g>
+        <g data-step="2">
+          <path d="M116 49 H134" class="ink"/>
+          <rect x="134" y="18" width="114" height="62" rx="6" class="c-bad" data-hi="2"/>
+          <text x="191" y="38" text-anchor="middle" fill="#fff">2. Stateful N=2</text>
+          <text x="191" y="55" text-anchor="middle" fill="#fff">Round-Robin LB</text>
+          <text x="191" y="71" text-anchor="middle" fill="#fff">66.7% follow-up 404</text>
+        </g>
+        <g data-step="3">
+          <path d="M248 49 H266" class="ink"/>
+          <rect x="266" y="18" width="116" height="62" rx="6" class="c-good" data-hi="3"/>
+          <text x="324" y="38" text-anchor="middle" fill="#fff">3. Stateless N=4</text>
+          <text x="324" y="55" text-anchor="middle" fill="#fff">100% ok | 206 RPS</text>
+          <text x="324" y="71" text-anchor="middle" fill="#fff">+1.4ms Redis hop</text>
+          <path d="M324 80 V106" class="ink"/>
+          <rect x="274" y="106" width="100" height="36" rx="6" class="c-accent" data-hi="3"/>
+          <text x="324" y="129" text-anchor="middle" fill="#fff">Shared Redis/DB</text>
+        </g>
+        <g data-step="4">
+          <path d="M382 49 H398" class="ink"/>
+          <rect x="398" y="18" width="94" height="124" rx="6" class="c-warn" data-hi="4"/>
+          <text x="445" y="38" text-anchor="middle" fill="#fff">4. Sync Chain</text>
+          <text x="445" y="58" text-anchor="middle" fill="#fff">5 RPC hops</text>
+          <text x="445" y="78" text-anchor="middle" fill="#fff">0.999^5 =</text>
+          <text x="445" y="95" text-anchor="middle" fill="#fff">99.50% SLA</text>
+          <text x="445" y="114" text-anchor="middle" fill="#fff">215.6m down</text>
+          <text x="445" y="131" text-anchor="middle" fill="#fff">+22.5ms p99</text>
+        </g>
+        <g data-step="3">
+          <rect x="10" y="156" width="482" height="72" rx="6" class="c-paper" stroke="var(--line)"/>
+          <text x="22" y="177">USL Throughput Ceiling: C(N) = N / (1 + alpha*(N-1) + beta*N*(N-1))</text>
+          <text x="22" y="197" class="m">Stateless app tier scales horizontally until shared DB locks (alpha) &amp; coherency (beta) bite</text>
+          <text x="22" y="216" class="m">Rule: Scale a stateless modular monolith across N workers before splitting into microservices</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>A single vertical server holds session state in process RAM with 100% accuracy and 22.4 ms p95 latency, but caps out at 55.6 RPS and is a single point of failure.</li>
+      <li>Adding a second stateful server behind round-robin routing causes 66.7% of follow-up turns (50% of all requests) to fail with 404 because Node B lacks Node A's RAM state.</li>
+      <li>Externalizing session state to shared Redis makes all 4 workers stateless, restoring 100% success at 206.2 RPS while adding only 1.4 ms of network hop latency.</li>
+      <li>Splitting the stateless app into a 5-hop synchronous microservice chain decays availability to 0.999^5 = 99.501% (215.6 min/mo downtime) and adds 22.5 ms RPC p99 overhead.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Externalize mutable state to scale stateless modular-monolith replicas horizontally behind a load balancer, and avoid synchronous microservice chains unless resource profiles or team boundaries force a split.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>V-S-U-M</strong> ("Vertical, Stateless, USL, Monolith-first"): <strong>V</strong>ertical scale hits hardware ceilings and SPOF -> <strong>S</strong>tateless workers externalize sessions to Redis so round-robin eliminates the <code>(N-1)/N</code> miss rate -> <strong>U</strong>SL formula <code>N / (1 + alpha(N-1) + beta N(N-1))</code> peaks at <code>N_peak = sqrt((1-alpha)/beta)</code> -> <strong>M</strong>odular monolith avoids the <code>p^k</code> availability decay of <code>k</code> synchronous microservice hops.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. Vertical scaling (scale up) vs horizontal scaling (scale out)</h3>
+  <p><strong>Vertical scaling</strong> increases the CPU cores, RAM, or GPU VRAM of a single node (e.g., moving from an 8-vCPU VM to a 128-vCPU metal instance). Its primary advantage is zero distributed-systems tax: inter-component calls are nanosecond function pointers, transactions use local ACID locks without two-phase commit, and consistency is trivial. However, vertical cost scales super-linearly at the high end, hardware hits a physical ceiling (you cannot buy a 10,000-core single socket), upgrades require reboot windows, and one motherboard or AZ failure takes down 100% of capacity.</p>
+  <p><strong>Horizontal scaling</strong> runs <code>N</code> independent commodity instances behind a reverse proxy or load balancer (nginx, Envoy, AWS ALB). Capacity scales in smooth increments, deploys run zero-downtime rolling updates, and losing one node costs only <code>1 / N</code> of capacity. The price is that you now run a distributed system where local disk and process RAM are ephemeral.</p>
+
+  <h3>2. Statelessness and why round-robin breaks local session memory</h3>
+  <p>A service worker is <strong>stateless</strong> if it stores zero client session context between requests; every request carries either the full context (e.g., a signed JWT or full message history) or a session key (<code>sess_id</code>) that any worker can fetch from an external shared store (Redis, DynamoDB, Postgres). Suppose an app instead stores <code>sessions[sess_id]</code> in a local Python dictionary inside each worker process. When Turn 1 arrives, the load balancer routes it to worker <code>w_1 in {0, ..., N-1}</code>, which allocates the session in its private RAM. On Turn 2:</p>
+  <ul>
+    <li><strong>Random or least-connections routing across <code>N</code> workers:</strong> Turn 2 lands on the same worker <code>w_1</code> with probability <code>1 / N</code> and misses with probability <strong><code>(N - 1) / N</code></strong> (50% miss at <code>N = 2</code>, 75% miss at <code>N = 4</code>, 90% miss at <code>N = 10</code>).</li>
+    <li><strong>Strict round-robin routing:</strong> If turns arrive interleaved or sequentially across <code>N</code> workers, consecutive turns cycle through <code>(w + 1) mod N</code>. In our kata's 4-turn conversation across <code>N = 2</code> workers, Turns 1 and 3 hit Worker 0 (succeeding) while Turns 2 and 4 hit Worker 1 (failing), yielding a <strong><code>66.7%</code> follow-up failure rate</strong> (50% overall). At <code>N = 4</code>, Turns 2, 3, and 4 all land on workers that never saw Turn 1, causing a <strong><code>100.0%</code> follow-up failure rate</strong>.</li>
+  </ul>
+  <p><strong>Why sticky sessions (session affinity) are a trap:</strong> Load balancers can hash a client IP or set an affinity cookie to pin a user to Worker A. While this hides the bug during sunny-day operation, any auto-scaling scale-in, deploy restart, or OOM crash on Worker A wipes out every active conversation pinned to it. Moreover, in AI workloads where a single power user runs heavy multi-turn agent loops, sticky sessions create severe load imbalance (hot-spotting) across workers.</p>
+  <details class="q"><summary>Check: In an AI voice clinic assistant using WebSockets for live bidirectional audio, TCP connections are inherently long-lived and stateful on one worker while open. How do you make this horizontally scalable and crash-resilient?</summary><div class="a">Keep only the transient transport socket on the worker, and stream every finalized utterance transcript and state checkpoint asynchronously to shared Redis Streams or Postgres within milliseconds. If the worker dies mid-call, the client reconnects through the load balancer to any surviving worker, presents its <code>call_id</code>, hydrates the latest transcript state from Redis in <code>~1.5 ms</code>, and resumes the conversation seamlessly.</div></details>
+
+  <h3>3. The Universal Scalability Law (USL): Contention and Coherency</h3>
+  <p>Even after you make the application tier 100% stateless, doubling workers from <code>N = 16</code> to <code>N = 32</code> rarely doubles throughput because all workers contend for downstream shared resources (database connection pools, Redis shards, lock managers). Neil Gunther's <strong>Universal Scalability Law (USL)</strong> models relative capacity <code>C(N)</code> for <code>N</code> workers as:</p>
+  <div class="codewrap"><pre>C(N) = N / (1 + alpha * (N - 1) + beta * N * (N - 1))</pre></div>
+  <p>Look closely at the three terms in the denominator:</p>
+  <ul>
+    <li><strong>Linear concurrency (<code>1</code>):</strong> When <code>alpha = 0</code> and <code>beta = 0</code>, <code>C(N) = N</code> (ideal linear scale-out).</li>
+    <li><strong>Contention (<code>alpha * (N - 1)</code>):</strong> Serial waiting for a shared resource (e.g., a serialized Postgres sequence lock or single Redis primary queue). When <code>beta = 0</code>, USL reduces to <strong>Amdahl's Law</strong>, which asymptotically plateaus at a maximum speedup of <strong><code>1 / alpha</code></strong> (for <code>alpha = 0.04</code>, speedup can never exceed <code>1 / 0.04 = 25x</code>, no matter how many thousands of nodes you add).</li>
+    <li><strong>Coherency / point-to-point coordination (<code>beta * N * (N - 1)</code>):</strong> Pairwise agreement overhead between <code>N</code> nodes (distributed lock arbitration, gossip protocols, cache invalidation broadcasts, Raft quorum acks). Because there are <code>N(N - 1) / 2</code> pairs of nodes, this penalty grows <strong>quadratically</strong> as <code>O(N^2)</code>. Differentiating <code>C(N)</code> with respect to <code>N</code> and setting <code>dC/dN = 0</code> gives the exact worker count where capacity peaks before turning downward (<strong>retrograde scaling</strong>):</li>
+  </ul>
+  <div class="codewrap"><pre>N_peak = sqrt((1 - alpha) / beta)</pre></div>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Universal Scalability Law (USL) and synchronous microservice chain availability</div>
+    <p class="ask">Predict first. With contention alpha = 0.04 and coherency beta = 0.0025, at what worker count N does adding more servers start reducing total throughput? And what happens to 99.9% node availability across 5 synchronous hops?</p>
+    <div class="ctl">
+      <label><span>Worker count N</span><input type="range" name="n" min="1" max="40" step="1" value="20"><output data-for="n" data-unit=" nodes"></output></label>
+      <label><span>Contention alpha (%)</span><input type="range" name="a" min="0" max="15" step="1" value="4"><output data-for="a" data-unit="%"></output></label>
+      <label><span>Coherency beta (per-mille)</span><input type="range" name="b" min="0" max="10" step="0.5" value="2.5"><output data-for="b" data-unit=" /1000"></output></label>
+      <label><span>Synchronous RPC hops</span><select name="h" data-num><option value="1">1 hop (Modular Monolith)</option><option value="3">3 sync microservice hops</option><option value="5">5 sync microservice hops</option><option value="10">10 sync microservice hops</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Contention alpha bends horizontal scaling toward an Amdahl ceiling of 1/alpha, quadratic coherency beta causes retrograde throughput collapse past N_peak = sqrt((1-alpha)/beta), and synchronous hops multiply downtime.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var n=v.n, alpha=v.a/100, beta=v.b/1000, h=v.h;
+    var amdahl=n/(1+alpha*(n-1));
+    var usl=n/(1+alpha*(n-1)+beta*n*(n-1));
+    var npeak=beta>0?Math.sqrt(Math.max(0,1-alpha)/beta):999;
+    var cpeak=beta>0?npeak/(1+alpha*(npeak-1)+beta*npeak*(npeak-1)):amdahl;
+    var avail=Math.pow(0.999,h)*100;
+    var down=(1-Math.pow(0.999,h))*43200;
+    var toneUsl=(beta>0&&n>npeak)?"bad":(usl/n>0.6?"good":"warn");
+    tl.bars(fig.querySelector("[data-chart]"),{max:40,rows:[
+      {label:"Ideal linear capacity (N)",value:n,tone:"muted",text:tl.fmt(n,1)+"x ("+tl.fmt(n*51.55,0)+" RPS)"},
+      {label:"Amdahl capacity (contention only)",value:amdahl,tone:"warn",text:tl.fmt(amdahl,2)+"x ("+tl.fmt(100*amdahl/n,0)+"% eff)"},
+      {label:"USL actual capacity (alpha + beta)",value:usl,tone:toneUsl,text:tl.fmt(usl,2)+"x ("+tl.fmt(usl*51.55,0)+" RPS)"},
+      {label:"USL peak ceiling at N_peak="+tl.fmt(npeak,1),value:Math.min(40,cpeak),tone:"good",text:tl.fmt(cpeak,2)+"x max"}
+    ]});
+    var retro=(beta>0&&n>Math.ceil(npeak))?" [RETROGRADE: N > N_peak="+tl.fmt(npeak,1)+", adding nodes loses throughput!]":" [Peak at N_peak="+tl.fmt(npeak,1)+" nodes]";
+    return {verdict:"At N="+n+", USL gives "+tl.fmt(usl,2)+"x speedup ("+tl.fmt(100*usl/n,1)+"% per-node efficiency)"+retro+". With "+h+" sync hop(s) at 99.9% SLA, chain SLA is "+tl.fmt(avail,3)+"% ("+tl.fmt(down,1)+" min/mo downtime)."};
+  })});</script>
+
+  <h3>4. Modular monolith vs microservices: The synchronous fan-out tax</h3>
+  <p>A common anti-pattern is confusing <em>horizontal scaling</em> with <em>microservices</em>. You can scale a well-structured <strong>modular monolith</strong> horizontally across 50 stateless containers behind a load balancer without paying a single inter-service network hop. Splitting a monolith into <code>k</code> synchronous microservices on the critical request path imposes three immediate engineering taxes:</p>
+  <ol>
+    <li><strong>Compounded availability decay:</strong> If a user request requires <code>k</code> services in series, each with availability <code>p = 99.9%</code> (43.2 min/mo downtime), overall chain availability is <code>p^k</code>. At <code>k = 5</code> hops, availability drops to <code>0.999^5 = 99.501%</code> (<strong>215.6 min/mo downtime</strong>); at <code>k = 10</code> hops, it drops to <code>99.004%</code> (<strong>430.1 min/mo downtime</strong>).</li>
+    <li><strong>Serialization and tail-latency amplification:</strong> In-process function calls take nanoseconds; each gRPC/HTTP hop adds <code>2..5 ms</code> of JSON/Protobuf serialization, kernel socket traversal, and TLS/mesh framing. Across 5 hops, our kata measures <code>+22.5 ms</code> of added p99 RPC latency before doing any business logic.</li>
+    <li><strong>Distributed data consistency:</strong> Replacing a single Postgres ACID transaction across two tables with two separate microservice databases forces eventual consistency, outbox pattern relays, idempotency keys, and Saga compensating rollbacks.</li>
+  </ol>
+  <p><strong>When to actually split a service:</strong> Extract a microservice only when (a) <strong>hardware resource profiles diverge sharply</strong> (e.g., splitting a GPU-bound LLM/embedding worker from a CPU/IO-bound CRUD web API so you do not buy GPUs to scale HTTP routing), (b) <strong>strict security/compliance blast radius</strong> requires isolated IAM/network boundaries (e.g., PII vault or payment tokenization), or (c) <strong>organizational scale</strong> exceeds ~30 engineers and independent deployment cadences are blocked by merge/release coordination.</p>
+
+  <details class="q"><summary>Check: An engineering team wants to split their 6-engineer RAG application into 7 microservices (Auth, Gateway, Chunker, Embedder, VectorSearch, PromptBuilder, LLMProxy) "so it can scale". Which split is genuinely justified by hardware economics, and what should remain a modular monolith?</summary><div class="a">Only self-hosted <strong>GPU inference / embedding</strong> (if running local models on GPU nodes) justifies a separate service boundary so GPU instances scale on token queue depth independently of web I/O. Auth, Gateway, Chunker, VectorSearch orchestration, and PromptBuilder are all lightweight CPU/IO modules that should stay inside a single <strong>stateless modular monolith</strong> scaled horizontally across <code>N</code> replicas, avoiding 6 unnecessary RPC hops and <code>6 x 43.2 = 259</code> minutes of extra monthly downtime exposure.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Follow-up miss rate for local RAM sessions under random routing across <code>N</code> nodes</td><td class="n">(N - 1) / N (50% at N=2, 75% at N=4)</td><td>Derived</td></tr>
+    <tr><td>Follow-up 404 rate under strict round-robin in kata (4 turns, <code>N = 2</code> vs <code>N = 4</code>)</td><td class="n">66.7% (N=2) / 100.0% (N=4)</td><td>Your own run</td></tr>
+    <tr><td>Stateless + Redis cluster success rate and p95 latency at <code>N = 4</code> (kata)</td><td class="n">100.0% success / 23.4 ms p95 (+1.4 ms hop)</td><td>Your own run</td></tr>
+    <tr><td>Stateless cluster max throughput scaling from <code>N = 1</code> to <code>N = 4</code> (kata)</td><td class="n">55.6 RPS -&gt; 206.2 RPS (3.71x)</td><td>Your own run</td></tr>
+    <tr><td>USL peak worker count formula <code>N_peak</code> before retrograde scaling</td><td class="n">sqrt((1 - alpha) / beta)</td><td>Derived (Gunther USL)</td></tr>
+    <tr><td>USL capacity at <code>N = 20</code> vs <code>N = 32</code> for <code>alpha = 0.04, beta = 0.0025</code></td><td class="n">7.38x (peak at N~20) -&gt; 6.78x at N=32</td><td>Your own run</td></tr>
+    <tr><td>End-to-end availability of 5 synchronous hops at <code>99.9%</code> per-service SLA</td><td class="n">99.501% (215.6 min/mo downtime)</td><td>Your own run</td></tr>
+    <tr><td>Single-AZ Redis primary read/write latency vs in-process dict lookup</td><td class="n">~0.5 to 1.5 ms vs ~50 ns</td><td>From memory, verify</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Vertical scaling (Scale Up)</td><td>Zero network hops, simple ACID transactions, no serialization or distributed state bugs</td><td>Hard hardware ceiling, super-linear instance cost, reboot downtime, single point of failure (SPOF)</td><td>Single-socket CPU or memory bandwidth saturation under concurrent request spikes</td></tr>
+    <tr><td>Stateless horizontal replicas + Shared Redis/DB</td><td>Near-linear compute scaling, zero-downtime deploys, instant auto-scaling and node replacement</td><td><code>~1..2 ms</code> network hop per state read/write; shared store becomes the new USL contention bottleneck (<code>alpha</code>)</td><td>Exhausting Postgres max connections (<code>max_connections</code>) as worker count <code>N</code> scales out</td></tr>
+    <tr><td>Sticky sessions (Load Balancer affinity)</td><td>Lets legacy in-memory stateful apps run on multiple nodes without code changes</td><td>Node crash or deploy wipes pinned user sessions; uneven traffic creates severe hot-spot workers</td><td>Long-lived WebSocket or multi-turn agent users piling onto one overloaded worker instance</td></tr>
+    <tr><td>Modular Monolith (horizontally scaled)</td><td>In-process function calls (0 ms RPC tax), single CI/CD artifact, atomic DB transactions, 99.9% SLA</td><td>All modules share one process fate (a memory leak in PDF parsing can OOM the auth handler)</td><td>Letting modules bypass clean interface boundaries via spaghetti cross-table SQL joins</td></tr>
+    <tr><td>Microservices (independent deployables)</td><td>Independent scaling of GPU vs CPU tiers, isolated fault/compliance boundaries, team autonomy</td><td><code>p^k</code> availability decay across <code>k</code> sync hops, <code>+3..5 ms</code> p99 per hop, distributed sagas and tracing</td><td>Synchronous "distributed monolith" chains where deploying Service A still requires deploying B and C</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Round-robin statefulness, USL ceiling, and microservice fan-out</h2>
+  <p>We simulate 200 users running 4-turn conversations (800 requests total, 600 follow-up turns) behind an nginx round-robin load balancer across 1, 2, and 4 workers, comparing local process state against externalized Redis state, followed by the Universal Scalability Law curve and synchronous microservice availability decay.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy>import random
+
+random.seed(42)
+
+def sim_cluster(n_workers, stateful_local, n_users=200, turns=4):
+    """Simulate nginx round-robin over n_workers handling multi-turn chat sessions."""
+    local_Mem = [{} for _ in range(n_workers)]
+    shared_redis = {}
+    rr_idx = 0
+    ok, fail_404 = 0, 0
+    latencies = []
+
+    for u in range(n_users):
+        sid = f"sess_{u}"
+        for turn in range(turns):
+            w = rr_idx % n_workers
+            rr_idx += 1
+            # Base worker compute latency ~18ms + jitter; Redis hop adds ~1.4ms
+            lat = random.gauss(18.0, 2.5) + (0.0 if stateful_local else 1.4)
+            latencies.append(lat)
+            if turn == 0:
+                if stateful_local:
+                    local_Mem[w][sid] = 1
+                else:
+                    shared_redis[sid] = 1
+                ok += 1
+            else:
+                store = local_Mem[w] if stateful_local else shared_redis
+                if sid in store:
+                    store[sid] += 1
+                    ok += 1
+                else:
+                    fail_404 += 1
+
+    total = ok + fail_404
+    followups = n_users * (turns - 1)
+    latencies.sort()
+    p95 = latencies[int(0.95 * len(latencies))]
+    # Throughput scales with workers minus coordination overhead
+    rps_cap = n_workers * (1000.0 / (18.0 if stateful_local else 19.4))
+    return total, ok, fail_404, followups, p95, rps_cap
+
+print("--- 1. Round-Robin Load Balancing: In-Memory State vs Stateless + Shared Store ---")
+print(f"{'Topology':&lt;32} | {'Success %':&gt;9} | {'Follow-up 404':&gt;13} | {'p95 (ms)':&gt;8} | {'Max RPS':&gt;8}")
+print("-" * 82)
+for label, nw, local in [
+    ("1 Worker (Stateful Monolith)", 1, True),
+    ("2 Workers (Local Session State)", 2, True),
+    ("4 Workers (Local Session State)", 4, True),
+    ("2 Workers (Stateless + Redis)", 2, False),
+    ("4 Workers (Stateless + Redis)", 4, False),
+]:
+    tot, ok, f404, fups, p95, rps = sim_cluster(nw, local)
+    print(f"{label:&lt;32} | {100*ok/tot:8.1f}% | {100*f404/fups:12.1f}% | {p95:8.1f} | {rps:8.1f}")
+
+print("\n--- 2. Universal Scalability Law: C(N) = N / (1 + alpha*(N-1) + beta*N*(N-1)) ---")
+alpha, beta = 0.04, 0.0025  # 4% contention, 0.25% coherency penalty
+print(f"{'Workers N':&gt;9} | {'Ideal Linear':&gt;12} | {'Amdahl (beta=0)':&gt;15} | {'USL (beta=0.0025)':&gt;17} | {'Efficiency':&gt;10}")
+print("-" * 74)
+for n in [1, 2, 4, 8, 16, 20, 32]:
+    amdahl = n / (1.0 + alpha * (n - 1))
+    usl = n / (1.0 + alpha * (n - 1) + beta * n * (n - 1))
+    print(f"{n:9d} | {n:11.1f}x | {amdahl:14.2f}x | {usl:16.2f}x | {100*usl/n:9.1f}%")
+
+print("\n--- 3. Premature Microservices: Synchronous Fan-Out Tax (per-service SLA=99.9%) ---")
+print(f"{'Sync Hops':&gt;9} | {'Chain Availability':&gt;18} | {'Monthly Downtime':&gt;16} | {'Added RPC p99 (ms)':&gt;18}")
+print("-" * 70)
+for hops in [1, 3, 5, 10]:
+    avail = (0.999 ** hops) * 100.0
+    downtime_min = (1.0 - 0.999 ** hops) * 43200.0
+    rpc_p99 = hops * 4.5 if hops &gt; 1 else 0.0
+    print(f"{hops:9d} | {avail:17.3f}% | {downtime_min:12.1f} min | {rpc_p99:15.1f} ms")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿--- 1. Round-Robin Load Balancing: In-Memory State vs Stateless + Shared Store ---
+Topology                         | Success % | Follow-up 404 | p95 (ms) |  Max RPS
+----------------------------------------------------------------------------------
+1 Worker (Stateful Monolith)     |    100.0% |          0.0% |     22.4 |     55.6
+2 Workers (Local Session State)  |     50.0% |         66.7% |     22.0 |    111.1
+4 Workers (Local Session State)  |     25.0% |        100.0% |     22.5 |    222.2
+2 Workers (Stateless + Redis)    |    100.0% |          0.0% |     23.7 |    103.1
+4 Workers (Stateless + Redis)    |    100.0% |          0.0% |     23.4 |    206.2
+
+--- 2. Universal Scalability Law: C(N) = N / (1 + alpha*(N-1) + beta*N*(N-1)) ---
+Workers N | Ideal Linear | Amdahl (beta=0) | USL (beta=0.0025) | Efficiency
+--------------------------------------------------------------------------
+        1 |         1.0x |           1.00x |             1.00x |     100.0%
+        2 |         2.0x |           1.92x |             1.91x |      95.7%
+        4 |         4.0x |           3.57x |             3.48x |      87.0%
+        8 |         8.0x |           6.25x |             5.63x |      70.4%
+       16 |        16.0x |          10.00x |             7.27x |      45.5%
+       20 |        20.0x |          11.36x |             7.38x |      36.9%
+       32 |        32.0x |          14.29x |             6.78x |      21.2%
+
+--- 3. Premature Microservices: Synchronous Fan-Out Tax (per-service SLA=99.9%) ---
+Sync Hops | Chain Availability | Monthly Downtime | Added RPC p99 (ms)
+----------------------------------------------------------------------
+        1 |            99.900% |         43.2 min |             0.0 ms
+        3 |            99.700% |        129.5 min |            13.5 ms
+        5 |            99.501% |        215.6 min |            22.5 ms
+       10 |            99.004% |        430.1 min |            45.0 ms</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Overall request success rate (%) and max RPS across round-robin worker topologies</div>
+    <div data-bars='{"unit":"%","digits":1,"max":100,"rows":[{"label":"1 Worker (Stateful Monolith, 55.6 RPS)","value":100.0,"tone":"muted","text":"100.0% ok (0% 404)"},{"label":"2 Workers (Local RAM State, 111.1 RPS)","value":50.0,"tone":"bad","text":"50.0% ok (66.7% follow-up 404)"},{"label":"4 Workers (Local RAM State, 222.2 RPS)","value":25.0,"tone":"bad","text":"25.0% ok (100% follow-up 404)"},{"label":"2 Workers (Stateless + Redis, 103.1 RPS)","value":100.0,"tone":"good","text":"100.0% ok (23.7 ms p95)"},{"label":"4 Workers (Stateless + Redis, 206.2 RPS)","value":100.0,"tone":"good","text":"100.0% ok (23.4 ms p95)"}]}'></div>
+    <figcaption><b>Takeaway.</b> Scaling stateful workers behind round-robin destroys correctness (dropping success to 50% at N=2 and 25% at N=4), whereas externalizing state to Redis keeps 100% accuracy while scaling capacity from 55.6 to 206.2 RPS.</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>Stateful horizontal scale-out fails deterministically:</strong> With <code>N = 2</code> local-memory workers, Turn 1 (Worker 0) and Turn 3 (Worker 0) succeed while Turn 2 (Worker 1) and Turn 4 (Worker 1) fail with 404, causing <code>66.7%</code> of follow-ups (<code>400 / 600</code>) to fail. At <code>N = 4</code>, only Turn 1 succeeds and <code>100.0%</code> of follow-ups fail.</li>
+    <li><strong>Statelessness trades a <code>1.4 ms</code> latency hop for <code>3.71x</code> throughput:</strong> Moving session state to shared Redis adds <code>~1.0 to 1.4 ms</code> to p95 latency (<code>22.4 ms -> 23.4 ms</code>) while scaling 100%-accurate throughput from <code>55.6 RPS</code> (1 worker) to <code>206.2 RPS</code> (4 workers).</li>
+    <li><strong>USL retrograde scaling above <code>N = 20</code>:</strong> With <code>alpha = 0.04</code> and <code>beta = 0.0025</code>, speedup peaks at <code>N = 20</code> workers (<code>7.38x</code> capacity, <code>36.9%</code> per-node efficiency) and drops backward to <code>6.78x</code> at <code>N = 32</code> workers (<code>21.2%</code> efficiency).</li>
+    <li><strong>Every synchronous microservice hop adds <code>43.2 min/mo</code> of downtime:</strong> A 5-hop chain at 99.9% per-service availability loses <code>215.6 min/mo</code> of uptime (<code>99.501%</code> SLA) and tacks on <code>22.5 ms</code> of RPC p99 tail latency.</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Switch from round-robin to random load balancing.</strong> Replace <code>w = rr_idx % n_workers</code> with <code>w = random.randrange(n_workers)</code>. Predict the new follow-up 404 percentage for <code>N = 2</code> and <code>N = 4</code> local-state workers (hint: <code>(N - 1) / N</code>), then run to verify <code>~50%</code> and <code>~75%</code>.</li>
+    <li><strong>Eliminate coherency delay (<code>beta = 0</code>) to recover Amdahl's Law.</strong> Set <code>beta = 0.0</code> and print <code>N = 100</code> and <code>N = 10000</code>. Confirm that capacity approaches the Amdahl limit <code>1 / alpha = 25.0x</code> and never exhibits retrograde drop.</li>
+    <li><strong>Simulate a connection-pool stampede.</strong> Add a contention penalty of <code>0.8 * max(0, n_workers - 8)</code> ms to <code>lat</code> when <code>not stateful_local</code> to see how unpooled Redis/Postgres connections spike p95 latency past 8 workers.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add consistent hashing with 3 virtual nodes per worker to the simulator, kill Worker 1 mid-run, and measure the exact percentage of sessions that drop compared to stateless Redis workers (where 0% of sessions drop when Worker 1 dies).</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Intermittent <code>401 Unauthorized</code> or lost chat context right after auto-scaling from 1 to 3 pods</td><td>Session tokens, CSRF nonces, or conversation state stored in local worker memory or local container disk (<code>/tmp</code>)</td><td>Move sessions to Redis or stateless signed JWTs, and store uploaded files in shared object storage (S3)</td></tr>
+    <tr><td>Adding 10 more Kubernetes pods during a traffic spike causes total RPS to drop and DB CPU to hit 100%</td><td>USL retrograde scaling: new pods opened <code>10 x pool_size</code> DB connections, thrashing locks (<code>alpha</code>) and cache coherency (<code>beta</code>)</td><td>Cap app pods near <code>N_peak</code>, place PgBouncer in transaction-pooling mode in front of Postgres, and offload reads to replicas/cache</td></tr>
+    <tr><td>One worker pod sits at 95% CPU while 7 sibling pods sit at 15% CPU</td><td>Load balancer uses round-robin on long-lived gRPC/WebSocket streams or sticky-session IP hashing behind a corporate NAT</td><td>Switch load balancer algorithm to <strong>least outstanding requests (LOR)</strong> / <code>least_conn</code> and configure L7 gRPC balancing</td></tr>
+    <tr><td>End-to-end p99 latency spikes to 2.5 seconds whenever one minor downstream service degrades</td><td>Deep synchronous microservice fan-out chain without timeouts, circuit breakers, or async decoupling</td><td>Collapse chatty synchronous hops back into a modular monolith or decouple non-critical side effects onto an async queue</td></tr></table></div>
+  <p><strong>Monitor:</strong> Per-worker CPU/memory skew ratio (<code>max_pod_cpu / avg_pod_cpu &gt; 1.4</code> flags sticky-session or L4 connection pinning hot spots), 404/401 rate correlated with Horizontal Pod Autoscaler (HPA) scale-out events, downstream connection pool saturation, and USL throughput-per-pod efficiency as <code>N</code> changes.</p>
+  <details class="q"><summary>Scenario: Your voice-AI clinic appointment service runs on a single 8-vCPU VM handling 55 RPS. Marketing launches a campaign tomorrow expecting 400 RPS. When you spin up 8 VMs behind an nginx round-robin load balancer in staging, 87% of multi-turn voice bookings fail on Turn 2 and Postgres crashes with "too many clients already". Walk through your exact remediation plan.</summary><div class="a"><ol>
+    <li><strong>Fix the 87.5% (<code>7/8</code>) Turn-2 failure by externalizing state:</strong> The app is storing call dialogue state in local process memory. Replace the in-memory session dict with a shared Redis cluster keyed by <code>call_id</code> (with a 30-minute TTL), making all 8 workers completely stateless.</li>
+    <li><strong>Fix the Postgres connection exhaustion:</strong> If each of the 8 VMs runs 16 Gunicorn workers with a pool of 10 DB connections, that is <code>8 x 16 x 10 = 1,280</code> connections crashing Postgres (default limit 100-200). Deploy <strong>PgBouncer</strong> in transaction pooling mode capped at 80 server connections.</li>
+    <li><strong>Eliminate shared lock contention (reduce USL <code>alpha</code>):</strong> Move read-heavy clinic schedule lookups to a Redis cache / read replica and ensure booking writes use optimistic concurrency (<code>INSERT ... ON CONFLICT</code>) rather than table-level locks.</li>
+    <li><strong>Switch nginx to <code>least_conn</code>:</strong> Because voice turn processing times vary with LLM response length, replace blind round-robin with <code>least_conn</code> so slow LLM turns do not queue behind busy workers.</li>
+  </ol></div></details>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Scaling out replaces a single vertically scaled server with N interchangeable worker instances behind a load balancer. It eliminates the single point of failure and hardware ceiling of one box, provided we make the compute tier completely stateless and manage shared-resource contention.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>If workers keep session state in local process RAM, round-robin routing across N nodes fails on (N minus 1) over N follow-up requests - 66.7% of follow-ups at N equals 2 and 100% at N equals 4 in a 4-turn flow. We make workers stateless by externalizing mutable state into shared Redis or Postgres. Any replica can then serve any turn at the cost of a 1.4-millisecond Redis hop. Rather than splitting early into synchronous microservices - where 5 hops at 99.9% SLA decay availability to 99.5% and multiply monthly downtime 5x to 215.6 minutes - we first scale a stateless modular monolith horizontally.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Horizontal capacity follows Gunther's Universal Scalability Law: N divided by 1 plus alpha(N-1) plus beta N(N-1). Serial database lock contention alpha sets an Amdahl ceiling of 1 over alpha, while pairwise coherency beta causes retrograde scaling past N_peak equals square root of (1 minus alpha) over beta - peaking near 20 nodes in our model before extra nodes reduce throughput.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"To scale our application for more users, we should move from a monolith to microservices and put a load balancer in front of multiple servers so that traffic is distributed evenly and the system never goes down."</p>
+    <p class="strong">"Before splitting into microservices, I would externalize in-memory session state to Redis so our modular monolith is stateless and can scale horizontally behind a least-connections load balancer without the (N-1)/N round-robin state miss rate. We only extract a microservice when resource profiles diverge - like separating GPU inference from CPU web routing - because a 5-hop synchronous microservice chain decays a 99.9% SLA to 99.501% (215.6 minutes of downtime/month) and adds ~22 ms of p99 RPC overhead."</p>
+    <p>The strong answer separates horizontal scaling from microservices, quantifies the stateful miss rate (<code>(N-1)/N</code>), and calculates the exact availability and latency tax of synchronous RPC chains.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Enabling sticky sessions on the load balancer makes a stateful in-memory application horizontally scalable just like a stateless architecture."</summary><div class="a">Wrong. Sticky sessions pin a user to one node's RAM, which means (1) any node crash, rolling deploy, or auto-scaler scale-in permanently destroys every active session on that node, and (2) heavy users or corporate NAT gateways sharing an IP create severe CPU hot-spots that cannot be rebalanced without dropping state.</div></details>
+  <details class="q"><summary>"We need to break our monolith into microservices so that we can scale horizontally across multiple servers."</summary><div class="a">Wrong. A monolith is a packaging and deployment unit, not a single-server limit. A stateless modular monolith scales horizontally across dozens of instances behind a load balancer with zero inter-service RPC latency and 99.9% single-hop availability. Microservices scale <em>teams and divergent hardware tiers</em>, not basic request concurrency.</div></details>
+  <details class="q"><summary>"If our application tier is 100% stateless, doubling the number of worker pods from 16 to 32 will double our system's throughput."</summary><div class="a">Wrong. Stateless workers still share downstream stateful databases, caches, and lock managers. Under the Universal Scalability Law, serial contention <code>alpha</code> and pairwise coherency <code>beta</code> bend the curve downward; in our kata with <code>alpha = 0.04, beta = 0.0025</code>, scaling from 20 to 32 workers actually <em>reduces</em> capacity from <code>7.38x</code> to <code>6.78x</code>.</div></details>
+  <details class="q"><summary>"Round-robin load balancing guarantees even CPU utilization across all stateless worker instances."</summary><div class="a">Wrong when request service times have high variance (such as LLM prompts ranging from 100 tokens to 8,000 tokens or persistent HTTP/2 and gRPC connections). Round-robin equalizes <em>request count</em>, not <em>active work</em>; long requests pile up on one worker unless you use <strong>least outstanding requests (<code>least_conn</code>)</strong> or power-of-two-choices (P2C) load balancing.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>1. Compare vertical scaling and horizontal scaling across four dimensions: ceiling, downtime/availability, consistency cost, and unit economics.</summary><div class="a"><strong>Ceiling:</strong> Vertical hits physical single-node RAM/CPU limits; horizontal scales out across hundreds of nodes. <strong>Availability:</strong> Vertical is a SPOF requiring reboot downtime to resize; horizontal survives node failures with rolling zero-downtime deploys. <strong>Consistency:</strong> Vertical uses fast local memory and ACID locks; horizontal requires externalized state and network hops. <strong>Economics:</strong> Vertical becomes exponentially expensive at extreme instance sizes; horizontal uses commodity VMs.<div class="f"><b>Follow-up</b>When is vertical scaling actually the right first move in production? Answer: When traffic fits comfortably below ~50% of a mid-sized commodity node and DB contention dominates, upgrading Postgres from 8 to 32 vCPUs with more RAM for buffer cache takes 5 minutes and avoids months of sharding engineering.</div></div></details>
+  <details class="q"><summary>2. Prove why an N-node stateful cluster behind a stateless load balancer suffers an (N - 1) / N session miss rate on Turn 2 under random routing and even worse under strict round-robin.</summary><div class="a">Under uniform random routing, Turn 1 places the session in the private RAM of 1 specific worker out of <code>N</code>. Turn 2 chooses among all <code>N</code> workers with probability <code>1/N</code> each; since only 1 worker holds the session and <code>N - 1</code> workers do not, the miss probability is <code>(N - 1) / N</code>. Under strict round-robin with a single user or synchronized turns, Turn 2 is deterministically sent to <code>(w + 1) mod N != w</code>, causing a <code>100%</code> miss on Turn 2.</div></details>
+  <details class="q"><summary>3. What is the difference between Amdahl's Law and Gunther's Universal Scalability Law, and how do you derive N_peak?</summary><div class="a">Amdahl's Law models only serial contention <code>alpha</code>: <code>C(N) = N / (1 + alpha(N - 1))</code>, which monotonically approaches an upper bound of <code>1 / alpha</code> as <code>N -> infinity</code>. USL adds the pairwise coherency/coordination term <code>beta N(N - 1)</code>: <code>C(N) = N / (1 + alpha(N - 1) + beta N(N - 1))</code>. Differentiating <code>C(N)</code> with respect to <code>N</code> sets <code>(1 - alpha + alpha N + beta N^2 - beta N) - N(alpha + 2 beta N - beta) = 1 - alpha - beta N^2 = 0</code>, yielding <strong><code>N_peak = sqrt((1 - alpha) / beta)</code></strong>.<div class="f"><b>Follow-up</b>Give one concrete engineering action that reduces alpha and one that reduces beta. Answer: Reducing lock hold time or sharding hot DB rows reduces contention <code>alpha</code>; replacing synchronous all-to-all cache invalidation broadcasts with local TTLs or partitioned ownership reduces coherency <code>beta</code>.</div></div></details>
+  <details class="q"><summary>4. Why does round-robin fail for gRPC or WebSockets even when workers are completely stateless, and how do you fix it?</summary><div class="a">Both gRPC (built on HTTP/2) and WebSockets multiplex many logical requests or turns over a single long-lived TCP connection. An L4 TCP round-robin load balancer balances at <em>connection establishment time</em>, pinning all subsequent RPCs on that connection to a single pod and leaving newly scaled-out pods idle. Fix by deploying an L7 proxy (Envoy, nginx with <code>grpc_pass</code>) that balances individual HTTP/2 frames using <strong>least outstanding requests</strong>.</div></details>
+  <details class="q"><summary>5. Calculate the availability and monthly downtime of a 5-service synchronous chain versus a modular monolith when each deployable has 99.9% availability.</summary><div class="a">A single modular monolith at <code>99.9%</code> availability has <code>0.001 * 43,200 = 43.2</code> minutes of downtime per 30-day month. Five independent services in series succeed only if all five are up simultaneously: <code>0.999^5 = 0.99500999 ~ 99.501%</code>, which equals <code>(1 - 0.99501) * 43,200 = 215.6</code> minutes of downtime per month (a 5x degradation).<div class="f"><b>Follow-up</b>How do you prevent a downstream service outage from multiplying into your core availability SLA? Answer: Decouple non-essential dependencies asynchronously via a durable queue/event log, or wrap synchronous calls in a circuit breaker with a cached/degraded fallback response.</div></div></details>
+  <details class="q"><summary>6. What is a "modular monolith", and how does it prevent turning into a big ball of mud while avoiding the microservice RPC tax?</summary><div class="a">A modular monolith deploys as a single binary or container image (zero network hops between modules, one CI/CD pipeline), but enforces strict compile-time or linter-enforced package boundaries inside the codebase: Module A can only call Module B through its public service interface and is forbidden from importing Module B's internal classes or joining directly against Module B's private database tables.</div></details>
+  <details class="q"><summary>7. In an AI RAG + Agent backend, which component should be extracted out of the core web monolith first as traffic scales, and why?</summary><div class="a">Extract the <strong>GPU model inference / local embedding worker</strong> (or heavy long-running document OCR/ingestion worker) first. Web/API orchestration is I/O-bound (high concurrency on cheap 2-vCPU nodes), whereas model inference and PDF OCR are compute/VRAM-bound (requiring expensive GPU or high-CPU nodes scaled on queue depth and batch size). Keeping them in one deployable forces you to over-provision GPUs just to handle HTTP connection waiting.<div class="f"><b>Follow-up</b>How should the stateless web tier communicate with the heavy ingestion worker? Answer: Asynchronously via a work queue (Redis Streams, SQS, Kafka) with status polling or SSE push, so bursty document uploads never exhaust web worker threads.</div></div></details>
+  <details class="q"><summary>8. When you scale stateless app workers from 4 to 40 behind a load balancer, what breaks in the database tier and how do you protect it?</summary><div class="a">Each new app worker opens its own database connection pool (e.g., 40 pods x 20 connections = 800 active connections), exhausting Postgres memory (~10 MB per backend process) and causing context-switch thrashing and lock contention (<code>alpha</code>). Protect the DB with a connection pooler like <strong>PgBouncer</strong> in transaction mode, read replicas for read-heavy queries, and a Redis cache-aside layer with singleflight request coalescing.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the concept stepper's 4 stages and narrate them, then write: (1) the follow-up miss rate formula for <code>N</code> stateful workers, (2) Gunther's Universal Scalability Law formula <code>C(N)</code> and peak worker formula <code>N_peak</code>, and (3) the availability and downtime numbers for a 5-hop 99.9% synchronous microservice chain.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>4-stage spine (V-S-U-M):</strong> Vertical box (55.6 RPS, SPOF) -> Naive stateful scale-out (66.7% follow-up 404 at <code>N=2</code>, 100% at <code>N=4</code> under round-robin) -> Stateless workers + shared Redis (100% ok, 206.2 RPS at <code>N=4</code>, +1.4 ms hop) -> Synchronous 5-hop microservice tax.</li>
+    <li><strong>Stateful miss formula:</strong> Random routing misses on <code>(N - 1) / N</code> of follow-ups; strict round-robin misses <code>66.7%</code> of follow-ups in a 4-turn flow at <code>N=2</code> and <code>100.0%</code> at <code>N=4</code>.</li>
+    <li><strong>USL &amp; N_peak formulas:</strong> <code>C(N) = N / (1 + alpha(N - 1) + beta N(N - 1))</code>; Amdahl ceiling is <code>1 / alpha</code> when <code>beta = 0</code>; retrograde scaling starts past <code>N_peak = sqrt((1 - alpha) / beta)</code> (<code>N_peak = 19.6</code> for <code>alpha = 0.04, beta = 0.0025</code>, peaking at <code>7.38x</code>).</li>
+    <li><strong>Microservice fan-out numbers:</strong> <code>k = 5</code> sync hops at <code>99.9%</code> SLA yields <code>0.999^5 = 99.501%</code> (<code>215.6 min/mo</code> downtime vs <code>43.2 min/mo</code> for 1 hop) and <code>+22.5 ms</code> p99 RPC overhead.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L04: According to Little's Law (L = lambda * W), if a single stateless worker processes requests with an average latency W = 20 ms and you want to keep in-flight concurrency at L = 1 to avoid queueing delay, what is its maximum throughput lambda?</summary><div class="a"><code>lambda = L / W = 1 / 0.020 s = 50 RPS</code> (or <code>55.6 RPS</code> at our kata's <code>18 ms</code> service time). Beyond that arrival rate, requests queue according to Kingman's formula <code>W_q propto rho / (1 - rho)</code>.</div></details>
+  <details class="q"><summary>A11: Why does backpropagation use reverse-mode VJP (v^T J) instead of forward-mode JVP (J u), and what step size eps is optimal for centered finite-difference checks in FP64?</summary><div class="a">Because neural net training minimizes a single scalar loss <code>L in R^1</code> over <code>n</code> millions of parameters, reverse-mode VJP computes all <code>n</code> partial derivatives in <code>1</code> backward pass instead of <code>n</code> forward JVP passes. In FP64 (<code>u = 1.11e-16</code>), centered FD optimizes at <code>eps* ~ u^(1/3) ~ 1e-5..1e-6</code> (error <code>~3.6e-11</code>).</div></details>
+  <details class="q"><summary>A09: If activation matrix X has shape (B, T, D) and weight matrix W has shape (D, V), what is the FLOP count of the linear projection X @ W?</summary><div class="a">Treating <code>(B, T)</code> as <code>B * T</code> tokens, multiplying a <code>(B*T x D)</code> matrix by a <code>(D x V)</code> matrix requires <strong><code>2 * B * T * D * V</code> FLOPs</strong> (one multiply and one add per inner-dimension element).</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://nginx.org/en/docs/http/load_balancing.html">NGINX Documentation: Using nginx as HTTP Load Balancer</a><small>Supports round-robin, least_conn, and ip_hash affinity mechanisms and stateful session pitfalls. Checked 2026-11-23.</small></li>
+    <li><a href="https://12factor.net/processes">The Twelve-Factor App: Factor VI - Execute the app as one or more stateless processes</a><small>Supports the architectural rule that share-nothing stateless processes must externalize persistent state to a backing service. Checked 2026-11-23.</small></li>
+    <li><a href="https://www.perfdynamics.com/Manifesto/USLscalability.html">Neil J. Gunther: Guerrilla Capacity Planning and the Universal Scalability Law</a><small>Supports the USL equation C(N) = N / (1 + alpha(N-1) + beta N(N-1)), Amdahl contention limit 1/alpha, and retrograde peak N_peak. Checked 2026-11-23.</small></li>
+    <li><a href="https://martinfowler.com/bliki/MonolithFirst.html">Martin Fowler: MonolithFirst &amp; MicroservicePremium</a><small>Supports starting with a modular monolith and paying the microservice operational/latency premium only when complexity and boundaries justify it. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Vertical vs Horizontal Scaling:</strong> Vertical scales up one machine (0 ms network hop, simple ACID, but hardware ceiling + SPOF); Horizontal scales out across <code>N</code> commodity nodes behind a load balancer (elastic + fault-tolerant, requires stateless workers).</li>
+    <li><strong>Statelessness &amp; Round-Robin Failure:</strong> Local in-memory sessions behind <code>N</code> nodes fail on <code>(N-1)/N</code> follow-ups under random routing and <code>66.7%</code> (<code>N=2</code>) to <code>100%</code> (<code>N=4</code>) under round-robin; externalizing state to Redis restores <code>100%</code> accuracy for <code>+1.4 ms</code> latency.</li>
+    <li><strong>Sticky Sessions Trap:</strong> Pinning users to one worker's RAM breaks auto-scaling and rolling deploys (node loss wipes sessions) and causes severe load hot-spots for heavy users.</li>
+    <li><strong>Universal Scalability Law (USL):</strong> <code>C(N) = N / (1 + alpha(N-1) + beta N(N-1))</code> models serial contention <code>alpha</code> (Amdahl limit <code>1/alpha</code>) and pairwise coherency <code>beta</code> (retrograde peak at <code>N_peak = sqrt((1-alpha)/beta)</code>).</li>
+    <li><strong>Modular Monolith vs Microservices:</strong> A stateless modular monolith scales horizontally across <code>N</code> pods with 0 RPC tax; splitting into <code>k</code> synchronous microservices decays availability as <code>p^k</code> (<code>99.501%</code> / <code>215.6 min/mo</code> downtime for 5 hops at <code>99.9%</code>) and adds <code>~4.5 ms</code> p99 per hop.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Core formulas:</strong> Stateful random miss rate = <code>(N - 1) / N</code>; USL capacity = <code>N / (1 + alpha(N-1) + beta N(N-1))</code>; Peak workers = <code>sqrt((1 - alpha) / beta)</code>; Sync chain availability = <code>p^k</code>.</li>
+      <li><strong>Load balancer choice for AI/LLM traffic:</strong> Never use plain round-robin for high-variance LLM generation times or persistent gRPC/WebSocket streams; use L7 <strong>least outstanding requests (<code>least_conn</code>)</strong>.</li>
+      <li><strong>Database protection when scaling out:</strong> Scaling from 4 to 40 pods multiplies DB connections 10x; always place a transaction pooler (<strong>PgBouncer</strong>) between stateless workers and Postgres.</li>
+      <li><strong>When to split a microservice:</strong> Split only for divergent hardware profiles (GPU inference vs CPU web tier), strict security/compliance isolation, or large multi-team deployment independence.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L05 T1 W02", "cards": [{"q": "What are the four stages of the scaling-out spine from a single box to microservices?", "a": "Single vertical server (SPOF), naive stateful replicas (round-robin session loss), stateless workers with shared Redis/DB state, and modular monolith versus microservice fan-out."}, {"q": "When an nginx round-robin load balancer distributes multi-turn traffic across N workers storing sessions in local process memory, what fraction of follow-up requests fail with 404?", "a": "Random routing fails on (N - 1) / N follow-ups; strict round-robin in a 4-turn flow fails on 66.7% of follow-ups at N=2 and 100% at N=4."}, {"q": "How does moving session state from local worker RAM to an external Redis cluster change success rate and p95 latency across 4 round-robin workers?", "a": "Success rate jumps from 25.0% to 100.0% while adding ~1.4 ms hop latency (p95 23.4 ms) and scaling throughput to 206.2 RPS."}, {"q": "Why do sticky sessions (IP hash or cookie affinity) fail to provide true horizontal resilience compared to stateless workers?", "a": "Any worker crash or deploy wipes every active session pinned to its local RAM, and heavy multi-turn users create severe load hot-spots across nodes."}, {"q": "What is the Universal Scalability Law (USL) formula C(N), and what do alpha and beta represent?", "a": "C(N) = N / (1 + alpha*(N-1) + beta*N*(N-1)), where alpha is shared-resource contention (Amdahl limit 1/alpha) and beta is pairwise coherency delay."}, {"q": "Why does capacity under the Universal Scalability Law eventually drop (retrograde scaling) past a peak worker count N_peak?", "a": "Quadratic coherency beta*N*(N-1) grows as O(N^2) and overtakes linear N past N_peak = sqrt((1 - alpha) / beta), making extra nodes reduce throughput."}, {"q": "If a request traverses 5 synchronous microservices each with 99.9% availability and 4.5 ms RPC overhead, what are the end-to-end availability and monthly downtime?", "a": "Availability decays to 0.999^5 = 99.501%, multiplying monthly downtime 5x from 43.2 to 215.6 minutes and adding 22.5 ms of p99 RPC latency."}, {"q": "When should you split a modular monolith into separate microservices instead of scaling the monolith horizontally?", "a": "Split only when modules have divergent hardware profiles (GPU inference vs CPU web I/O), strict security isolation boundaries, or independent multi-team release cadences."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>

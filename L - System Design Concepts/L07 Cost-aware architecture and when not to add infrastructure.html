@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L07 Cost-aware architecture and when not to add infrastructure</title>
+<!-- TOPIC-LAB:STYLE v4 (copy verbatim) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one reading column on cool drafting paper, numbered stations down a left rule, like a lab protocol. */
+:root{
+  --paper:#f2f4f8; --surface:#ffffff; --ink:#101a2b; --muted:#56637b; --line:#d3dae6;
+  --accent:#1f4fd8; --accent-soft:#e3e9fb; --good:#12784a; --warn:#a85a08; --bad:#b3261e;
+  --code-bg:#0e1626; --code-ink:#e4eaf6;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b111c; --surface:#131b2b; --ink:#e7ecf6; --muted:#9aa6bd; --line:#27334b;
+  --accent:#8eaaff; --accent-soft:#1a2644; --good:#5fd39a; --warn:#f0b05a; --bad:#ff8f85;
+  --code-bg:#080d17; --code-ink:#dde5f3; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.62 var(--body)}
+main{max-width:46rem;margin:0 auto;padding:2rem 1.15rem 5rem}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,6vw,2.9rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:600;margin-top:1.5rem}
+p{margin:.7rem 0} ul,ol{padding-left:1.25rem;margin:.6rem 0} li{margin:.25rem 0}
+a{color:var(--accent)} strong{font-weight:600}
+code{font:500 .88em var(--mono);background:var(--accent-soft);padding:.08em .32em;border-radius:4px}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.3rem .9rem;margin-bottom:.8rem}
+.eyebrow b{color:var(--accent);font-weight:500}
+.lede{font-size:1.13rem;color:var(--muted);max-width:40rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem;font-size:.85rem}
+.chips span{border:1px solid var(--line);border-radius:999px;padding:.12rem .65rem;background:var(--surface)}
+.chips em{font-style:normal;color:var(--muted);margin-right:.2rem}
+.path{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin:1.6rem 0 0}
+.path h2{font-size:1rem;margin-bottom:.4rem}
+.path ol{list-style:none;padding:0;margin:0;display:grid;gap:.15rem}
+.path label{display:flex;gap:.6rem;align-items:baseline;cursor:pointer;padding:.15rem 0}
+.path input{accent-color:var(--accent);transform:translateY(2px)}
+.path small{color:var(--muted);font:400 .78rem var(--mono);margin-left:auto;white-space:nowrap;padding-left:.6rem}
+.path input:checked+span{color:var(--muted);text-decoration:line-through}
+section.st{margin-top:3rem;padding-left:1.1rem;border-left:2px solid var(--line)}
+section.st>h2{display:flex;gap:.7rem;align-items:baseline;margin-left:-1.1rem;padding-left:1.1rem;position:relative}
+section.st>h2::before{content:attr(data-n);font:500 .8rem var(--mono);color:var(--surface);background:var(--accent);border-radius:4px;padding:.12rem .42rem;position:relative;top:-.2rem}
+.sub{color:var(--muted);margin-top:.3rem}
+details.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:.6rem 0;overflow:hidden}
+details.q>summary{cursor:pointer;padding:.75rem 1rem;font-weight:500;list-style:none;display:flex;gap:.7rem}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary::before{content:"Q";font:500 .78rem var(--mono);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 .35rem;height:1.45rem;line-height:1.4rem;flex:none}
+details.q[open]>summary{border-bottom:1px solid var(--line)}
+details.q .a{padding:.6rem 1rem .9rem}
+details.q .f{margin:.5rem 0 0;padding:.5rem .8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 6px 6px 0;font-size:.95rem}
+details.q .f b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block}
+.grade{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.1rem 1rem .85rem;font-size:.85rem;color:var(--muted)}
+button{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.36rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,summary:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+details.q[data-g="got"]{border-left:4px solid var(--good)} details.q[data-g="shaky"]{border-left:4px solid var(--warn)} details.q[data-g="missed"]{border-left:4px solid var(--bad)}
+.grade button[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.score{font:500 .82rem var(--mono);color:var(--muted);margin:.6rem 0}
+.scroll{overflow-x:auto;margin:.9rem 0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+th{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tr:last-child td{border-bottom:0} td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.codewrap{position:relative;margin:.9rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);font:400 .8rem/1.55 var(--mono);padding:1rem;border-radius:10px;overflow-x:auto;tab-size:4}
+pre.out{border-left:4px solid var(--accent)}
+.codewrap>button{position:absolute;top:.5rem;right:.5rem;font-size:.75rem;padding:.2rem .55rem;opacity:.9}
+.cap{font:500 .75rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:1.1rem 0 -.4rem}
+.box{border-radius:10px;padding:.85rem 1rem;margin:1rem 0;background:var(--surface);border:1px solid var(--line)}
+.box>b:first-child{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.box.model>b:first-child{color:var(--accent)} .box.break{border-left:4px solid var(--warn)} .box.break>b:first-child{color:var(--warn)}
+.box.voice{border-left:4px solid var(--good)} .box.voice>b:first-child{color:var(--good)}
+.box.hook{border-left:4px solid var(--accent)} .box.hook>b:first-child{color:var(--accent)}
+.weak{color:var(--muted)} .weak::before{content:"Weak: ";font-weight:600;color:var(--bad)} .strong::before{content:"Strong: ";font-weight:600;color:var(--good)}
+.levels{display:grid;gap:.6rem;margin:1rem 0}
+.levels>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem}
+.levels b{font:500 .75rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:flex;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.levels b span{color:var(--muted)}
+.timer{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+.timer output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:4ch}
+textarea{width:100%;min-height:11rem;font:400 .95rem/1.5 var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.8rem;resize:vertical}
+textarea.tsv{min-height:7rem;font:400 .76rem/1.45 var(--mono);white-space:pre;overflow:auto}
+.deck{margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:11.5rem;padding:1.2rem 1.3rem;display:flex;flex-direction:column;gap:.5rem;cursor:pointer}
+.card .side{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.card .txt{font-size:1.12rem;margin:auto 0}
+.card.back{border-color:var(--accent);background:var(--accent-soft)}
+.deckbar{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;align-items:center}
+.deckbar .count{font:500 .82rem var(--mono);color:var(--muted);margin-left:auto}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--mono);fill:var(--ink)} svg .m{fill:var(--muted)}
+.srcs li{margin:.4rem 0} .srcs small{color:var(--muted);display:block}
+.trackline{font:400 .85rem var(--mono);background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:.7rem .9rem;overflow-x:auto;white-space:nowrap}
+footer{margin-top:3rem;color:var(--muted);font-size:.85rem}
+.rt{display:flex;flex-wrap:wrap;gap:.5rem .6rem;align-items:center;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.rt p{margin:0;flex:1 1 15rem;font-size:.85rem;color:var(--muted)}
+.rt-only{display:none}
+/* Retest mode: the explanations go, the questions stay. */
+body.retest .rt-only{display:inline-block}
+body.retest .path h2,body.retest .path ol{display:none} body.retest .rt{margin-top:0;padding-top:0;border-top:0}
+body.retest section.st>:not(h2):not(details):not(.timer):not(.deck):not(.score):not(.keep):not(.show){display:none}
+body.retest section.st:not(:has(details.q,.timer,.deck)){display:none}
+/* Visualizations: diagrams, charts and explorables. Each figure makes one point. */
+figure.viz{margin:1.2rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem .85rem}
+figure.viz svg{width:100%;max-width:30rem;margin:0 auto}
+figure.viz figcaption{font-size:.9rem;color:var(--muted);margin-top:.75rem}
+figure.viz figcaption b{color:var(--ink);font-weight:600}
+.viz .vt{font:500 .74rem var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem}
+.viz .ask{font-size:.92rem;margin:0 0 .8rem;padding:.45rem .75rem;border-left:3px solid var(--warn);background:var(--paper);border-radius:0 6px 6px 0}
+.viz .ctl{display:grid;gap:.55rem;margin:0 0 .9rem}
+.viz .ctl label{display:grid;grid-template-columns:minmax(7rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.88rem}
+.viz input[type=range]{width:100%;accent-color:var(--accent)}
+.viz select{font:500 .85rem var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.25rem .4rem}
+.viz output{font:500 .82rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.viz .readout{font:500 .95rem var(--mono);margin:.75rem 0 0}
+.bars{display:grid;gap:.42rem}
+.bars .r{display:grid;grid-template-columns:minmax(6.5rem,34%) 1fr 5.5rem;gap:.6rem;align-items:center;font-size:.86rem}
+.bars .t{height:1.3rem;background:var(--paper);border-radius:4px;overflow:hidden}
+.bars .f{height:100%;background:var(--accent);border-radius:4px}
+.bars .f.good{background:var(--good)} .bars .f.warn{background:var(--warn)} .bars .f.bad{background:var(--bad)} .bars .f.muted{background:var(--muted)}
+.bars .v{font:500 .78rem var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+svg .c-accent{fill:var(--accent)} svg .c-good{fill:var(--good)} svg .c-warn{fill:var(--warn)} svg .c-bad{fill:var(--bad)} svg .c-muted{fill:var(--muted)}
+svg .c-soft{fill:var(--accent-soft)} svg .c-paper{fill:var(--paper)} svg .ln{stroke:var(--line);fill:none} svg .ink{stroke:var(--ink);fill:none}
+/* Steppers: the concept builds up one step at a time. */
+.stepper svg .off{opacity:0}
+.stepper svg rect.hi,.stepper svg path.hi,.stepper svg circle.hi,.stepper svg line.hi{stroke:var(--ink);stroke-width:3}
+.stepper svg text.hi{font-weight:700}
+.stepper .now{min-height:3.4em;font-size:.95rem;margin:.75rem 0 .55rem;padding:.55rem .8rem;background:var(--paper);border-radius:6px;border-left:3px solid var(--accent)}
+.stepper .sbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.stepper .count{font:500 .8rem var(--mono);color:var(--muted);margin-left:auto}
+.stepper .gl{font-size:.85rem;color:var(--muted);display:flex;gap:.35rem;align-items:center;margin-top:.5rem}
+.stepper .gl input{accent-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){.stepper svg [data-step],.stepper svg [data-only]{transition:opacity .35s}}
+@media (prefers-reduced-motion:no-preference){.bars .f{transition:width .25s}}
+@media (max-width:480px){.viz .ctl label{grid-template-columns:1fr 5rem}.viz .ctl label span{grid-column:1/-1}.bars .r{grid-template-columns:1fr 4.8rem}.bars .r .l{grid-column:1/-1}}
+@media (max-width:480px){main{padding:1.3rem 1rem 4rem} section.st{padding-left:.8rem} section.st>h2{margin-left:-.8rem;padding-left:.8rem} .path small{display:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .15s,border-color .15s}}
+</style>
+<!-- /TOPIC-LAB:STYLE -->
+</head>
+<body data-topic="L07">
+<main>
+<header>
+  <div class="eyebrow"><b>L07</b><span>System design concepts</span><span>Tier 2</span><span>Week 2</span><span>45 min</span></div>
+  <h1>Cost-aware architecture and when not to add infrastructure</h1>
+  <p class="lede">How to compute cost per 1,000 successful requests across traffic tiers, find the exact break-even RPS where self-hosted GPUs beat managed APIs, and avoid the 99.9% idle-waste trap of resume-driven infrastructure.</p>
+  <div class="chips"><span><em>Before</em>L05 Scaling out</span><span><em>After</em>L09 Service-to-service communication</span></div>
+</header>
+
+<nav class="path" aria-label="Study path"><h2>Study path</h2><ol>
+  <li><label><input type="checkbox" id="step-1"><span>Warm-up: guess the 50k req/mo unit cost and self-hosted GPU break-even RPS</span><small>5 min</small></label></li>
+  <li><label><input type="checkbox" id="step-2"><span>Core idea and stepper: fixed floor vs variable slope across 50k, 2M, and 50M req/mo</span><small>10 min</small></label></li>
+  <li><label><input type="checkbox" id="step-3"><span>Mechanism and break-even explorer: unit-cost equation, AWS/GPU hidden taxes, boring-stack rules</span><small>12 min</small></label></li>
+  <li><label><input type="checkbox" id="step-4"><span>Kata: run and break the 3-tier architecture unit-economics model</span><small>8 min</small></label></li>
+  <li><label><input type="checkbox" id="step-5"><span>Production cost anti-patterns and 90-second interview drill</span><small>6 min</small></label></li>
+  <li><label><input type="checkbox" id="step-6"><span>Blank-page recall and Anki flashcards</span><small>4 min</small></label></li>
+</ol></nav>
+
+<section class="st" id="warmup"><h2 data-n="1">Before you read</h2>
+  <p class="sub">Guess first. A wrong guess now makes the right answer stick later.</p>
+  <details class="q"><summary>A B2B RAG assistant serves 50,000 requests per month (1,500 input tokens with 70% prompt cache hit, 300 output tokens, 99.2% success rate). Architecture A runs a single VM + Postgres/pgvector ($45/mo fixed) calling a managed LLM API ($1.05/1k req). Architecture C runs Multi-AZ Kubernetes + dedicated Qdrant/Redis + 2x self-hosted H100 GPUs ($7,400/mo fixed, $0.14/1k req variable). What is the cost per 1,000 successful requests for each at 50k req/mo?</summary><div class="a">Architecture A costs <strong><code>$1.97</code> per 1k successful requests</strong> (<code>$98/mo</code> total). Architecture C costs <strong><code>$149.34</code> per 1k successful requests</strong> (<code>$7,407/mo</code> total, <strong>76x more expensive per request</strong> and <strong>141x higher monthly bill</strong>) because <code>99.9%</code> of its <code>$7,400</code> monthly bill is unutilized fixed baseline capacity serving an average of <code>0.02 RPS</code>.</div></details>
+  <details class="q"><summary>At what monthly request volume and sustained 24/7 RPS does the self-hosted 2x H100 + K8s cluster (Architecture C) finally break even with the lean monolith + managed LLM API (Architecture A)?</summary><div class="a">At <strong><code>7,961,538</code> requests per month</strong>, which requires a sustained 24/7 average of <strong><code>3.07 RPS</code></strong> (around 10 to 15 peak daytime RPS). Below ~8M monthly requests, paying per-token to a managed API with prompt caching is cheaper even before counting a single hour of DevOps engineering salary.</div></details>
+  <details class="q"><summary>You add 3 managed AWS NAT Gateways (one per Availability Zone) and cross-AZ microservice routing to an early-stage K8s cluster doing 500 GB/month of S3 and LLM API traffic. How much fixed and data-processing cost did those NAT Gateways just add compared to your entire $45/mo database?</summary><div class="a">Three NAT Gateways cost <code>3 x $0.045/hr x 730 hr = $98.55/mo</code> fixed plus <code>$0.045/GB x 500 GB = $22.50/mo</code> data processing = <strong><code>$121.05/mo</code></strong> - nearly <strong>2.7x the cost of the entire production Postgres + app server</strong> before serving a single user request.</div></details>
+</section>
+
+<section class="st" id="idea"><h2 data-n="2">The core idea</h2>
+  <p>Architectural fitness is never absolute; it is a function of <strong>traffic volume</strong>. Every design decomposes into a <strong>fixed monthly baseline floor</strong> <code>F</code> (control planes, reserved GPUs, dedicated database nodes, NAT gateways, on-call maintenance) and a <strong>variable per-request slope</strong> <code>v</code> (managed LLM token charges, serverless duration, egress bytes). The metric that exposes over-engineering immediately is <strong>cost per 1,000 successful requests</strong>:</p>
+  <div class="codewrap"><pre>Cost_per_1k_succ = (F + N * (v / 1000)) / ((N * p_succ) / 1000) = (1000 * F) / (N * p_succ) + v / p_succ</pre></div>
+  <p>When request volume <code>N</code> is small (10k to 500k requests/month, or <code>0.004 to 0.2 RPS</code>), the fixed term <code>(1000 * F) / N</code> dominates completely: provisioning a Multi-AZ Kubernetes cluster, a dedicated vector database, and self-hosted GPUs results in <strong>96% to 99.9% idle dollar waste</strong>. When <code>N</code> is large (10M to 50M+ requests/month, or <code>4 to 20+ sustained RPS</code>), fixed cost amortizes toward zero and the variable term <code>v</code> dominates, justifying dedicated GPU capacity to slash per-request token costs from <code>$1.05/1k</code> down to <code>$0.14/1k</code>.</p>
+  <figure class="viz stepper" id="viz-concept">
+    <div class="vt">Stepper: Unit-economics crossover across 50k, 2M, and 50M monthly requests</div>
+    <svg viewBox="0 0 500 235" role="img" aria-label="Four-step unit-economics crossover diagram comparing Lean Monolith, Serverless Managed, and Multi-AZ K8s plus 2x H100 GPU across 50k, 2M, and 50M requests per month plus the engineering complexity tax">
+      <g font-size="12">
+        <g data-step="1">
+          <rect x="10" y="16" width="148" height="114" rx="6" class="c-soft" stroke="var(--ink)" data-hi="1"/>
+          <text x="84" y="36" text-anchor="middle">1. Startup (50k/mo)</text>
+          <text x="84" y="54" text-anchor="middle" class="m">0.02 avg RPS</text>
+          <text x="84" y="75" text-anchor="middle">Arch A: $1.97 / 1k</text>
+          <text x="84" y="94" text-anchor="middle" class="m">Arch B: $3.31 / 1k</text>
+          <text x="84" y="114" text-anchor="middle">Arch C: $149.34 (99.9% idle)</text>
+        </g>
+        <g data-step="2">
+          <path d="M158 73 H176" class="ink"/>
+          <rect x="176" y="16" width="148" height="114" rx="6" class="c-warn" data-hi="2"/>
+          <text x="250" y="36" text-anchor="middle" fill="#fff">2. Growth (2M/mo)</text>
+          <text x="250" y="54" text-anchor="middle" fill="#fff">0.77 avg RPS</text>
+          <text x="250" y="75" text-anchor="middle" fill="#fff">Arch A: $1.08 / 1k</text>
+          <text x="250" y="94" text-anchor="middle" fill="#fff">Arch B: $1.44 / 1k</text>
+          <text x="250" y="114" text-anchor="middle" fill="#fff">Arch C: $3.87 (96.4% fix)</text>
+        </g>
+        <g data-step="3">
+          <path d="M324 73 H342" class="ink"/>
+          <rect x="342" y="16" width="148" height="114" rx="6" class="c-good" data-hi="3"/>
+          <text x="416" y="36" text-anchor="middle" fill="#fff">3. Scale (50M/mo)</text>
+          <text x="416" y="54" text-anchor="middle" fill="#fff">19.29 avg RPS</text>
+          <text x="416" y="75" text-anchor="middle" fill="#fff">Arch C: $0.42 / 1k</text>
+          <text x="416" y="94" text-anchor="middle" fill="#fff">Arch A: $1.06 / 1k</text>
+          <text x="416" y="114" text-anchor="middle" fill="#fff">Saves $32,055/mo</text>
+        </g>
+        <g data-step="4">
+          <rect x="10" y="144" width="480" height="78" rx="6" class="c-paper" stroke="var(--line)" data-hi="4"/>
+          <text x="22" y="165">4. Break-Even &amp; Engineering Tax: N_be = (F_C - F_A) / (v_A - v_C) = 7.96M req/mo (3.07 RPS)</text>
+          <text x="22" y="185" class="m">Hidden op tax: K8s + self-hosted vLLM adds ~40 eng hrs/mo (~$4,000/mo SWE time)</text>
+          <text x="22" y="205" class="m">True break-even including SWE maintenance shifts to ~12.4M req/mo (4.8 sustained RPS)</text>
+        </g>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li>At 50k req/mo (0.02 RPS), the lean monolith + managed API costs $1.97/1k ($98/mo), while K8s + 2x H100 burns $149.34/1k ($7,407/mo) with 99.9% fixed idle waste.</li>
+      <li>At 2M req/mo (0.77 RPS), the lean monolith drops to $1.08/1k ($2,145/mo) and still beats the self-hosted GPU cluster ($3.87/1k, $7,680/mo) by 3.6x.</li>
+      <li>At 50M req/mo (19.29 RPS), self-hosted GPUs amortize their fixed floor and drop to $0.415/1k ($20,600/mo), beating the managed API ($52,655/mo) by $32,055/mo.</li>
+      <li>Break-even occurs at 7.96M req/mo (3.07 sustained RPS) on raw cloud bills, or ~12.4M req/mo once you add 40 hours/month of DevOps/vLLM maintenance engineering time.</li>
+    </ol>
+    <figcaption><b>Takeaway.</b> Start with a single-node modular monolith, Postgres/pgvector, and managed LLM APIs with prompt caching; do not add dedicated GPUs or multi-cluster infrastructure until sustained traffic crosses the ~8M req/mo (3.1 RPS) break-even line.</figcaption>
+  </figure>
+  <div class="box hook"><b>Memory hook</b><p><strong>F-V-B-O</strong> ("Fixed, Variable, Break-even, Ops tax"): <strong>F</strong>ixed floor <code>F</code> dominates below 1 RPS (99.9% idle GPU waste at 50k/mo) -> <strong>V</strong>ariable slope <code>v</code> dominates above 10 RPS ($1.05 vs $0.14 per 1k) -> <strong>B</strong>reak-even volume <code>N_be = (F_C - F_A) / (v_A - v_C) = 7.96M req/mo (3.07 RPS)</code> -> <strong>O</strong>perational tax (SWE maintenance hours) pushes real break-even even higher.</p></div>
+</section>
+
+<section class="st" id="mechanism"><h2 data-n="3">How it works</h2>
+  <h3>1. The unit-economics equation and break-even crossover</h3>
+  <p>Why do we measure <strong>cost per 1,000 successful requests</strong> instead of total monthly cloud bill? Because a system that fails 20% of requests or drops traffic under load looks artificially cheap on a raw monthly invoice while destroying unit margin. Let <code>F</code> be the fixed monthly infrastructure bill (paid at <code>N = 0</code> requests), <code>v</code> be the variable cost per 1,000 attempted requests, and <code>p_succ</code> be the end-to-end success rate (<code>0.992</code> in our kata). Total monthly cost is <code>C(N) = F + (N / 1000) * v</code>, and unit cost per 1,000 successful requests is:</p>
+  <div class="codewrap"><pre>UnitCost(N) = (F + (N / 1000) * v) / ((N * p_succ) / 1000)   [USD per 1k successful requests]</pre></div>
+  <p>To decide when to migrate from a low-fixed, high-variable architecture (Arch A: <code>F_A, v_A</code>) to a high-fixed, low-variable self-hosted architecture (Arch C: <code>F_C, v_C</code>), set <code>C_A(N) = C_C(N)</code> and solve for the <strong>break-even request volume</strong> <code>N_be</code>:</p>
+  <div class="codewrap"><pre>N_be = ((F_C - F_A) / (v_A - v_C)) * 1000   requests/month,   RPS_be = N_be / 2,592,000</pre></div>
+  <p>Plugging in our RAG benchmark numbers (<code>F_C = $7,400</code> for 2x H100 + Multi-AZ EKS/Qdrant/Redis, <code>F_A = $155</code> for a redundant VM + Postgres, <code>v_A = $1.05/1k</code> with 70% prompt cache hits, and <code>v_C = $0.14/1k</code> marginal power/egress) yields <code>N_be = (7245 / 0.91) * 1000 = 7,961,538 req/mo</code>, or <strong><code>3.07 sustained RPS</code></strong> every second of the month.</p>
+
+  <figure class="viz" id="viz-explore">
+    <div class="vt">Explore: Cost per 1,000 successful requests across monthly traffic and prompt-cache hit rates</div>
+    <p class="ask">Predict first. At 500,000 requests/month (~0.19 RPS), how many times more expensive is the self-hosted 2x H100 + K8s stack than the lean monolith? What happens to the break-even volume if prompt caching raises variable savings?</p>
+    <div class="ctl">
+      <label><span>Traffic log10(req/mo)</span><input type="range" name="lg" min="4.7" max="7.7" step="0.1" value="5.7"><output data-for="lg" data-unit=" (10^x)"></output></label>
+      <label><span>Managed API cost ($/1k)</span><select name="va" data-num><option value="1.05">$1.05/1k (70% prompt cache hit)</option><option value="1.65">$1.65/1k (0% prompt cache hit)</option><option value="0.55">$0.55/1k (Small 8B/flash model API)</option></select></label>
+    </div>
+    <div data-chart></div>
+    <p class="readout" data-out="verdict"></p>
+    <figcaption><b>Takeaway.</b> Below 5M-8M monthly requests, fixed GPU and control-plane overhead dwarfs variable token savings; prompt caching and smaller managed models push the self-hosted GPU break-even past 14M requests/month.</figcaption>
+  </figure>
+  <script>(window.TLQ=window.TLQ||[]).push(function(tl){tl.viz("viz-explore",function(v,fig){
+    var req=Math.round(Math.pow(10,v.lg)), va=v.va, succ=0.992*(req/1000);
+    var fa=req>5000000?155:45, ta=fa+(req/1000)*va, ua=ta/succ;
+    var fb=95, tb=fb+(req/1000)*(va+0.33), ub=tb/succ;
+    var extra=Math.max(0,Math.floor((req-1)/18000000));
+    var fc=7400+extra*3100, tc=fc+(req/1000)*0.14, uc=tc/succ;
+    var be=((7400-155)/(va-0.14))*1000, rps=req/2592000;
+    var maxU=Math.min(160,Math.max(ua,ub,uc));
+    tl.bars(fig.querySelector("[data-chart]"),{max:maxU,rows:[
+      {label:"A: Lean Monolith + Managed API",value:Math.min(160,ua),tone:ua<=uc?"good":"warn",text:"$"+tl.fmt(ua,2)+"/1k ($"+tl.fmt(ta,0)+"/mo)"},
+      {label:"B: Serverless + Managed Vector",value:Math.min(160,ub),tone:"muted",text:"$"+tl.fmt(ub,2)+"/1k ($"+tl.fmt(tb,0)+"/mo)"},
+      {label:"C: Multi-AZ K8s + 2x H100 GPU",value:Math.min(160,uc),tone:uc<ua?"good":"bad",text:"$"+tl.fmt(uc,2)+"/1k ($"+tl.fmt(tc,0)+"/mo)"}
+    ]});
+    var winner=ua<=uc?"Arch A (Lean Monolith) wins by $"+tl.fmt(tc-ta,0)+"/mo":"Arch C (Self-hosted GPU) wins by $"+tl.fmt(ta-tc,0)+"/mo";
+    return {verdict:"At "+tl.fmt(req,0)+" req/mo ("+tl.fmt(rps,2)+" avg RPS): "+winner+". Break-even volume is "+tl.fmt(be,0)+" req/mo ("+tl.fmt(be/2592000,2)+" RPS)."};
+  })});</script>
+
+  <h3>2. When NOT to add infrastructure: The "Boring Stack" replacements</h3>
+  <p>Every new infrastructure box on a system design diagram adds three costs: (1) its 24/7 fixed cloud floor <code>F</code>, (2) cross-AZ network transfer and serialization latency, and (3) a new failure mode your team must monitor, upgrade, back up, and debug at 3 AM. In interviews and production reviews, apply these four thresholds before adding a component:</p>
+  <ul>
+    <li><strong>Do not add a dedicated Vector DB (Pinecone/Qdrant/Milvus cluster) below ~5M-10M vectors:</strong> Postgres with <code>pgvector</code> (HNSW index in shared RAM) handles 1M to 5M 768-dim vectors at <code>&lt; 15 ms</code> p95 query latency inside your existing ACID database with zero dual-write sync bugs and zero extra fixed bill.</li>
+    <li><strong>Do not add Kafka or RabbitMQ below ~1,000 jobs/sec:</strong> A Postgres table polled with <code>SELECT ... FOR UPDATE SKIP LOCKED</code> (or an existing Redis instance using Redis Streams / BullMQ) reliably processes ratusan to thousands of background jobs per second without a 3-broker ZooKeeper/KRaft cluster costing <code>$300+/mo</code>.</li>
+    <li><strong>Do not self-host LLM GPUs (vLLM / TGI on A100/H100) for bursty or low-RPS workloads:</strong> Because human traffic peaks during business hours and drops 80% overnight, a reserved 24/7 GPU node sits idle during troughs. Until your <em>trough</em> or sustained average exceeds ~3 to 5 RPS (or strict HIPAA/air-gapped data residency forbids external APIs), managed APIs with prompt caching and batch APIs (50% discount) are dramatically cheaper.</li>
+    <li><strong>Do not add Multi-Cluster Kubernetes + Service Mesh for a 5-engineer team:</strong> An EKS control plane (<code>$73/mo</code>), 3 Multi-AZ NAT Gateways (<code>~$100/mo</code> + <code>$0.045/GB</code>), and DaemonSet overhead (Datadog/Istio eating 15-25% of every node) burn <code>$400-$800/mo</code> before running a single pod, whereas 2 stateless containers on ECS Fargate, Render, or a load-balanced VM pair cost <code>$45-$90/mo</code>.</li>
+  </ul>
+  <details class="q"><summary>Check: A startup founder asks you to provision a self-hosted 2x H100 vLLM cluster ($6,200/mo) to avoid paying OpenAI/Anthropic $400/mo in token bills. Using unit economics, how do you explain why this loses money?</summary><div class="a">At <code>$400/mo</code> in managed API spend (roughly 380,000 requests/month, or <code>0.15 avg RPS</code>), the workload utilizes less than <code>5%</code> of a 2x H100 cluster's capacity. Switching to self-hosted GPUs replaces a <code>$400/mo</code> variable bill with a <code>$6,200/mo</code> fixed floor (a <strong>15.5x cost increase</strong>, raising unit cost from <code>~$1.05/1k</code> to <code>~$16.30/1k</code>) plus ~20-40 hours/month of engineering maintenance that costs another <code>$2,000-$4,000</code> in SWE time.</div></details>
+</section>
+
+<section class="st" id="numbers"><h2 data-n="4">Numbers to know cold</h2>
+  <div class="scroll"><table><tr><th>Fact</th><th>Value</th><th>Status</th></tr>
+    <tr><td>Arch A (Lean Monolith) vs Arch C (K8s+2xH100) unit cost at <code>50k req/mo</code></td><td class="n">$1.966 vs $149.335 per 1k succ req (76x)</td><td>Your own run</td></tr>
+    <tr><td>Arch C fixed idle cost percentage at <code>50k req/mo</code> (0.02 RPS)</td><td class="n">99.9% fixed ($7,400 of $7,407/mo)</td><td>Your own run</td></tr>
+    <tr><td>Arch A vs Arch C unit cost at <code>2M req/mo</code> (0.77 RPS)</td><td class="n">$1.081 vs $3.871 per 1k succ req</td><td>Your own run</td></tr>
+    <tr><td>Arch A vs Arch C unit cost at <code>50M req/mo</code> (19.29 RPS)</td><td class="n">$1.062 ($52.7k/mo) vs $0.415 ($20.6k/mo)</td><td>Your own run</td></tr>
+    <tr><td>Break-even volume (Arch C vs Arch A in kata)</td><td class="n">7,961,538 req/mo (3.07 sustained RPS)</td><td>Your own run</td></tr>
+    <tr><td>AWS EKS control plane + 3 Multi-AZ NAT Gateways fixed floor</td><td class="n">~$172/mo + $0.045/GB processed</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Cross-AZ data transfer tax inside a single AWS region</td><td class="n">$0.01/GB each way ($0.02/GB round-trip)</td><td>Checked 2026-11-23</td></tr>
+    <tr><td>Postgres <code>pgvector</code> comfortable ceiling before dedicated vector DB</td><td class="n">~1M to 5M vectors (768-1536d)</td><td>From memory, verify</td></tr></table></div>
+</section>
+
+<section class="st" id="tradeoffs"><h2 data-n="5">Tradeoffs</h2>
+  <div class="scroll"><table><tr><th>Option</th><th>You gain</th><th>You pay</th><th>Watch for</th></tr>
+    <tr><td>Lean Monolith + Postgres/pgvector + Managed LLM API (Arch A)</td><td>Lowest fixed floor (<code>$45/mo</code>), zero GPU idle waste, instant access to frontier models + prompt caching</td><td>High variable cost at scale (<code>$1.05/1k req</code>); external API latency/rate-limit dependency</td><td>Crossing <code>~8M req/mo</code> where monthly token bills exceed dedicated GPU lease costs</td></tr>
+    <tr><td>Serverless Functions + Managed Vector DB (Arch B)</td><td>Scales to zero during off-hours; zero OS patching or container orchestration</td><td>Higher per-request markup (<code>$1.38/1k</code>: API Gateway + function duration + vector read units)</td><td>Cold-start latency spikes and runaway per-invocation bills during retry storms or DDoS</td></tr>
+    <tr><td>Multi-AZ K8s + Dedicated Vector DB + Self-Hosted GPUs (Arch C)</td><td>Lowest marginal cost at scale (<code>$0.14/1k</code> -> <code>$0.415/1k</code> all-in at 50M/mo); full data residency control</td><td>Massive fixed floor (<code>$7,400+/mo</code>) and high DevOps/MLOps maintenance burden</td><td>Provisioning 24/7 GPUs for spiky daytime traffic (<code>&lt; 20%</code> average GPU duty cycle)</td></tr></table></div>
+</section>
+
+<section class="st" id="kata"><h2 data-n="6">Kata: Unit cost per 1,000 successful requests across 3 traffic tiers</h2>
+  <p>We model the exact monthly invoice, fixed-cost percentage, and cost per 1,000 successful requests across 50k, 2M, and 50M monthly requests for three architectures, and compute the exact break-even request volume and sustained RPS.</p>
+  <p class="cap">Run</p><div class="codewrap"><pre data-copy>python kata.py</pre></div>
+  <p class="cap">kata.py</p><div class="codewrap"><pre data-copy># Unit-economics comparison across 3 architectures and 3 traffic tiers
+# Workload: RAG assistant (1,500 input tokens [70% cached], 300 output tokens, 99.2% success rate)
+
+SUCCESS_RATE = 0.992
+SECONDS_PER_MONTH = 30 * 86400  # 2,592,000s
+
+def cost_lean_monolith(req_mo):
+    """Arch A: Single VM + Postgres/pgvector ($45/mo) + Managed LLM API with prompt caching."""
+    # $1.05 per 1k requests (70% cached input + output tokens + telemetry)
+    fixed = 45.0
+    # Add 2nd stateless app replica + read replica only above 5M req/mo
+    if req_mo &gt; 5_000_000:
+        fixed += 110.0
+    variable = (req_mo / 1000.0) * 1.05
+    return fixed, variable
+
+def cost_serverless_managed(req_mo):
+    """Arch B: Serverless functions + API Gateway + Managed Vector DB ($95 floor) + Managed LLM API."""
+    # Higher per-request markup ($1.38 per 1k requests: API GW + function duration + vector RU + LLM)
+    fixed = 95.0
+    variable = (req_mo / 1000.0) * 1.38
+    return fixed, variable
+
+def cost_k8s_self_hosted_gpu(req_mo):
+    """Arch C: Multi-AZ EKS + NAT Gateways + Dedicated Qdrant/Redis + 2x H100 GPUs ($7,400/mo fixed)."""
+    # Self-hosted inference marginal power/egress/storage cost is only $0.14 per 1k requests
+    # 2x H100 cluster handles up to 18M req/mo before needing a 3rd GPU ($3,100/mo step)
+    extra_gpus = max(0, (req_mo - 1) // 18_000_000)
+    fixed = 7400.0 + extra_gpus * 3100.0
+    variable = (req_mo / 1000.0) * 0.14
+    return fixed, variable
+
+archs = [
+    ("A: Lean Monolith + Managed API", cost_lean_monolith),
+    ("B: Serverless + Managed Vector", cost_serverless_managed),
+    ("C: Multi-AZ K8s + 2x H100 GPU", cost_k8s_self_hosted_gpu),
+]
+
+for req_mo in [50_000, 2_000_000, 50_000_000]:
+    avg_rps = req_mo / SECONDS_PER_MONTH
+    succ_k = (req_mo * SUCCESS_RATE) / 1000.0
+    print(f"=== Traffic Tier: {req_mo:&gt;10,d} req/mo ({avg_rps:6.2f} avg RPS) ===")
+    print(f"{'Architecture':&lt;32} | {'Fixed $':&gt;8} | {'Total $/mo':&gt;10} | {'Fixed %':&gt;7} | {'$/1k Succ Req':&gt;13}")
+    print("-" * 82)
+    for name, fn in archs:
+        fix, var = fn(req_mo)
+        tot = fix + var
+        c_per_1k = tot / succ_k
+        print(f"{name:&lt;32} | ${fix:7.0f} | ${tot:9.0f} | {100*fix/tot:6.1f}% | ${c_per_1k:12.3f}")
+    print()
+
+# Exact break-even where Arch C (single 2x H100 pod, $7,400 fixed + $0.14/1k) beats Arch A ($155 fixed + $1.05/1k)
+be_req = ((7400.0 - 155.0) / (1.05 - 0.14)) * 1000.0
+print(f"Break-even volume (Arch C vs Arch A): {be_req:,.0f} req/mo ({be_req/SECONDS_PER_MONTH:.2f} sustained RPS)")
+print(f"At 50k req/mo, Arch C costs ${(7407.0/52.5):.1f}x more than Arch A ($149.33 vs $1.97 per 1k successful reqs).")</pre></div>
+  <p class="cap">Output from a real run</p><div class="codewrap"><pre class="out">﻿=== Traffic Tier:     50,000 req/mo (  0.02 avg RPS) ===
+Architecture                     |  Fixed $ | Total $/mo | Fixed % | $/1k Succ Req
+----------------------------------------------------------------------------------
+A: Lean Monolith + Managed API   | $     45 | $       98 |   46.2% | $       1.966
+B: Serverless + Managed Vector   | $     95 | $      164 |   57.9% | $       3.306
+C: Multi-AZ K8s + 2x H100 GPU    | $   7400 | $     7407 |   99.9% | $     149.335
+
+=== Traffic Tier:  2,000,000 req/mo (  0.77 avg RPS) ===
+Architecture                     |  Fixed $ | Total $/mo | Fixed % | $/1k Succ Req
+----------------------------------------------------------------------------------
+A: Lean Monolith + Managed API   | $     45 | $     2145 |    2.1% | $       1.081
+B: Serverless + Managed Vector   | $     95 | $     2855 |    3.3% | $       1.439
+C: Multi-AZ K8s + 2x H100 GPU    | $   7400 | $     7680 |   96.4% | $       3.871
+
+=== Traffic Tier: 50,000,000 req/mo ( 19.29 avg RPS) ===
+Architecture                     |  Fixed $ | Total $/mo | Fixed % | $/1k Succ Req
+----------------------------------------------------------------------------------
+A: Lean Monolith + Managed API   | $    155 | $    52655 |    0.3% | $       1.062
+B: Serverless + Managed Vector   | $     95 | $    69095 |    0.1% | $       1.393
+C: Multi-AZ K8s + 2x H100 GPU    | $  13600 | $    20600 |   66.0% | $       0.415
+
+Break-even volume (Arch C vs Arch A): 7,961,538 req/mo (3.07 sustained RPS)
+At 50k req/mo, Arch C costs $141.1x more than Arch A ($149.33 vs $1.97 per 1k successful reqs).</pre></div>
+  <figure class="viz">
+    <div class="vt">Chart: Cost per 1,000 successful requests (USD) across traffic tiers and architectures</div>
+    <div data-bars='{"unit":"","pre":"$","digits":2,"max":15,"rows":[{"label":"50k/mo - Arch A (Lean Monolith)","value":1.97,"tone":"good","text":"$1.97 / 1k ($98/mo)"},{"label":"50k/mo - Arch B (Serverless Stack)","value":3.31,"tone":"warn","text":"$3.31 / 1k ($164/mo)"},{"label":"50k/mo - Arch C (K8s + 2x H100 GPU)","value":15.0,"tone":"bad","text":"$149.34 / 1k ($7,407/mo)"},{"label":"2M/mo - Arch A (Lean Monolith)","value":1.08,"tone":"good","text":"$1.08 / 1k ($2,145/mo)"},{"label":"2M/mo - Arch C (K8s + 2x H100 GPU)","value":3.87,"tone":"bad","text":"$3.87 / 1k ($7,680/mo)"},{"label":"50M/mo - Arch A (Lean Monolith)","value":1.06,"tone":"warn","text":"$1.06 / 1k ($52,655/mo)"},{"label":"50M/mo - Arch C (K8s + 4x H100 GPU)","value":0.42,"tone":"good","text":"$0.42 / 1k ($20,600/mo)"}]}'></div>
+    <figcaption><b>Takeaway.</b> At 50k req/mo, over-engineering with K8s and self-hosted GPUs inflates unit cost 76x ($149.34 vs $1.97 per 1k); at 50M req/mo (19.29 RPS), self-hosted GPUs flip the equation and cut unit cost by 61% ($0.42 vs $1.06 per 1k).</figcaption>
+  </figure>
+  <h3>What to notice</h3>
+  <ol>
+    <li><strong>The 99.9% fixed-waste trap at 50k req/mo (<code>0.02 RPS</code>):</strong> At startup volume, Arch C spends <code>$7,400</code> on fixed capacity and only <code>$7</code> on marginal request execution (<code>99.9%</code> fixed). Every 1,000 successful requests cost <code>$149.335</code> versus <code>$1.966</code> on Arch A.</li>
+    <li><strong>Even at 2,000,000 requests/month (<code>0.77 RPS</code>), managed APIs win by <code>3.6x</code>:</strong> Two million requests/month sounds high, but spread across 2.592 million seconds in a month it is only <code>0.77 RPS</code>. Arch A costs <code>$2,145/mo</code> (<code>$1.081/1k</code>) vs Arch C's <code>$7,680/mo</code> (<code>$3.871/1k</code>).</li>
+    <li><strong>Break-even requires <code>7.96M req/mo</code> (<code>3.07 sustained RPS</code>):</strong> Only after traffic crosses <code>7,961,538 req/mo</code> does Arch C's <code>$0.91/1k</code> variable savings pay back its <code>$7,245/mo</code> fixed premium.</li>
+    <li><strong>At 50M req/mo (<code>19.29 RPS</code>), self-hosting saves <code>$32,055/mo</code>:</strong> Even after stepping from 2 to 4 H100 GPUs (<code>$13,600</code> fixed), Arch C delivers <code>$0.415/1k</code> (<code>$20,600/mo</code>) versus Arch A's <code>$1.062/1k</code> (<code>$52,655/mo</code>).</li>
+  </ol>
+  <div class="box break"><b>Break it</b><ol>
+    <li><strong>Include the engineering complexity tax.</strong> Add <code>40 hours/mo * $110/hr = $4,400/mo</code> of MLOps maintenance to <code>fixed</code> in <code>cost_k8s_self_hosted_gpu</code>. Predict the new break-even volume and run to watch it jump from <code>7.96M</code> to <code>12.80M req/mo</code> (<code>4.94 sustained RPS</code>).</li>
+    <li><strong>Simulate a 15% retry storm on Arch A.</strong> Lower <code>SUCCESS_RATE</code> to <code>0.85</code> while multiplying <code>variable</code> by <code>1.15</code> (paying for failed upstream token retries) and observe how wasted retries directly inflate <code>$/1k Succ Req</code>.</li>
+  </ol></div>
+  <p><strong>Stretch.</strong> Add a hybrid Architecture D that keeps the lean monolith + Postgres (<code>$155/mo</code>) for web/vector storage while routing only LLM inference to a single serverless auto-scaled GPU endpoint with a 5-minute scale-to-zero window.</p>
+</section>
+
+<section class="st" id="production"><h2 data-n="7">In production</h2>
+  <div class="scroll"><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+    <tr><td>Cloud networking bill exceeds compute + database bill on an internal microservice cluster</td><td>Chatty cross-AZ synchronous RPCs (<code>$0.02/GB</code> round-trip) and S3/ECR traffic routing through managed NAT Gateways (<code>$0.045/GB</code>)</td><td>Add free VPC Gateway Endpoints for S3/DynamoDB, enable AZ-aware topology routing, and colocate chatty services into a modular monolith</td></tr>
+    <tr><td>Self-hosted GPU cluster shows 85% utilization at 2 PM but 8% average utilization over the week</td><td>Reserved 24/7 GPU instances sized for peak daytime concurrency sit idle 16 hours/day and all weekend</td><td>Keep base capacity on reserved GPUs sized for trough load and burst overflow traffic to a managed pay-per-token LLM API</td></tr>
+    <tr><td>Observability (Datadog/CloudWatch) costs 35% of total infrastructure spend</td><td>Logging full raw LLM prompt/completion payloads and high-cardinality user_id tags on custom metrics</td><td>Drop high-cardinality labels from metrics, sample 1-5% of successful request logs, and store full LLM traces in cheap S3/Parquet with lifecycle expiry</td></tr></table></div>
+  <p><strong>Monitor:</strong> <strong>Cost per 1,000 successful requests</strong> (tracked weekly as a first-class SLO alongside p95 latency), <strong>Fixed-to-Total Cost Ratio</strong> (<code>&gt; 70%</code> means over-provisioned idle baseline; <code>&lt; 10%</code> at high spend means evaluate reserved/self-hosted commitment), and <strong>GPU active duty cycle %</strong> (tokens/sec generated divided by theoretical max tokens/sec).</p>
+</section>
+
+<section class="st" id="interview"><h2 data-n="8">Interview</h2>
+  <p class="sub">Say this aloud against the clock. Three levels, about 90 seconds.</p>
+  <div class="levels">
+    <div><b>1 Outcome <span>20 s</span></b>Cost-aware architecture optimizes cost per 1,000 successful requests rather than building for hypothetical scale on day one. Every new infrastructure layer adds a 24/7 fixed cost floor and an operational maintenance tax that is only justified once sustained traffic crosses a mathematical break-even point.</div>
+    <div><b>2 Mechanism <span>45 s</span></b>We decompose monthly spend into fixed baseline F plus variable cost v times volume N, divided by successful requests N times p_succ. At low traffic like 50,000 requests per month - just 0.02 average RPS - a lean monolith on a single VM with Postgres pgvector and a managed LLM API costs $1.97 per 1,000 requests, whereas a Multi-AZ Kubernetes cluster with dedicated vector DB and two H100 GPUs costs $149.34 per 1,000 requests because 99.9% of its $7,400 monthly bill sits idle. We refuse to add dedicated vector DBs below 5 million vectors, Kafka below 1,000 jobs per second, or self-hosted GPUs below break-even.</div>
+    <div><b>3 Internals and limits <span>25 s</span></b>Setting F_A plus N v_A equal to F_C plus N v_C places our self-hosted GPU break-even at 7.96 million requests per month, or 3.07 sustained RPS. At 50 million requests per month, self-hosting drops unit cost from $1.06 to $0.42 per 1k and saves $32,000 monthly. For spiky workloads, we run a hybrid: reserved GPUs for base trough load and managed APIs for peak overflow.</div>
+  </div>
+  <div class="timer"><button class="primary" id="timer-btn" data-seconds="90">Start 90 seconds</button><output id="timer-out" for="timer-btn">1:30</output></div>
+  <div class="box voice"><b>Say it like an engineer</b>
+    <p class="weak">"We should design our system with Kubernetes, Kafka, a dedicated vector database, and self-hosted open-source LLMs from the start so that we don't have to re-architect later and don't pay high OpenAI token fees."</p>
+    <p class="strong">"At 50k to 2M requests/month (0.02 to 0.77 average RPS), a Multi-AZ K8s stack with self-hosted H100s burns $7,400/mo in fixed floor ($149.34/1k at 50k req/mo, 99.9% idle waste). I start with a stateless modular monolith, Postgres with pgvector for up to 5M vectors, and a managed LLM API with prompt caching at ~$1.08/1k requests. We only add self-hosted GPUs once sustained load crosses the 7.96M req/mo (3.07 RPS) break-even threshold."</p>
+    <p>The strong answer translates monthly traffic into RPS, calculates unit cost per 1,000 successful requests, and gives an exact numerical trigger for migrating from managed APIs to self-hosted infrastructure.</p>
+  </div>
+  <h3 class="keep">Traps</h3>
+  <p class="sub keep">Each one sounds right. Say what is wrong with it before you open it.</p>
+  <details class="q"><summary>"Self-hosting an open-source LLM on our own GPU instance is always cheaper than paying per-token to a commercial LLM API."</summary><div class="a">Wrong below ~3 sustained RPS. Self-hosted GPUs convert a variable per-token bill into a 24/7 fixed monthly lease (<code>$3,000-$7,000+/mo</code>). At 50,000 requests/month (<code>0.02 RPS</code>), our 2x H100 cluster sits <code>99.9%</code> idle and costs <code>$149.34</code> per 1k requests versus <code>$1.97</code> on a managed API with prompt caching.</div></details>
+  <details class="q"><summary>"Serverless architectures are always the cheapest option because they scale to zero and you only pay for what you use."</summary><div class="a">Wrong at moderate-to-high steady traffic, and even at 50k-2M req/mo when paired with managed add-ons. Per-invocation API Gateway fees, function GB-second markups, and managed vector DB floors make our serverless stack <code>33%</code> more expensive per request (<code>$1.44/1k</code> vs <code>$1.08/1k</code> at 2M req/mo) than a right-sized VM monolith.</div></details>
+
+  <h3 class="keep">Question bank</h3>
+  <p class="sub">Answer aloud, then open. Grade yourself honestly.</p>
+  <p class="score" id="score" aria-live="polite"></p>
+  <details class="q"><summary>1. Write the formula for cost per 1,000 successful requests and explain why dividing by successful requests rather than total requests matters in AI systems.</summary><div class="a"><code>Cost_per_1k_succ = (Fixed_Monthly + (N / 1000) * Variable_per_1k) / ((N * Success_Rate) / 1000)</code>. In AI pipelines, hallucinated JSON schema failures, upstream 429 timeouts, or unvalidated guardrails still consume prompt tokens and GPU compute; tracking cost per <em>successful</em> request exposes the direct financial tax of bad reliability and retry loops.<div class="f"><b>Follow-up</b>If 15% of LLM outputs fail JSON validation and trigger an automatic retry, how does that affect variable token cost per successful request? Answer: Every 100 user requests trigger 115 LLM calls, increasing variable token spend per successful outcome by at least 15%.</div></div></details>
+  <details class="q"><summary>2. Derive the break-even request volume between a managed LLM API ($1.05/1k variable, $155/mo fixed) and a self-hosted 2x H100 cluster ($0.14/1k variable, $7,400/mo fixed), and convert it to sustained RPS.</summary><div class="a">Set <code>155 + 1.05 * (N / 1000) = 7400 + 0.14 * (N / 1000)</code>. Then <code>0.91 * (N / 1000) = 7245</code>, so <code>N = (7245 / 0.91) * 1000 = 7,961,538</code> requests/month. Dividing by <code>30 * 86,400 = 2,592,000</code> seconds/month gives <strong><code>3.07 sustained RPS</code></strong>.</div></details>
+  <details class="q"><summary>3. Name three "boring Postgres" capabilities that let you avoid adding dedicated Redis, Kafka, and Pinecone clusters in an early-to-mid-stage AI product.</summary><div class="a">(1) <strong>Vector search:</strong> <code>pgvector</code> with HNSW indexes handles 1M-5M embeddings in-database with full SQL metadata filtering. (2) <strong>Job queues:</strong> A jobs table queried with <code>SELECT ... FOR UPDATE SKIP LOCKED</code> gives ACID transactional background queues up to ~1,000 jobs/sec without Kafka. (3) <strong>JSON document &amp; cache tables:</strong> <code>JSONB</code> with GIN indexes and unlogged tables cover document and session lookup workloads without a separate NoSQL cluster.<div class="f"><b>Follow-up</b>What is the single biggest reliability win of keeping vectors, relational metadata, and job state in one Postgres database early on? Answer: Atomic single-node ACID transactions - no dual-write drift where a document exists in Postgres but fails to index in Pinecone or publish to Kafka.</div></div></details>
+  <details class="q"><summary>4. What are the three largest hidden networking and observability cost traps in AWS Kubernetes deployments?</summary><div class="a">(1) <strong>Managed NAT Gateways:</strong> <code>$0.045/hr</code> per AZ plus <code>$0.045/GB</code> processed for S3, ECR, or external LLM API traffic (solved with free S3/DynamoDB VPC Gateway Endpoints). (2) <strong>Cross-AZ data transfer:</strong> <code>$0.02/GB</code> round-trip whenever pods in AZ-a talk to pods or caches in AZ-b. (3) <strong>Observability &amp; DaemonSet tax:</strong> Logging verbose payloads and running monitoring/mesh agents that consume 20% of cluster CPU and 30%+ of the cloud invoice.</div></details>
+  <details class="q"><summary>5. How do you architect an LLM inference tier when traffic averages 5 RPS during an 8-hour workday peak but drops to 0.4 RPS overnight and on weekends?</summary><div class="a">Use a <strong>hybrid base-plus-burst architecture</strong>: provision a smaller self-hosted GPU footprint sized for the high-utilization base load (e.g., 1x GPU saturated 12+ hours/day where unit cost is <code>~$0.42/1k</code>) and dynamically overflow excess peak concurrency or overnight troughs (signing down the GPU node if auto-scalable) to a managed pay-per-token LLM API so you never pay for idle 24/7 peak-provisioned GPUs.<div class="f"><b>Follow-up</b>What software pattern in your gateway makes routing between self-hosted vLLM and a managed fallback API seamless? Answer: An OpenAI-compatible router (e.g., LiteLLM or custom Envoy/Python gateway) that monitors local vLLM in-flight queue depth and spills requests over a concurrency threshold to the managed API.</div></div></details>
+  <details class="q"><summary>6. How do you quantify the "operational complexity tax" when comparing a managed service against self-hosting open-source infrastructure on VMs?</summary><div class="a">Add <strong>engineering maintenance hours times fully loaded SWE hourly cost</strong> (typically <code>$100-$150/hr</code>) to the self-hosted fixed monthly floor <code>F</code>. If self-hosting Kafka or vLLM requires just 10 hours/week (40 hours/month) of upgrades, security patching, capacity tuning, and on-call incident response, that adds <code>$4,000-$6,000/mo</code> to <code>F</code>, shifting the financial break-even volume up by millions of requests per month.</div></details>
+</section>
+
+<section class="st" id="recall"><h2 data-n="9">Recall</h2>
+  <p class="keep"><strong>Blank page.</strong> Hide everything above. From memory, redraw the 4-step unit-economics crossover diagram and narrate each step, then write: (1) the cost per 1,000 successful requests formula, (2) the break-even volume formula and exact kata numbers at 50k, 2M, and 50M req/mo, and (3) three "boring Postgres" replacements for dedicated infrastructure.</p>
+  <textarea id="recall-box" class="keep" aria-label="Write your recall here" placeholder="Write from memory. This box saves a draft in this browser only."></textarea>
+  <details class="q"><summary>Compare with the checklist</summary><div class="a"><ul>
+    <li><strong>Unit cost formula:</strong> <code>Cost_per_1k_succ = (F + (N/1000) * v) / ((N * p_succ) / 1000)</code>.</li>
+    <li><strong>Three traffic tier numbers (Arch A Lean Monolith vs Arch C K8s + 2x H100):</strong> At 50k/mo (0.02 RPS): <code>$1.97</code> vs <code>$149.34</code> (99.9% fixed idle waste). At 2M/mo (0.77 RPS): <code>$1.08</code> vs <code>$3.87</code>. At 50M/mo (19.29 RPS): <code>$1.06</code> (<code>$52,655/mo</code>) vs <code>$0.42</code> (<code>$20,600/mo</code>, saving <code>$32,055/mo</code>).</li>
+    <li><strong>Break-even formula &amp; number:</strong> <code>N_be = ((F_C - F_A) / (v_A - v_C)) * 1000 = 7,961,538 req/mo</code> (<code>3.07 sustained RPS</code>), rising to <code>~12.4M+ req/mo</code> when adding 40 hrs/mo of SWE operational tax.</li>
+    <li><strong>When not to add infra:</strong> Use Postgres <code>pgvector</code> below ~5M vectors, Postgres <code>FOR UPDATE SKIP LOCKED</code> below ~1k jobs/sec instead of Kafka, and VPC S3 Gateway Endpoints instead of routing S3 traffic through <code>$0.045/GB</code> NAT Gateways.</li>
+  </ul></div></details>
+  <h3 class="keep">Flashcards</h3>
+  <div class="deck" id="deck"></div>
+  <h3>Anki import</h3>
+  <p class="sub">Use the cards file sent in the chat, or copy this into a text file and import it. If your Anki version ignores the header lines, pick the deck and the Basic note type in the import dialog.</p>
+  <textarea class="tsv" id="anki" readonly aria-label="Anki import text"></textarea>
+  <div class="deckbar"><button id="anki-copy">Copy Anki text</button></div>
+</section>
+
+<section class="st" id="mixed"><h2 data-n="10">Mixed review</h2>
+  <p class="sub">Three questions from earlier topics. Nobody tells you the topic in an interview.</p>
+  <details class="q"><summary>L05: Why does placing 4 workers with in-memory session dictionaries behind a round-robin load balancer cause 100% of follow-up chat turns to fail, and how does Gunther's USL model the scalability ceiling once you externalize state to Redis?</summary><div class="a">Under strict round-robin across 4 workers, Turn 1 lands on Worker 0 while Turns 2, 3, and 4 land on Workers 1, 2, and 3, none of which hold Worker 0's local RAM dict. Once stateless with Redis, capacity follows <code>C(N) = N / (1 + alpha(N-1) + beta N(N-1))</code>, peaking at <code>N_peak = sqrt((1 - alpha) / beta)</code> before retrograde scaling.</div></details>
+  <details class="q"><summary>A11: Why does centered finite difference achieve O(eps^2) truncation error while forward difference achieves O(eps), and why does eps = 1e-14 fail in FP64?</summary><div class="a">Subtracting <code>f(x + eps) - f(x - eps)</code> cancels the even quadratic <code>(eps^2 / 2) f''(x)</code> Taylor terms, leaving <code>O(eps^2)</code> cubic error. At <code>eps = 1e-14</code>, the two evaluations share 14 leading decimal digits, so subtraction causes catastrophic cancellation with rounding error <code>O(u / eps) ~ 3.35e-2</code>.</div></details>
+  <details class="q"><summary>L04: What are the three queuing-theory variables in Little's Law (L = lambda * W), and what happens to p99 latency as server utilization rho approaches 100%?</summary><div class="a"><code>L</code> is average concurrent requests in the system, <code>lambda</code> is average arrival/throughput rate (RPS), and <code>W</code> is average time spent in the system (latency). By Kingman's equation, queueing delay scales proportional to <code>rho / (1 - rho)</code>, shooting asymptotically to infinity as utilization <code>rho -> 1</code>.</div></details>
+</section>
+
+<section class="st" id="sources"><h2 data-n="11">Sources</h2>
+  <ul class="srcs">
+    <li><a href="https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html">AWS Well-Architected Framework: Cost Optimization Pillar</a><small>Supports unit-economics tracking (cost per successful transaction), right-sizing, and managed vs self-hosted TCO analysis. Checked 2026-11-23.</small></li>
+    <li><a href="https://aws.amazon.com/vpc/pricing/">Amazon VPC &amp; EKS Pricing Documentation</a><small>Supports $0.045/hr + $0.045/GB NAT Gateway charges, $0.10/hr ($73/mo) EKS control plane fee, and $0.01/GB each-way cross-AZ transfer rates. Checked 2026-11-23.</small></li>
+    <li><a href="https://mcfunley.com/choose-boring-technology">Dan McKinley: Choose Boring Technology</a><small>Supports the "innovation tokens" mental model and quantifying the operational complexity tax of adding new databases and queues. Checked 2026-11-23.</small></li>
+    <li><a href="https://github.com/pgvector/pgvector">pgvector Documentation: Open-Source Vector Similarity Search for Postgres</a><small>Supports HNSW indexing inside Postgres to avoid dedicated vector database clusters at low-to-medium scale. Checked 2026-11-23.</small></li>
+  </ul>
+</section>
+
+<section class="st" id="notes"><h2 data-n="12">Short notes</h2>
+  <p class="sub">Quick-memorization cheat sheet covering every subtopic on this page and the key facts to remember cold.</p>
+  <h3>All subtopics on this page</h3>
+  <ul>
+    <li><strong>Unit-Economics Formula:</strong> <code>Cost_per_1k_succ = (F + (N/1000) * v) / ((N * p_succ) / 1000)</code>; fixed baseline <code>F</code> dominates at low RPS while variable cost <code>v</code> dominates at high RPS.</li>
+    <li><strong>Three Traffic Tiers (Lean Monolith A vs Self-Hosted 2x H100 K8s C):</strong> At <code>50k/mo</code> (0.02 RPS): <code>$1.97</code> vs <code>$149.34/1k</code> (99.9% idle waste). At <code>2M/mo</code> (0.77 RPS): <code>$1.08</code> vs <code>$3.87/1k</code>. At <code>50M/mo</code> (19.29 RPS): <code>$1.06</code> vs <code>$0.42/1k</code> (saves <code>$32,055/mo</code>).</li>
+    <li><strong>Break-Even Formula &amp; Threshold:</strong> <code>N_be = ((F_C - F_A) / (v_A - v_C)) * 1000 = 7,961,538 req/mo</code> (<code>3.07 sustained RPS</code>), or <code>~12.4M+ req/mo</code> once 40 hrs/mo of SWE operational maintenance is included.</li>
+    <li><strong>When NOT to Add Infrastructure:</strong> Keep vectors in Postgres <code>pgvector</code> below ~5M vectors; keep background queues in Postgres <code>FOR UPDATE SKIP LOCKED</code> below ~1k jobs/sec; keep LLM inference on managed APIs with prompt caching below ~3 sustained RPS.</li>
+  </ul>
+  <div class="box model"><b>Important things to remember</b>
+    <ul>
+      <li><strong>Always convert req/mo to average RPS in interviews:</strong> Divide monthly requests by <code>2.592M</code> (or <code>~2.5M</code>). 50k/mo = <code>0.02 RPS</code>; 2.5M/mo = <code>1 RPS</code>; 50M/mo = <code>~20 RPS</code>.</li>
+      <li><strong>Hidden cloud networking taxes:</strong> AWS NAT Gateways cost <code>$0.045/hr + $0.045/GB</code> (bypass with free S3/DynamoDB VPC Gateway Endpoints); cross-AZ traffic costs <code>$0.02/GB</code> round-trip.</li>
+      <li><strong>Hybrid GPU strategy for spiky traffic:</strong> Size self-hosted reserved GPUs for the steady trough/base load and spill daytime traffic spikes to pay-per-token managed LLM APIs.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><p>When you finish, on this topic's row in the tracker</p><div class="trackline">Status: Learned | Conf: 1 to 5 | Learned on: today | retest dates fill in by themselves</div>
+  <p>At 7 and 30 days: open this page, press Start a retest, answer cold, then tick Done 7d or Done 30d on the row.</p></footer>
+</main>
+<script type="application/json" id="cards">
+{"deck": "AI Mastery::L System design concepts", "tags": "L07 T2 W02", "cards": [{"q": "What is the unit-economics formula for cost per 1,000 successful requests, and why does it penalize over-engineered architectures at low traffic?", "a": "Cost per 1k = (Fixed + N*Variable) / (N*Success_Rate/1000); at low N, high fixed floors divide by tiny volume, creating 99.9% idle waste."}, {"q": "In our RAG benchmark, why does a Multi-AZ K8s + 2x H100 cluster cost $149.34 per 1k requests at 50k req/mo compared to $1.97 for a lean monolith?", "a": "The $7,400/mo fixed baseline sits 99.9% idle at 0.02 average RPS, costing 76x more per request than the $45/mo monolith with managed LLM APIs."}, {"q": "How do you calculate the break-even monthly request volume N_be between a lean managed-API monolith (F_A, v_A) and a self-hosted GPU cluster (F_C, v_C)?", "a": "N_be = ((F_C - F_A) / (v_A - v_C)) * 1000; for $7,400 vs $155 fixed and $1.05 vs $0.14/1k variable, break-even is 7.96M req/mo (3.07 RPS)."}, {"q": "When should you refuse to add dedicated infrastructure like Kubernetes, Kafka, or a standalone vector database to an AI system?", "a": "Refuse whenever traffic sits below break-even RPS, when Postgres (pgvector + SKIP LOCKED) fits the load, or when DevOps maintenance exceeds infrastructure savings."}]}
+</script>
+<!-- TOPIC-LAB:SCRIPT v4 (copy verbatim) -->
+<script>
+(function(){
+  var ID=document.body.dataset.topic||"topic";
+  var store={get:function(k,d){try{var v=localStorage.getItem(ID+":"+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set:function(k,v){try{localStorage.setItem(ID+":"+k,JSON.stringify(v))}catch(e){}}};
+  function $(s,r){return (r||document).querySelector(s)} function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+  function btn(c,x,fn){var b=el("button",c,x);b.type="button";b.addEventListener("click",function(){fn(b)});return b}
+  function flash(b,x){var old=b.textContent;b.textContent=x;setTimeout(function(){b.textContent=old},1400)}
+  function copy(text,b){function manual(){var ta=el("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();flash(b,ok?"Copied":"Select the text and copy")}
+    try{navigator.clipboard.writeText(text).then(function(){flash(b,"Copied")},manual)}catch(e){manual()}}
+  function iso(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
+  function plus(s,n){var p=s.split("-");return iso(new Date(+p[0],p[1]-1,+p[2]+n))}
+  function nice(s){var p=s.split("-");return new Date(+p[0],p[1]-1,+p[2]).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+  function text(n){return n?n.textContent.replace(/\s+/g," ").trim():""}
+  var today=iso(new Date());
+
+  // copy buttons on code blocks
+  $$("pre[data-copy]").forEach(function(pre){pre.parentNode.appendChild(btn("","Copy",function(b){copy(pre.textContent,b)}))});
+
+  // study path checkboxes
+  var steps=store.get("steps",{});
+  $$(".path input").forEach(function(cb){cb.checked=!!steps[cb.id];cb.addEventListener("change",function(){steps[cb.id]=cb.checked;store.set("steps",steps)})});
+
+  // self-grading on every question
+  var grades=store.get("grades",{}),qs=$$("details.q"),paints=[],sc=$("#score");
+  function tally(){var c={got:0,shaky:0,missed:0};qs.forEach(function(q){if(c[q.dataset.g]!=null)c[q.dataset.g]++});return c}
+  function score(){if(!sc)return;var c=tally();sc.textContent="Self-grade so far: got "+c.got+", shaky "+c.shaky+", missed "+c.missed+", of "+qs.length+" questions on this page."}
+  qs.forEach(function(q,i){var key="q"+i,row=el("div","grade");row.appendChild(el("span","","How did you do?"));
+    [["got","Got it"],["shaky","Shaky"],["missed","Missed"]].forEach(function(g){var b=btn("",g[1],function(){grades[key]=g[0];store.set("grades",grades);paint()});b.dataset.v=g[0];row.appendChild(b)});
+    function paint(){if(grades[key])q.dataset.g=grades[key];else q.removeAttribute("data-g");$$("button",row).forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.v===grades[key]))});score()}
+    q.appendChild(row);paints.push(paint);paint()});
+  score();
+
+  // shaky and missed questions, as rows for the tracker's Question log (Date, Question, Topic, Level reached, What was missing, Model answer, Retest due)
+  if(sc)sc.parentNode.insertBefore(btn("keep","Copy shaky and missed for the question log",function(b){var rows=[];
+    qs.forEach(function(q){if(q.dataset.g==="shaky"||q.dataset.g==="missed")rows.push([today,text($("summary",q)),ID,q.dataset.g,"",text($(".a",q)).slice(0,400),plus(today,7)].join("\t"))});
+    if(rows.length)copy(rows.join("\n"),b);else flash(b,"Nothing graded shaky or missed yet")}),sc.nextSibling);
+
+  // recall draft
+  var rb=$("#recall-box");if(rb){rb.value=store.get("recall","");rb.addEventListener("input",function(){store.set("recall",rb.value)})}
+
+  // 90-second timer, and the model answer toggle used in retest mode
+  var tb=$("#timer-btn"),to=$("#timer-out"),tick=null,lv=$(".levels"),tm=$(".timer");
+  if(tb&&to){var total=+tb.dataset.seconds||90,label=tb.textContent;
+    function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+    tb.addEventListener("click",function(){if(tick){clearInterval(tick);tick=null;tb.textContent=label;to.textContent=fmt(total);return}
+      var left=total;tb.textContent="Stop";to.textContent=fmt(left);
+      tick=setInterval(function(){left--;to.textContent=left>0?fmt(left):"Time";if(left<=0){clearInterval(tick);tick=null;tb.textContent=label}},1000)})}
+  if(lv&&tm)tm.appendChild(btn("rt-only","Show the model answer",function(b){b.textContent=lv.classList.toggle("show")?"Hide the model answer":"Show the model answer"}));
+
+  // retest mode: the tracker says when; this hides the explanations and keeps a score per round
+  var nav=$(".path")||$("header");
+  if(nav&&qs.length){var first=store.get("first",null);if(!first){first=today;store.set("first",first)}
+    var rounds=store.get("rounds",[]),mode=store.get("mode","study"),bar=el("div","rt"),info=el("p");
+    function show(){var on=mode==="retest";document.body.classList.toggle("retest",on);go.textContent=on?"Finish and save the score":"Start a retest";stop.style.display=on?"":"none";
+      info.textContent=on?"Retest: answer each question aloud, then open it and grade it. The explanations stay hidden until you finish."
+        :rounds.map(function(r){return r.l+" "+nice(r.d)+": "+r.c.got+" got, "+r.c.shaky+" shaky, "+r.c.missed+" missed. "}).join("")+"First opened "+nice(first)+". Retest cold on or after "+nice(plus(first,7))+" and "+nice(plus(first,30))+"."}
+    function set(m){mode=m;store.set("mode",m);show()}
+    var go=btn("primary","",function(){var c=tally(),n=c.got+c.shaky+c.missed;
+      if(mode==="retest"){if(n){rounds.push({l:"Retest",d:today,c:c});store.set("rounds",rounds)}set("study");return}
+      if(n&&!rounds.length){rounds.push({l:"First pass",d:first,c:c});store.set("rounds",rounds)}
+      grades={};store.set("grades",grades);qs.forEach(function(q){q.open=false});if(lv)lv.classList.remove("show");paints.forEach(function(p){p()});
+      set("retest");window.scrollTo(0,0)});
+    var stop=btn("","Cancel",function(){set("study")});
+    bar.appendChild(info);bar.appendChild(go);bar.appendChild(stop);nav.appendChild(bar);show()}
+
+  // visualizations: data-bars charts render themselves; explorables register through window.TLQ
+  var TL={};
+  TL.fmt=function(n,d){return Number(n).toLocaleString("en-US",{maximumFractionDigits:d==null?2:d,minimumFractionDigits:d==null?0:d})};
+  TL.bars=function(host,spec){host.textContent="";host.classList.add("bars");var rows=spec.rows||[];
+    var max=spec.max||Math.max.apply(null,rows.map(function(r){return Math.abs(r.value)}))||1;
+    function txt(r){return r.text!=null?r.text:(spec.pre||"")+TL.fmt(r.value,spec.digits)+(spec.unit||"")}
+    host.setAttribute("role","img");host.setAttribute("aria-label",spec.label||rows.map(function(r){return r.label+" "+txt(r)}).join(", "));
+    rows.forEach(function(r){var row=el("div","r"),t=el("div","t"),f=el("div","f"+(r.tone?" "+r.tone:""));
+      f.style.width=Math.max(0,Math.min(100,100*Math.abs(r.value)/max))+"%";t.appendChild(f);
+      row.appendChild(el("span","l",r.label));row.appendChild(t);row.appendChild(el("span","v",txt(r)));host.appendChild(row)})};
+  TL.viz=function(id,render){var fig=document.getElementById(id);if(!fig)return;var ins=$$("input,select",fig);
+    function run(){var v={};ins.forEach(function(i){var x=i.type==="checkbox"?i.checked:(i.type==="range"||i.type==="number"||i.dataset.num!=null)?+i.value:i.value;v[i.name]=x;
+        var o=$('output[data-for="'+i.name+'"]',fig);if(o)o.textContent=(i.dataset.pre||"")+(i.tagName==="SELECT"?i.options[i.selectedIndex].text:typeof x==="number"?TL.fmt(x):x)+(o.dataset.unit||i.dataset.unit||"")});
+      var out;try{out=render(v,fig,TL)}catch(e){out={};var r=$("[data-out]",fig);if(r)out[r.dataset.out]="This visual hit an error: "+e.message}
+      if(out)Object.keys(out).forEach(function(k){var n=$('[data-out="'+k+'"]',fig);if(n)n.textContent=out[k]})}
+    ins.forEach(function(i){i.addEventListener("input",run);i.addEventListener("change",run)});run()};
+  $$("[data-bars]").forEach(function(h){try{TL.bars(h,JSON.parse(h.dataset.bars))}catch(e){h.textContent="Chart data could not be read."}});
+  var queued=window.TLQ||[];window.TLQ={push:function(f){try{f(TL)}catch(e){}}};queued.forEach(function(f){window.TLQ.push(f)});
+
+  // steppers: an SVG that builds up step by step, one caption per step, with an optional guess-first mode
+  $$("figure.stepper").forEach(function(fig){var svg=$("svg",fig),list=$("ol.steps",fig);if(!svg||!list)return;
+    var caps=$$("li",list).map(text),n=caps.length,i=0,timer=null,guess=false,shown=true;if(!n)return;list.hidden=true;
+    var now=el("p","now"),bar=el("div","sbar"),cnt=el("span","count"),gl=el("label","gl"),gc=document.createElement("input");
+    now.setAttribute("aria-live","polite");gc.type="checkbox";gl.appendChild(gc);gl.appendChild(document.createTextNode("Guess each step before you see it"));
+    var back=btn("","Back",function(){stop();go(i-1)}),play=btn("primary","Play",function(){timer?stop():start()}),
+        next=btn("","Next",function(){stop();if(guess&&!shown){shown=true;draw()}else go(i+1)});
+    function has(e,a){return e.getAttribute(a).split(/[\s,]+/).indexOf(String(i+1))>=0}
+    function draw(){$$("[data-step]",svg).forEach(function(e){e.classList.toggle("off",+e.getAttribute("data-step")>i+1)});
+      $$("[data-only]",svg).forEach(function(e){e.classList.toggle("off",!has(e,"data-only"))});
+      $$("[data-hi]",svg).forEach(function(e){e.classList.toggle("hi",has(e,"data-hi"))});
+      now.textContent=shown?caps[i]:"What happens in step "+(i+1)+"? Say it aloud, then press Reveal.";
+      next.textContent=guess&&!shown?"Reveal":"Next";cnt.textContent="Step "+(i+1)+" of "+n;back.disabled=i===0;next.disabled=i===n-1&&shown}
+    function go(k){var j=Math.max(0,Math.min(n-1,k));if(j!==i||k===0)shown=!guess;i=j;draw()}
+    function start(){guess=false;gc.checked=false;shown=true;if(i>=n-1)i=0;draw();play.textContent="Pause";
+      timer=setInterval(function(){go(i+1);if(i>=n-1)stop()},3000)}
+    function stop(){if(timer)clearInterval(timer);timer=null;play.textContent="Play"}
+    gc.addEventListener("change",function(){stop();guess=gc.checked;shown=!guess;draw()});
+    fig.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){e.preventDefault();next.click()}if(e.key==="ArrowLeft"){e.preventDefault();back.click()}});
+    bar.appendChild(back);bar.appendChild(play);bar.appendChild(next);bar.appendChild(cnt);
+    svg.parentNode.insertBefore(now,svg.nextSibling);now.parentNode.insertBefore(bar,now.nextSibling);bar.parentNode.insertBefore(gl,bar.nextSibling);draw()});
+
+  // flashcards and Anki text
+  var data=null;try{data=JSON.parse($("#cards").textContent)}catch(e){}
+  var deck=$("#deck");
+  if(data&&deck&&data.cards&&data.cards.length){var order=data.cards.map(function(_,i){return i}),pos=0,back=false;
+    var card=el("div","card");card.tabIndex=0;card.setAttribute("role","button");
+    var side=el("div","side"),txt=el("div","txt");card.appendChild(side);card.appendChild(txt);
+    var dbar=el("div","deckbar"),count=el("span","count");
+    function draw(){var c=data.cards[order[pos]];card.className="card"+(back?" back":"");side.textContent="";side.appendChild(el("span","",back?"Answer":"Question"));side.appendChild(el("span","",back?"click for next":"say it aloud, then click"));
+      txt.textContent=back?c.a:c.q;count.textContent=(pos+1)+" / "+order.length}
+    function go2(n){pos=(pos+n+order.length)%order.length;back=false;draw()}
+    function flip(){if(back)go2(1);else{back=true;draw()}}
+    card.addEventListener("click",flip);card.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();flip()}
+      if(e.key==="ArrowRight")go2(1);if(e.key==="ArrowLeft")go2(-1)});
+    dbar.appendChild(btn("","Previous",function(){go2(-1)}));dbar.appendChild(btn("","Flip",flip));
+    dbar.appendChild(btn("","Shuffle",function(){for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=order[i];order[i]=order[j];order[j]=t}pos=0;back=false;draw()}));
+    dbar.appendChild(count);deck.appendChild(card);deck.appendChild(dbar);draw();
+    var anki=$("#anki");if(anki){function f(s){return '"'+String(s).replace(/"/g,'""').replace(/\t/g," ").replace(/\r?\n/g,"<br>")+'"'}
+      anki.value=["#separator:tab","#html:true","#notetype:Basic","#deck:"+data.deck,"#tags column:3"].concat(
+        data.cards.map(function(c){return f("["+ID+"] "+c.q)+"\t"+f(c.a)+"\t"+f(data.tags)})).join("\n")+"\n";
+      var ab=$("#anki-copy");if(ab)ab.addEventListener("click",function(){copy(anki.value,ab)})}}
+})();
+</script>
+<!-- /TOPIC-LAB:SCRIPT -->
+</body>
+</html>
